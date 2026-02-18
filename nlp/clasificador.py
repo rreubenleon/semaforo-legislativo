@@ -18,6 +18,80 @@ from config import CATEGORIAS, NLP_CONFIG, DATABASE, KEYWORDS_NEGATIVOS, KEYWORD
 
 logger = logging.getLogger(__name__)
 
+# ─────────────────────────────────────────────
+# FILTRO DE CONTEXTO NO-LEGISLATIVO
+# Si el artículo tiene señales fuertes de deportes o entretenimiento
+# y NO tiene señales político-sociales, se descarta.
+# Esto permite que temas SOCIALES pasen (feminicidios, crisis de agua,
+# desastres) porque esos sí presionan al Congreso.
+# ─────────────────────────────────────────────
+CONTEXTO_DEPORTIVO = [
+    "selección mexicana", "selección nacional", "seleccion mexicana",
+    "director técnico", "director tecnico", "convocatoria mundialista",
+    "mundial 2026", "mundial de futbol", "eliminatoria mundialista",
+    "liga mx", "club américa", "club america", "chivas", "pumas unam",
+    "tigres uanl", "rayados", "cruz azul vs",
+    "juegos olímpicos", "juegos olimpicos", "medallista olímpic",
+    "sprint femenino", "sprint masculino", "clavadista",
+    "copa oro", "copa del mundo", "balón de oro", "balon de oro",
+    "gol de", "anotó gol", "marcador final", "medio tiempo",
+    "fichaje", "transferencia de jugador", "entrenador del equipo",
+    "torneo de tenis", "grand prix", "fórmula 1", "formula 1",
+    "ufc", "pelea de box", "round de box",
+]
+
+CONTEXTO_ENTRETENIMIENTO = [
+    "se vuelve viral", "video viral", "se hizo viral",
+    "meme de", "los memes", "horóscopo", "horoscopo",
+    "signo zodiacal", "farándula", "farandula",
+    "reality show", "influencer", "tiktoker", "youtuber",
+    "netflix", "serie de tv", "telenovela", "estreno de cine",
+    "alfombra roja", "premios oscar", "premios grammy",
+    "perro lobo", "mascota viral", "receta de cocina",
+    "celebridad", "paparazzi",
+]
+
+def _es_contexto_no_legislativo(titulo, resumen=""):
+    """
+    Detecta si un artículo es claramente deportes o entretenimiento.
+    Retorna True si debe ser EXCLUIDO de la clasificación legislativa.
+
+    IMPORTANTE: No excluye temas sociales (violencia, desastres, crisis)
+    porque esos sí pueden generar presión legislativa.
+    """
+    texto = f"{titulo} {resumen}".lower()
+
+    # Contar señales deportivas
+    hits_deporte = sum(1 for kw in CONTEXTO_DEPORTIVO if kw in texto)
+    # Contar señales de entretenimiento
+    hits_entretenimiento = sum(1 for kw in CONTEXTO_ENTRETENIMIENTO if kw in texto)
+
+    # Si no hay señales de deporte/entretenimiento, NO excluir
+    if hits_deporte == 0 and hits_entretenimiento == 0:
+        return False
+
+    # Señales político-sociales que RESCATAN el artículo aunque tenga
+    # contexto deportivo (ej: "Congreso aprueba ley para el Mundial 2026")
+    rescate_politico = [
+        "congreso", "senado", "cámara de diputados", "camara de diputados",
+        "iniciativa", "punto de acuerdo", "dictamen", "reforma",
+        "ley", "legisl", "presupuesto", "gobierno federal",
+        "secretaría", "secretaria", "sheinbaum", "morena", "pan ",
+        "pri ", "comisión", "comision", "tribunal", "corte suprema",
+        "derechos humanos", "feminicidio", "desaparición", "desaparicion",
+        "protesta", "manifestación", "manifestacion", "denuncia",
+        "fiscal", "procurador", "ministerio público",
+    ]
+
+    hits_politico = sum(1 for kw in rescate_politico if kw in texto)
+
+    # Si tiene contexto político, NO excluir (es un tema mixto relevante)
+    if hits_politico >= 1:
+        return False
+
+    # Si tiene 1+ señales de deporte o entretenimiento SIN contexto político: excluir
+    return True
+
 # Stopwords del español para limpiar texto
 STOPWORDS_ES = {
     "de", "la", "que", "el", "en", "y", "a", "los", "del", "se", "las",
@@ -126,7 +200,11 @@ def clasificar_texto(titulo, resumen=""):
     - Bonus por keywords en título vs resumen
     - Filtro de relevancia México (penaliza artículos internacionales)
     """
-    # Filtro de relevancia México (sobre texto crudo)
+    # Filtro 1: Excluir deportes y entretenimiento
+    if _es_contexto_no_legislativo(titulo, resumen):
+        return {}
+
+    # Filtro 2: Relevancia México (penaliza artículos internacionales)
     relevancia = calcular_relevancia_mexico(titulo, resumen)
     if relevancia == 0.0:
         return {}

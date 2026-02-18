@@ -319,6 +319,9 @@ CATEGORIAS = {
             "Tren Maya", "transporte", "obra pública", "construcción",
             "vivienda", "agua", "Conagua", "drenaje", "puente",
             "corredor interoceánico", "telecomunicaciones",
+            "terremoto", "sismo", "inundación", "huracán", "desastre natural",
+            "protección civil", "reconstrucción", "declaratoria de emergencia",
+            "damnificados", "derrumbe", "evacuación",
         ],
         "comisiones": [
             "Infraestructura", "Comunicaciones y Transportes",
@@ -372,6 +375,7 @@ CATEGORIAS = {
             "economía circular", "contingencia ambiental",
             "ley ambiental", "norma ambiental", "impacto ambiental",
             "política ambiental", "residuos peligrosos", "Acuerdo de París",
+            "sequía", "incendio forestal", "ola de calor", "fenómeno natural",
         ],
         "comisiones": [
             "Medio Ambiente, Sustentabilidad, Cambio Climático y Recursos Naturales",
@@ -478,6 +482,19 @@ KEYWORDS_NEGATIVOS = [
     "NFL", "NBA", "MLB", "Super Bowl", "touchdown", "quarterback",
     "Premier League", "Champions League", "La Liga española",
     "Serie A", "Bundesliga", "Grand Slam", "Wimbledon",
+    # Deportes / selecciones nacionales (NO son tema legislativo)
+    "selección mexicana", "selección nacional de futbol",
+    "Javier Aguirre", "director técnico", "convocatoria mundialista",
+    "Mundial 2026", "eliminatoria mundialista",
+    "Liga MX", "Club América", "Chivas", "Cruz Azul futbol",
+    "Pumas UNAM futbol", "Tigres UANL", "Rayados",
+    "Juegos Olímpicos", "medallista", "atletismo", "clavadista",
+    "sprint femenino", "sprint masculino", "velocista",
+    "Copa del Mundo FIFA", "World Series", "Stanley Cup",
+    "UFC", "boxeo profesional", "Fórmula 1",
+    "gol de", "anotó gol", "marcador final", "medio tiempo",
+    "entrenador del", "fichaje", "transferencia de jugador",
+    "torneo de tenis", "Grand Prix", "maratón deportivo",
     # Países como sujeto (no como tema de política exterior mexicana)
     "Congreso de Perú", "parlamento europeo", "parlamento británico",
     "Congreso de Colombia", "Congreso de Argentina", "Congreso de Chile",
@@ -487,12 +504,14 @@ KEYWORDS_NEGATIVOS = [
     "Steffon Diggs", "Stefon Diggs", "Tom Brady", "LeBron James",
     "Taylor Swift", "Elon Musk", "Jeff Bezos",
     "Milei", "Boric", "Petro", "Lula",
-    # Entretenimiento internacional
+    # Entretenimiento / farándula / virales
     "Hollywood", "Bollywood", "Oscar de Hollywood",
     "Grammy", "Emmy", "Golden Globe",
-    # Deportes genéricos (cuando no son tema legislativo)
-    "Copa del Mundo FIFA", "World Series", "Stanley Cup",
-    "UFC", "boxeo profesional", "Fórmula 1",
+    "reality show", "telenovela", "Netflix", "influencer",
+    "se vuelve viral", "video viral", "meme",
+    "horóscopo", "signo zodiacal",
+    "farándula", "espectáculos",
+    "perro lobo", "mascota viral",
 ]
 
 # Términos que confirman que el artículo es relevante para México
