@@ -187,6 +187,222 @@
         }
 
         /* ================================================================
+           HISTORICAL SCORES CHART (Polymarket-style)
+           ================================================================ */
+
+        const CATEGORY_COLORS = [
+            '#2563eb', '#dc2626', '#059669', '#d97706', '#7c3aed',
+            '#db2777', '#0891b2', '#65a30d', '#ea580c', '#4f46e5',
+            '#0d9488', '#b91c1c', '#1d4ed8', '#9333ea',
+        ];
+
+        function HistorialScoresChart({ historial, semaforo, onCategoryClick }) {
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+            const [hoveredCat, setHoveredCat] = useState(null);
+            const [visibleCats, setVisibleCats] = useState(() => {
+                /* Start with top 5 by current score */
+                const sorted = [...semaforo].sort((a,b) => b.score_total - a.score_total);
+                return new Set(sorted.slice(0, 5).map(s => s.categoria));
+            });
+
+            const { fechas, categorias } = historial;
+            const catKeys = Object.keys(categorias);
+
+            const toggleCat = (cat) => {
+                setVisibleCats(prev => {
+                    const next = new Set(prev);
+                    if (next.has(cat)) { if (next.size > 1) next.delete(cat); }
+                    else { next.add(cat); }
+                    return next;
+                });
+            };
+
+            const toggleAll = () => {
+                if (visibleCats.size === catKeys.length) {
+                    const sorted = [...semaforo].sort((a,b) => b.score_total - a.score_total);
+                    setVisibleCats(new Set(sorted.slice(0, 5).map(s => s.categoria)));
+                } else {
+                    setVisibleCats(new Set(catKeys));
+                }
+            };
+
+            useEffect(() => {
+                if (!chartRef.current || fechas.length < 2) return;
+                if (chartInstance.current) chartInstance.current.destroy();
+
+                const labels = fechas.map(f => {
+                    const d = new Date(f + 'T12:00:00');
+                    return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+                });
+
+                const datasets = catKeys.filter(cat => visibleCats.has(cat)).map((cat, idx) => {
+                    const catData = categorias[cat];
+                    const colorIdx = catKeys.indexOf(cat);
+                    const color = CATEGORY_COLORS[colorIdx % CATEGORY_COLORS.length];
+                    const isHovered = hoveredCat === cat;
+                    const hasHover = hoveredCat !== null;
+
+                    return {
+                        label: catData.nombre,
+                        data: catData.scores.map(s => s === null ? undefined : s),
+                        borderColor: hasHover && !isHovered ? color + '30' : color,
+                        backgroundColor: color + '08',
+                        borderWidth: isHovered ? 3 : (hasHover ? 1 : 1.5),
+                        fill: false,
+                        tension: 0.3,
+                        pointRadius: isHovered ? 4 : 0,
+                        pointHitRadius: 8,
+                        pointHoverRadius: 5,
+                        pointBackgroundColor: color,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2,
+                        spanGaps: true,
+                        order: isHovered ? 0 : 1,
+                        _catKey: cat,
+                    };
+                });
+
+                const thresholdPlugin = {
+                    id: 'thresholds',
+                    beforeDraw(chart) {
+                        const { ctx, chartArea, scales } = chart;
+                        if (!chartArea) return;
+                        const yScale = scales.y;
+
+                        /* Verde zone */
+                        const y70 = yScale.getPixelForValue(70);
+                        const yTop = chartArea.top;
+                        ctx.fillStyle = 'rgba(46,125,50,0.04)';
+                        ctx.fillRect(chartArea.left, yTop, chartArea.width, y70 - yTop);
+
+                        /* Amarillo zone */
+                        const y40 = yScale.getPixelForValue(40);
+                        ctx.fillStyle = 'rgba(198,151,43,0.04)';
+                        ctx.fillRect(chartArea.left, y70, chartArea.width, y40 - y70);
+
+                        /* Rojo zone */
+                        ctx.fillStyle = 'rgba(198,40,40,0.04)';
+                        ctx.fillRect(chartArea.left, y40, chartArea.width, chartArea.bottom - y40);
+
+                        /* Threshold lines */
+                        ctx.setLineDash([4, 4]);
+                        ctx.lineWidth = 1;
+
+                        ctx.beginPath();
+                        ctx.strokeStyle = 'rgba(46,125,50,0.3)';
+                        ctx.moveTo(chartArea.left, y70);
+                        ctx.lineTo(chartArea.right, y70);
+                        ctx.stroke();
+
+                        ctx.beginPath();
+                        ctx.strokeStyle = 'rgba(198,40,40,0.3)';
+                        ctx.moveTo(chartArea.left, y40);
+                        ctx.lineTo(chartArea.right, y40);
+                        ctx.stroke();
+
+                        ctx.setLineDash([]);
+                    }
+                };
+
+                chartInstance.current = new Chart(chartRef.current, {
+                    type: 'line',
+                    plugins: [thresholdPlugin],
+                    data: { labels, datasets },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(255,255,255,0.97)',
+                                titleColor: '#111827',
+                                bodyColor: '#374151',
+                                borderColor: '#e5e7eb',
+                                borderWidth: 1,
+                                padding: 12,
+                                displayColors: true,
+                                boxWidth: 10,
+                                boxHeight: 10,
+                                titleFont: { size: 12, weight: 'bold' },
+                                bodyFont: { size: 11 },
+                                callbacks: {
+                                    label: (item) => ` ${item.dataset.label}: ${item.raw?.toFixed(1)}%`
+                                },
+                                itemSort: (a, b) => (b.raw || 0) - (a.raw || 0),
+                            }
+                        },
+                        scales: {
+                            y: {
+                                min: 0, max: 100,
+                                position: 'right',
+                                ticks: {
+                                    color: '#9ca3af',
+                                    font: { size: 10 },
+                                    stepSize: 20,
+                                    padding: 8,
+                                    callback: v => v + '%',
+                                },
+                                grid: { color: '#f3f4f6', drawBorder: false },
+                                border: { display: false },
+                            },
+                            x: {
+                                ticks: {
+                                    color: '#9ca3af',
+                                    font: { size: 9 },
+                                    maxRotation: 0,
+                                    maxTicksLimit: 10,
+                                    padding: 4,
+                                },
+                                grid: { display: false },
+                                border: { display: false },
+                            }
+                        },
+                    }
+                });
+
+                return () => { if (chartInstance.current) chartInstance.current.destroy(); };
+            }, [historial, visibleCats, hoveredCat]);
+
+            return (
+                <div className="glass border border-borde rounded-xl p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Tendencia de scores</div>
+                            <div className="text-[10px] text-gray-400 mt-0.5">Evolucion del score compuesto por categoria</div>
+                        </div>
+                        <button onClick={toggleAll}
+                            className="text-[10px] text-acento hover:text-acento/80 font-medium px-2 py-1 rounded border border-acento/20 hover:bg-acento/5 transition-colors">
+                            {visibleCats.size === catKeys.length ? 'Top 5' : 'Ver todas'}
+                        </button>
+                    </div>
+                    <div style={{height: '220px'}}><canvas ref={chartRef}></canvas></div>
+                    <div className="flex flex-wrap gap-1.5">
+                        {catKeys.map((cat, idx) => {
+                            const catInfo = categorias[cat];
+                            const color = CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
+                            const isVisible = visibleCats.has(cat);
+                            const lastScore = catInfo.scores.filter(s => s !== null).pop();
+                            const catData = semaforo.find(s => s.categoria === cat);
+                            return (
+                                <button key={cat}
+                                    onClick={() => toggleCat(cat)}
+                                    onMouseEnter={() => setHoveredCat(cat)}
+                                    onMouseLeave={() => setHoveredCat(null)}
+                                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium transition-all border ${isVisible ? 'border-gray-300 bg-white shadow-sm' : 'border-transparent bg-gray-100 text-gray-400'}`}>
+                                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: isVisible ? color : '#d1d5db'}}></div>
+                                    <span className={isVisible ? 'text-gray-700' : ''}>{catInfo.nombre.length > 15 ? catInfo.nombre.substring(0, 13) + '..' : catInfo.nombre}</span>
+                                    {lastScore !== undefined && isVisible && <span className="text-gray-400 ml-0.5">{lastScore.toFixed(0)}%</span>}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        }
+
+        /* ================================================================
            DETAIL MODAL
            ================================================================ */
 
@@ -393,6 +609,11 @@
                             </div>
                         );
                     })()}
+
+                    {/* Historical Trends Chart */}
+                    {data.historial_scores && data.historial_scores.fechas?.length > 1 && (
+                        <HistorialScoresChart historial={data.historial_scores} semaforo={semaforo} onCategoryClick={setSelected} />
+                    )}
 
                     {/* Counters */}
                     <div className="grid grid-cols-3 gap-3">

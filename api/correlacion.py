@@ -358,6 +358,88 @@ def obtener_alertas_recientes(limite=20):
     return [dict(r) for r in rows]
 
 
+def obtener_historial_scores_todas(dias=180):
+    """
+    Recupera historial de scores para TODAS las categorías.
+    Formato optimizado para gráfica temporal tipo Polymarket.
+
+    Retorna:
+        {
+            "fechas": ["2026-02-13", "2026-02-14", ...],
+            "categorias": {
+                "seguridad_justicia": {
+                    "nombre": "Seguridad y Justicia",
+                    "scores": [77.5, 78.2, ...],   // alineados con fechas
+                    "colores": ["verde", "verde", ...]
+                },
+                ...
+            }
+        }
+    """
+    from datetime import timedelta
+
+    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
+    conn = sqlite3.connect(str(db_path))
+    conn.row_factory = sqlite3.Row
+
+    fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
+
+    # Obtener todas las fechas disponibles
+    fechas_rows = conn.execute("""
+        SELECT DISTINCT fecha FROM scores
+        WHERE fecha >= ?
+        ORDER BY fecha
+    """, (fecha_limite,)).fetchall()
+
+    fechas = [r["fecha"] for r in fechas_rows]
+
+    # Obtener todos los scores
+    rows = conn.execute("""
+        SELECT categoria, fecha, score_total, color
+        FROM scores
+        WHERE fecha >= ?
+        ORDER BY fecha
+    """, (fecha_limite,)).fetchall()
+
+    conn.close()
+
+    # Organizar por categoría
+    por_cat = {}
+    for r in rows:
+        cat = r["categoria"]
+        if cat not in por_cat:
+            por_cat[cat] = {}
+        por_cat[cat][r["fecha"]] = {
+            "score": r["score_total"],
+            "color": r["color"],
+        }
+
+    # Construir estructura final alineada con fechas
+    categorias = {}
+    for cat_clave, cat_config in CATEGORIAS.items():
+        scores_alineados = []
+        colores_alineados = []
+        for f in fechas:
+            dato = por_cat.get(cat_clave, {}).get(f)
+            if dato:
+                scores_alineados.append(round(dato["score"], 1))
+                colores_alineados.append(dato["color"])
+            else:
+                scores_alineados.append(None)
+                colores_alineados.append(None)
+
+        categorias[cat_clave] = {
+            "nombre": cat_config["nombre"],
+            "scores": scores_alineados,
+            "colores": colores_alineados,
+        }
+
+    return {
+        "fechas": fechas,
+        "categorias": categorias,
+    }
+
+
 def generar_reporte():
     """Genera un reporte en texto del estado actual del semáforo."""
     resultados = calcular_todos_los_scores()

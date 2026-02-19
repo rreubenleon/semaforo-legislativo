@@ -33,6 +33,7 @@ from api.correlacion import (
     calcular_todos_los_scores,
     obtener_scores_actuales,
     obtener_alertas_recientes,
+    obtener_historial_scores_todas,
     generar_reporte,
 )
 from api.lag import analizar_todas_categorias, obtener_prediccion
@@ -341,6 +342,9 @@ def paso_7_exportar_dashboard():
     except Exception:
         sil_stats = {"total": 0, "con_partido": 0, "con_fecha": 0}
 
+    # Historial de scores para gráfica temporal (tipo Polymarket)
+    historial_scores = obtener_historial_scores_todas()
+
     # Predicciones de autoría legislativa (¿quién presenta?)
     autoria = {}
     try:
@@ -378,6 +382,7 @@ def paso_7_exportar_dashboard():
         "distribucion_categorias": distribucion,
         "predicciones": predicciones,
         "fuentes": fuentes,
+        "historial_scores": historial_scores,
         "series_temporales": series_temporales,
         "partidos": partidos,
         "autoria": autoria,

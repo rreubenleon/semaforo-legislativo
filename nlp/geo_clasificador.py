@@ -183,14 +183,31 @@ CIUDADES_ESTADO = {
     "Ensenada": "baja_california",
     "Rosarito": "baja_california",
     "Tecate": "baja_california",
-    # Ciudad de Mexico
+    # Ciudad de Mexico (alcaldias y colonias)
     "CDMX": "ciudad_de_mexico",
     "Coyoacan": "ciudad_de_mexico",
     "Iztapalapa": "ciudad_de_mexico",
+    "Iztacalco": "ciudad_de_mexico",
     "Tlalpan": "ciudad_de_mexico",
     "Xochimilco": "ciudad_de_mexico",
     "Azcapotzalco": "ciudad_de_mexico",
     "Gustavo A. Madero": "ciudad_de_mexico",
+    "Cuauhtemoc": "ciudad_de_mexico",
+    "Benito Juarez": "ciudad_de_mexico",
+    "Miguel Hidalgo": "ciudad_de_mexico",
+    "Venustiano Carranza": "ciudad_de_mexico",
+    "Tlahuac": "ciudad_de_mexico",
+    "Milpa Alta": "ciudad_de_mexico",
+    "Magdalena Contreras": "ciudad_de_mexico",
+    "Alvaro Obregon": "ciudad_de_mexico",
+    "Cuajimalpa": "ciudad_de_mexico",
+    "Polanco": "ciudad_de_mexico",
+    "Santa Fe": "ciudad_de_mexico",
+    "Condesa": "ciudad_de_mexico",
+    "Roma Norte": "ciudad_de_mexico",
+    "Tepito": "ciudad_de_mexico",
+    "Doctores": "ciudad_de_mexico",
+    "Chapultepec": "ciudad_de_mexico",
     # Estado de Mexico
     "Toluca": "estado_de_mexico",
     "Ecatepec": "estado_de_mexico",
@@ -401,12 +418,76 @@ def _texto_combinado(titulo, resumen):
 # ---------------------------------------------------------------------------
 # clasificar_estado(titulo, resumen)
 # ---------------------------------------------------------------------------
+def _es_mencion_federal_cdmx(texto):
+    """
+    Detecta si la mencion de 'Ciudad de Mexico' en el texto es por contexto
+    institucional/federal (no por ser noticia LOCAL de CDMX).
+
+    Heuristica:
+    - Si el texto menciona instituciones federales (SCJN, Congreso, Senado, etc.)
+      Y la unica referencia geografica es 'Ciudad de Mexico' (no CDMX, no alcaldias)
+      → probablemente es noticia federal, no local.
+    - Si menciona CDMX, alcaldias, o colonias → es local, no filtrar.
+    """
+    # Indicadores de noticia LOCAL de CDMX (no filtrar)
+    _LOCAL_CDMX = re.compile(
+        r'\bCDMX\b|'
+        r'\balcald[ií]a\b|'
+        r'\bCoyoac[aá]n\b|\bIztapalapa\b|\bTlalpan\b|\bXochimilco\b|'
+        r'\bAzcapotzalco\b|\bGustavo\s+A\b|\bCuauht[eé]moc\b|'
+        r'\bIztacalco\b|\bBenito\s+Ju[aá]rez\b|\bMiguel\s+Hidalgo\b|'
+        r'\bVenustiano\s+Carranza\b|\bTl[aá]huac\b|\bMilpa\s+Alta\b|'
+        r'\bMagdalena\s+Contreras\b|\b[ÁA]lvaro\s+Obreg[oó]n\b|'
+        r'\bCongreso\s+de\s+(?:la\s+)?CDMX\b|'
+        r'\bGobierno\s+(?:de\s+la\s+)?(?:CDMX|Ciudad\s+de\s+M[eé]xico)\b|'
+        r'\bmetro\s+(?:de\s+)?(?:la\s+)?(?:CDMX|Ciudad\s+de\s+M[eé]xico)\b|'
+        r'\bZ[oó]calo\b|\bReforma\s+(?:norte|sur)\b|\bInsurgentes\b|'
+        r'\bChapultepec\b|\bPolanco\b|\bSanta\s+Fe\b|\bCondesa\b|'
+        r'\bRoma\s+(?:Norte|Sur)\b|\bTepito\b|\bDoctores\b|'
+        r'\bCoyoac[aá]n\b|\bUniversidad\b.*\bCU\b',
+        re.IGNORECASE
+    )
+
+    if _LOCAL_CDMX.search(texto):
+        return False  # Es noticia local de CDMX
+
+    # Indicadores de noticia FEDERAL (instituciones con sede en CDMX)
+    _FEDERAL = re.compile(
+        r'\bCorte\b.*\b(?:sentencia|fallo|resoluci[oó]n|deja\s+firme|amparo)\b|'
+        r'\bSCJN\b|'
+        r'\bCongreso\s+(?:de\s+la\s+Uni[oó]n|General)\b|'
+        r'\bSenado\s+de\s+la\s+Rep[uú]blica\b|'
+        r'\bC[aá]mara\s+de\s+(?:Diputados|Senadores)\b|'
+        r'\bGobierno\s+(?:de\s+)?M[eé]xico\b|'
+        r'\bGobierno\s+federal\b|'
+        r'\bPresidenta?\s+(?:de\s+)?(?:la\s+)?Rep[uú]blica\b|'
+        r'\bSecretar[ií]a\s+de\s+(?!la\s+CDMX|la\s+Ciudad)',
+        re.IGNORECASE
+    )
+
+    if _FEDERAL.search(texto):
+        return True  # Parece noticia federal, filtrar CDMX
+
+    # Patron: "Ciudad de Mexico" aparece como dateline/firma al final
+    # Ejemplo: "... Ciudad de Mexico, a 18 de febrero de 2026"
+    if re.search(
+        r'Ciudad\s+de\s+M[eé]xico\s*,?\s*(?:a\s+)?\d{1,2}\s+de\s+',
+        texto, re.IGNORECASE
+    ):
+        return True
+
+    return False
+
+
 def clasificar_estado(titulo, resumen):
     """Escanea titulo y resumen en busca de menciones a estados mexicanos
     (por nombre de estado o por nombre de ciudad).
 
     Retorna una lista de claves de estados encontrados (sin duplicados),
     por ejemplo: ["sonora", "jalisco"].
+
+    Filtra CDMX cuando la mencion es claramente por contexto federal
+    (instituciones nacionales con sede en CDMX) y no por ser noticia local.
     """
     texto = _texto_combinado(titulo, resumen)
     if not texto:
@@ -426,6 +507,11 @@ def clasificar_estado(titulo, resumen):
         if estado not in estados_encontrados:
             if patron.search(texto):
                 estados_encontrados.add(estado)
+
+    # 3. Filtrar CDMX si la mencion es por contexto federal
+    if "ciudad_de_mexico" in estados_encontrados and len(estados_encontrados) == 1:
+        if _es_mencion_federal_cdmx(texto):
+            estados_encontrados.discard("ciudad_de_mexico")
 
     return sorted(estados_encontrados)
 
