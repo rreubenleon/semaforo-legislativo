@@ -335,6 +335,8 @@ CATEGORIAS = {
             "pesca", "maíz", "glifosato", "transgénico", "Segalmex",
             "Sembrando Vida", "fertilizante", "sequía", "cosecha",
             "ejido", "tierra", "reforma agraria", "soberanía alimentaria",
+            "productos agropecuarios", "exportación agropecuaria",
+            "certificación agropecuaria",
         ],
         "comisiones": [
             "Desarrollo y Conservación Rural, Agrícola y Autosuficiencia Alimentaria",
@@ -376,6 +378,9 @@ CATEGORIAS = {
             "ley ambiental", "norma ambiental", "impacto ambiental",
             "política ambiental", "residuos peligrosos", "Acuerdo de París",
             "sequía", "incendio forestal", "ola de calor", "fenómeno natural",
+            "forestal", "desarrollo forestal", "reforestación",
+            "certificación ambiental", "productos forestales",
+            "tala", "silvicultura",
         ],
         "comisiones": [
             "Medio Ambiente, Sustentabilidad, Cambio Climático y Recursos Naturales",

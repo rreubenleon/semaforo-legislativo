@@ -1,17 +1,23 @@
 """
 Scraper de la Gaceta Parlamentaria - Cámara de Diputados
-Extrae: iniciativas, puntos de acuerdo, dictámenes, proposiciones
-Datos: fecha, autor, comisión, tipo, resumen del texto
+Extrae: iniciativas, proposiciones, dictámenes, minutas, decretos
+
+Arquitectura de 3 niveles:
+  Nivel 1: Página principal del día (20260218.html) → descubre Anexos
+  Nivel 2: Página índice de Anexo (-II.html, -III.html) → descubre sub-páginas
+  Nivel 3: Sub-página de contenido (-II-1.html) → extrae documentos del TOC
 
 Estructura real del sitio:
-- Frameset principal en gaceta.diputados.gob.mx
-- Contenido diario en /Gaceta/66/YYYY/mes/YYYYMMDD.html
-- Documentos legislativos inline en <p> tags numerados
-- Secciones marcadas con <a class="Seccion">
-- Items del índice con <a class="Indice">
+  - Anexo I    → Comunicaciones oficiales, iniciativas de congresos estatales
+  - Anexo II   → Iniciativas (sub-páginas por partido: -II-1 a -II-N)
+  - Anexo III  → Proposiciones con punto de acuerdo (-III-1 a -III-N)
+  - Anexo IV+  → Dictámenes, informes, convenios (muchos en PDF)
+  - Anexo S/O  → Agendas de sesión (ignoradas)
 """
 
 import re
+import time
+import hashlib
 import logging
 import sqlite3
 from datetime import datetime, timedelta
@@ -45,16 +51,31 @@ LEGISLATURA = "66"
 
 # Patrones para clasificar tipo de documento
 TIPO_PATTERNS = {
-    "iniciativa": re.compile(r"iniciativa\s+con\s+proyecto", re.IGNORECASE),
-    "punto_de_acuerdo": re.compile(r"punto\s+de\s+acuerdo|proposici[oó]n\s+con\s+punto", re.IGNORECASE),
+    "iniciativa": re.compile(
+        r"iniciativa|que\s+reforma|que\s+adiciona|que\s+expide|que\s+abroga|que\s+deroga",
+        re.IGNORECASE,
+    ),
+    "proposicion": re.compile(
+        r"proposici[oó]n|punto\s+de\s+acuerdo|con\s+punto\s+de\s+acuerdo",
+        re.IGNORECASE,
+    ),
     "dictamen": re.compile(r"dictam[eé]n", re.IGNORECASE),
     "minuta": re.compile(r"minuta", re.IGNORECASE),
+    "decreto": re.compile(r"decreto", re.IGNORECASE),
 }
 
-# Patrón para extraer autor (Suscrita por... / Presentada por...)
+# Patrón para extraer autor
 RE_AUTOR = re.compile(
-    r"(?:suscrita?|presentada?|que\s+presenta)\s+por\s+(?:el|la|los|las)?\s*"
-    r"(?:C\.\s*)?(?:diputad[oa]|senador[a]?)?\s*(.+?)(?:,\s*del\s+[Gg]rupo|,\s*e\s+integrantes|\.\s)",
+    r"(?:suscrita?|presentada?|que\s+presenta|a\s+cargo\s+de[l]?)\s+"
+    r"(?:por\s+)?(?:el|la|los|las)?\s*"
+    r"(?:C\.\s*)?(?:diputad[oa]s?|senador[ae]?s?)?\s*"
+    r"(.+?)(?:,\s*(?:del|de\s+los|e\s+integrantes|y\s+suscrita)|del\s+[Gg]rupo|\.\s)",
+    re.IGNORECASE,
+)
+
+# Patrón para extraer grupo parlamentario
+RE_PARTIDO = re.compile(
+    r"[Gg]rupo[s]?\s+[Pp]arlamentario[s]?\s+(?:del?\s+)?(.+?)(?:\.|,\s|y\s+de\s|respectivamente|$)",
     re.IGNORECASE,
 )
 
@@ -64,6 +85,10 @@ RE_COMISION = re.compile(
     re.IGNORECASE,
 )
 
+
+# ─────────────────────────────────────────────
+# BASE DE DATOS
+# ─────────────────────────────────────────────
 
 def init_db():
     """Crea la tabla de gaceta si no existe, con migración de columnas nuevas."""
@@ -94,6 +119,15 @@ def init_db():
     return conn
 
 
+def _titulo_hash(titulo):
+    """Hash de los primeros 200 chars del título para deduplicación."""
+    return hashlib.md5(titulo[:200].lower().strip().encode()).hexdigest()
+
+
+# ─────────────────────────────────────────────
+# DESCARGA DE PÁGINAS
+# ─────────────────────────────────────────────
+
 def construir_url_gaceta(fecha):
     """
     Construye la URL de la Gaceta para una fecha dada.
@@ -104,167 +138,358 @@ def construir_url_gaceta(fecha):
     return f"{BASE_URL}/Gaceta/{LEGISLATURA}/{fecha.year}/{mes_str}/{fecha_str}.html"
 
 
-def obtener_gaceta_del_dia(fecha):
-    """Descarga el HTML de la Gaceta de un día específico."""
-    url = construir_url_gaceta(fecha)
+def fetch_page(url):
+    """Descarga una página con manejo de errores. Retorna None si falla."""
     try:
         resp = requests.get(url, headers=HEADERS, timeout=30, verify=False)
         resp.encoding = "iso-8859-1"
         if resp.status_code == 200 and len(resp.text) > 500:
-            return resp.text, url
-        logger.debug(f"Gaceta no disponible para {fecha.strftime('%Y-%m-%d')} ({resp.status_code})")
+            return resp.text
+        return None
     except requests.RequestException as e:
-        logger.warning(f"Error accediendo Gaceta {fecha.strftime('%Y-%m-%d')}: {e}")
-    return None, None
+        logger.debug(f"Error descargando {url}: {e}")
+        return None
 
 
-def extraer_documentos_legislativos(html, url_gaceta, fecha):
+# ─────────────────────────────────────────────
+# NIVEL 1: DESCUBRIR ANEXOS
+# ─────────────────────────────────────────────
+
+def descubrir_anexos(html, fecha_str):
     """
-    Parsea el HTML completo de una Gaceta diaria.
-    Extrae documentos legislativos del cuerpo (no solo del índice).
+    Parsea la página principal de un día y descubre todos los Anexos disponibles.
+    Retorna lista de dicts con {sufijo, url, tipo, es_pdf}.
 
-    Los documentos aparecen como párrafos numerados:
-      <span class="Negritas">1. </span> Iniciativa con proyecto de decreto...
-      Suscrita por la diputada Fulana, del Grupo Parlamentario de...
+    Ejemplo para 20260218:
+      - {sufijo: '-II', url: '.../20260218-II.html', tipo: 'iniciativas_index', es_pdf: False}
+      - {sufijo: '-III', url: '.../20260218-III.html', tipo: 'proposiciones_index', es_pdf: False}
+      - {sufijo: '-IV', url: '.../20260218-IV.pdf', tipo: 'otros', es_pdf: True}
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    anexos = []
+    vistos = set()
+
+    for a in soup.find_all("a", href=True):
+        href = a["href"]
+
+        # Buscar links que contengan la fecha del día
+        if fecha_str not in href:
+            continue
+
+        # Extraer el sufijo después de la fecha (ej: -II, -III, -I-1, -S, -O)
+        match = re.search(rf'{fecha_str}(-[^.]+)\.(html|pdf)', href)
+        if not match:
+            continue
+
+        sufijo = match.group(1)  # ej: -II, -III, -I-1, -S, -IV
+        extension = match.group(2)
+
+        # Deduplicar
+        if sufijo in vistos:
+            continue
+        vistos.add(sufijo)
+
+        # Construir URL completa
+        if href.startswith("http"):
+            url = href
+        elif href.startswith("/"):
+            url = f"{BASE_URL}{href}"
+        else:
+            url = f"{BASE_URL}/{href}"
+
+        es_pdf = extension == "pdf"
+
+        # Clasificar tipo de anexo
+        tipo = _clasificar_anexo(sufijo)
+
+        anexos.append({
+            "sufijo": sufijo,
+            "url": url,
+            "tipo": tipo,
+            "es_pdf": es_pdf,
+        })
+
+    logger.info(f"  Anexos descubiertos: {len(anexos)} ({', '.join(a['sufijo'] for a in anexos)})")
+    return anexos
+
+
+def _clasificar_anexo(sufijo):
+    """Clasifica un anexo por su sufijo."""
+    sufijo_upper = sufijo.upper()
+
+    # Anexo II (con o sin sub-número) → Iniciativas
+    if sufijo_upper.startswith("-II"):
+        if re.match(r'-II-\d+$', sufijo, re.IGNORECASE):
+            return "iniciativas_subpagina"
+        return "iniciativas_index"
+
+    # Anexo III → Proposiciones
+    if sufijo_upper.startswith("-III"):
+        if re.match(r'-III-\d+$', sufijo, re.IGNORECASE):
+            return "proposiciones_subpagina"
+        return "proposiciones_index"
+
+    # Anexo I → Comunicaciones oficiales
+    if sufijo_upper.startswith("-I") and not sufijo_upper.startswith("-II") and not sufijo_upper.startswith("-III"):
+        return "comunicaciones"
+
+    # Agendas de sesión
+    if sufijo_upper in ("-S", "-O", "-OV"):
+        return "agendas"
+
+    # Todo lo demás (IV, V, VI, VII)
+    return "otros"
+
+
+# ─────────────────────────────────────────────
+# NIVEL 2: DESCUBRIR SUB-PÁGINAS
+# ─────────────────────────────────────────────
+
+def descubrir_subpaginas(html, fecha_str, tipo_anexo):
+    """
+    Parsea una página índice de Anexo (ej: -II.html) y descubre sub-páginas.
+    Retorna lista de dicts con {url_html, url_pdf, partido}.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    subpaginas = []
+    pdfs = {}  # mapeo sufijo → url_pdf
+
+    for a in soup.find_all("a", href=True):
+        href = a["href"]
+        texto = a.get_text(strip=True)
+
+        if fecha_str not in href:
+            continue
+
+        # Buscar sub-páginas HTML
+        match_html = re.search(rf'{fecha_str}(-(?:II|III)-\d+)\.(html)', href, re.IGNORECASE)
+        if match_html:
+            sufijo = match_html.group(1)
+            if href.startswith("http"):
+                url = href
+            elif href.startswith("/"):
+                url = f"{BASE_URL}{href}"
+            else:
+                url = f"{BASE_URL}/{href}"
+
+            # Intentar extraer partido del texto del link
+            partido = _extraer_partido_de_texto(texto)
+
+            subpaginas.append({
+                "sufijo": sufijo,
+                "url_html": url,
+                "url_pdf": "",
+                "partido": partido,
+            })
+
+        # Buscar PDFs asociados
+        match_pdf = re.search(rf'{fecha_str}(-(?:II|III)-\d+(?:-\d+)?)\.(pdf)', href, re.IGNORECASE)
+        if match_pdf:
+            sufijo_pdf = match_pdf.group(1)
+            if href.startswith("http"):
+                pdf_url = href
+            elif href.startswith("/"):
+                pdf_url = f"{BASE_URL}{href}"
+            else:
+                pdf_url = f"{BASE_URL}/{href}"
+
+            # El sufijo del PDF tiene un trailing -1 (ej: -II-1-1.pdf para la sub-página -II-1)
+            # Normalizar para emparejar con la sub-página
+            sufijo_base = re.sub(r'-\d+$', '', sufijo_pdf)
+            pdfs[sufijo_base] = pdf_url
+
+    # Emparejar PDFs con sub-páginas
+    for sub in subpaginas:
+        if sub["sufijo"] in pdfs:
+            sub["url_pdf"] = pdfs[sub["sufijo"]]
+
+    # Deduplicar por sufijo
+    vistos = set()
+    resultado = []
+    for sub in subpaginas:
+        if sub["sufijo"] not in vistos:
+            vistos.add(sub["sufijo"])
+            resultado.append(sub)
+
+    logger.info(f"    Sub-páginas: {len(resultado)} ({', '.join(s['sufijo'] for s in resultado)})")
+    return resultado
+
+
+def _extraer_partido_de_texto(texto):
+    """Extrae el nombre del partido/grupo parlamentario del texto de un link."""
+    texto_lower = texto.lower()
+
+    partidos = {
+        "morena": "Morena",
+        "pan": "PAN",
+        "pri": "PRI",
+        "pvem": "PVEM",
+        "verde ecologista": "PVEM",
+        "pt": "PT",
+        "trabajo": "PT",
+        "movimiento ciudadano": "MC",
+        "mc": "MC",
+        "prd": "PRD",
+    }
+
+    for clave, nombre in partidos.items():
+        if clave in texto_lower:
+            return nombre
+
+    return ""
+
+
+# ─────────────────────────────────────────────
+# NIVEL 3: EXTRAER DOCUMENTOS DE SUB-PÁGINA
+# ─────────────────────────────────────────────
+
+def extraer_docs_de_subpagina(html, url_subpagina, tipo_doc, partido_default, fecha_str):
+    """
+    Parsea una sub-página de contenido y extrae documentos del TOC.
+
+    Estructura típica:
+      <ul>
+        <li><a href="#Iniciativa1">Que reforma... suscrita por diputado X del GP de Morena</a></li>
+        <li><a href="#Iniciativa2">Que adiciona... presentada por diputada Y del GP del PAN</a></li>
+      </ul>
+
+    Para Proposiciones:
+      <ul>
+        <li><a href="#Proposicion1">Con punto de acuerdo por el que...</a></li>
+      </ul>
     """
     soup = BeautifulSoup(html, "html.parser")
     documentos = []
-    fecha_str = fecha.strftime("%Y-%m-%d")
 
-    # Extraer fecha del título de la Gaceta si disponible
-    titulo_gaceta = soup.find("div", id="NGaceta")
-    if titulo_gaceta:
-        fecha_extraida = _extraer_fecha_de_texto(titulo_gaceta.get_text())
-        if fecha_extraida:
-            fecha_str = fecha_extraida
-
-    # Estrategia 1: Buscar párrafos numerados con contenido legislativo
-    parrafos = soup.find_all("p")
-    buffer_doc = None
-
-    for p in parrafos:
-        texto = p.get_text(strip=True)
-        if not texto or len(texto) < 20:
+    # Estrategia 1: TOC con <li><a href="#Iniciativa/Proposicion N">
+    for li in soup.find_all("li"):
+        a = li.find("a", href=True)
+        if not a:
             continue
 
-        # Detectar inicio de documento legislativo (numerado)
-        tiene_negrita = p.find("span", class_="Negritas")
-        es_inicio_numerado = tiene_negrita and re.match(r"^\d+\.\s*", texto)
+        href = a.get("href", "")
+        titulo = a.get_text(strip=True)
 
-        # Clasificar tipo
-        tipo = _clasificar_tipo(texto)
+        # Solo links internos al TOC (#IniciativaN o #ProposicionN)
+        if not href.startswith("#"):
+            continue
 
-        if es_inicio_numerado and tipo:
-            # Guardar documento previo si existe
-            if buffer_doc:
-                documentos.append(buffer_doc)
+        # Filtrar títulos muy cortos o no-legislativos
+        if not titulo or len(titulo) < 20:
+            continue
 
-            # Extraer número real del documento del texto (ej: "2." → "2")
-            num_match = re.match(r"^(\d+)\.\s*", texto)
-            numero_doc = num_match.group(1) if num_match else str(len(documentos) + 1)
+        # Extraer número del anchor (#Iniciativa3 → 3)
+        num_match = re.search(r'(\d+)$', href)
+        numero_doc = num_match.group(1) if num_match else ""
 
-            buffer_doc = {
-                "tipo": tipo,
-                "titulo": texto[:500],
-                "autor": _extraer_autor_inline(texto),
-                "comision": "",
-                "resumen": texto[:1000],
+        # Extraer autor
+        autor = _extraer_autor(titulo)
+
+        # Extraer partido
+        partido = _extraer_partido_de_titulo(titulo) or partido_default
+
+        # Extraer comisión
+        comision = _extraer_comision(titulo)
+
+        # Clasificar tipo del documento por su contenido
+        tipo_detectado = _clasificar_tipo(titulo) or tipo_doc
+
+        documentos.append({
+            "tipo": tipo_detectado,
+            "titulo": titulo[:500],
+            "autor": autor,
+            "partido": partido,
+            "comision": comision,
+            "resumen": titulo[:1000],
+            "fecha": fecha_str,
+            "numero_doc": numero_doc,
+            "url": f"{url_subpagina}{href}",
+            "url_pdf": "",
+        })
+
+    # Estrategia 2 (fallback): Buscar <h2 id="IniciativaN"> si no hay TOC
+    if not documentos:
+        for h2 in soup.find_all("h2", id=True):
+            h2_id = h2.get("id", "")
+            if not re.match(r'(Iniciativa|Proposicion|Dictamen)\d+', h2_id, re.IGNORECASE):
+                continue
+
+            titulo = h2.get_text(strip=True)
+            if not titulo or len(titulo) < 20:
+                continue
+
+            num_match = re.search(r'(\d+)$', h2_id)
+            numero_doc = num_match.group(1) if num_match else ""
+
+            autor = _extraer_autor(titulo)
+            partido = _extraer_partido_de_titulo(titulo) or partido_default
+            comision = _extraer_comision(titulo)
+            tipo_detectado = _clasificar_tipo(titulo) or tipo_doc
+
+            documentos.append({
+                "tipo": tipo_detectado,
+                "titulo": titulo[:500],
+                "autor": autor,
+                "partido": partido,
+                "comision": comision,
+                "resumen": titulo[:1000],
                 "fecha": fecha_str,
                 "numero_doc": numero_doc,
-                "url": url_gaceta,
+                "url": f"{url_subpagina}#{h2_id}",
                 "url_pdf": "",
-            }
-        elif buffer_doc:
-            # Acumular texto al documento actual (autor, comisión, etc)
-            buffer_doc["resumen"] = (buffer_doc["resumen"] + " " + texto)[:1000]
+            })
 
-            # Intentar extraer autor si no se encontró
-            if buffer_doc["autor"] == "No identificado":
-                autor = _extraer_autor_inline(texto)
-                if autor != "No identificado":
-                    buffer_doc["autor"] = autor
-
-            # Intentar extraer comisión
-            if not buffer_doc["comision"]:
-                comision = _extraer_comision_inline(texto)
-                if comision:
-                    buffer_doc["comision"] = comision
-
-            # Detectar que salimos del bloque (nuevo tipo de sección, otro numbered item sin tipo legislativo)
-            if tiene_negrita and re.match(r"^\d+\.\s*", texto) and not tipo:
-                documentos.append(buffer_doc)
-                buffer_doc = None
-
-    # Guardar último documento
-    if buffer_doc:
-        documentos.append(buffer_doc)
-
-    # Estrategia 2: Items del índice que son legislativos
-    items_indice = soup.find_all("a", class_="Indice")
-    for item in items_indice:
-        texto = item.get_text(strip=True)
-        tipo = _clasificar_tipo(texto)
-        if tipo:
-            # Verificar que no sea duplicado
-            titulo_corto = texto[:100]
-            ya_existe = any(titulo_corto in d["titulo"] for d in documentos)
-            if not ya_existe:
-                # Extraer número del documento si existe en el texto
-                idx_match = re.match(r"^(\d+)\.\s*", texto)
-                idx_num = idx_match.group(1) if idx_match else ""
-
-                # Obtener href real del índice
-                href = item.get("href", "")
-                url_doc = f"{url_gaceta}{href}" if href else url_gaceta
-
-                # Verificar si href apunta a un PDF
-                url_pdf = ""
-                if href and (".pdf" in href.lower() or "/PDF/" in href):
-                    url_pdf = url_doc
-
-                documentos.append({
-                    "tipo": tipo,
-                    "titulo": texto[:500],
-                    "autor": _extraer_autor_inline(texto),
-                    "comision": _extraer_comision_inline(texto),
-                    "resumen": texto[:1000],
-                    "fecha": fecha_str,
-                    "numero_doc": idx_num,
-                    "url": url_doc,
-                    "url_pdf": url_pdf,
-                })
-
-    # Buscar links PDF en la página para asignarlos a documentos sin url_pdf
-    for a_tag in soup.find_all("a", href=True):
-        href = a_tag["href"]
-        if ".pdf" in href.lower() or "/PDF/" in href:
-            # Normalizar URL
-            if href.startswith("/"):
-                pdf_url = f"{BASE_URL}{href}"
-            elif not href.startswith("http"):
-                pdf_url = f"{BASE_URL}/{href}"
-            else:
-                pdf_url = href
-            pdf_text = a_tag.get_text(strip=True)[:200].lower()
-
-            # Intentar emparejar con documentos sin PDF
-            for doc in documentos:
-                if doc.get("url_pdf"):
-                    continue  # Ya tiene PDF
-                doc_num = doc.get("numero_doc", "")
-                doc_titulo = doc["titulo"].lower()[:100]
-                # Match por número de documento en el texto del link
-                if doc_num and re.search(rf"\b{doc_num}\b", pdf_text):
-                    doc["url_pdf"] = pdf_url
-                    break
-                # Match por similitud de título
-                if len(doc_titulo) > 20 and doc_titulo[:40] in pdf_text:
-                    doc["url_pdf"] = pdf_url
-                    break
-
-    logger.info(f"  {fecha_str}: {len(documentos)} documentos legislativos encontrados")
     return documentos
 
+
+def extraer_docs_de_comunicaciones(html, url_pagina, fecha_str):
+    """
+    Extrae documentos legislativos del Anexo I (comunicaciones oficiales).
+    Aquí pueden aparecer iniciativas de congresos estatales y comunicaciones
+    que contienen documentos legislativos.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    documentos = []
+
+    # Buscar en el TOC links que sean legislativos
+    for li in soup.find_all("li"):
+        a = li.find("a", href=True)
+        if not a:
+            continue
+
+        href = a.get("href", "")
+        titulo = a.get_text(strip=True)
+
+        if not href.startswith("#") or not titulo or len(titulo) < 20:
+            continue
+
+        # Solo incluir si tiene contenido legislativo
+        tipo = _clasificar_tipo(titulo)
+        if not tipo:
+            continue
+
+        num_match = re.search(r'(\d+)$', href)
+        numero_doc = num_match.group(1) if num_match else ""
+
+        documentos.append({
+            "tipo": tipo,
+            "titulo": titulo[:500],
+            "autor": _extraer_autor(titulo),
+            "partido": _extraer_partido_de_titulo(titulo),
+            "comision": _extraer_comision(titulo),
+            "resumen": titulo[:1000],
+            "fecha": fecha_str,
+            "numero_doc": numero_doc,
+            "url": f"{url_pagina}{href}",
+            "url_pdf": "",
+        })
+
+    return documentos
+
+
+# ─────────────────────────────────────────────
+# FUNCIONES DE EXTRACCIÓN
+# ─────────────────────────────────────────────
 
 def _clasificar_tipo(texto):
     """Clasifica el tipo de documento por su texto."""
@@ -274,16 +499,48 @@ def _clasificar_tipo(texto):
     return None
 
 
-def _extraer_autor_inline(texto):
-    """Extrae autor de un bloque de texto inline."""
+def _extraer_autor(texto):
+    """Extrae autor de un bloque de texto."""
     match = RE_AUTOR.search(texto)
     if match:
-        return match.group(1).strip()[:200]
+        autor = match.group(1).strip()
+        # Limpiar sufijos comunes
+        autor = re.sub(r',?\s*del\s+Grupo.*$', '', autor, flags=re.IGNORECASE)
+        autor = re.sub(r',?\s*e\s+integrantes.*$', '', autor, flags=re.IGNORECASE)
+        return autor[:200]
     return "No identificado"
 
 
-def _extraer_comision_inline(texto):
-    """Extrae comisión de turno de un bloque de texto inline."""
+def _extraer_partido_de_titulo(titulo):
+    """Extrae partido del título de un documento."""
+    match = RE_PARTIDO.search(titulo)
+    if match:
+        partido_raw = match.group(1).strip()
+        # Normalizar nombres de partidos
+        normalizacion = {
+            "morena": "Morena",
+            "del pan": "PAN",
+            "pan": "PAN",
+            "acción nacional": "PAN",
+            "pri": "PRI",
+            "revolucionario institucional": "PRI",
+            "pvem": "PVEM",
+            "verde ecologista": "PVEM",
+            "pt": "PT",
+            "del trabajo": "PT",
+            "movimiento ciudadano": "MC",
+            "prd": "PRD",
+        }
+        partido_lower = partido_raw.lower()
+        for clave, nombre in normalizacion.items():
+            if clave in partido_lower:
+                return nombre
+        return partido_raw[:30]
+    return ""
+
+
+def _extraer_comision(texto):
+    """Extrae comisión de turno de un bloque de texto."""
     match = RE_COMISION.search(texto)
     if match:
         return match.group(1).strip()[:300]
@@ -298,7 +555,8 @@ def _extraer_fecha_de_texto(texto):
         "septiembre": "09", "octubre": "10", "noviembre": "11", "diciembre": "12",
     }
     match = re.search(
-        r"(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+de\s+(\d{4})",
+        r"(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|"
+        r"septiembre|octubre|noviembre|diciembre)\s+de\s+(\d{4})",
         texto, re.IGNORECASE,
     )
     if match:
@@ -309,62 +567,162 @@ def _extraer_fecha_de_texto(texto):
     return None
 
 
+# ─────────────────────────────────────────────
+# SCRAPING PRINCIPAL
+# ─────────────────────────────────────────────
+
 def scrape_gaceta_rango(dias=7):
     """
     Scrapea la Gaceta Parlamentaria para un rango de días.
-    Retorna lista de documentos encontrados.
+    Usa arquitectura de 3 niveles: página principal → índice de anexo → sub-páginas.
     """
     conn = init_db()
     todos_documentos = []
+    total_requests = 0
 
     for i in range(dias):
         fecha = datetime.now() - timedelta(days=i)
-        logger.info(f"Scrapeando Gaceta para {fecha.strftime('%Y-%m-%d')}")
+        fecha_str = fecha.strftime("%Y-%m-%d")
+        fecha_url = fecha.strftime("%Y%m%d")
 
-        html, url_gaceta = obtener_gaceta_del_dia(fecha)
-        if html is None:
+        logger.info(f"Scrapeando Gaceta para {fecha_str}")
+
+        # NIVEL 1: Descargar página principal del día
+        url_principal = construir_url_gaceta(fecha)
+        html_principal = fetch_page(url_principal)
+        total_requests += 1
+
+        if not html_principal:
+            logger.debug(f"  Gaceta no disponible para {fecha_str}")
             continue
 
-        documentos = extraer_documentos_legislativos(html, url_gaceta, fecha)
+        # Descubrir anexos disponibles
+        anexos = descubrir_anexos(html_principal, fecha_url)
 
-        for doc in documentos:
-            # Verificar si ya existe en la BD (por fecha + tipo + numero_doc)
-            numero_doc = doc.get("numero_doc", "")
-            existe = conn.execute(
-                "SELECT 1 FROM gaceta WHERE fecha = ? AND tipo = ? AND numero_doc = ?",
-                (doc["fecha"], doc["tipo"], numero_doc)
-            ).fetchone()
-            if existe:
+        for anexo in anexos:
+            # Ignorar PDFs y agendas de sesión
+            if anexo["es_pdf"] or anexo["tipo"] == "agendas":
                 continue
 
-            registro = {
-                "fecha": doc["fecha"],
-                "tipo": doc["tipo"],
-                "titulo": doc["titulo"],
-                "autor": doc["autor"],
-                "comision": doc["comision"] or "No especificada",
-                "resumen": doc["resumen"],
-                "url": doc["url"],
-                "url_pdf": doc.get("url_pdf", ""),
-                "numero_doc": numero_doc,
-                "fecha_scraping": datetime.now().isoformat(),
-            }
+            # NIVEL 2: Procesar índices de Iniciativas y Proposiciones
+            if anexo["tipo"] in ("iniciativas_index", "proposiciones_index"):
+                tipo_doc = "iniciativa" if "iniciativas" in anexo["tipo"] else "proposicion"
 
-            try:
-                conn.execute("""
-                    INSERT INTO gaceta (fecha, tipo, titulo, autor, comision, resumen, url, url_pdf, numero_doc, fecha_scraping)
-                    VALUES (:fecha, :tipo, :titulo, :autor, :comision, :resumen, :url, :url_pdf, :numero_doc, :fecha_scraping)
-                """, registro)
-                conn.commit()
-                todos_documentos.append(registro)
-                logger.info(f"    [{doc['tipo']}] #{numero_doc} {doc['titulo'][:80]}...")
-            except sqlite3.IntegrityError:
-                pass
+                html_index = fetch_page(anexo["url"])
+                total_requests += 1
+                time.sleep(0.3)
+
+                if not html_index:
+                    continue
+
+                subpaginas = descubrir_subpaginas(html_index, fecha_url, anexo["tipo"])
+
+                # NIVEL 3: Extraer documentos de cada sub-página
+                for sub in subpaginas:
+                    html_sub = fetch_page(sub["url_html"])
+                    total_requests += 1
+                    time.sleep(0.3)
+
+                    if not html_sub:
+                        continue
+
+                    docs = extraer_docs_de_subpagina(
+                        html_sub, sub["url_html"], tipo_doc,
+                        sub["partido"], fecha_str,
+                    )
+
+                    # Asignar PDF del índice a todos los docs de esta sub-página
+                    if sub.get("url_pdf"):
+                        for doc in docs:
+                            if not doc["url_pdf"]:
+                                doc["url_pdf"] = sub["url_pdf"]
+
+                    # Insertar en DB
+                    nuevos = _insertar_documentos(conn, docs)
+                    todos_documentos.extend(docs[:nuevos] if nuevos > 0 else [])
+
+            # Procesar sub-páginas directas (ej: -II-1 en la página principal)
+            elif anexo["tipo"] in ("iniciativas_subpagina", "proposiciones_subpagina"):
+                tipo_doc = "iniciativa" if "iniciativas" in anexo["tipo"] else "proposicion"
+
+                html_sub = fetch_page(anexo["url"])
+                total_requests += 1
+                time.sleep(0.3)
+
+                if not html_sub:
+                    continue
+
+                docs = extraer_docs_de_subpagina(
+                    html_sub, anexo["url"], tipo_doc, "", fecha_str,
+                )
+
+                nuevos = _insertar_documentos(conn, docs)
+                todos_documentos.extend(docs[:nuevos] if nuevos > 0 else [])
+
+            # Procesar comunicaciones (Anexo I) — pueden tener iniciativas estatales
+            elif anexo["tipo"] == "comunicaciones":
+                html_com = fetch_page(anexo["url"])
+                total_requests += 1
+                time.sleep(0.3)
+
+                if not html_com:
+                    continue
+
+                docs = extraer_docs_de_comunicaciones(html_com, anexo["url"], fecha_str)
+
+                nuevos = _insertar_documentos(conn, docs)
+                todos_documentos.extend(docs[:nuevos] if nuevos > 0 else [])
 
     conn.close()
-    logger.info(f"Total documentos nuevos: {len(todos_documentos)}")
+    logger.info(f"Scraping completo: {len(todos_documentos)} documentos nuevos ({total_requests} requests)")
     return todos_documentos
 
+
+def _insertar_documentos(conn, documentos):
+    """Inserta documentos en la BD, deduplicando por (fecha + titulo_hash)."""
+    nuevos = 0
+    for doc in documentos:
+        t_hash = _titulo_hash(doc["titulo"])
+
+        # Verificar si ya existe
+        existe = conn.execute(
+            "SELECT 1 FROM gaceta WHERE fecha = ? AND tipo = ? AND titulo LIKE ?",
+            (doc["fecha"], doc["tipo"], doc["titulo"][:100] + "%")
+        ).fetchone()
+
+        if existe:
+            continue
+
+        registro = {
+            "fecha": doc["fecha"],
+            "tipo": doc["tipo"],
+            "titulo": doc["titulo"],
+            "autor": doc.get("autor", "No identificado"),
+            "comision": doc.get("comision") or "No especificada",
+            "resumen": doc.get("resumen", doc["titulo"]),
+            "url": doc.get("url", ""),
+            "url_pdf": doc.get("url_pdf", ""),
+            "numero_doc": doc.get("numero_doc", ""),
+            "fecha_scraping": datetime.now().isoformat(),
+        }
+
+        try:
+            conn.execute("""
+                INSERT INTO gaceta (fecha, tipo, titulo, autor, comision, resumen, url, url_pdf, numero_doc, fecha_scraping)
+                VALUES (:fecha, :tipo, :titulo, :autor, :comision, :resumen, :url, :url_pdf, :numero_doc, :fecha_scraping)
+            """, registro)
+            conn.commit()
+            nuevos += 1
+            logger.info(f"    [{doc['tipo']}] {doc['titulo'][:80]}...")
+        except sqlite3.IntegrityError:
+            pass
+
+    return nuevos
+
+
+# ─────────────────────────────────────────────
+# FUNCIONES DE CONSULTA (sin cambios)
+# ─────────────────────────────────────────────
 
 def buscar_por_categoria(keyword, dias=30):
     """Busca documentos en la BD que coincidan con un keyword."""
@@ -437,11 +795,23 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     import warnings
     warnings.filterwarnings("ignore")
-    print("=== Scraper Gaceta Parlamentaria ===")
+    print("=== Scraper Gaceta Parlamentaria (v2 - 3 niveles) ===\n")
     docs = scrape_gaceta_rango(dias=3)
     print(f"\nDocumentos encontrados: {len(docs)}")
+
+    # Agrupar por tipo
+    por_tipo = {}
+    for d in docs:
+        t = d.get("tipo", "otro")
+        por_tipo[t] = por_tipo.get(t, 0) + 1
+
+    print(f"\nPor tipo:")
+    for tipo, count in sorted(por_tipo.items()):
+        print(f"  {tipo}: {count}")
+
+    print(f"\nÚltimos 10:")
     for d in docs[:10]:
         print(f"  [{d['tipo']}] {d['titulo'][:100]}")
-        print(f"    Autor: {d['autor']}")
-        print(f"    Comisión: {d['comision']}")
+        print(f"    Autor: {d.get('autor', 'N/A')}")
+        print(f"    URL: {d.get('url', 'N/A')[:80]}")
         print()
