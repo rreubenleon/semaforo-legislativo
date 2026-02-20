@@ -54,6 +54,36 @@
         const { useState, useEffect, useRef } = React;
 
         /* ================================================================
+           HELPERS
+           ================================================================ */
+
+        /**
+         * Formatea un timestamp ISO del servidor a tiempo relativo del usuario.
+         * Muestra "Hace X min/horas" si es reciente, o "Hoy, HH:MM" / "Ayer, HH:MM" / fecha completa.
+         */
+        function formatearActualizacion(isoString) {
+            if (!isoString) return '';
+            const fechaServer = new Date(isoString);
+            if (isNaN(fechaServer.getTime())) return '';
+            const ahora = new Date();
+            const diffMs = ahora - fechaServer;
+            const diffMin = Math.floor(diffMs / 60000);
+            const diffHoras = Math.floor(diffMs / 3600000);
+
+            const horaLocal = fechaServer.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
+            const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+            const ayer = new Date(hoy.getTime() - 86400000);
+            const fechaDia = new Date(fechaServer.getFullYear(), fechaServer.getMonth(), fechaServer.getDate());
+
+            if (diffMin < 1) return 'Justo ahora';
+            if (diffMin < 60) return `Hace ${diffMin} min`;
+            if (diffHoras < 6) return `Hace ${diffHoras}h (${horaLocal})`;
+            if (fechaDia.getTime() === hoy.getTime()) return `Hoy, ${horaLocal}`;
+            if (fechaDia.getTime() === ayer.getTime()) return `Ayer, ${horaLocal}`;
+            return fechaServer.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) + ', ' + horaLocal;
+        }
+
+        /* ================================================================
            SHARED COMPONENTS
            ================================================================ */
 
@@ -424,7 +454,7 @@
            DETAIL MODAL
            ================================================================ */
 
-        function DetalleModal({ data, prediccion, fuentes, seriesTemporales, autoria, onClose }) {
+        function DetalleModal({ data, prediccion, fuentes, seriesTemporales, autoria, generado, onClose }) {
             if (!data) return null;
             const colors = { verde: '#2e7d32', amarillo: '#c6972b', rojo: '#c62828' };
             const chartRef = useRef(null);
@@ -476,7 +506,7 @@
                             <div>
                                 <div className="text-3xl font-bold" style={{color: colors[data.color]}}>{data.score_total.toFixed(1)}</div>
                                 <div className="text-gray-500 text-sm uppercase tracking-wider">{data.color}</div>
-                                <div className="text-xs text-gray-400 mt-1">Actualizado: {data.fecha}</div>
+                                <div className="text-xs text-gray-400 mt-1">Actualizado: {formatearActualizacion(generado)}</div>
                             </div>
                         </div>
                         <div className="bg-gray-50/50 border border-gray-100 rounded-lg p-3">
@@ -1138,7 +1168,7 @@
                             <img src="fiat-logo.png" alt="FIAT" style={{height: '80px', width: '150px'}} />
                             <p className="text-gray-400 text-xs tracking-wide mt-1">Sistema predictivo de actividad legislativa en el Congreso de Mexico</p>
                         </div>
-                        <div className="text-xs text-gray-400">Actualizado: {new Date(data.metadata.generado).toLocaleString('es-MX')}</div>
+                        <div className="text-xs text-gray-400">Actualizado: {formatearActualizacion(data.metadata.generado)}</div>
                     </header>
 
                     {/* Navigation tabs */}
@@ -1173,7 +1203,7 @@
 
                     {/* Modal */}
                     {selected && (
-                        <DetalleModal data={selected} prediccion={predicciones[selected.categoria]} fuentes={fuentes} seriesTemporales={data.series_temporales} autoria={data.autoria?.[selected.categoria]} onClose={() => setSelected(null)} />
+                        <DetalleModal data={selected} prediccion={predicciones[selected.categoria]} fuentes={fuentes} seriesTemporales={data.series_temporales} autoria={data.autoria?.[selected.categoria]} generado={data.metadata.generado} onClose={() => setSelected(null)} />
                     )}
                 </div>
             );
