@@ -28,6 +28,7 @@ from scrapers.sil import (
     obtener_serie_temporal_sil,
     obtener_conteo_sil,
 )
+from scrapers.mananera import scrape_mananeras
 from nlp.clasificador import actualizar_categorias_en_db, obtener_distribucion_categorias
 from api.correlacion import (
     calcular_todos_los_scores,
@@ -153,6 +154,27 @@ def paso_2_scraping_gaceta(dias=7):
 
     logger.info(f"Gaceta: {len(documentos)} documentos nuevos ({duracion:.1f}s)")
     return documentos
+
+
+def paso_2b_scraping_mananera():
+    """Paso 2b: Scrapear conferencias matutinas de la Presidenta."""
+    logger.info("=" * 60)
+    logger.info("PASO 2b: Scraping de Conferencias Matutinas CSP")
+    logger.info("=" * 60)
+
+    inicio = time.time()
+    try:
+        resultado = scrape_mananeras(dias=14)
+        duracion = time.time() - inicio
+        logger.info(
+            f"Mañaneras: {resultado['conferencias']} conferencias, "
+            f"{resultado['menciones']} menciones ({duracion:.1f}s)"
+        )
+    except Exception as e:
+        logger.warning(f"Mañaneras falló (no crítico): {e}")
+        resultado = {"conferencias": 0, "menciones": 0}
+
+    return resultado
 
 
 def paso_3_scraping_trends():
@@ -297,10 +319,28 @@ def obtener_fuentes_por_categoria():
                 "interes_promedio": r["promedio"],
             })
 
+        # Menciones de CSP en conferencias matutinas
+        menciones_csp = []
+        try:
+            rows_csp = conn.execute("""
+                SELECT fecha, fragmento, url FROM mananera
+                WHERE categoria = ?
+                ORDER BY fecha DESC LIMIT 10
+            """, (cat_clave,)).fetchall()
+            for r in rows_csp:
+                menciones_csp.append({
+                    "fecha": r["fecha"],
+                    "fragmento": r["fragmento"],
+                    "url": r["url"],
+                })
+        except sqlite3.OperationalError:
+            pass  # Tabla no existe aún
+
         fuentes[cat_clave] = {
             "articulos_medios": articulos,
             "documentos_gaceta": gaceta_docs,
             "google_trends": trends_data,
+            "menciones_csp": menciones_csp,
         }
 
     conn.close()
@@ -427,6 +467,7 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     # Pasos secuenciales
     paso_1_scraping_medios()
     paso_2_scraping_gaceta(dias=dias_gaceta)
+    paso_2b_scraping_mananera()
 
     if not skip_trends:
         paso_3_scraping_trends()

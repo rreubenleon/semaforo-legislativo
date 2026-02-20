@@ -168,6 +168,24 @@
             );
         }
 
+        function FuentesMananera({ menciones }) {
+            if (!menciones || menciones.length === 0) return <div className="text-gray-400 text-sm py-3 text-center">Sin menciones de la Presidenta en este tema</div>;
+            return (
+                <div className="space-y-2 fuentes-panel max-h-56 overflow-y-auto pr-1">
+                    {menciones.map((m, i) => (
+                        <div key={i} className="bg-rose-50 rounded-lg p-3 border border-rose-200">
+                            <div className="flex items-center gap-2 mb-1.5">
+                                <span className="bg-rose-600 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded">Conferencia CSP</span>
+                                <span className="text-xs text-gray-400">{m.fecha}</span>
+                            </div>
+                            <div className="text-sm text-gray-700 leading-relaxed italic">&laquo;{m.fragmento}&raquo;</div>
+                            <a href={m.url} target="_blank" rel="noopener noreferrer" className="text-xs text-rose-600 hover:text-rose-800 hover:underline mt-1.5 inline-block">Ver conferencia completa &rarr;</a>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
         function AlertaItem({ alerta, categorias }) {
             const fecha = new Date(alerta.fecha).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
             const catData = categorias.find(c => c.categoria === alerta.categoria);
@@ -444,6 +462,7 @@
             const nMedia = catFuentes.articulos_medios?.length || 0;
             const nGaceta = catFuentes.documentos_gaceta?.length || 0;
             const nTrends = catFuentes.google_trends?.length || 0;
+            const nCSP = catFuentes.menciones_csp?.length || 0;
 
             return (
                 <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
@@ -472,13 +491,14 @@
                         </div>
                         <div>
                             <div className="flex gap-0 border-b border-gray-200 mb-3 flex-wrap">
-                                {[['media', `Medios (${nMedia})`], ['gaceta', `Gaceta (${nGaceta})`], ['trends', `Trends (${nTrends})`], ['urgencia', 'Urgencia']].map(([key, label]) => (
+                                {[['media', `Medios (${nMedia})`], ['gaceta', `Gaceta (${nGaceta})`], ['csp', `CSP (${nCSP})`], ['trends', `Trends (${nTrends})`], ['urgencia', 'Urgencia']].map(([key, label]) => (
                                     <button key={key} onClick={() => setTabActiva(key)} className={`px-3 py-2 text-sm transition-colors ${tabActiva === key ? 'tab-active' : 'tab-inactive'}`}>{label}</button>
                                 ))}
                                 {autoria?.length > 0 && <button onClick={() => setTabActiva('autoria')} className={`px-3 py-2 text-sm transition-colors ${tabActiva === 'autoria' ? 'tab-active' : 'tab-inactive'}`}>Quien presenta?</button>}
                             </div>
                             {tabActiva === 'media' && <FuentesMedia articulos={catFuentes.articulos_medios} />}
                             {tabActiva === 'gaceta' && <FuentesGaceta documentos={catFuentes.documentos_gaceta} />}
+                            {tabActiva === 'csp' && <FuentesMananera menciones={catFuentes.menciones_csp} />}
                             {tabActiva === 'trends' && <FuentesTrends trends={catFuentes.google_trends} />}
                             {tabActiva === 'autoria' && autoria?.length > 0 && (
                                 <div className="space-y-2">
