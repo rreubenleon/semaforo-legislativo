@@ -55,6 +55,17 @@ jobs:
           git config user.email "fiat-bot@users.noreply.github.com"
           git add semaforo.db dashboard/data.json
           git diff --staged --quiet || git commit -m "🔄 Actualización automática $(date -u '+%Y-%m-%d %H:%M UTC')"
+          # Pull con rebase para resolver si alguien pusheó durante el pipeline
+          git pull --rebase origin main || {
+            # Si rebase falla por conflictos en archivos generados, aceptar los nuestros
+            git checkout --theirs semaforo.db dashboard/data.json 2>/dev/null
+            git add semaforo.db dashboard/data.json 2>/dev/null
+            git rebase --continue 2>/dev/null || git rebase --abort
+            git pull --no-rebase origin main
+            git checkout --ours semaforo.db dashboard/data.json 2>/dev/null
+            git add semaforo.db dashboard/data.json 2>/dev/null
+            git commit -m "🔄 Merge automático con cambios remotos" --allow-empty
+          }
           git push
 
   # Deploy a GitHub Pages después del pipeline
