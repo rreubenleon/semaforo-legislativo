@@ -1,6 +1,6 @@
 """
 Motor de Scoring - Semáforo Legislativo
-Calcula: SCORE = (0.35 × Media) + (0.25 × Trends) + (0.30 × Congreso) + (0.10 × Urgencia)
+Calcula: SCORE = (0.30×Media) + (0.20×Trends) + (0.25×Congreso) + (0.15×Mañanera) + (0.10×Urgencia)
 Asigna color: Verde ≥70 | Amarillo 40-69 | Rojo <40
 """
 
@@ -15,6 +15,7 @@ from config import CATEGORIAS, SCORING, URGENCIA, DATABASE
 from scrapers.medios import obtener_score_media
 from scrapers.gaceta import obtener_score_congreso
 from scrapers.trends import obtener_score_trends
+from scrapers.mananera import obtener_score_mananera
 
 logger = logging.getLogger(__name__)
 
@@ -31,6 +32,7 @@ def init_db():
             score_media REAL,
             score_trends REAL,
             score_congreso REAL,
+            score_mananera REAL,
             score_urgencia REAL,
             color TEXT NOT NULL,
             fecha TEXT NOT NULL,
@@ -38,6 +40,12 @@ def init_db():
             UNIQUE(categoria, fecha)
         )
     """)
+    # Migración: agregar columna score_mananera si no existe
+    try:
+        conn.execute("ALTER TABLE scores ADD COLUMN score_mananera REAL DEFAULT 0")
+        conn.commit()
+    except sqlite3.OperationalError:
+        pass  # Columna ya existe
     conn.execute("""
         CREATE TABLE IF NOT EXISTS alertas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -179,22 +187,25 @@ def asignar_color(score):
 def calcular_score_categoria(categoria_clave):
     """
     Calcula el score completo para una categoría.
-    SCORE = (0.35 × Media) + (0.25 × Trends) + (0.30 × Congreso) + (0.10 × Urgencia)
+    SCORE = (0.30×Media) + (0.20×Trends) + (0.25×Congreso) + (0.15×Mañanera) + (0.10×Urgencia)
     """
     cat_config = CATEGORIAS[categoria_clave]
     keywords = cat_config["keywords"]
     pesos = SCORING["pesos"]
 
-    # Componente 1: Presión mediática (0.35)
+    # Componente 1: Presión mediática (0.30)
     score_media = obtener_score_media(keywords)
 
-    # Componente 2: Google Trends (0.25)
+    # Componente 2: Google Trends (0.20)
     score_trends = obtener_score_trends(categoria_clave)
 
-    # Componente 3: Actividad en Congreso (0.30)
+    # Componente 3: Actividad en Congreso (0.25)
     score_congreso = obtener_score_congreso(keywords)
 
-    # Componente 4: Urgencia basada en evidencia histórica
+    # Componente 4: Mención de la Presidenta CSP (0.15)
+    score_mananera = obtener_score_mananera(categoria_clave)
+
+    # Componente 5: Urgencia basada en evidencia histórica (0.10)
     score_urgencia = calcular_score_urgencia_historica(
         categoria_clave, score_media, score_trends
     )
@@ -204,6 +215,7 @@ def calcular_score_categoria(categoria_clave):
         pesos["media"] * score_media
         + pesos["trends"] * score_trends
         + pesos["congreso"] * score_congreso
+        + pesos["mananera"] * score_mananera
         + pesos["urgencia"] * score_urgencia
     )
 
@@ -217,6 +229,7 @@ def calcular_score_categoria(categoria_clave):
         "score_media": score_media,
         "score_trends": score_trends,
         "score_congreso": score_congreso,
+        "score_mananera": score_mananera,
         "score_urgencia": score_urgencia,
         "color": color,
         "factor_calendario": calcular_factor_urgencia(),
@@ -226,7 +239,8 @@ def calcular_score_categoria(categoria_clave):
     logger.info(
         f"[{color.upper():8s}] {cat_config['nombre']:30s} "
         f"Score: {score_total:6.2f} "
-        f"(M:{score_media:.1f} T:{score_trends:.1f} C:{score_congreso:.1f} U:{score_urgencia:.1f})"
+        f"(M:{score_media:.1f} T:{score_trends:.1f} C:{score_congreso:.1f} "
+        f"CSP:{score_mananera:.1f} U:{score_urgencia:.1f})"
     )
 
     return resultado
@@ -250,14 +264,16 @@ def calcular_todos_los_scores():
             conn.execute("""
                 INSERT INTO scores
                     (categoria, score_total, score_media, score_trends,
-                     score_congreso, score_urgencia, color, fecha, detalle)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     score_congreso, score_mananera, score_urgencia,
+                     color, fecha, detalle)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 resultado["categoria"],
                 resultado["score_total"],
                 resultado["score_media"],
                 resultado["score_trends"],
                 resultado["score_congreso"],
+                resultado["score_mananera"],
                 resultado["score_urgencia"],
                 resultado["color"],
                 resultado["fecha"],
@@ -268,13 +284,15 @@ def calcular_todos_los_scores():
             conn.execute("""
                 UPDATE scores
                 SET score_total=?, score_media=?, score_trends=?,
-                    score_congreso=?, score_urgencia=?, color=?, detalle=?
+                    score_congreso=?, score_mananera=?, score_urgencia=?,
+                    color=?, detalle=?
                 WHERE categoria=? AND fecha=?
             """, (
                 resultado["score_total"],
                 resultado["score_media"],
                 resultado["score_trends"],
                 resultado["score_congreso"],
+                resultado["score_mananera"],
                 resultado["score_urgencia"],
                 resultado["color"],
                 f"cal:{resultado['factor_calendario']}",
@@ -458,13 +476,14 @@ def generar_reporte():
         lineas.append(
             f"  {icono} {r['nombre']:30s}  {r['score_total']:6.2f}  "
             f"[M:{r['score_media']:5.1f} T:{r['score_trends']:5.1f} "
-            f"C:{r['score_congreso']:5.1f} U:{r['score_urgencia']:5.1f}]"
+            f"C:{r['score_congreso']:5.1f} CSP:{r.get('score_mananera',0):5.1f} "
+            f"U:{r['score_urgencia']:5.1f}]"
         )
 
     lineas.extend([
         "",
         "-" * 70,
-        f"  Fórmula: SCORE = (0.35×Media) + (0.25×Trends) + (0.30×Congreso) + (0.10×Urgencia)",
+        f"  Fórmula: SCORE = (0.30×Media) + (0.20×Trends) + (0.25×Congreso) + (0.15×Mañanera) + (0.10×Urgencia)",
         f"  Verde ≥70 | Amarillo 40-69 | Rojo <40",
         "=" * 70,
     ])

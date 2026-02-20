@@ -409,9 +409,10 @@ CATEGORIAS = {
 # ─────────────────────────────────────────────
 SCORING = {
     "pesos": {
-        "media": 0.35,       # Cobertura mediática
-        "trends": 0.25,      # Google Trends
-        "congreso": 0.30,    # Actividad en Gaceta Parlamentaria
+        "media": 0.30,       # Cobertura mediática
+        "trends": 0.20,      # Google Trends
+        "congreso": 0.25,    # Actividad en Gaceta Parlamentaria
+        "mananera": 0.15,    # Mención de la Presidenta en conferencia matutina
         "urgencia": 0.10,    # Factor de urgencia temporal
     },
     "umbrales": {
@@ -421,7 +422,7 @@ SCORING = {
     },
 }
 
-# SCORE = (0.35 × Media) + (0.25 × Trends) + (0.30 × Congreso) + (0.10 × Urgencia)
+# SCORE = (0.30×Media) + (0.20×Trends) + (0.25×Congreso) + (0.15×Mañanera) + (0.10×Urgencia)
 
 # ─────────────────────────────────────────────
 # CONGRESO - Gaceta Parlamentaria

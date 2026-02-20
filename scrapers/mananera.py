@@ -402,6 +402,68 @@ def _extraer_fragmento(bloque, keywords):
 
 
 # ─────────────────────────────────────────────
+# SCORING: señal mañanera para fórmula FIAT
+# ─────────────────────────────────────────────
+
+def obtener_score_mananera(categoria_clave, dias=14):
+    """
+    Calcula un score 0-100 que mide la intensidad con la que
+    la Presidenta ha hablado de este tema en sus conferencias.
+
+    Lógica:
+    - Cada mención en los últimos 14 días suma puntos.
+    - Menciones más recientes pesan más (decay exponencial).
+    - 1 mención reciente ≈ 40 pts, 3+ menciones ≈ 80-100 pts.
+    - Sin menciones → 0 (la Presidenta no ha tocado el tema).
+
+    Esto funciona como señal predictiva: cuando CSP habla de un
+    tema, es muy probable que el Congreso actúe en días/semanas.
+    """
+    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
+    try:
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+
+        rows = conn.execute("""
+            SELECT fecha, fragmento FROM mananera
+            WHERE categoria = ?
+            AND fecha >= date('now', ? || ' days')
+            ORDER BY fecha DESC
+        """, (categoria_clave, f"-{dias}")).fetchall()
+
+        conn.close()
+    except sqlite3.OperationalError:
+        return 0.0  # Tabla no existe aún
+
+    if not rows:
+        return 0.0
+
+    # Scoring con decay por antigüedad
+    hoy = datetime.now()
+    score = 0.0
+
+    for row in rows:
+        try:
+            fecha_mencion = datetime.strptime(row["fecha"], "%Y-%m-%d")
+        except (ValueError, TypeError):
+            continue
+
+        dias_atras = (hoy - fecha_mencion).days
+
+        # Decay exponencial: mención de hoy = 1.0, de hace 7 días = 0.5, de hace 14 = 0.25
+        peso_temporal = 2.0 ** (-dias_atras / 7.0)
+
+        # Bonus por longitud del fragmento (mención sustantiva vs mención tangencial)
+        frag_len = len(row["fragmento"]) if row["fragmento"] else 0
+        peso_sustancia = min(frag_len / 300.0, 1.0)  # Fragmentos >300 chars = peso completo
+
+        score += 35.0 * peso_temporal * peso_sustancia
+
+    # Tope en 100
+    return min(round(score, 2), 100.0)
+
+
+# ─────────────────────────────────────────────
 # ORQUESTADOR PRINCIPAL
 # ─────────────────────────────────────────────
 

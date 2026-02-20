@@ -131,10 +131,11 @@
                         </div>
                         <ScoreRing score={data.score_total} color={data.color} size={56} />
                     </div>
-                    <div className="grid grid-cols-4 gap-1 text-xs text-gray-500">
+                    <div className="grid grid-cols-5 gap-1 text-xs text-gray-500">
                         <div className="text-center"><div className="text-gray-700 font-medium">{data.score_media.toFixed(0)}%</div><div>Media</div></div>
                         <div className="text-center"><div className="text-gray-700 font-medium">{data.score_trends.toFixed(0)}%</div><div>Trends</div></div>
                         <div className="text-center"><div className="text-gray-700 font-medium">{data.score_congreso.toFixed(0)}%</div><div>Congreso</div></div>
+                        <div className="text-center"><div className="text-rose-600 font-medium">{(data.score_mananera || 0).toFixed(0)}%</div><div>CSP</div></div>
                         <div className="text-center"><div className="text-gray-700 font-medium">{data.score_urgencia.toFixed(0)}%</div><div>Urgencia</div></div>
                     </div>
                 </div>
@@ -513,10 +514,11 @@
                             <div className="text-[10px] text-gray-400 mb-2 uppercase tracking-wider font-medium">Actividad legislativa - SIL</div>
                             <div style={{height: '180px'}}><canvas ref={chartRef}></canvas></div>
                         </div>
-                        <div className="grid grid-cols-4 gap-2 text-xs">
+                        <div className="grid grid-cols-5 gap-2 text-xs">
                             <div className="bg-acento/5 border border-acento/10 rounded-lg p-2 text-center"><div className="font-bold text-acento">{data.score_media.toFixed(0)}%</div><div className="text-gray-500">Media</div></div>
                             <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 text-center"><div className="font-bold text-gray-700">{data.score_trends.toFixed(0)}%</div><div className="text-gray-500">Trends</div></div>
                             <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-center"><div className="font-bold text-amber-800">{data.score_congreso.toFixed(0)}%</div><div className="text-gray-500">Congreso</div></div>
+                            <div className="bg-rose-50 border border-rose-200 rounded-lg p-2 text-center"><div className="font-bold text-rose-600">{(data.score_mananera || 0).toFixed(0)}%</div><div className="text-gray-500">CSP</div></div>
                             <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 text-center"><div className="font-bold text-purple-800">{data.score_urgencia.toFixed(0)}%</div><div className="text-gray-500">Urgencia</div></div>
                         </div>
                         <div>
@@ -1070,7 +1072,7 @@
                         <div>
                             <h3 className="font-semibold text-gray-700 mb-2">Formula del score compuesto</h3>
                             <code className="block bg-gray-50 p-3 rounded-lg text-acento border border-gray-100 text-sm">
-                                SCORE = (0.35 x Media) + (0.25 x Trends) + (0.30 x Congreso) + (0.10 x Urgencia)
+                                SCORE = (0.30 x Media) + (0.20 x Trends) + (0.25 x Congreso) + (0.15 x CSP) + (0.10 x Urgencia)
                             </code>
                         </div>
 
@@ -1078,16 +1080,20 @@
                             <h3 className="font-semibold text-gray-700">Componentes</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div className="bg-acento/5 border border-acento/10 rounded-lg p-3">
-                                    <div className="font-semibold text-acento text-sm mb-1">Media (35%)</div>
+                                    <div className="font-semibold text-acento text-sm mb-1">Media (30%)</div>
                                     <div className="text-xs text-gray-600">Articulos de 18 medios nacionales e internacionales (Animal Politico, El Universal, La Jornada, Milenio, Politico.mx, La Politica Online, Bloomberg Linea, etc.) recopilados via RSS y scraping HTML directo.</div>
                                 </div>
                                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                                    <div className="font-semibold text-gray-700 text-sm mb-1">Trends (25%)</div>
+                                    <div className="font-semibold text-gray-700 text-sm mb-1">Trends (20%)</div>
                                     <div className="text-xs text-gray-600">Interes de busqueda en Google para Mexico. Mide la atencion publica real sobre cada tema en tiempo real.</div>
                                 </div>
                                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-                                    <div className="font-semibold text-amber-800 text-sm mb-1">Congreso (30%)</div>
+                                    <div className="font-semibold text-amber-800 text-sm mb-1">Congreso (25%)</div>
                                     <div className="text-xs text-gray-600">Iniciativas, puntos de acuerdo y dictamenes del SIL (Sistema de Informacion Legislativa) y Gaceta Parlamentaria de la Camara de Diputados.</div>
+                                </div>
+                                <div className="bg-rose-50 border border-rose-200 rounded-lg p-3">
+                                    <div className="font-semibold text-rose-600 text-sm mb-1">Mencion CSP (15%)</div>
+                                    <div className="text-xs text-gray-600">Menciones de la Presidenta Claudia Sheinbaum en sus conferencias matutinas. Cuando la Presidenta habla de un tema, es una senal directa de intencion politica que frecuentemente precede actividad legislativa. Ventana de 14 dias con mayor peso a menciones recientes.</div>
                                 </div>
                                 <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
                                     <div className="font-semibold text-purple-800 text-sm mb-1">Urgencia (10%)</div>

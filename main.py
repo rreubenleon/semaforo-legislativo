@@ -413,7 +413,7 @@ def paso_7_exportar_dashboard():
         "metadata": {
             "generado": datetime.now().isoformat(),
             "version": "3.0",
-            "formula": "SCORE = (0.35*Media) + (0.25*Trends) + (0.30*Congreso) + (0.10*Urgencia)",
+            "formula": "SCORE = (0.30*Media) + (0.20*Trends) + (0.25*Congreso) + (0.15*Mañanera) + (0.10*Urgencia)",
             "umbrales": SCORING["umbrales"],
             "sil_docs": sil_stats.get("total", 0),
         },
@@ -441,6 +441,7 @@ def paso_7_exportar_dashboard():
             "score_media": score.get("score_media", 0),
             "score_trends": score.get("score_trends", 0),
             "score_congreso": score.get("score_congreso", 0),
+            "score_mananera": score.get("score_mananera", 0),
             "score_urgencia": score.get("score_urgencia", 0),
             "color": score.get("color", "rojo"),
             "fecha": score.get("fecha", ""),
