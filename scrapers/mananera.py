@@ -100,12 +100,14 @@ RE_OTHER_SPEAKER = re.compile(
     re.IGNORECASE,
 )
 
-# Meses en español para parsear fechas de URLs
+# Meses en español: nombre → número (para parsear URLs)
 MESES_ES = {
     "enero": 1, "febrero": 2, "marzo": 3, "abril": 4,
     "mayo": 5, "junio": 6, "julio": 7, "agosto": 8,
     "septiembre": 9, "octubre": 10, "noviembre": 11, "diciembre": 12,
 }
+# Diccionario inverso: número → nombre (para construir URLs)
+NUM_A_MES = {v: k for k, v in MESES_ES.items()}
 
 
 # ─────────────────────────────────────────────
@@ -154,7 +156,7 @@ def descubrir_conferencias(dias=14):
         if fecha.weekday() in (5, 6):
             continue
 
-        mes_str = MESES_ES.get(fecha.month, "enero")
+        mes_str = NUM_A_MES.get(fecha.month, "enero")
         url = CONF_URL_TEMPLATE.format(
             dia=fecha.day,
             mes=mes_str,
