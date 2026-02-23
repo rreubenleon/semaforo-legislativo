@@ -413,7 +413,7 @@ def obtener_score_mananera(categoria_clave, dias=14):
     Lógica:
     - Cada mención en los últimos 14 días suma puntos.
     - Menciones más recientes pesan más (decay exponencial).
-    - 1 mención reciente ≈ 40 pts, 3+ menciones ≈ 80-100 pts.
+    - 1 mención reciente ≈ 10 pts, 5+ menciones recientes ≈ 40-60 pts.
     - Sin menciones → 0 (la Presidenta no ha tocado el tema).
 
     Esto funciona como señal predictiva: cuando CSP habla de un
@@ -457,7 +457,7 @@ def obtener_score_mananera(categoria_clave, dias=14):
         frag_len = len(row["fragmento"]) if row["fragmento"] else 0
         peso_sustancia = min(frag_len / 300.0, 1.0)  # Fragmentos >300 chars = peso completo
 
-        score += 35.0 * peso_temporal * peso_sustancia
+        score += 12.0 * peso_temporal * peso_sustancia
 
     # Tope en 100
     return min(round(score, 2), 100.0)

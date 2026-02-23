@@ -9,12 +9,12 @@ Sistema predictivo: evento mediático → presión sostenida → iniciativa legi
 MEDIOS = {
     "animal_politico": {
         "nombre": "Animal Político",
-        "rss": "https://www.animalpolitico.com/feed/",
+        "rss": "",  # RSS eliminado por el medio; cubierto por medios_html.py
         "peso": 1.2,  # Mayor peso por enfoque político
     },
     "el_universal": {
         "nombre": "El Universal",
-        "rss": "https://www.eluniversal.com.mx/rss.xml",
+        "rss": "https://www.eluniversal.com.mx/arc/outboundfeeds/rss/?outputType=xml",
         "peso": 1.1,
     },
     "el_economista": {
@@ -29,27 +29,27 @@ MEDIOS = {
     },
     "milenio": {
         "nombre": "Milenio",
-        "rss": "https://www.milenio.com/rss",
+        "rss": "",  # RSS eliminado por el medio; cubierto por medios_html.py
         "peso": 1.0,
     },
     "proceso": {
         "nombre": "Proceso",
-        "rss": "https://www.proceso.com.mx/feed/",
+        "rss": "",  # RSS eliminado por el medio; cubierto por medios_html.py
         "peso": 1.2,
     },
     "excelsior": {
         "nombre": "Excélsior",
-        "rss": "https://www.excelsior.com.mx/rss.xml",
+        "rss": "",  # RSS eliminado por el medio; cubierto por medios_html.py
         "peso": 1.0,
     },
     "la_razon": {
         "nombre": "La Razón",
-        "rss": "https://www.razon.com.mx/feed/",
+        "rss": "https://www.razon.com.mx/arc/outboundfeeds/rss/?outputType=xml",
         "peso": 0.9,
     },
     "el_heraldo": {
         "nombre": "El Heraldo",
-        "rss": "https://heraldodemexico.com.mx/feed/",
+        "rss": "",  # RSS eliminado por el medio; cubierto por medios_html.py
         "peso": 0.8,
     },
     "24_horas": {
@@ -59,12 +59,12 @@ MEDIOS = {
     },
     "cronica": {
         "nombre": "Crónica",
-        "rss": "https://www.cronica.com.mx/feed",
+        "rss": "https://www.cronica.com.mx/arc/outboundfeeds/rss/?outputType=xml",
         "peso": 0.8,
     },
     "sol_de_mexico": {
         "nombre": "El Sol de México",
-        "rss": "https://www.elsoldemexico.com.mx/rss.xml",
+        "rss": "",  # RSS eliminado por el medio; cubierto por medios_html.py
         "peso": 0.8,
     },
     "nyt": {
@@ -79,17 +79,17 @@ MEDIOS = {
     },
     "bloomberg_linea": {
         "nombre": "Bloomberg Línea",
-        "rss": "",
+        "rss": "https://www.bloomberglinea.com/arc/outboundfeeds/rss/?outputType=xml",
         "peso": 1.3,  # Peso alto: cobertura financiera/política de calidad
     },
     "el_financiero": {
         "nombre": "El Financiero",
-        "rss": "",
+        "rss": "https://www.elfinanciero.com.mx/arc/outboundfeeds/rss/?outputType=xml",
         "peso": 1.2,  # Peso alto: cobertura política/económica de referencia
     },
     "politico_mx": {
         "nombre": "Político.mx",
-        "rss": "",
+        "rss": "https://www.politico.mx/arc/outboundfeeds/rss/?outputType=xml",
         "peso": 1.3,  # Peso alto: medio especializado en política mexicana
     },
     "la_politica_online": {
