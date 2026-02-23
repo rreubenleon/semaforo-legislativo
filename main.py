@@ -29,6 +29,7 @@ from scrapers.sil import (
     obtener_conteo_sil,
 )
 from scrapers.mananera import scrape_mananeras
+from scrapers.sintesis_legislativa import scrape_sintesis_legislativa
 from nlp.clasificador import actualizar_categorias_en_db, obtener_distribucion_categorias
 from api.correlacion import (
     calcular_todos_los_scores,
@@ -173,6 +174,27 @@ def paso_2b_scraping_mananera():
     except Exception as e:
         logger.warning(f"Mañaneras falló (no crítico): {e}")
         resultado = {"conferencias": 0, "menciones": 0}
+
+    return resultado
+
+
+def paso_2c_scraping_sintesis():
+    """Paso 2c: Descargar y clasificar síntesis legislativa diaria."""
+    logger.info("=" * 60)
+    logger.info("PASO 2c: Síntesis Legislativa (Cámara de Diputados)")
+    logger.info("=" * 60)
+
+    inicio = time.time()
+    try:
+        resultado = scrape_sintesis_legislativa()
+        duracion = time.time() - inicio
+        logger.info(
+            f"Síntesis: {resultado['fuentes_procesadas']} fuentes, "
+            f"{resultado['categorias_detectadas']} categorías ({duracion:.1f}s)"
+        )
+    except Exception as e:
+        logger.warning(f"Síntesis legislativa falló (no crítico): {e}")
+        resultado = {"fuentes_procesadas": 0, "categorias_detectadas": 0}
 
     return resultado
 
@@ -469,6 +491,7 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     paso_1_scraping_medios()
     paso_2_scraping_gaceta(dias=dias_gaceta)
     paso_2b_scraping_mananera()
+    paso_2c_scraping_sintesis()
 
     if not skip_trends:
         paso_3_scraping_trends()

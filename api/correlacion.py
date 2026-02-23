@@ -16,6 +16,7 @@ from scrapers.medios import obtener_score_media
 from scrapers.gaceta import obtener_score_congreso
 from scrapers.trends import obtener_score_trends
 from scrapers.mananera import obtener_score_mananera
+from scrapers.sintesis_legislativa import obtener_boost_sintesis
 
 logger = logging.getLogger(__name__)
 
@@ -200,7 +201,9 @@ def calcular_score_categoria(categoria_clave):
     score_trends = obtener_score_trends(categoria_clave)
 
     # Componente 3: Actividad en Congreso (0.25)
+    # Base: Gaceta Parlamentaria + boost de síntesis legislativa diaria
     score_congreso = obtener_score_congreso(keywords)
+    score_congreso = min(score_congreso + obtener_boost_sintesis(categoria_clave), 100.0)
 
     # Componente 4: Mención de la Presidenta CSP (0.15)
     score_mananera = obtener_score_mananera(categoria_clave)

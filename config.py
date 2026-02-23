@@ -594,7 +594,8 @@ DATABASE = {
         "scores",           # Scores calculados por categoría
         "alertas",          # Historial de alertas
         "correlaciones",    # Resultados de análisis temporal
-        "mananera",         # Menciones de CSP en conferencias matutinas
+        "mananera",              # Menciones de CSP en conferencias matutinas
+        "sintesis_legislativa",  # Síntesis diaria de Cámara de Diputados
     ],
 }
 
