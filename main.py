@@ -31,6 +31,7 @@ from scrapers.sil import (
 )
 from scrapers.mananera import scrape_mananeras
 from scrapers.sintesis_legislativa import scrape_sintesis_legislativa
+from scrapers.twitter import scrape_twitter
 from nlp.clasificador import actualizar_categorias_en_db, obtener_distribucion_categorias
 from api.correlacion import (
     calcular_todos_los_scores,
@@ -200,6 +201,27 @@ def paso_2c_scraping_sintesis():
     return resultado
 
 
+def paso_2d_scraping_twitter():
+    """Paso 2d: Scrapear tweets de periodistas y coordinadores parlamentarios."""
+    logger.info("=" * 60)
+    logger.info("PASO 2d: Scraping de Twitter/X (20 cuentas)")
+    logger.info("=" * 60)
+
+    inicio = time.time()
+    try:
+        resultado = scrape_twitter(max_por_cuenta=10)
+        duracion = time.time() - inicio
+        logger.info(
+            f"Twitter: {resultado['cuentas']} cuentas, "
+            f"{resultado['tweets_nuevos']} tweets nuevos ({duracion:.1f}s)"
+        )
+    except Exception as e:
+        logger.warning(f"Twitter falló (no crítico): {e}")
+        resultado = {"cuentas": 0, "tweets_nuevos": 0}
+
+    return resultado
+
+
 def paso_3_scraping_trends():
     """Paso 3: Consultar Google Trends para las 12 categorías."""
     logger.info("=" * 60)
@@ -359,11 +381,30 @@ def obtener_fuentes_por_categoria():
         except sqlite3.OperationalError:
             pass  # Tabla no existe aún
 
+        # Tweets relevantes de periodistas y coordinadores
+        tweets_relevantes = []
+        try:
+            rows_tw = conn.execute("""
+                SELECT usuario, nombre, texto, fecha FROM tweets
+                WHERE categorias LIKE ?
+                ORDER BY fecha DESC LIMIT 10
+            """, (f"%{cat_clave}%",)).fetchall()
+            for r in rows_tw:
+                tweets_relevantes.append({
+                    "usuario": r["usuario"],
+                    "nombre": r["nombre"],
+                    "texto": r["texto"][:280],
+                    "fecha": r["fecha"][:10] if r["fecha"] else "",
+                })
+        except sqlite3.OperationalError:
+            pass  # Tabla no existe aún
+
         fuentes[cat_clave] = {
             "articulos_medios": articulos,
             "documentos_gaceta": gaceta_docs,
             "google_trends": trends_data,
             "menciones_csp": menciones_csp,
+            "tweets": tweets_relevantes,
         }
 
     conn.close()
@@ -493,6 +534,7 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     paso_2_scraping_gaceta(dias=dias_gaceta)
     paso_2b_scraping_mananera()
     paso_2c_scraping_sintesis()
+    paso_2d_scraping_twitter()
 
     if not skip_trends:
         paso_3_scraping_trends()

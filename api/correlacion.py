@@ -17,6 +17,7 @@ from scrapers.gaceta import obtener_score_congreso
 from scrapers.trends import obtener_score_trends
 from scrapers.mananera import obtener_score_mananera
 from scrapers.sintesis_legislativa import obtener_boost_sintesis
+from scrapers.twitter import obtener_boost_twitter
 
 logger = logging.getLogger(__name__)
 
@@ -195,7 +196,9 @@ def calcular_score_categoria(categoria_clave):
     pesos = SCORING["pesos"]
 
     # Componente 1: Presión mediática (0.30)
+    # Base: RSS/HTML + boost de Twitter (periodistas y coordinadores)
     score_media = obtener_score_media(keywords)
+    score_media = min(score_media + obtener_boost_twitter(categoria_clave), 100.0)
 
     # Componente 2: Google Trends (0.20)
     score_trends = obtener_score_trends(categoria_clave)

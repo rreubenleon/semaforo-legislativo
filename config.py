@@ -204,8 +204,12 @@ TWITTER_ACCOUNTS = [
     },
 ]
 
-# Nota: Twitter/X requiere API v2 con Bearer Token
-TWITTER_BEARER_TOKEN = ""  # Configurar vía variable de entorno
+# Twitter/X API v2 — Bearer Token (PPU plan)
+import os
+TWITTER_BEARER_TOKEN = os.environ.get(
+    "TWITTER_BEARER_TOKEN",
+    "AAAAAAAAAAAAAAAAAAAAAFtE7wEAAAAAFJYjhootmF922JDbuebwMdpiGz8=lD9rhkUP4z6ni4rvVwc79hZlMOIKyJb1lhV4fHsknT39ncBloc"
+)
 
 # ─────────────────────────────────────────────
 # 12 CATEGORÍAS LEGISLATIVAS (basadas en comisiones)
@@ -596,6 +600,7 @@ DATABASE = {
         "correlaciones",    # Resultados de análisis temporal
         "mananera",              # Menciones de CSP en conferencias matutinas
         "sintesis_legislativa",  # Síntesis diaria de Cámara de Diputados
+        "tweets",                # Tweets de periodistas y coordinadores parlamentarios
     ],
 }
 
