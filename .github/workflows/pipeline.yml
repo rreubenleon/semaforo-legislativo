@@ -46,6 +46,8 @@ jobs:
       # 5. Ejecutar el pipeline completo (sin Trends para evitar rate limits)
       - name: Ejecutar pipeline
         run: python main.py --skip-trends
+        env:
+          TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
         continue-on-error: false
 
       # 6. Commit y push de datos actualizados (DB + JSON)
