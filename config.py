@@ -110,8 +110,8 @@ TWITTER_ACCOUNTS = [
         "peso": 1.2,
     },
     {
-        "handle": "@saborit",
-        "nombre": "Sara Pantoja (placeholder - verificar @saquribe)",
+        "handle": "@SaraPantoja",
+        "nombre": "Sara Pantoja",
         "medio": "Proceso",
         "peso": 1.1,
     },
@@ -167,7 +167,7 @@ TWITTER_ACCOUNTS = [
     },
     # Senado
     {
-        "handle": "@NachoMierVelazco",
+        "handle": "@NachoMierV",
         "nombre": "Ignacio Mier Velazco",
         "medio": "Coord. Morena – Senado",
         "peso": 1.5,
@@ -185,7 +185,7 @@ TWITTER_ACCOUNTS = [
         "peso": 1.4,
     },
     {
-        "handle": "@AnayaAlbertoG",
+        "handle": "@AlbertoAnayaG",
         "nombre": "Alberto Anaya Gutiérrez",
         "medio": "Coord. PT – Senado",
         "peso": 1.3,
