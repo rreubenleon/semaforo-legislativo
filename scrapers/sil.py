@@ -41,8 +41,6 @@ PARTIDOS_MEXICO = {
     "PT":     {"nombre": "PT", "color": "#CC0000"},
     "MC":     {"nombre": "Movimiento Ciudadano", "color": "#FF6600"},
     "PRD":    {"nombre": "PRD", "color": "#FFD700"},
-    "NA":     {"nombre": "Nueva Alianza", "color": "#00B4AA"},
-    "SIN PARTIDO": {"nombre": "Sin Partido", "color": "#999999"},
 }
 
 # Claves válidas de partidos (para normalización)
