@@ -553,15 +553,15 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     logger.info("=" * 60)
     try:
         inicio_sil = time.time()
-        sil_result = scrape_sil_completo(fecha_desde="2024-09-01", detalle_max=50)
+        sil_result = scrape_sil_completo(fecha_desde="2024-09-01", detalle_max=30)
         dur_sil = time.time() - inicio_sil
         logger.info(f"SIL: {sil_result['nuevos']} nuevos ({dur_sil:.1f}s)")
     except Exception as e:
         logger.warning(f"SIL falló (no crítico): {e}")
 
-    # Paso 3c: Enriquecer fechas faltantes del SIL (lote de 500)
+    # Paso 3c: Enriquecer fechas faltantes del SIL (lote de 150)
     try:
-        enr = enriquecer_fechas_sil(limite=500)
+        enr = enriquecer_fechas_sil(limite=150)
         if enr["enriquecidos"] > 0:
             logger.info(f"SIL enriquecimiento: {enr['enriquecidos']}/{enr['procesados']} fechas completadas")
     except Exception as e:

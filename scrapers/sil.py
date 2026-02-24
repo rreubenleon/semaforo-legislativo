@@ -401,7 +401,7 @@ def scrape_sil_completo(fecha_desde="2025-09-01", detalle_max=200):
                 key = (r["seguimiento_id"], r["asunto_id"])
                 if key not in todos_ids:
                     todos_ids[key] = r
-            time.sleep(2)  # respetar servidor
+            time.sleep(1.5)  # respetar servidor
 
     logger.info(f"SIL Fase 1: {len(todos_ids)} documentos únicos recolectados")
 
@@ -744,6 +744,7 @@ def normalizar_partidos_existentes():
     También puebla presentador y tipo_presentador si están vacíos.
     Solo trabaja con datos locales, NO hace HTTP.
     """
+    init_db()  # Asegurar columnas presentador/tipo_presentador existen
     db_path = ROOT / DATABASE["archivo"]
     conn = sqlite3.connect(str(db_path))
 
@@ -756,7 +757,15 @@ def normalizar_partidos_existentes():
     actualizados = 0
     for doc_id, partido_actual, presentador_actual in rows:
         if partido_actual in PARTIDOS_VALIDOS:
-            continue  # Ya está normalizado
+            # Partido ya es válido, solo asegurar tipo_presentador esté seteado
+            if not presentador_actual:
+                conn.execute("""
+                    UPDATE sil_documentos
+                    SET tipo_presentador = COALESCE(NULLIF(tipo_presentador, ''), 'legislador')
+                    WHERE id = ?
+                """, (doc_id,))
+                actualizados += 1
+            continue
 
         # El partido_actual podría ser el presentador raw (era el viejo comportamiento)
         texto_para_normalizar = presentador_actual or partido_actual
