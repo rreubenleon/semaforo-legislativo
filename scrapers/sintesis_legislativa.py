@@ -20,16 +20,24 @@ logger = logging.getLogger(__name__)
 # ─────────────────────────────────────────────
 # Fuentes de síntesis
 # ─────────────────────────────────────────────
+def _url_senado_hoy():
+    """Genera la URL de la síntesis del Senado para la fecha actual."""
+    hoy = datetime.now()
+    return (
+        f"https://comunicacionsocial.senado.gob.mx/sintesis/book/"
+        f"{hoy.year}/{hoy.month:02d}/{hoy.day:02d}/SINTESIS/RESUMENEJECUTIVO.pdf"
+    )
+
+
 SINTESIS_FUENTES = {
     "diputados": {
         "nombre": "Cámara de Diputados",
         "url": "https://comunicacion.diputados.gob.mx/sintesis/notas/whats/resumenejecutivo.pdf",
     },
-    # Senado tiene WAF (Incapsula) — se intenta pero no se falla si no responde
-    # "senado": {
-    #     "nombre": "Senado de la República",
-    #     "url": "https://comunicacionsocial.senado.gob.mx/...",
-    # },
+    "senado": {
+        "nombre": "Senado de la República",
+        "url_fn": _url_senado_hoy,  # URL dinámica por fecha
+    },
 }
 
 # ─────────────────────────────────────────────
@@ -267,7 +275,11 @@ def scrape_sintesis_legislativa():
     resultado = {"fuentes_procesadas": 0, "categorias_detectadas": 0}
 
     for fuente_key, fuente_config in SINTESIS_FUENTES.items():
-        url = fuente_config["url"]
+        # URL estática o dinámica (Senado usa fecha del día)
+        if "url_fn" in fuente_config:
+            url = fuente_config["url_fn"]()
+        else:
+            url = fuente_config["url"]
         nombre = fuente_config["nombre"]
         logger.info(f"Descargando síntesis: {nombre}")
 

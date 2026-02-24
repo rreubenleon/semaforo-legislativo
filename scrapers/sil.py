@@ -525,6 +525,88 @@ def obtener_conteo_sil():
     return {"total": total, "con_partido": con_partido, "con_fecha": con_fecha}
 
 
+def enriquecer_fechas_sil(limite=200):
+    """
+    Busca documentos SIL sin fecha_presentacion y consulta el detalle
+    para obtenerla. Útil para completar los ~5000 'Asuntos' sin fecha.
+
+    Corre en lotes pequeños para no saturar el SIL.
+    Solo funciona si sil.gobernacion.gob.mx responde (puede fallar por SSL).
+    """
+    db_path = ROOT / DATABASE["archivo"]
+    conn = sqlite3.connect(str(db_path))
+
+    # Obtener docs sin fecha
+    rows = conn.execute("""
+        SELECT id, seguimiento_id, asunto_id, titulo FROM sil_documentos
+        WHERE (fecha_presentacion = '' OR fecha_presentacion IS NULL)
+        LIMIT ?
+    """, (limite,)).fetchall()
+
+    if not rows:
+        logger.info("SIL enriquecimiento: todos los documentos ya tienen fecha")
+        conn.close()
+        return {"procesados": 0, "enriquecidos": 0, "fallidos": 0}
+
+    logger.info(f"SIL enriquecimiento: procesando {len(rows)} documentos sin fecha")
+
+    enriquecidos = 0
+    fallidos = 0
+
+    for row in rows:
+        doc_id, seg_id, asu_id, titulo = row
+
+        try:
+            detalle = _obtener_detalle(seg_id, asu_id)
+        except Exception:
+            detalle = None
+
+        if detalle and detalle.get("fecha_presentacion"):
+            conn.execute("""
+                UPDATE sil_documentos
+                SET fecha_presentacion = ?,
+                    legislatura = COALESCE(NULLIF(legislatura, ''), ?),
+                    periodo = COALESCE(NULLIF(periodo, ''), ?),
+                    partido = COALESCE(NULLIF(partido, ''), ?),
+                    comision = COALESCE(NULLIF(comision, ''), ?),
+                    estatus = COALESCE(NULLIF(estatus, ''), ?)
+                WHERE id = ?
+            """, (
+                detalle["fecha_presentacion"],
+                detalle.get("legislatura", ""),
+                detalle.get("periodo", ""),
+                detalle.get("partido", ""),
+                detalle.get("comision", ""),
+                detalle.get("estatus", ""),
+                doc_id,
+            ))
+            enriquecidos += 1
+        else:
+            fallidos += 1
+
+        time.sleep(0.5)
+
+        # Commit cada 50
+        if (enriquecidos + fallidos) % 50 == 0:
+            conn.commit()
+            logger.info(
+                f"SIL enriquecimiento: {enriquecidos} enriquecidos, "
+                f"{fallidos} sin fecha de {enriquecidos + fallidos}"
+            )
+
+    conn.commit()
+    conn.close()
+
+    logger.info(
+        f"SIL enriquecimiento completado: {enriquecidos}/{len(rows)} enriquecidos"
+    )
+    return {
+        "procesados": len(rows),
+        "enriquecidos": enriquecidos,
+        "fallidos": fallidos,
+    }
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 

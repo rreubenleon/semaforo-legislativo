@@ -27,6 +27,7 @@ from scrapers.sil import (
     obtener_stats_por_partido,
     obtener_serie_temporal_sil,
     obtener_conteo_sil,
+    enriquecer_fechas_sil,
 )
 from scrapers.mananera import scrape_mananeras
 from scrapers.sintesis_legislativa import scrape_sintesis_legislativa
@@ -181,7 +182,7 @@ def paso_2b_scraping_mananera():
 def paso_2c_scraping_sintesis():
     """Paso 2c: Descargar y clasificar síntesis legislativa diaria."""
     logger.info("=" * 60)
-    logger.info("PASO 2c: Síntesis Legislativa (Cámara de Diputados)")
+    logger.info("PASO 2c: Síntesis Legislativa (Diputados + Senado)")
     logger.info("=" * 60)
 
     inicio = time.time()
@@ -509,6 +510,14 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
         logger.info(f"SIL: {sil_result['nuevos']} nuevos ({dur_sil:.1f}s)")
     except Exception as e:
         logger.warning(f"SIL falló (no crítico): {e}")
+
+    # Paso 3c: Enriquecer fechas faltantes del SIL (lote de 100)
+    try:
+        enr = enriquecer_fechas_sil(limite=100)
+        if enr["enriquecidos"] > 0:
+            logger.info(f"SIL enriquecimiento: {enr['enriquecidos']}/{enr['procesados']} fechas completadas")
+    except Exception as e:
+        logger.warning(f"SIL enriquecimiento falló (no crítico): {e}")
 
     paso_4_clasificacion_nlp()
     scores = paso_5_scoring()

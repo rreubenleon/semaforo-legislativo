@@ -21,7 +21,7 @@ if hasattr(ssl, "_create_unverified_context"):
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import MEDIOS, DATABASE
+from config import MEDIOS, DATABASE, CATEGORIAS
 
 logger = logging.getLogger(__name__)
 
@@ -249,38 +249,68 @@ def contar_menciones_por_fecha(keyword, dias=30):
 def obtener_score_media(categoria_keywords, dias=7):
     """
     Calcula score 0-100 de presión mediática para una categoría.
-    Considera: volumen de notas, peso de fuentes, tendencia.
+
+    Mide qué proporción de la agenda mediática ocupa este tema,
+    relativo a lo esperado si todos los temas tuvieran igual cobertura.
+
+    - ratio > 1 → el tema domina la agenda → score > 50
+    - ratio = 1 → cobertura promedio → score ≈ 50
+    - ratio < 1 → tema con poca presencia → score < 50
+
+    Usa escala logarítmica (tanh) para que diferencias pequeñas
+    en temas poco cubiertos aún sean visibles.
     """
+    import math
+
     db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
     conn = sqlite3.connect(str(db_path))
 
     fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
 
-    # Total de artículos en el periodo
-    total = conn.execute(
-        "SELECT COUNT(*) FROM articulos WHERE fecha >= ?", (fecha_limite,)
+    # Peso total de todos los artículos en el periodo
+    total_peso = conn.execute(
+        "SELECT COALESCE(SUM(peso_fuente), 0) FROM articulos WHERE fecha >= ?",
+        (fecha_limite,)
     ).fetchone()[0]
 
-    if total == 0:
+    if total_peso == 0:
         conn.close()
         return 0
 
-    # Artículos relevantes con peso ponderado
-    score_acum = 0
+    # Peso ponderado de artículos relevantes (deduplicando por id)
+    articulos_vistos = set()
+    score_acum = 0.0
     for kw in categoria_keywords:
         rows = conn.execute("""
-            SELECT peso_fuente FROM articulos
+            SELECT id, peso_fuente FROM articulos
             WHERE fecha >= ?
               AND (titulo LIKE ? OR resumen LIKE ?)
         """, (fecha_limite, f"%{kw}%", f"%{kw}%")).fetchall()
 
         for row in rows:
-            score_acum += row[0]  # Sumar peso de la fuente
+            if row[0] not in articulos_vistos:
+                articulos_vistos.add(row[0])
+                score_acum += row[1]
 
     conn.close()
 
-    # Normalizar: si hay >20 menciones ponderadas en una semana → 100
-    score = min((score_acum / 20) * 100, 100)
+    # Proporción de la agenda que ocupa este tema
+    share = score_acum / total_peso  # 0.0 a ~0.30
+
+    # Share esperado si todos los temas fueran iguales (14 categorías)
+    n_categorias = len(CATEGORIAS)
+    expected_share = 1.0 / n_categorias  # ~0.0714
+
+    # Ratio vs lo esperado
+    ratio = share / expected_share if expected_share > 0 else 0
+
+    if ratio <= 0:
+        return 0.0
+
+    # Escala logarítmica con tanh: ratio=1 → 50, ratio=3 → ~83, ratio=0.1 → ~3
+    score = 50 + 50 * math.tanh(math.log(ratio) / 1.5)
+    score = max(0.0, min(100.0, score))
+
     return round(score, 2)
 
 
