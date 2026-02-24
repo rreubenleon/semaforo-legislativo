@@ -45,6 +45,72 @@ PARTIDOS_MEXICO = {
     "SIN PARTIDO": {"nombre": "Sin Partido", "color": "#999999"},
 }
 
+# Claves válidas de partidos (para normalización)
+PARTIDOS_VALIDOS = set(PARTIDOS_MEXICO.keys())
+
+
+def normalizar_partido(texto_presentador):
+    """
+    Normaliza el campo 'Presentador' del SIL al partido real.
+    Ej: 'Dip. Juan Pérez (PAN)' → 'PAN'
+        'EJECUTIVO FEDERAL' → 'EJECUTIVO FEDERAL' (no es partido, se guarda como tipo)
+        'GOBIERNO DE HIDALGO' → '' (no es legislador federal)
+    Retorna (partido, tipo_presentador):
+      - partido: clave de PARTIDOS_MEXICO o ''
+      - tipo_presentador: 'legislador', 'ejecutivo', 'gobierno_estatal',
+                          'congreso_estatal', 'organismo', 'comision', 'otro'
+    """
+    if not texto_presentador:
+        return "", "otro"
+
+    texto = texto_presentador.strip().upper()
+
+    # Ordenar partidos de mayor a menor longitud para evitar matches parciales
+    # Ej: "MORENA" debe matchear antes que "NA"
+    import re as _re
+    partidos_ordenados = sorted(PARTIDOS_VALIDOS, key=len, reverse=True)
+
+    # 1. Buscar partido explícito entre paréntesis: "Dip. Nombre (PAN)"
+    match_partido = _re.search(r'\(([^)]+)\)', texto)
+    if match_partido:
+        contenido = match_partido.group(1).strip()
+        for p in partidos_ordenados:
+            if p in contenido:
+                return p, "legislador"
+        # Partido independiente
+        if "IND" in contenido:
+            return "SIN PARTIDO", "legislador"
+
+    # 2. Buscar partido en el texto directo
+    for p in partidos_ordenados:
+        if p == texto or texto.startswith(f"{p} ") or texto.endswith(f" {p}"):
+            return p, "legislador"
+
+    # 3. Clasificar por tipo de presentador no-partido
+    if any(x in texto for x in ["EJECUTIVO FEDERAL", "PRESIDENCIA", "PRESIDENTE"]):
+        return "", "ejecutivo"
+    if any(x in texto for x in ["GOBIERNO DE ", "GOBERNADOR", "GOBERNADORA"]):
+        return "", "gobierno_estatal"
+    if any(x in texto for x in ["CONGRESO DE ", "LEGISLATURA"]):
+        return "", "congreso_estatal"
+    if any(x in texto for x in ["CÁMARA DE", "CAMARA DE", "MESA DIRECTIVA",
+                                  "JUCOPO", "COMISIÓN PERMANENTE"]):
+        return "", "comision"
+    if any(x in texto for x in ["SECRETARÍA", "SECRETARIA", "COMISIÓN FEDERAL",
+                                  "BANCO DE", "SERVICIO DE", "PROCURADURÍA",
+                                  "CENTROS DE"]):
+        return "", "organismo"
+
+    # 4. Último recurso: si contiene "DIP." o "SEN." es legislador
+    if "DIP." in texto or "SEN." in texto:
+        # Intentar extraer partido del nombre
+        for p in PARTIDOS_VALIDOS:
+            if p in texto:
+                return p, "legislador"
+        return "", "legislador"
+
+    return "", "otro"
+
 
 # ────────────────────────────────────────────
 # Base de datos
@@ -69,10 +135,18 @@ def init_db():
             partido TEXT,
             comision TEXT,
             categoria TEXT,
+            presentador TEXT DEFAULT '',
+            tipo_presentador TEXT DEFAULT '',
             fecha_scraping TEXT NOT NULL,
             UNIQUE(seguimiento_id, asunto_id)
         )
     """)
+    # Agregar columnas nuevas si no existen (migración)
+    for col, default in [("presentador", "''"), ("tipo_presentador", "''")]:
+        try:
+            conn.execute(f"ALTER TABLE sil_documentos ADD COLUMN {col} TEXT DEFAULT {default}")
+        except sqlite3.OperationalError:
+            pass  # Ya existe
     conn.commit()
     conn.close()
 
@@ -94,6 +168,7 @@ def _buscar_ids(query, max_resultados=500):
             params={"Valor": query},
             timeout=90,
             headers=HEADERS,
+            verify=False,
         )
         resp.encoding = "latin-1"
     except requests.RequestException as e:
@@ -229,14 +304,9 @@ def _obtener_detalle(seg_id, asu_id):
                 tipo = k.capitalize()
                 break
 
-    # Extraer partido del campo "Presentador"
-    partido = meta.get("presentador", "").strip().upper()
-    # Normalizar
-    if partido:
-        for p in PARTIDOS_MEXICO:
-            if p in partido:
-                partido = p
-                break
+    # Extraer presentador raw y normalizar partido
+    presentador_raw = meta.get("presentador", "").strip()
+    partido, tipo_presentador = normalizar_partido(presentador_raw)
 
     # Comisión del "Último Trámite"
     tramite = meta.get("último trámite", meta.get("ultimo trámite", ""))
@@ -252,6 +322,8 @@ def _obtener_detalle(seg_id, asu_id):
         "periodo": meta.get("periodo de sesiones", meta.get("periodo", "")),
         "tipo": tipo or meta.get("tipo", ""),
         "partido": partido,
+        "presentador": presentador_raw,
+        "tipo_presentador": tipo_presentador,
         "comision": comision,
         "estatus": meta.get("último estatus", meta.get("ultimo estatus", "")),
     }
@@ -368,8 +440,9 @@ def scrape_sil_completo(fecha_desde="2025-09-01", detalle_max=200):
                     INSERT INTO sil_documentos
                         (seguimiento_id, asunto_id, tipo, titulo, sinopsis,
                          camara, fecha_presentacion, legislatura, periodo,
-                         estatus, partido, comision, categoria, fecha_scraping)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                         estatus, partido, comision, categoria,
+                         presentador, tipo_presentador, fecha_scraping)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (
                     seg_id, asu_id,
                     detalle["tipo"], info["titulo"], info["sinopsis"],
@@ -377,6 +450,8 @@ def scrape_sil_completo(fecha_desde="2025-09-01", detalle_max=200):
                     detalle["legislatura"], detalle["periodo"],
                     detalle["estatus"], detalle["partido"],
                     detalle["comision"], categoria,
+                    detalle.get("presentador", ""),
+                    detalle.get("tipo_presentador", ""),
                     datetime.now().isoformat(),
                 ))
                 nuevos += 1
@@ -462,28 +537,53 @@ def obtener_serie_temporal_sil(categoria=None, dias=30):
 
 def obtener_stats_por_partido(dias=180):
     """
-    Estadísticas de instrumentos legislativos por partido.
+    Estadísticas de instrumentos legislativos por partido político real.
+    Solo incluye partidos de PARTIDOS_MEXICO (excluye ejecutivo, gobiernos estatales, etc.).
     Retorna dict para el dashboard.
     """
     db_path = ROOT / DATABASE["archivo"]
     conn = sqlite3.connect(str(db_path))
     fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
 
-    # Total por partido
-    rows_total = conn.execute("""
+    # Construir filtro de partidos válidos
+    placeholders = ",".join(["?"] * len(PARTIDOS_VALIDOS))
+
+    # Total por partido (solo partidos reales)
+    rows_total = conn.execute(f"""
         SELECT partido, COUNT(*) as total
         FROM sil_documentos
-        WHERE fecha_presentacion >= ? AND partido != '' AND partido IS NOT NULL
+        WHERE fecha_presentacion >= ? AND partido IN ({placeholders})
         GROUP BY partido ORDER BY total DESC
-    """, (fecha_limite,)).fetchall()
+    """, (fecha_limite, *PARTIDOS_VALIDOS)).fetchall()
 
     # Por partido y categoría
-    rows_cat = conn.execute("""
+    rows_cat = conn.execute(f"""
         SELECT partido, categoria, COUNT(*) as n
         FROM sil_documentos
-        WHERE fecha_presentacion >= ? AND partido != '' AND categoria != ''
+        WHERE fecha_presentacion >= ? AND partido IN ({placeholders})
+          AND categoria != '' AND categoria IS NOT NULL
         GROUP BY partido, categoria ORDER BY partido, n DESC
-    """, (fecha_limite,)).fetchall()
+    """, (fecha_limite, *PARTIDOS_VALIDOS)).fetchall()
+
+    # Por partido y tipo de instrumento
+    rows_tipo = conn.execute(f"""
+        SELECT partido, tipo, COUNT(*) as n
+        FROM sil_documentos
+        WHERE fecha_presentacion >= ? AND partido IN ({placeholders})
+          AND tipo != '' AND tipo IS NOT NULL
+        GROUP BY partido, tipo ORDER BY partido, n DESC
+    """, (fecha_limite, *PARTIDOS_VALIDOS)).fetchall()
+
+    # Serie temporal por partido (últimos 6 meses, por semana)
+    rows_temporal = conn.execute(f"""
+        SELECT partido,
+               strftime('%Y-W%W', fecha_presentacion) as semana,
+               COUNT(*) as n
+        FROM sil_documentos
+        WHERE fecha_presentacion >= ? AND partido IN ({placeholders})
+        GROUP BY partido, semana
+        ORDER BY partido, semana
+    """, (fecha_limite, *PARTIDOS_VALIDOS)).fetchall()
 
     conn.close()
 
@@ -496,6 +596,8 @@ def obtener_stats_por_partido(dias=180):
             "color": meta["color"],
             "total": row[1],
             "por_categoria": {},
+            "por_tipo": {},
+            "serie_semanal": {},
             "top_categoria": None,
         }
 
@@ -506,6 +608,16 @@ def obtener_stats_por_partido(dias=180):
             partidos[p]["por_categoria"][cat] = {"nombre": cat_nombre, "count": n}
             if not partidos[p]["top_categoria"]:
                 partidos[p]["top_categoria"] = {"categoria": cat, "nombre": cat_nombre, "count": n}
+
+    for row in rows_tipo:
+        p, tipo, n = row
+        if p in partidos and tipo:
+            partidos[p]["por_tipo"][tipo] = n
+
+    for row in rows_temporal:
+        p, semana, n = row
+        if p in partidos:
+            partidos[p]["serie_semanal"][semana] = n
 
     return partidos
 
@@ -528,11 +640,12 @@ def obtener_conteo_sil():
 def enriquecer_fechas_sil(limite=200):
     """
     Busca documentos SIL sin fecha_presentacion y consulta el detalle
-    para obtenerla. Útil para completar los ~5000 'Asuntos' sin fecha.
+    para obtenerla. También extrae presentador, partido normalizado,
+    cámara, comisión, etc.
 
-    Corre en lotes pequeños para no saturar el SIL.
-    Solo funciona si sil.gobernacion.gob.mx responde (puede fallar por SSL).
+    Corre en lotes configurables. Usa verify=False para SSL expirado.
     """
+    init_db()  # Asegurar columnas nuevas existen
     db_path = ROOT / DATABASE["archivo"]
     conn = sqlite3.connect(str(db_path))
 
@@ -562,32 +675,49 @@ def enriquecer_fechas_sil(limite=200):
             detalle = None
 
         if detalle and detalle.get("fecha_presentacion"):
+            # Re-clasificar categoría si estaba vacía
+            cat_actual = conn.execute(
+                "SELECT categoria FROM sil_documentos WHERE id = ?", (doc_id,)
+            ).fetchone()[0]
+            if not cat_actual:
+                cat_actual = _clasificar_documento(titulo)
+
             conn.execute("""
                 UPDATE sil_documentos
                 SET fecha_presentacion = ?,
+                    camara = COALESCE(NULLIF(camara, ''), ?),
                     legislatura = COALESCE(NULLIF(legislatura, ''), ?),
                     periodo = COALESCE(NULLIF(periodo, ''), ?),
-                    partido = COALESCE(NULLIF(partido, ''), ?),
+                    partido = ?,
                     comision = COALESCE(NULLIF(comision, ''), ?),
-                    estatus = COALESCE(NULLIF(estatus, ''), ?)
+                    estatus = COALESCE(NULLIF(estatus, ''), ?),
+                    tipo = COALESCE(NULLIF(tipo, ''), ?),
+                    presentador = ?,
+                    tipo_presentador = ?,
+                    categoria = COALESCE(NULLIF(categoria, ''), ?)
                 WHERE id = ?
             """, (
                 detalle["fecha_presentacion"],
+                detalle.get("camara", ""),
                 detalle.get("legislatura", ""),
                 detalle.get("periodo", ""),
                 detalle.get("partido", ""),
                 detalle.get("comision", ""),
                 detalle.get("estatus", ""),
+                detalle.get("tipo", ""),
+                detalle.get("presentador", ""),
+                detalle.get("tipo_presentador", ""),
+                cat_actual,
                 doc_id,
             ))
             enriquecidos += 1
         else:
             fallidos += 1
 
-        time.sleep(0.5)
+        time.sleep(0.3)
 
-        # Commit cada 50
-        if (enriquecidos + fallidos) % 50 == 0:
+        # Commit cada 100
+        if (enriquecidos + fallidos) % 100 == 0:
             conn.commit()
             logger.info(
                 f"SIL enriquecimiento: {enriquecidos} enriquecidos, "
@@ -605,6 +735,47 @@ def enriquecer_fechas_sil(limite=200):
         "enriquecidos": enriquecidos,
         "fallidos": fallidos,
     }
+
+
+def normalizar_partidos_existentes():
+    """
+    Re-normaliza el campo partido para todos los documentos SIL
+    que tienen un partido que no es uno de los partidos válidos.
+    También puebla presentador y tipo_presentador si están vacíos.
+    Solo trabaja con datos locales, NO hace HTTP.
+    """
+    db_path = ROOT / DATABASE["archivo"]
+    conn = sqlite3.connect(str(db_path))
+
+    # Docs con partido que no es de PARTIDOS_VALIDOS y no está vacío
+    rows = conn.execute("""
+        SELECT id, partido, presentador FROM sil_documentos
+        WHERE partido != '' AND partido IS NOT NULL
+    """).fetchall()
+
+    actualizados = 0
+    for doc_id, partido_actual, presentador_actual in rows:
+        if partido_actual in PARTIDOS_VALIDOS:
+            continue  # Ya está normalizado
+
+        # El partido_actual podría ser el presentador raw (era el viejo comportamiento)
+        texto_para_normalizar = presentador_actual or partido_actual
+        nuevo_partido, tipo_pres = normalizar_partido(texto_para_normalizar)
+
+        conn.execute("""
+            UPDATE sil_documentos
+            SET partido = ?,
+                presentador = COALESCE(NULLIF(presentador, ''), ?),
+                tipo_presentador = COALESCE(NULLIF(tipo_presentador, ''), ?)
+            WHERE id = ?
+        """, (nuevo_partido, partido_actual, tipo_pres, doc_id))
+        actualizados += 1
+
+    conn.commit()
+    conn.close()
+
+    logger.info(f"Partidos normalizados: {actualizados} documentos actualizados")
+    return actualizados
 
 
 if __name__ == "__main__":

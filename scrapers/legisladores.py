@@ -586,7 +586,8 @@ def scrape_senadores(max_detalle=150):
 def poblar_actividad_desde_sil():
     """
     Vincula los documentos del SIL existentes con legisladores.
-    Parsea el campo 'Presentador' de la ficha SIL para extraer nombres.
+    Usa el campo 'presentador' ya almacenado en sil_documentos (sin HTTP extra).
+    Si no existe presentador, hace fallback al campo partido.
     """
     db_path = ROOT / DATABASE["archivo"]
     conn = sqlite3.connect(str(db_path))
@@ -597,30 +598,34 @@ def poblar_actividad_desde_sil():
     for row in conn.execute("SELECT id, nombre, nombre_normalizado FROM legisladores"):
         legisladores[row["nombre_normalizado"]] = row["id"]
 
+    if not legisladores:
+        logger.warning("No hay legisladores en la BD. Ejecuta scrape_diputados/senadores primero.")
+        conn.close()
+        return {"vinculados": 0, "sin_match": 0}
+
     # Procesar documentos SIL que aún no están en actividad_legislador
+    # Solo procesar docs con presentador, fecha y categoría
     docs = conn.execute("""
         SELECT s.id, s.seguimiento_id, s.asunto_id, s.tipo, s.titulo,
-               s.categoria, s.fecha_presentacion, s.comision, s.estatus, s.partido
+               s.categoria, s.fecha_presentacion, s.comision, s.estatus,
+               s.partido, s.presentador, s.tipo_presentador
         FROM sil_documentos s
         LEFT JOIN actividad_legislador a ON a.sil_documento_id = s.id
         WHERE a.id IS NULL
-          AND s.seguimiento_id != ''
+          AND s.tipo_presentador = 'legislador'
+          AND s.presentador != '' AND s.presentador IS NOT NULL
+          AND s.fecha_presentacion != '' AND s.fecha_presentacion IS NOT NULL
     """).fetchall()
 
-    logger.info(f"Procesando {len(docs)} documentos SIL para vincular con legisladores...")
+    logger.info(f"Procesando {len(docs)} documentos SIL (legisladores) para vincular...")
 
     vinculados = 0
     sin_match = 0
 
     for doc in docs:
-        # Obtener el nombre del presentador de la ficha de detalle
-        presentador = _obtener_presentador_sil(doc["seguimiento_id"], doc["asunto_id"])
+        presentador = doc["presentador"]
 
-        if not presentador:
-            # Usar partido como fallback
-            presentador = doc["partido"] or "Desconocido"
-
-        # Intentar parsear múltiples autores
+        # Parsear múltiples autores del campo presentador
         autores = _parsear_presentadores(presentador)
 
         for autor_nombre in autores:
@@ -653,7 +658,7 @@ def poblar_actividad_desde_sil():
         if not autores:
             sin_match += 1
 
-        if vinculados % 100 == 0 and vinculados > 0:
+        if vinculados % 200 == 0 and vinculados > 0:
             conn.commit()
             logger.info(f"  Vinculados: {vinculados}...")
 

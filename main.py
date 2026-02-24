@@ -28,6 +28,7 @@ from scrapers.sil import (
     obtener_serie_temporal_sil,
     obtener_conteo_sil,
     enriquecer_fechas_sil,
+    normalizar_partidos_existentes,
 )
 from scrapers.mananera import scrape_mananeras
 from scrapers.sintesis_legislativa import scrape_sintesis_legislativa
@@ -41,7 +42,12 @@ from api.correlacion import (
     generar_reporte,
 )
 from api.lag import analizar_todas_categorias, obtener_prediccion
-from api.predictor_autoria import predecir_autores, obtener_estadisticas_autoria
+from api.predictor_autoria import (
+    predecir_autores,
+    obtener_estadisticas_autoria,
+    calcular_reacciones_historicas,
+)
+from scrapers.legisladores import poblar_actividad_desde_sil
 from nlp.geo_clasificador import obtener_mapa_datos
 
 logger = logging.getLogger("semaforo")
@@ -553,13 +559,37 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     except Exception as e:
         logger.warning(f"SIL falló (no crítico): {e}")
 
-    # Paso 3c: Enriquecer fechas faltantes del SIL (lote de 100)
+    # Paso 3c: Enriquecer fechas faltantes del SIL (lote de 500)
     try:
-        enr = enriquecer_fechas_sil(limite=100)
+        enr = enriquecer_fechas_sil(limite=500)
         if enr["enriquecidos"] > 0:
             logger.info(f"SIL enriquecimiento: {enr['enriquecidos']}/{enr['procesados']} fechas completadas")
     except Exception as e:
         logger.warning(f"SIL enriquecimiento falló (no crítico): {e}")
+
+    # Paso 3d: Normalizar partidos (limpiar datos de presentador)
+    try:
+        norm = normalizar_partidos_existentes()
+        if norm > 0:
+            logger.info(f"SIL normalización: {norm} partidos normalizados")
+    except Exception as e:
+        logger.warning(f"Normalización de partidos falló (no crítico): {e}")
+
+    # Paso 3e: Vincular documentos SIL con legisladores
+    logger.info("=" * 60)
+    logger.info("PASO 3e: Vinculación SIL → Legisladores + Reacciones")
+    logger.info("=" * 60)
+    try:
+        act = poblar_actividad_desde_sil()
+        logger.info(f"Actividad legislador: {act['vinculados']} nuevos vínculos")
+    except Exception as e:
+        logger.warning(f"Vinculación legisladores falló (no crítico): {e}")
+
+    try:
+        n_reacciones = calcular_reacciones_historicas()
+        logger.info(f"Reacciones históricas: {n_reacciones} calculadas")
+    except Exception as e:
+        logger.warning(f"Reacciones históricas falló (no crítico): {e}")
 
     paso_4_clasificacion_nlp()
     scores = paso_5_scoring()

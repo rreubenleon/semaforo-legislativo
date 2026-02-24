@@ -249,6 +249,9 @@ def calcular_reacciones_historicas():
             continue
         for cat in cats:
             cat = cat.strip()
+            # Strip confidence score: "electoral_politico:0.611" -> "electoral_politico"
+            if ":" in cat:
+                cat = cat.split(":")[0].strip()
             if cat:
                 conteos[cat][fecha_raw] += 1
 
