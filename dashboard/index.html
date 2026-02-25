@@ -781,73 +781,146 @@
            PAGE: LEGISLADORES
            ================================================================ */
 
+        function LegisladorCard({ leg, rank }) {
+            const signals = [
+                { key: 'historial_tematico', label: 'Historial en tema', icon: '📚', tip: 'Cuantas veces ha legislado sobre este tema' },
+                { key: 'comision_relevante', label: 'En comision clave', icon: '🏛️', tip: 'Integra la comision del tema' },
+                { key: 'velocidad_reaccion', label: 'Velocidad reaccion', icon: '⚡', tip: 'Que tan rapido reacciona a temas mediaticos' },
+                { key: 'actividad_reciente', label: 'Actividad reciente', icon: '📈', tip: 'Documentos presentados en ultimos 60 dias' },
+                { key: 'contexto_geografico', label: 'Contexto geo', icon: '📍', tip: 'Coincidencia con la region del tema' },
+            ];
+            return (
+                <div className="glass border border-borde rounded-xl p-4 hover:border-acento/30 transition-colors">
+                    <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-full bg-acento/10 flex items-center justify-center text-sm font-bold text-acento flex-shrink-0">{rank}</div>
+                        <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className="font-bold text-sm text-gray-800">{leg.nombre}</span>
+                                <span className="text-white text-[10px] px-1.5 py-0.5 rounded font-medium" style={{backgroundColor: PARTIDO_COLORS[leg.partido] || '#999'}}>{leg.partido || '?'}</span>
+                            </div>
+                            <div className="text-xs text-gray-500 mt-1">{leg.camara}{leg.estado ? ` - ${leg.estado}` : ''}</div>
+                            {leg.comisiones_afines?.length > 0 && <div className="text-xs text-gray-400 mt-0.5">Comisiones: {leg.comisiones_afines.join(', ')}</div>}
+                            {/* Score bar */}
+                            <div className="flex items-center gap-2 mt-2">
+                                <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden"><div className="h-full rounded-full bg-acento transition-all" style={{width: `${Math.min(leg.score, 100)}%`}} /></div>
+                                <span className="text-sm text-acento font-bold">{leg.score.toFixed(0)}%</span>
+                            </div>
+                            {/* 5 signal bars */}
+                            <div className="mt-2.5 space-y-1">
+                                {signals.map(s => {
+                                    const val = leg.desglose?.[s.key] || 0;
+                                    const barColor = val >= 70 ? '#22c55e' : val >= 40 ? '#eab308' : '#d1d5db';
+                                    return (
+                                        <div key={s.key} className="flex items-center gap-1.5" title={s.tip}>
+                                            <span className="text-[10px] w-3 text-center">{s.icon}</span>
+                                            <span className="text-[10px] text-gray-500 w-24 truncate">{s.label}</span>
+                                            <div className="flex-1 bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                                                <div className="h-full rounded-full transition-all" style={{width: `${Math.min(val, 100)}%`, backgroundColor: barColor}} />
+                                            </div>
+                                            <span className="text-[10px] font-medium text-gray-500 w-6 text-right">{val.toFixed(0)}</span>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                            <div className="text-[10px] text-gray-400 mt-1.5">{leg.docs_categoria || 0} docs previos en este tema</div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         function PageLegisladores({ data }) {
             const [catSeleccionada, setCatSeleccionada] = useState(null);
+            const [verTodas, setVerTodas] = useState(false);
             const semaforo = data.semaforo || [];
             const autoria = data.autoria || {};
-            const categorias = Object.keys(autoria).filter(k => autoria[k]?.length > 0);
+
+            // Top 5 categorias por score del semaforo (donde hay valor predictivo)
+            const top5 = [...semaforo]
+                .filter(s => autoria[s.categoria]?.length > 0)
+                .sort((a, b) => b.score_total - a.score_total)
+                .slice(0, 5);
+
+            const todasCategorias = Object.keys(autoria).filter(k => autoria[k]?.length > 0);
+            const categoriasExtras = todasCategorias.filter(c => !top5.find(t => t.categoria === c));
 
             return (
                 <div className="space-y-6">
                     <div>
-                        <h2 className="text-lg font-bold text-gray-800 mb-1">Probabilidad de presentacion por tema</h2>
-                        <p className="text-sm text-gray-500">Selecciona una categoria para ver los legisladores con mayor probabilidad de presentar iniciativas, puntos de acuerdo u otros instrumentos legislativos.</p>
+                        <h2 className="text-lg font-bold text-gray-800 mb-1">Legisladores mas probables por tema</h2>
+                        <p className="text-sm text-gray-500">Enfocado en las 5 categorias con mayor score del semaforo: donde hay mas probabilidad de accion legislativa.</p>
                     </div>
 
-                    {/* Category selector */}
-                    <div className="flex flex-wrap gap-2">
-                        {categorias.map(cat => {
-                            const catData = semaforo.find(s => s.categoria === cat);
-                            const nombre = catData?.nombre || cat;
-                            const isActive = catSeleccionada === cat;
-                            const colorDot = catData?.color === 'verde' ? 'bg-semaforo-verde' : catData?.color === 'amarillo' ? 'bg-semaforo-amarillo' : 'bg-semaforo-rojo';
-                            return (
-                                <button key={cat} onClick={() => setCatSeleccionada(isActive ? null : cat)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border flex items-center gap-1.5 ${isActive ? 'bg-acento text-white border-acento' : 'bg-white text-gray-700 border-gray-200 hover:border-acento/50'}`}>
-                                    <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-white' : colorDot}`}></div>
-                                    {nombre}
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {/* Results */}
-                    {catSeleccionada && autoria[catSeleccionada] ? (
-                        <div className="space-y-3">
-                            <h3 className="text-sm font-semibold text-acento uppercase tracking-wider">{semaforo.find(s => s.categoria === catSeleccionada)?.nombre || catSeleccionada}</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {autoria[catSeleccionada].map((leg, i) => (
-                                    <div key={i} className="glass border border-borde rounded-xl p-4 hover:border-acento/30 transition-colors">
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-acento/10 flex items-center justify-center text-sm font-bold text-acento flex-shrink-0">{i + 1}</div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className="font-bold text-sm text-gray-800">{leg.nombre}</span>
-                                                    <span className="text-white text-[10px] px-1.5 py-0.5 rounded font-medium" style={{backgroundColor: PARTIDO_COLORS[leg.partido] || '#999'}}>{leg.partido || '?'}</span>
-                                                </div>
-                                                <div className="text-xs text-gray-500 mt-1">{leg.camara}{leg.estado ? ` - ${leg.estado}` : ''}</div>
-                                                {leg.comisiones_afines?.length > 0 && <div className="text-xs text-gray-400 mt-0.5">Comisiones afines: {leg.comisiones_afines.join(', ')}</div>}
-                                                <div className="flex items-center gap-2 mt-2">
-                                                    <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden"><div className="h-full rounded-full bg-acento transition-all" style={{width: `${Math.min(leg.score, 100)}%`}} /></div>
-                                                    <span className="text-sm text-acento font-bold">{leg.score.toFixed(0)}%</span>
-                                                </div>
-                                                <div className="grid grid-cols-3 gap-2 mt-2 text-[10px] text-gray-400">
-                                                    <div className="text-center"><div className="font-bold text-gray-600">{leg.desglose?.historial_tematico?.toFixed(0) || 0}</div>Historial</div>
-                                                    <div className="text-center"><div className="font-bold text-gray-600">{leg.desglose?.comision_relevante?.toFixed(0) || 0}</div>Comision</div>
-                                                    <div className="text-center"><div className="font-bold text-gray-600">{leg.docs_categoria || 0}</div>Docs previos</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
+                    {/* Top 5 auto-displayed */}
+                    {top5.map(catData => {
+                        const cat = catData.categoria;
+                        const legs = autoria[cat] || [];
+                        const colorBg = catData.color === 'verde' ? 'border-l-green-500' : catData.color === 'amarillo' ? 'border-l-yellow-500' : 'border-l-red-400';
+                        return (
+                            <div key={cat} className={`border-l-4 ${colorBg} pl-4`}>
+                                <div className="flex items-center gap-3 mb-3">
+                                    <h3 className="text-sm font-bold text-gray-800">{catData.nombre}</h3>
+                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${catData.color === 'verde' ? 'bg-green-50 text-green-700' : catData.color === 'amarillo' ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-700'}`}>
+                                        Score: {catData.score_total.toFixed(0)}
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                    {legs.slice(0, 3).map((leg, i) => (
+                                        <LegisladorCard key={i} leg={leg} rank={i + 1} />
+                                    ))}
+                                </div>
                             </div>
-                        </div>
-                    ) : (
-                        <div className="text-center text-gray-400 py-12">
-                            <div className="text-4xl mb-3">&#9878;</div>
-                            <div>Selecciona una categoria para ver las predicciones de autoria legislativa</div>
+                        );
+                    })}
+
+                    {/* Separator + other categories */}
+                    {categoriasExtras.length > 0 && (
+                        <div className="border-t border-gray-200 pt-4">
+                            <button onClick={() => setVerTodas(!verTodas)}
+                                className="text-xs text-acento font-medium hover:underline">
+                                {verTodas ? 'Ocultar otras categorias' : `Ver otras ${categoriasExtras.length} categorias`}
+                            </button>
+
+                            {verTodas && (
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                    {categoriasExtras.map(cat => {
+                                        const catData = semaforo.find(s => s.categoria === cat);
+                                        const nombre = catData?.nombre || cat;
+                                        const isActive = catSeleccionada === cat;
+                                        const colorDot = catData?.color === 'verde' ? 'bg-semaforo-verde' : catData?.color === 'amarillo' ? 'bg-semaforo-amarillo' : 'bg-semaforo-rojo';
+                                        return (
+                                            <button key={cat} onClick={() => setCatSeleccionada(isActive ? null : cat)}
+                                                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border flex items-center gap-1.5 ${isActive ? 'bg-acento text-white border-acento' : 'bg-white text-gray-700 border-gray-200 hover:border-acento/50'}`}>
+                                                <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-white' : colorDot}`}></div>
+                                                {nombre}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+
+                            {verTodas && catSeleccionada && autoria[catSeleccionada] && (
+                                <div className="mt-4">
+                                    <h3 className="text-sm font-semibold text-acento uppercase tracking-wider mb-3">{semaforo.find(s => s.categoria === catSeleccionada)?.nombre || catSeleccionada}</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {autoria[catSeleccionada].map((leg, i) => (
+                                            <LegisladorCard key={i} leg={leg} rank={i + 1} />
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
+
+                    {/* Methodology footer */}
+                    <div className="text-[10px] text-gray-400 bg-gray-50 rounded-lg p-3 space-y-1">
+                        <div className="font-semibold text-gray-500 mb-1">Senales del modelo (5 factores):</div>
+                        <div>📚 <strong>Historial en tema (35%)</strong> — Cuanto ha legislado sobre esta categoria en el pasado</div>
+                        <div>🏛️ <strong>En comision clave (25%)</strong> — Si integra o preside la comision relevante al tema</div>
+                        <div>⚡ <strong>Velocidad reaccion (15%)</strong> — Que tan rapido reacciona a eventos mediaticos con iniciativas</div>
+                        <div>📈 <strong>Actividad reciente (15%)</strong> — Documentos presentados en los ultimos 60 dias</div>
+                        <div>📍 <strong>Contexto geografico (10%)</strong> — Coincidencia entre el legislador y la region del tema</div>
+                    </div>
                 </div>
             );
         }
@@ -1163,11 +1236,27 @@
                 return () => { if (chartInstance.current) chartInstance.current.destroy(); };
             }, [semanas]);
 
-            // Gauge SVG
+            // Speedometer SVG
             const gaugeColor = resoluciones.accuracy_global >= 70 ? '#22c55e' : resoluciones.accuracy_global >= 50 ? '#eab308' : '#ef4444';
-            const gaugeRadius = 52;
-            const gaugeCircumference = 2 * Math.PI * gaugeRadius;
-            const gaugeOffset = gaugeCircumference * (1 - resoluciones.accuracy_global / 100);
+            const speedVal = resoluciones.accuracy_global;
+            const speedAngle = -135 + (speedVal / 100) * 270; // -135° (0%) to +135° (100%)
+            const speedR = 54;
+            const speedArc = (pct) => {
+                const startAngle = -135 * (Math.PI / 180);
+                const endAngle = (-135 + (pct / 100) * 270) * (Math.PI / 180);
+                const cx = 70, cy = 70;
+                const x1 = cx + speedR * Math.cos(startAngle);
+                const y1 = cy + speedR * Math.sin(startAngle);
+                const x2 = cx + speedR * Math.cos(endAngle);
+                const y2 = cy + speedR * Math.sin(endAngle);
+                const largeArc = (pct / 100) * 270 > 180 ? 1 : 0;
+                return `M ${x1} ${y1} A ${speedR} ${speedR} 0 ${largeArc} 1 ${x2} ${y2}`;
+            };
+            const needleAngle = speedAngle;
+            const needleRad = needleAngle * (Math.PI / 180);
+            const needleLen = 40;
+            const nx = 70 + needleLen * Math.cos(needleRad);
+            const ny = 70 + needleLen * Math.sin(needleRad);
 
             if (semanas.length === 0) {
                 return (
@@ -1188,15 +1277,36 @@
                 <div className="space-y-6">
                     {/* Header: Gauge + Summary */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Gauge */}
-                        <div className="glass border border-borde rounded-xl p-6 flex flex-col items-center justify-center">
-                            <svg width="130" height="130" viewBox="0 0 130 130">
-                                <circle cx="65" cy="65" r={gaugeRadius} fill="none" stroke="#f3f4f6" strokeWidth="10" />
-                                <circle cx="65" cy="65" r={gaugeRadius} fill="none" stroke={gaugeColor} strokeWidth="10"
-                                    strokeDasharray={gaugeCircumference} strokeDashoffset={gaugeOffset}
-                                    strokeLinecap="round" transform="rotate(-90 65 65)" style={{transition: 'stroke-dashoffset 1s ease'}} />
-                                <text x="65" y="60" textAnchor="middle" className="text-2xl font-bold" fill="#1a365d" style={{fontSize: '24px', fontWeight: 700}}>{resoluciones.accuracy_global.toFixed(1)}%</text>
-                                <text x="65" y="80" textAnchor="middle" fill="#9ca3af" style={{fontSize: '10px'}}>precision global</text>
+                        {/* Speedometer */}
+                        <div className="glass border border-borde rounded-xl p-4 flex flex-col items-center justify-center">
+                            <svg width="150" height="110" viewBox="0 0 140 105">
+                                {/* Background arc (gray track) */}
+                                <path d={speedArc(100)} fill="none" stroke="#e5e7eb" strokeWidth="12" strokeLinecap="round" />
+                                {/* Colored zones */}
+                                <path d={speedArc(33)} fill="none" stroke="#ef4444" strokeWidth="12" strokeLinecap="round" opacity="0.25" />
+                                <path d={(() => { const s = -135 * (Math.PI/180); const e = (-135 + 0.33*270) * (Math.PI/180); return ''; })()} />
+                                {/* Value arc */}
+                                {speedVal > 0 && <path d={speedArc(speedVal)} fill="none" stroke={gaugeColor} strokeWidth="12" strokeLinecap="round" style={{transition: 'all 1s ease'}} />}
+                                {/* Tick marks */}
+                                {[0, 25, 50, 75, 100].map(v => {
+                                    const a = (-135 + (v / 100) * 270) * (Math.PI / 180);
+                                    const x1 = 70 + 44 * Math.cos(a), y1 = 70 + 44 * Math.sin(a);
+                                    const x2 = 70 + 48 * Math.cos(a), y2 = 70 + 48 * Math.sin(a);
+                                    const xt = 70 + 37 * Math.cos(a), yt = 70 + 37 * Math.sin(a);
+                                    return (
+                                        <g key={v}>
+                                            <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#9ca3af" strokeWidth="1.5" />
+                                            <text x={xt} y={yt + 3} textAnchor="middle" fill="#9ca3af" style={{fontSize: '8px'}}>{v}</text>
+                                        </g>
+                                    );
+                                })}
+                                {/* Needle */}
+                                <line x1="70" y1="70" x2={nx} y2={ny} stroke="#1a365d" strokeWidth="2.5" strokeLinecap="round" style={{transition: 'all 1s ease'}} />
+                                <circle cx="70" cy="70" r="4" fill="#1a365d" />
+                                <circle cx="70" cy="70" r="2" fill="white" />
+                                {/* Value text */}
+                                <text x="70" y="95" textAnchor="middle" fill="#1a365d" style={{fontSize: '18px', fontWeight: 700}}>{resoluciones.accuracy_global.toFixed(1)}%</text>
+                                <text x="70" y="104" textAnchor="middle" fill="#9ca3af" style={{fontSize: '8px'}}>precision global</text>
                             </svg>
                         </div>
 
