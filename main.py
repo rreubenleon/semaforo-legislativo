@@ -49,6 +49,7 @@ from api.predictor_autoria import (
 )
 from scrapers.legisladores import poblar_actividad_desde_sil
 from nlp.geo_clasificador import obtener_mapa_datos
+from api.resoluciones import calcular_resoluciones_semanales, obtener_resoluciones
 
 logger = logging.getLogger("semaforo")
 
@@ -275,6 +276,24 @@ def paso_5_scoring():
     return scores
 
 
+def paso_5b_resoluciones():
+    """Paso 5b: Calcular resoluciones (precisión predictiva semanal)."""
+    logger.info("=" * 60)
+    logger.info("PASO 5b: Resoluciones (Precisión Predictiva)")
+    logger.info("=" * 60)
+
+    inicio = time.time()
+    n_semanas = 0
+    try:
+        n_semanas = calcular_resoluciones_semanales()
+        duracion = time.time() - inicio
+        logger.info(f"Resoluciones: {n_semanas} semanas calculadas ({duracion:.1f}s)")
+    except Exception as e:
+        logger.warning(f"Resoluciones falló (no crítico): {e}")
+
+    return n_semanas
+
+
 def paso_6_correlacion_temporal():
     """Paso 6: Análisis de correlación temporal."""
     logger.info("=" * 60)
@@ -498,6 +517,7 @@ def paso_7_exportar_dashboard():
         "autoria": autoria,
         "autoria_stats": autoria_stats,
         "mapa": obtener_mapa_datos(),
+        "resoluciones": obtener_resoluciones(semanas=12),
     }
 
     # Construir datos del semáforo con nombres
@@ -593,6 +613,7 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
 
     paso_4_clasificacion_nlp()
     scores = paso_5_scoring()
+    paso_5b_resoluciones()
     paso_6_correlacion_temporal()
     data = paso_7_exportar_dashboard()
 
@@ -612,6 +633,7 @@ def ejecutar_solo_scoring():
     logger.info("Modo: Solo scoring (sin scraping)")
     paso_4_clasificacion_nlp()
     paso_5_scoring()
+    paso_5b_resoluciones()
     paso_7_exportar_dashboard()
     print(generar_reporte())
 

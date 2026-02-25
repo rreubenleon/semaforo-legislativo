@@ -601,6 +601,7 @@ DATABASE = {
         "mananera",              # Menciones de CSP en conferencias matutinas
         "sintesis_legislativa",  # Síntesis diaria de Cámara de Diputados
         "tweets",                # Tweets de periodistas y coordinadores parlamentarios
+        "resoluciones",          # Tracking de precisión predictiva semanal
     ],
 }
 

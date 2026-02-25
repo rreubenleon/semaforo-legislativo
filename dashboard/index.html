@@ -1086,6 +1086,268 @@
         }
 
         /* ================================================================
+           PAGE: RESOLUCIONES (Precision Predictiva)
+           ================================================================ */
+
+        function PageResoluciones({ data }) {
+            const [semanaIdx, setSemanaIdx] = useState(null);
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+            const resoluciones = data.resoluciones || { accuracy_global: 0, semanas: [] };
+            const semanas = resoluciones.semanas || [];
+
+            // Auto-select last week
+            useEffect(() => {
+                if (semanas.length > 0 && semanaIdx === null) setSemanaIdx(semanas.length - 1);
+            }, [semanas.length]);
+
+            const semanaActual = semanaIdx !== null ? semanas[semanaIdx] : null;
+
+            // Chart
+            useEffect(() => {
+                if (!chartRef.current || semanas.length === 0) return;
+                if (chartInstance.current) chartInstance.current.destroy();
+
+                const labels = semanas.map(s => {
+                    const parts = s.semana.split('-W');
+                    return 'Sem ' + parseInt(parts[1]);
+                });
+
+                const barColors = semanas.map(s =>
+                    s.accuracy >= 70 ? '#22c55e' : s.accuracy >= 50 ? '#eab308' : '#ef4444'
+                );
+
+                chartInstance.current = new Chart(chartRef.current, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: 'Precision',
+                            data: semanas.map(s => s.accuracy),
+                            backgroundColor: barColors,
+                            borderRadius: 6,
+                            barPercentage: 0.6,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                min: 0, max: 100,
+                                ticks: { callback: v => v + '%', font: { size: 11 } },
+                                grid: { color: '#f3f4f6' },
+                            },
+                            x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            annotation: {
+                                annotations: {
+                                    line70: { type: 'line', yMin: 70, yMax: 70, borderColor: '#22c55e', borderWidth: 1, borderDash: [4, 4] },
+                                    line50: { type: 'line', yMin: 50, yMax: 50, borderColor: '#eab308', borderWidth: 1, borderDash: [4, 4] },
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: ctx => ctx.parsed.y.toFixed(1) + '% de acierto',
+                                }
+                            }
+                        },
+                        onClick: (evt, elements) => {
+                            if (elements.length > 0) setSemanaIdx(elements[0].index);
+                        }
+                    }
+                });
+
+                return () => { if (chartInstance.current) chartInstance.current.destroy(); };
+            }, [semanas]);
+
+            // Gauge SVG
+            const gaugeColor = resoluciones.accuracy_global >= 70 ? '#22c55e' : resoluciones.accuracy_global >= 50 ? '#eab308' : '#ef4444';
+            const gaugeRadius = 52;
+            const gaugeCircumference = 2 * Math.PI * gaugeRadius;
+            const gaugeOffset = gaugeCircumference * (1 - resoluciones.accuracy_global / 100);
+
+            if (semanas.length === 0) {
+                return (
+                    <div className="space-y-6">
+                        <div className="glass border border-borde rounded-xl p-8 text-center text-gray-400">
+                            <div className="text-4xl mb-3">📊</div>
+                            <div className="text-sm font-medium text-gray-500">Sin datos de resoluciones aun</div>
+                            <div className="text-xs mt-1">Los datos de precision predictiva se generan semanalmente. La primera resolucion aparecera cuando el semaforo complete al menos una semana de operacion.</div>
+                        </div>
+                    </div>
+                );
+            }
+
+            const totalAciertos = semanas.reduce((s, w) => s + w.aciertos, 0);
+            const totalEvaluados = semanas.reduce((s, w) => s + w.total, 0);
+
+            return (
+                <div className="space-y-6">
+                    {/* Header: Gauge + Summary */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Gauge */}
+                        <div className="glass border border-borde rounded-xl p-6 flex flex-col items-center justify-center">
+                            <svg width="130" height="130" viewBox="0 0 130 130">
+                                <circle cx="65" cy="65" r={gaugeRadius} fill="none" stroke="#f3f4f6" strokeWidth="10" />
+                                <circle cx="65" cy="65" r={gaugeRadius} fill="none" stroke={gaugeColor} strokeWidth="10"
+                                    strokeDasharray={gaugeCircumference} strokeDashoffset={gaugeOffset}
+                                    strokeLinecap="round" transform="rotate(-90 65 65)" style={{transition: 'stroke-dashoffset 1s ease'}} />
+                                <text x="65" y="60" textAnchor="middle" className="text-2xl font-bold" fill="#1a365d" style={{fontSize: '24px', fontWeight: 700}}>{resoluciones.accuracy_global.toFixed(1)}%</text>
+                                <text x="65" y="80" textAnchor="middle" fill="#9ca3af" style={{fontSize: '10px'}}>precision global</text>
+                            </svg>
+                        </div>
+
+                        {/* Summary stats */}
+                        <div className="glass border border-borde rounded-xl p-5 flex flex-col justify-center space-y-3">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs text-gray-400">Semanas evaluadas</span>
+                                <span className="text-lg font-bold text-gray-700">{semanas.length}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs text-gray-400">Total aciertos</span>
+                                <span className="text-lg font-bold text-gray-700">{totalAciertos}/{totalEvaluados}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs text-gray-400">Categorias monitoreadas</span>
+                                <span className="text-lg font-bold text-gray-700">14</span>
+                            </div>
+                        </div>
+
+                        {/* Best/worst week */}
+                        <div className="glass border border-borde rounded-xl p-5 flex flex-col justify-center space-y-3">
+                            {(() => {
+                                const best = semanas.reduce((a, b) => a.accuracy > b.accuracy ? a : b);
+                                const worst = semanas.reduce((a, b) => a.accuracy < b.accuracy ? a : b);
+                                return (
+                                    <>
+                                        <div>
+                                            <span className="text-[10px] text-gray-400 uppercase tracking-wider">Mejor semana</span>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <span className="text-lg font-bold text-green-600">{best.accuracy.toFixed(1)}%</span>
+                                                <span className="text-xs text-gray-400">{best.semana} ({best.fecha_inicio})</span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] text-gray-400 uppercase tracking-wider">Semana mas baja</span>
+                                            <div className="flex items-center gap-2 mt-0.5">
+                                                <span className="text-lg font-bold text-red-500">{worst.accuracy.toFixed(1)}%</span>
+                                                <span className="text-xs text-gray-400">{worst.semana} ({worst.fecha_inicio})</span>
+                                            </div>
+                                        </div>
+                                    </>
+                                );
+                            })()}
+                        </div>
+                    </div>
+
+                    {/* Chart: Weekly accuracy */}
+                    <div className="glass border border-borde rounded-xl p-4">
+                        <h3 className="font-semibold text-gray-700 mb-3 text-sm">Precision Semanal</h3>
+                        <div style={{height: '220px'}}>
+                            <canvas ref={chartRef}></canvas>
+                        </div>
+                        <div className="text-[10px] text-gray-400 mt-2 text-center">Haz clic en una barra para ver el detalle de esa semana</div>
+                    </div>
+
+                    {/* Week selector pills */}
+                    <div className="flex gap-2 flex-wrap">
+                        {semanas.map((s, i) => {
+                            const c = s.accuracy >= 70 ? 'bg-green-50 text-green-700 border-green-200' : s.accuracy >= 50 ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-red-50 text-red-700 border-red-200';
+                            return (
+                                <button key={s.semana} onClick={() => setSemanaIdx(i)}
+                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${semanaIdx === i ? c + ' ring-2 ring-offset-1 ring-gray-300' : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'}`}>
+                                    {s.semana.split('-W')[1] && 'Sem ' + parseInt(s.semana.split('-W')[1])} — {s.accuracy.toFixed(0)}%
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Detail table for selected week */}
+                    {semanaActual && (
+                        <div className="glass border border-borde rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="font-semibold text-gray-700 text-sm">
+                                    Detalle {semanaActual.semana}
+                                    <span className="text-gray-400 font-normal ml-2 text-xs">desde {semanaActual.fecha_inicio}</span>
+                                </h3>
+                                <div className="text-sm font-bold" style={{color: semanaActual.accuracy >= 70 ? '#22c55e' : semanaActual.accuracy >= 50 ? '#eab308' : '#ef4444'}}>
+                                    {semanaActual.accuracy.toFixed(1)}% precision ({semanaActual.aciertos}/{semanaActual.total})
+                                </div>
+                            </div>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-xs">
+                                    <thead>
+                                        <tr className="text-gray-400 border-b border-gray-200">
+                                            <th className="text-left py-2 font-medium">Categoria</th>
+                                            <th className="text-center py-2 font-medium">Score</th>
+                                            <th className="text-center py-2 font-medium">Prediccion</th>
+                                            <th className="text-center py-2 font-medium">Docs reales</th>
+                                            <th className="text-center py-2 font-medium">Prom. hist.</th>
+                                            <th className="text-center py-2 font-medium">Resultado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {semanaActual.detalle.map((d, i) => {
+                                            const dotColor = d.color === 'verde' ? '#22c55e' : d.color === 'amarillo' ? '#eab308' : '#ef4444';
+                                            const resultIcon = d.acierto ? '\u2705' : (d.tipo === 'sobreestimacion' ? '\u2B06\uFE0F' : '\u2B07\uFE0F');
+                                            const resultLabel = d.acierto ? 'Acierto' : (d.tipo === 'sobreestimacion' ? 'Sobreest.' : 'Subestim.');
+                                            const resultColor = d.acierto ? 'text-green-600' : 'text-orange-500';
+                                            return (
+                                                <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50">
+                                                    <td className="py-2.5 text-gray-800 font-medium">{d.nombre}</td>
+                                                    <td className="py-2.5 text-center">
+                                                        <span className="inline-flex items-center gap-1">
+                                                            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{backgroundColor: dotColor}}></span>
+                                                            {d.score_promedio?.toFixed(1)}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-2.5 text-center">
+                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${d.color === 'verde' ? 'bg-green-50 text-green-700' : d.color === 'amarillo' ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-700'}`}>
+                                                            {d.score_promedio >= 50 ? 'Alta' : 'Baja'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="py-2.5 text-center font-bold text-gray-700">{d.docs_reales}</td>
+                                                    <td className="py-2.5 text-center text-gray-400">{d.promedio_historico?.toFixed(1)}</td>
+                                                    <td className={`py-2.5 text-center font-medium ${resultColor}`}>
+                                                        {resultIcon} {resultLabel}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Methodology explanation */}
+                    <div className="glass border border-borde rounded-xl p-4 text-xs text-gray-500 space-y-2">
+                        <h3 className="font-semibold text-gray-600 text-sm">Como se calcula la precision</h3>
+                        <p>Cada semana, FIAT compara sus predicciones contra la actividad legislativa real registrada en el SIL (Sistema de Informacion Legislativa).</p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
+                            <div className="bg-green-50/50 rounded-lg p-2.5 border border-green-100">
+                                <div className="font-semibold text-green-700 mb-1">Acierto</div>
+                                <div className="text-green-600">Score alto + actividad por encima del promedio, o score bajo + actividad por debajo del promedio.</div>
+                            </div>
+                            <div className="bg-orange-50/50 rounded-lg p-2.5 border border-orange-100">
+                                <div className="font-semibold text-orange-700 mb-1">Sobreestimacion</div>
+                                <div className="text-orange-600">El semaforo predijo actividad alta pero no se materializo en el Congreso.</div>
+                            </div>
+                            <div className="bg-orange-50/50 rounded-lg p-2.5 border border-orange-100">
+                                <div className="font-semibold text-orange-700 mb-1">Subestimacion</div>
+                                <div className="text-orange-600">El semaforo predijo actividad baja pero hubo actividad legislativa significativa.</div>
+                            </div>
+                        </div>
+                        <p className="text-gray-400 mt-1">Los datos se calculan cada 2 horas y se acumulan semanalmente. La precision mejora con mas semanas de datos.</p>
+                    </div>
+                </div>
+            );
+        }
+
+        /* ================================================================
            PAGE: METODOLOGIA
            ================================================================ */
 
@@ -1209,28 +1471,23 @@
                         <div className="text-xs text-gray-400">Actualizado: {formatearActualizacion(data.metadata.generado)}</div>
                     </header>
 
-                    {/* Navigation tabs */}
-                    <nav className="flex gap-0 border-b border-gray-200">
-                        {[['actividad', 'Actividad Legislativa'], ['legisladores', 'Legisladores'], ['mapa', 'Mapa'], ['metodologia', 'Metodologia']].map(([key, label]) => (
-                            <button key={key} onClick={() => setPagina(key)} className={`nav-tab ${pagina === key ? 'nav-tab-active' : ''}`}>{label}</button>
+                    {/* Navigation tabs + search */}
+                    <nav className="flex gap-0 border-b border-gray-200 items-center overflow-x-auto">
+                        {[['actividad', 'Actividad Legislativa'], ['legisladores', 'Legisladores'], ['mapa', 'Mapa de Medios'], ['resoluciones', 'Resoluciones'], ['metodologia', 'Metodologia']].map(([key, label]) => (
+                            <button key={key} onClick={() => setPagina(key)} className={`nav-tab whitespace-nowrap ${pagina === key ? 'nav-tab-active' : ''}`}>{label}</button>
                         ))}
-                    </nav>
-
-                    {/* Search bar */}
-                    {pagina === 'actividad' && (
-                        <div className="flex justify-end mt-4">
-                            <div className="relative">
-                                <input type="text" placeholder="Buscar tema..." value={busquedaGlobal} onChange={e => setBusquedaGlobal(e.target.value)}
-                                    className="w-56 md:w-72 pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-acento/30 focus:border-acento" />
-                                <svg className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                            </div>
+                        <div className="ml-auto pl-3 relative flex-shrink-0">
+                            <input type="text" placeholder="Busca en el FIAT..." value={busquedaGlobal} onChange={e => setBusquedaGlobal(e.target.value)}
+                                className="w-44 md:w-56 pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-acento/30 focus:border-acento" />
+                            <svg className="w-4 h-4 text-gray-400 absolute left-5.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                         </div>
-                    )}
+                    </nav>
 
                     {/* Page content */}
                     {pagina === 'actividad' && <PageActividadLegislativa data={data} setSelected={setSelected} busqueda={busquedaGlobal} />}
                     {pagina === 'legisladores' && <PageLegisladores data={data} />}
                     {pagina === 'mapa' && <PageMapa data={data} />}
+                    {pagina === 'resoluciones' && <PageResoluciones data={data} />}
                     {pagina === 'metodologia' && <PageMetodologia data={data} />}
 
                     {/* Footer */}
