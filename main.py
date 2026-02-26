@@ -14,7 +14,7 @@ import json
 import logging
 import argparse
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from config import LOGGING, DATABASE, CATEGORIAS, SCORING
@@ -501,8 +501,8 @@ def paso_7_exportar_dashboard():
 
     data = {
         "metadata": {
-            "generado": datetime.now().isoformat(),
-            "version": "3.0",
+            "generado": datetime.now(timezone.utc).isoformat(),
+            "version": "3.1",
             "formula": "SCORE = (0.25*Media) + (0.15*Trends) + (0.30*Congreso) + (0.15*Mañanera) + (0.15*Urgencia)",
             "umbrales": SCORING["umbrales"],
             "sil_docs": sil_stats.get("total", 0),
