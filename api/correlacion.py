@@ -1,6 +1,6 @@
 """
 Motor de Scoring - Semáforo Legislativo
-Calcula: SCORE = (0.30×Media) + (0.20×Trends) + (0.25×Congreso) + (0.15×Mañanera) + (0.10×Urgencia)
+Calcula: SCORE = (0.25×Media) + (0.15×Trends) + (0.30×Congreso) + (0.15×Mañanera) + (0.15×Urgencia)
 Asigna color: Verde ≥70 | Amarillo 40-69 | Rojo <40
 """
 
@@ -84,7 +84,7 @@ def calcular_factor_urgencia():
     return factor
 
 
-def calcular_score_urgencia_historica(categoria_clave, score_media, score_trends):
+def calcular_score_urgencia_historica(categoria_clave, score_media, score_trends, score_congreso=0):
     """
     Score de urgencia 0-100 basado en EVIDENCIA HISTÓRICA.
 
@@ -97,6 +97,9 @@ def calcular_score_urgencia_historica(categoria_clave, score_media, score_trends
     2. Velocidad de presentación en SIL (¿se están presentando
        instrumentos legislativos recientemente?)
     3. Factor calendario (período ordinario vs receso)
+
+    Amplificación condicional: si Media Y Congreso superan umbrales,
+    urgencia se amplifica (convergencia de evidencia = mayor urgencia).
 
     Si no hay correlación histórica → urgencia baja (sin evidencia).
     """
@@ -171,6 +174,27 @@ def calcular_score_urgencia_historica(categoria_clave, score_media, score_trends
         calendario_score * 0.20
     )
 
+    # ── Amplificación condicional ──
+    # Convergencia de evidencia: si Media Y Congreso activos → urgencia amplificada
+    amp = URGENCIA.get("amplificacion", {})
+    umbral_m = amp.get("umbral_media", 50)
+    umbral_c = amp.get("umbral_congreso", 60)
+    factor_conv = amp.get("factor_max_convergente", 1.4)
+    factor_parc = amp.get("factor_max_parcial", 1.15)
+
+    if score_media >= umbral_m and score_congreso >= umbral_c:
+        # Convergencia fuerte → amplificar hasta factor_conv
+        exceso_media = (score_media - umbral_m) / (100 - umbral_m) if umbral_m < 100 else 0
+        exceso_congreso = (score_congreso - umbral_c) / (100 - umbral_c) if umbral_c < 100 else 0
+        urgencia *= 1.0 + (factor_conv - 1.0) * min(exceso_media, exceso_congreso)
+    elif score_media >= umbral_m or score_congreso >= umbral_c:
+        # Convergencia parcial → amplificar hasta factor_parc
+        exceso = max(
+            (score_media - umbral_m) / (100 - umbral_m) if score_media >= umbral_m and umbral_m < 100 else 0,
+            (score_congreso - umbral_c) / (100 - umbral_c) if score_congreso >= umbral_c and umbral_c < 100 else 0,
+        )
+        urgencia *= 1.0 + (factor_parc - 1.0) * exceso
+
     conn.close()
 
     return min(round(urgencia, 2), 100)
@@ -189,7 +213,7 @@ def asignar_color(score):
 def calcular_score_categoria(categoria_clave):
     """
     Calcula el score completo para una categoría.
-    SCORE = (0.30×Media) + (0.20×Trends) + (0.25×Congreso) + (0.15×Mañanera) + (0.10×Urgencia)
+    SCORE = (0.25×Media) + (0.15×Trends) + (0.30×Congreso) + (0.15×Mañanera) + (0.15×Urgencia)
     """
     cat_config = CATEGORIAS[categoria_clave]
     keywords = cat_config["keywords"]
@@ -211,9 +235,9 @@ def calcular_score_categoria(categoria_clave):
     # Componente 4: Mención de la Presidenta CSP (0.15)
     score_mananera = obtener_score_mananera(categoria_clave)
 
-    # Componente 5: Urgencia basada en evidencia histórica (0.10)
+    # Componente 5: Urgencia basada en evidencia histórica (0.15)
     score_urgencia = calcular_score_urgencia_historica(
-        categoria_clave, score_media, score_trends
+        categoria_clave, score_media, score_trends, score_congreso
     )
 
     # Fórmula principal
@@ -250,6 +274,72 @@ def calcular_score_categoria(categoria_clave):
     )
 
     return resultado
+
+
+def calcular_momentum(categoria_clave, umbral=40.0):
+    """
+    Calcula cuántos días/semanas consecutivos (hacia atrás desde hoy)
+    el score_total ha estado por encima del umbral.
+
+    Retorna dict:
+        dias_consecutivos: int
+        semanas_en_agenda: int
+        tendencia: "up" | "down" | "stable"
+        etiqueta: "Semana 3 en agenda" | "5 dias activo" | ""
+    """
+    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
+    conn = sqlite3.connect(str(db_path))
+    conn.row_factory = sqlite3.Row
+
+    rows = conn.execute("""
+        SELECT fecha, score_total FROM scores
+        WHERE categoria = ?
+        ORDER BY fecha DESC
+        LIMIT 30
+    """, (categoria_clave,)).fetchall()
+    conn.close()
+
+    if not rows:
+        return {"dias_consecutivos": 0, "semanas_en_agenda": 0,
+                "tendencia": "stable", "etiqueta": ""}
+
+    # Días consecutivos por encima del umbral (desde el más reciente)
+    dias_consecutivos = 0
+    for row in rows:
+        if row["score_total"] >= umbral:
+            dias_consecutivos += 1
+        else:
+            break
+
+    semanas = dias_consecutivos // 7
+
+    # Tendencia: promedio últimos 3 vs anteriores 3
+    scores_list = [r["score_total"] for r in rows]
+    if len(scores_list) >= 6:
+        avg_reciente = sum(scores_list[:3]) / 3
+        avg_anterior = sum(scores_list[3:6]) / 3
+        diff = avg_reciente - avg_anterior
+        tendencia = "up" if diff > 3 else ("down" if diff < -3 else "stable")
+    elif len(scores_list) >= 2:
+        tendencia = "up" if scores_list[0] > scores_list[1] else (
+            "down" if scores_list[0] < scores_list[1] else "stable")
+    else:
+        tendencia = "stable"
+
+    # Etiqueta concisa
+    if semanas >= 2:
+        etiqueta = f"Semana {semanas} en agenda"
+    elif dias_consecutivos >= 3:
+        etiqueta = f"{dias_consecutivos} dias activo"
+    else:
+        etiqueta = ""
+
+    return {
+        "dias_consecutivos": dias_consecutivos,
+        "semanas_en_agenda": semanas,
+        "tendencia": tendencia,
+        "etiqueta": etiqueta,
+    }
 
 
 def calcular_todos_los_scores():
@@ -489,7 +579,7 @@ def generar_reporte():
     lineas.extend([
         "",
         "-" * 70,
-        f"  Fórmula: SCORE = (0.30×Media) + (0.20×Trends) + (0.25×Congreso) + (0.15×Mañanera) + (0.10×Urgencia)",
+        f"  Fórmula: SCORE = (0.25×Media) + (0.15×Trends) + (0.30×Congreso) + (0.15×Mañanera) + (0.15×Urgencia)",
         f"  Verde ≥70 | Amarillo 40-69 | Rojo <40",
         "=" * 70,
     ])

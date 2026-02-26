@@ -40,6 +40,7 @@ from api.correlacion import (
     obtener_alertas_recientes,
     obtener_historial_scores_todas,
     generar_reporte,
+    calcular_momentum,
 )
 from api.lag import analizar_todas_categorias, obtener_prediccion
 from api.predictor_autoria import (
@@ -502,7 +503,7 @@ def paso_7_exportar_dashboard():
         "metadata": {
             "generado": datetime.now().isoformat(),
             "version": "3.0",
-            "formula": "SCORE = (0.30*Media) + (0.20*Trends) + (0.25*Congreso) + (0.15*Mañanera) + (0.10*Urgencia)",
+            "formula": "SCORE = (0.25*Media) + (0.15*Trends) + (0.30*Congreso) + (0.15*Mañanera) + (0.15*Urgencia)",
             "umbrales": SCORING["umbrales"],
             "sil_docs": sil_stats.get("total", 0),
         },
@@ -520,7 +521,7 @@ def paso_7_exportar_dashboard():
         "resoluciones": obtener_resoluciones(semanas=12),
     }
 
-    # Construir datos del semáforo con nombres
+    # Construir datos del semáforo con nombres + momentum
     for score in scores:
         cat_clave = score.get("categoria", "")
         cat_config = CATEGORIAS.get(cat_clave, {})
@@ -535,6 +536,7 @@ def paso_7_exportar_dashboard():
             "score_urgencia": score.get("score_urgencia", 0),
             "color": score.get("color", "rojo"),
             "fecha": score.get("fecha", ""),
+            "momentum": calcular_momentum(cat_clave),
         })
 
     # Escribir JSON

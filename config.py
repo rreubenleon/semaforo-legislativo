@@ -424,11 +424,11 @@ CATEGORIAS = {
 # ─────────────────────────────────────────────
 SCORING = {
     "pesos": {
-        "media": 0.30,       # Cobertura mediática
-        "trends": 0.20,      # Google Trends
-        "congreso": 0.25,    # Actividad en Gaceta Parlamentaria
+        "media": 0.25,       # Cobertura mediática (volumen + concentración + diversidad)
+        "trends": 0.15,      # Google Trends (atención pública, no intención política)
+        "congreso": 0.30,    # Actividad en Gaceta Parlamentaria (señal institucional)
         "mananera": 0.15,    # Mención de la Presidenta en conferencia matutina
-        "urgencia": 0.10,    # Factor de urgencia temporal
+        "urgencia": 0.15,    # Factor de urgencia condicional (amplifica si convergen señales)
     },
     "umbrales": {
         "verde": 70,         # ≥70: alta probabilidad de actividad legislativa
@@ -437,7 +437,7 @@ SCORING = {
     },
 }
 
-# SCORE = (0.30×Media) + (0.20×Trends) + (0.25×Congreso) + (0.15×Mañanera) + (0.10×Urgencia)
+# SCORE = (0.25×Media) + (0.15×Trends) + (0.30×Congreso) + (0.15×Mañanera) + (0.15×Urgencia)
 
 # ─────────────────────────────────────────────
 # CONGRESO - Gaceta Parlamentaria
@@ -580,6 +580,12 @@ URGENCIA = {
         {"inicio": "09-01", "fin": "12-15"},  # Primer período
         {"inicio": "02-01", "fin": "04-30"},  # Segundo período
     ],
+    "amplificacion": {
+        "umbral_media": 50,             # Media debe superar este score
+        "umbral_congreso": 60,          # Congreso debe superar este score
+        "factor_max_convergente": 1.4,  # Ambas señales activas → hasta 1.4×
+        "factor_max_parcial": 1.15,     # Una señal activa → hasta 1.15×
+    },
 }
 
 # ─────────────────────────────────────────────

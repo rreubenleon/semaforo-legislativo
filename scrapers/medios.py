@@ -250,15 +250,11 @@ def obtener_score_media(categoria_keywords, dias=7):
     """
     Calcula score 0-100 de presión mediática para una categoría.
 
-    Mide qué proporción de la agenda mediática ocupa este tema,
-    relativo a lo esperado si todos los temas tuvieran igual cobertura.
-
-    - ratio > 1 → el tema domina la agenda → score > 50
-    - ratio = 1 → cobertura promedio → score ≈ 50
-    - ratio < 1 → tema con poca presencia → score < 50
-
-    Usa escala logarítmica (tanh) para que diferencias pequeñas
-    en temas poco cubiertos aún sean visibles.
+    Descompone en 4 subfactores:
+    1. Volumen/Share (40%) — proporción de la agenda mediática (escala log tanh)
+    2. Concentración temporal (20%) — en cuántos de los N días apareció el tema
+    3. Días consecutivos (20%) — streak desde hoy hacia atrás
+    4. Diversidad de medios (20%) — cuántas fuentes distintas cubren el tema (√)
     """
     import math
 
@@ -277,12 +273,12 @@ def obtener_score_media(categoria_keywords, dias=7):
         conn.close()
         return 0
 
-    # Peso ponderado de artículos relevantes (deduplicando por id)
+    # Recopilar artículos relevantes con metadata (deduplicando por id)
     articulos_vistos = set()
-    score_acum = 0.0
+    articulos_data = []
     for kw in categoria_keywords:
         rows = conn.execute("""
-            SELECT id, peso_fuente FROM articulos
+            SELECT id, peso_fuente, fuente, DATE(fecha) as dia FROM articulos
             WHERE fecha >= ?
               AND (titulo LIKE ? OR resumen LIKE ?)
         """, (fecha_limite, f"%{kw}%", f"%{kw}%")).fetchall()
@@ -290,28 +286,59 @@ def obtener_score_media(categoria_keywords, dias=7):
         for row in rows:
             if row[0] not in articulos_vistos:
                 articulos_vistos.add(row[0])
-                score_acum += row[1]
+                articulos_data.append({
+                    "id": row[0], "peso": row[1],
+                    "fuente": row[2], "dia": row[3],
+                })
 
     conn.close()
 
-    # Proporción de la agenda que ocupa este tema
-    share = score_acum / total_peso  # 0.0 a ~0.30
-
-    # Share esperado si todos los temas fueran iguales (14 categorías)
-    n_categorias = len(CATEGORIAS)
-    expected_share = 1.0 / n_categorias  # ~0.0714
-
-    # Ratio vs lo esperado
-    ratio = share / expected_share if expected_share > 0 else 0
-
-    if ratio <= 0:
+    if not articulos_data:
         return 0.0
 
-    # Escala logarítmica con tanh: ratio=1 → 50, ratio=3 → ~83, ratio=0.1 → ~3
-    score = 50 + 50 * math.tanh(math.log(ratio) / 1.5)
-    score = max(0.0, min(100.0, score))
+    score_acum = sum(a["peso"] for a in articulos_data)
 
-    return round(score, 2)
+    # ── Subfactor 1: Volumen/Share (40%) ──
+    share = score_acum / total_peso
+    n_categorias = len(CATEGORIAS)
+    expected_share = 1.0 / n_categorias
+    ratio = share / expected_share if expected_share > 0 else 0
+    if ratio <= 0:
+        vol_score = 0.0
+    else:
+        vol_score = 50 + 50 * math.tanh(math.log(ratio) / 1.5)
+    vol_score = max(0.0, min(100.0, vol_score))
+
+    # ── Subfactor 2: Concentración temporal (20%) ──
+    dias_con_cobertura = set(a["dia"] for a in articulos_data)
+    conc_score = min((len(dias_con_cobertura) / dias) * 100.0, 100.0)
+
+    # ── Subfactor 3: Días consecutivos recientes (20%) ──
+    hoy = datetime.now().date()
+    dias_consecutivos = 0
+    for i in range(dias):
+        dia_check = (hoy - timedelta(days=i)).strftime("%Y-%m-%d")
+        if dia_check in dias_con_cobertura:
+            dias_consecutivos += 1
+        else:
+            break
+    consec_score = min((dias_consecutivos / dias) * 100.0, 100.0)
+
+    # ── Subfactor 4: Diversidad de medios (20%) ──
+    fuentes_unicas = set(a["fuente"] for a in articulos_data)
+    n_total_medios = len(MEDIOS)
+    diversity_ratio = math.sqrt(len(fuentes_unicas) / n_total_medios) if n_total_medios > 0 else 0
+    div_score = min(diversity_ratio * 100.0, 100.0)
+
+    # ── Compuesto ──
+    score = (
+        0.40 * vol_score
+        + 0.20 * conc_score
+        + 0.20 * consec_score
+        + 0.20 * div_score
+    )
+
+    return round(max(0.0, min(100.0, score)), 2)
 
 
 if __name__ == "__main__":

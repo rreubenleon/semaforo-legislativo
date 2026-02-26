@@ -450,8 +450,8 @@ def obtener_score_mananera(categoria_clave, dias=14):
 
         dias_atras = (hoy - fecha_mencion).days
 
-        # Decay exponencial: mención de hoy = 1.0, de hace 7 días = 0.5, de hace 14 = 0.25
-        peso_temporal = 2.0 ** (-dias_atras / 7.0)
+        # Decay exponencial: mención de hoy = 1.0, de hace 5 días = 0.5, de hace 10 = 0.25
+        peso_temporal = 2.0 ** (-dias_atras / 5.0)
 
         # Bonus por longitud del fragmento (mención sustantiva vs mención tangencial)
         frag_len = len(row["fragmento"]) if row["fragmento"] else 0
