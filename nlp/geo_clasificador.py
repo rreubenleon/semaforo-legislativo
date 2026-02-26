@@ -519,9 +519,13 @@ def clasificar_estado(titulo, resumen):
 # ---------------------------------------------------------------------------
 # clasificar_articulos_por_estado()
 # ---------------------------------------------------------------------------
-def clasificar_articulos_por_estado():
-    """Lee todos los articulos de la tabla 'articulos' en semaforo.db,
+def clasificar_articulos_por_estado(desde_fecha=None):
+    """Lee articulos de la tabla 'articulos' en semaforo.db,
     clasifica cada uno por estado y retorna un diccionario agrupado.
+
+    Args:
+        desde_fecha: Fecha minima (str YYYY-MM-DD HH:MM:SS). Si se
+                     proporciona, solo incluye articulos desde esa fecha.
 
     Retorno:
         {
@@ -552,9 +556,15 @@ def clasificar_articulos_por_estado():
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
-        cursor.execute(
-            "SELECT titulo, fecha, resumen, url, categorias FROM articulos"
-        )
+        if desde_fecha:
+            cursor.execute(
+                "SELECT titulo, fecha, resumen, url, categorias FROM articulos WHERE fecha >= ?",
+                (desde_fecha,)
+            )
+        else:
+            cursor.execute(
+                "SELECT titulo, fecha, resumen, url, categorias FROM articulos"
+            )
         filas = cursor.fetchall()
 
         for fila in filas:
@@ -596,7 +606,8 @@ def clasificar_articulos_por_estado():
 # ---------------------------------------------------------------------------
 def obtener_mapa_datos():
     """Genera un resumen por estado listo para alimentar una visualizacion
-    de mapa o dashboard.
+    de mapa o dashboard.  Solo incluye articulos de la semana actual
+    (lunes a domingo).
 
     Retorno:
         {
@@ -612,7 +623,11 @@ def obtener_mapa_datos():
 
     Solo incluye estados que tengan al menos un articulo clasificado.
     """
-    articulos_por_estado = clasificar_articulos_por_estado()
+    from datetime import datetime, timedelta
+    hoy = datetime.now()
+    lunes = hoy - timedelta(days=hoy.weekday())
+    desde_fecha = lunes.strftime("%Y-%m-%d 00:00:00")
+    articulos_por_estado = clasificar_articulos_por_estado(desde_fecha=desde_fecha)
 
     mapa = {}
 

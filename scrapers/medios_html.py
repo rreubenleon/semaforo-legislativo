@@ -125,6 +125,13 @@ SCRAPE_CONFIGS = {
         "base_url": "https://www.lapoliticaonline.com",
         "filtro_href": "/mexico/",
     },
+    "el_pais": {
+        "url": "https://elpais.com/mexico/",
+        "metodo": "headings",
+        "tags": ["h2", "h3"],
+        "base_url": "https://elpais.com",
+        "filtro_href": "/mexico/",
+    },
 }
 
 

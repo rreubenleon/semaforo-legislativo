@@ -97,6 +97,11 @@ MEDIOS = {
         "rss": "",
         "peso": 1.1,  # Cobertura política con fuentes internas
     },
+    "el_pais": {
+        "nombre": "El País",
+        "rss": "",  # Sin RSS público para sección México; cubierto por medios_html.py
+        "peso": 1.3,  # Peso alto: cobertura internacional de referencia
+    },
 }
 
 # ─────────────────────────────────────────────
@@ -108,6 +113,12 @@ TWITTER_ACCOUNTS = [
         "nombre": "Leti Robles Rosa",
         "medio": "Reforma",
         "peso": 1.2,
+    },
+    {
+        "handle": "@MLopezSanMartin",
+        "nombre": "Manuel López San Martín",
+        "medio": "Periodista político",
+        "peso": 1.1,
     },
     {
         "handle": "@SaraPantoja",

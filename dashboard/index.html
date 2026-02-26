@@ -903,7 +903,7 @@
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
                         <div>
                             <h2 className="text-lg font-bold text-gray-800 mb-1">Mapa de cobertura mediatica</h2>
-                            <p className="text-sm text-gray-500">Distribucion geografica de {totalArticulos} noticias rastreadas en {estados.length} estados.</p>
+                            <p className="text-sm text-gray-500">Distribucion geografica de {totalArticulos} noticias rastreadas en {estados.length} estados durante esta semana.</p>
                         </div>
                         <div className="flex items-center gap-4 text-xs text-gray-500">
                             <div className="text-center"><div className="text-lg font-bold text-acento">{estados.length}</div>estados</div>
@@ -1170,27 +1170,20 @@
                 return () => { if (chartInstance.current) chartInstance.current.destroy(); };
             }, [semanas]);
 
-            // Speedometer SVG
+            // Speedometer SVG - Semicircle (half gauge)
             const gaugeColor = resoluciones.accuracy_global >= 70 ? '#22c55e' : resoluciones.accuracy_global >= 50 ? '#eab308' : '#ef4444';
             const speedVal = resoluciones.accuracy_global;
-            const speedAngle = -135 + (speedVal / 100) * 270; // -135° (0%) to +135° (100%)
-            const speedR = 54;
+            const speedR = 50;
+            const speedCx = 70, speedCy = 65;
             const speedArc = (pct) => {
-                const startAngle = -135 * (Math.PI / 180);
-                const endAngle = (-135 + (pct / 100) * 270) * (Math.PI / 180);
-                const cx = 70, cy = 70;
-                const x1 = cx + speedR * Math.cos(startAngle);
-                const y1 = cy + speedR * Math.sin(startAngle);
-                const x2 = cx + speedR * Math.cos(endAngle);
-                const y2 = cy + speedR * Math.sin(endAngle);
-                const largeArc = (pct / 100) * 270 > 180 ? 1 : 0;
-                return `M ${x1} ${y1} A ${speedR} ${speedR} 0 ${largeArc} 1 ${x2} ${y2}`;
+                const startAngle = Math.PI;
+                const endAngle = Math.PI + (pct / 100) * Math.PI;
+                const x1 = speedCx + speedR * Math.cos(startAngle);
+                const y1 = speedCy + speedR * Math.sin(startAngle);
+                const x2 = speedCx + speedR * Math.cos(endAngle);
+                const y2 = speedCy + speedR * Math.sin(endAngle);
+                return `M ${x1} ${y1} A ${speedR} ${speedR} 0 0 0 ${x2} ${y2}`;
             };
-            const needleAngle = speedAngle;
-            const needleRad = needleAngle * (Math.PI / 180);
-            const needleLen = 40;
-            const nx = 70 + needleLen * Math.cos(needleRad);
-            const ny = 70 + needleLen * Math.sin(needleRad);
 
             if (semanas.length === 0) {
                 return (
@@ -1213,34 +1206,14 @@
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {/* Speedometer */}
                         <div className="glass border border-borde rounded-xl p-4 flex flex-col items-center justify-center">
-                            <svg width="150" height="110" viewBox="0 0 140 105">
+                            <svg width="150" height="100" viewBox="0 5 140 90">
                                 {/* Background arc (gray track) */}
-                                <path d={speedArc(100)} fill="none" stroke="#e5e7eb" strokeWidth="12" strokeLinecap="round" />
-                                {/* Colored zones */}
-                                <path d={speedArc(33)} fill="none" stroke="#ef4444" strokeWidth="12" strokeLinecap="round" opacity="0.25" />
-                                <path d={(() => { const s = -135 * (Math.PI/180); const e = (-135 + 0.33*270) * (Math.PI/180); return ''; })()} />
+                                <path d={speedArc(100)} fill="none" stroke="#e5e7eb" strokeWidth="14" strokeLinecap="round" />
                                 {/* Value arc */}
-                                {speedVal > 0 && <path d={speedArc(speedVal)} fill="none" stroke={gaugeColor} strokeWidth="12" strokeLinecap="round" style={{transition: 'all 1s ease'}} />}
-                                {/* Tick marks */}
-                                {[0, 25, 50, 75, 100].map(v => {
-                                    const a = (-135 + (v / 100) * 270) * (Math.PI / 180);
-                                    const x1 = 70 + 44 * Math.cos(a), y1 = 70 + 44 * Math.sin(a);
-                                    const x2 = 70 + 48 * Math.cos(a), y2 = 70 + 48 * Math.sin(a);
-                                    const xt = 70 + 37 * Math.cos(a), yt = 70 + 37 * Math.sin(a);
-                                    return (
-                                        <g key={v}>
-                                            <line x1={x1} y1={y1} x2={x2} y2={y2} stroke="#9ca3af" strokeWidth="1.5" />
-                                            <text x={xt} y={yt + 3} textAnchor="middle" fill="#9ca3af" style={{fontSize: '8px'}}>{v}</text>
-                                        </g>
-                                    );
-                                })}
-                                {/* Needle */}
-                                <line x1="70" y1="70" x2={nx} y2={ny} stroke="#1a365d" strokeWidth="2.5" strokeLinecap="round" style={{transition: 'all 1s ease'}} />
-                                <circle cx="70" cy="70" r="4" fill="#1a365d" />
-                                <circle cx="70" cy="70" r="2" fill="white" />
+                                {speedVal > 0 && <path d={speedArc(speedVal)} fill="none" stroke={gaugeColor} strokeWidth="14" strokeLinecap="round" style={{transition: 'all 1s ease'}} />}
                                 {/* Value text */}
-                                <text x="70" y="95" textAnchor="middle" fill="#1a365d" style={{fontSize: '18px', fontWeight: 700}}>{resoluciones.accuracy_global.toFixed(1)}%</text>
-                                <text x="70" y="104" textAnchor="middle" fill="#9ca3af" style={{fontSize: '8px'}}>precision global</text>
+                                <text x="70" y="58" textAnchor="middle" fill={gaugeColor} style={{fontSize: '28px', fontWeight: 700}}>{resoluciones.accuracy_global.toFixed(0)}%</text>
+                                <text x="70" y="72" textAnchor="middle" fill="#9ca3af" style={{fontSize: '9px'}}>precision global</text>
                             </svg>
                         </div>
 
