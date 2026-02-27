@@ -115,6 +115,12 @@ TWITTER_ACCOUNTS = [
         "peso": 1.2,
     },
     {
+        "handle": "@PollsMX_",
+        "nombre": "Polls MX",
+        "medio": "Encuestas y opinión pública",
+        "peso": 1.0,
+    },
+    {
         "handle": "@MLopezSanMartin",
         "nombre": "Manuel López San Martín",
         "medio": "Periodista político",
