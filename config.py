@@ -241,7 +241,11 @@ CATEGORIAS = {
             "extorsión", "secuestro", "feminicidio", "desaparición forzada",
         ],
         "comisiones": [
+            # Diputados
             "Justicia", "Seguridad Pública", "Defensa Nacional",
+            # Senado LXVI
+            "Justicia", "Seguridad Pública", "Defensa Nacional",
+            "Guardia Nacional", "Marina",
         ],
     },
     "economia_hacienda": {
@@ -254,8 +258,14 @@ CATEGORIAS = {
             "recaudación", "IEPS", "IVA", "ISR", "déficit",
         ],
         "comisiones": [
+            # Diputados
             "Hacienda y Crédito Público", "Economía, Comercio y Competitividad",
             "Presupuesto y Cuenta Pública",
+            # Senado LXVI
+            "Hacienda y Crédito Público", "Economía",
+            "Fomento Económico y al Emprendimiento",
+            "Defensa de los Consumidores",
+            "Desarrollo Regional",
         ],
     },
     "energia": {
@@ -267,7 +277,10 @@ CATEGORIAS = {
             "tarifas eléctricas", "soberanía energética",
         ],
         "comisiones": [
+            # Diputados
             "Energía",
+            # Senado LXVI
+            "Energía", "Minería",
         ],
     },
     "salud": {
@@ -279,7 +292,10 @@ CATEGORIAS = {
             "salud mental", "adicciones", "fentanilo",
         ],
         "comisiones": [
+            # Diputados
             "Salud",
+            # Senado LXVI
+            "Salud", "Seguridad Social",
         ],
     },
     "educacion": {
@@ -291,7 +307,12 @@ CATEGORIAS = {
             "rezago educativo", "deserción escolar",
         ],
         "comisiones": [
+            # Diputados
             "Educación", "Ciencia, Tecnología e Innovación",
+            # Senado LXVI
+            "Educación",
+            "Ciencia, Humanidades, Tecnología e Innovación",
+            "Cultura", "Juventud", "Deporte",
         ],
     },
     "trabajo": {
@@ -303,7 +324,10 @@ CATEGORIAS = {
             "prestaciones", "aguinaldo", "vacaciones dignas",
         ],
         "comisiones": [
+            # Diputados
             "Trabajo y Previsión Social",
+            # Senado LXVI
+            "Trabajo y Previsión Social", "Seguridad Social",
         ],
     },
     "electoral_politico": {
@@ -316,7 +340,18 @@ CATEGORIAS = {
             "revocación de mandato", "consulta popular",
         ],
         "comisiones": [
+            # Diputados
             "Gobernación y Población", "Reforma Política-Electoral",
+            # Senado LXVI
+            "Gobernación", "Puntos Constitucionales",
+            "Participación Ciudadana",
+            "Estudios Legislativos",
+            "Estudios Legislativos, Primera",
+            "Estudios Legislativos, Segunda",
+            "Federalismo",
+            "Desarrollo Municipal",
+            "Reglamentos y Prácticas Parlamentarias",
+            "Medalla Belisario Domínguez",
         ],
     },
     "derechos_humanos": {
@@ -329,8 +364,16 @@ CATEGORIAS = {
             "defensor", "amnistía",
         ],
         "comisiones": [
+            # Diputados
             "Derechos Humanos", "Igualdad de Género",
             "Asuntos Migratorios",
+            # Senado LXVI
+            "Derechos Humanos",
+            "Derechos de la Niñez y de la Adolescencia",
+            "Derechos Digitales",
+            "Para la Igualdad de Género",
+            "Asuntos Migratorios",
+            "Pueblos Indígenas y Afromexicanos",
         ],
     },
     "infraestructura": {
@@ -345,8 +388,19 @@ CATEGORIAS = {
             "damnificados", "derrumbe", "evacuación",
         ],
         "comisiones": [
+            # Diputados
             "Infraestructura", "Comunicaciones y Transportes",
             "Recursos Hidráulicos, Agua Potable y Saneamiento",
+            # Senado LXVI
+            "Comunicaciones y Transportes",
+            "Infraestructura Ferroviaria",
+            "Puertos e Infraestructura Marítima",
+            "Zonas Metropolitanas y Movilidad",
+            "Desarrollo Urbano y Ordenamiento Territorial",
+            "Recursos Hídricos e Infraestructura Hidráulica",
+            "Reordenamiento Urbano y Vivienda",
+            "Desarrollo Municipal",
+            "Desarrollo Regional",
         ],
     },
     "agro_rural": {
@@ -360,7 +414,13 @@ CATEGORIAS = {
             "certificación agropecuaria",
         ],
         "comisiones": [
+            # Diputados
             "Desarrollo y Conservación Rural, Agrícola y Autosuficiencia Alimentaria",
+            # Senado LXVI
+            "Agricultura", "Ganadería", "Desarrollo Rural",
+            "Pesca y Acuacultura",
+            "Reforma Agraria",
+            "Autosuficiencia Alimentaria",
         ],
     },
     "relaciones_exteriores": {
@@ -372,7 +432,19 @@ CATEGORIAS = {
             "soberanía", "intervención", "deportación",
         ],
         "comisiones": [
+            # Diputados
             "Relaciones Exteriores",
+            # Senado LXVI
+            "Relaciones Exteriores",
+            "Relaciones Exteriores América del Norte",
+            "Relaciones Exteriores América Latina y el Caribe",
+            "Relaciones Exteriores Asia-Pacífico",
+            "Relaciones Exteriores Europa",
+            "Relaciones Exteriores África",
+            "Organismos Internacionales",
+            "Seguimiento a la Implementación y Revisión del T-MEC",
+            "Asuntos de la Frontera Norte",
+            "Asuntos de la Frontera Sur",
         ],
     },
     "anticorrupcion": {
@@ -385,7 +457,11 @@ CATEGORIAS = {
             "SNA", "UIF", "extinción de dominio",
         ],
         "comisiones": [
+            # Diputados
             "Transparencia y Anticorrupción",
+            # Senado LXVI
+            "Anticorrupción y Transparencia",
+            "Jurisdiccional",
         ],
     },
     "medio_ambiente": {
@@ -404,8 +480,11 @@ CATEGORIAS = {
             "tala", "silvicultura",
         ],
         "comisiones": [
+            # Diputados
             "Medio Ambiente, Sustentabilidad, Cambio Climático y Recursos Naturales",
             "Cambio Climático y Sostenibilidad",
+            # Senado LXVI
+            "Medio Ambiente, Recursos Naturales y Cambio Climático",
         ],
     },
     "inteligencia_artificial": {
@@ -420,7 +499,58 @@ CATEGORIAS = {
             "protección de datos personales", "ley de datos",
         ],
         "comisiones": [
+            # Diputados
             "Ciencia, Tecnología e Innovación",
+            # Senado LXVI
+            "Análisis, Seguimiento y Evaluación sobre la aplicación y desarrollo de la Inteligencia Artificial en México",
+            "Ciencia, Humanidades, Tecnología e Innovación",
+            "Ciberseguridad",
+            "Derechos Digitales",
+        ],
+    },
+    "politica_social": {
+        "nombre": "Política Social",
+        "keywords": [
+            "bienestar", "programa social", "subsidio", "pobreza",
+            "marginación", "pensión bienestar", "beca benito juárez",
+            "jóvenes construyendo el futuro", "tandas para el bienestar",
+            "adultos mayores", "personas con discapacidad",
+            "desarrollo social", "asistencia social", "vulnerabilidad",
+            "desigualdad", "rezago social", "carencia social",
+            "Coneval", "pobreza extrema", "ingreso mínimo",
+        ],
+        "comisiones": [
+            # Senado LXVI
+            "Bienestar",
+        ],
+    },
+    "medios_comunicacion": {
+        "nombre": "Medios de Comunicación",
+        "keywords": [
+            "radio", "televisión", "cinematografía", "medios de comunicación",
+            "concesión de radiodifusión", "IFT", "contenido audiovisual",
+            "streaming", "plataforma digital", "regulación de medios",
+            "ley de telecomunicaciones", "derecho a la información",
+            "comunicación social", "radiodifusión", "espectro radioeléctrico",
+            "televisión pública", "censura mediática",
+        ],
+        "comisiones": [
+            # Senado LXVI
+            "Radio, Televisión y Cinematografía",
+        ],
+    },
+    "turismo": {
+        "nombre": "Turismo",
+        "keywords": [
+            "turismo", "turista", "Sectur", "hotel", "hotelería",
+            "destino turístico", "pueblo mágico", "ecoturismo",
+            "turismo cultural", "ocupación hotelera", "derrama económica",
+            "industria hotelera", "viajero", "crucero",
+            "turismo sustentable", "infraestructura turística",
+        ],
+        "comisiones": [
+            # Senado LXVI
+            "Turismo",
         ],
     },
 }
