@@ -26,29 +26,50 @@ logger = logging.getLogger(__name__)
 # desastres) porque esos sí presionan al Congreso.
 # ─────────────────────────────────────────────
 CONTEXTO_DEPORTIVO = [
+    # Fútbol mexicano
     "selección mexicana", "selección nacional", "seleccion mexicana",
     "director técnico", "director tecnico", "convocatoria mundialista",
     "mundial 2026", "mundial de futbol", "eliminatoria mundialista",
     "liga mx", "club américa", "club america", "chivas", "pumas unam",
-    "tigres uanl", "rayados", "cruz azul vs",
-    "juegos olímpicos", "juegos olimpicos", "medallista olímpic",
-    "sprint femenino", "sprint masculino", "clavadista",
+    "tigres uanl", "rayados", "cruz azul vs", "santos laguna",
     "copa oro", "copa del mundo", "balón de oro", "balon de oro",
     "gol de", "anotó gol", "marcador final", "medio tiempo",
     "fichaje", "transferencia de jugador", "entrenador del equipo",
+    # Otros deportes
+    "juegos olímpicos", "juegos olimpicos", "medallista olímpic",
+    "sprint femenino", "sprint masculino", "clavadista",
     "torneo de tenis", "grand prix", "fórmula 1", "formula 1",
     "ufc", "pelea de box", "round de box",
+    # Deportes internacionales
+    "super bowl", "nfl", "nba", "mlb", "grandes ligas",
+    "champions league", "premier league", "la liga española",
+    "serie a italiana",
+    # Maratones y atletismo (sin contexto político)
+    "maratón de la ciudad", "medio maratón", "triatlón",
 ]
 
 CONTEXTO_ENTRETENIMIENTO = [
+    # Virales y redes sociales
     "se vuelve viral", "video viral", "se hizo viral",
     "meme de", "los memes", "horóscopo", "horoscopo",
     "signo zodiacal", "farándula", "farandula",
     "reality show", "influencer", "tiktoker", "youtuber",
+    "celebridad", "paparazzi",
+    # Cine, TV y streaming
     "netflix", "serie de tv", "telenovela", "estreno de cine",
     "alfombra roja", "premios oscar", "premios grammy",
+    "taquilla de cine", "trailer oficial",
+    "temporada de serie", "disney plus", "amazon prime video",
+    # Música y conciertos
+    "concierto", "gira musical", "gira de conciertos",
+    "boletos de concierto", "festival musical", "sold out",
+    "backstage", "meet and greet", "fan zone",
+    "álbum nuevo", "sencillo musical", "videoclip",
+    # Videojuegos
+    "videojuego", "gamer", "esports", "playstation", "xbox",
+    # Misceláneos
     "perro lobo", "mascota viral", "receta de cocina",
-    "celebridad", "paparazzi",
+    "tendencia de moda", "pasarela de moda",
 ]
 
 def _es_contexto_no_legislativo(titulo, resumen=""):

@@ -272,7 +272,7 @@ CATEGORIAS = {
         "nombre": "Energía",
         "keywords": [
             "energía", "petróleo", "Pemex", "CFE", "electricidad",
-            "hidrocarburos", "gasolina", "gas", "renovable", "solar",
+            "hidrocarburos", "gasolina", "gas natural", "gas LP", "renovable", "solar",
             "eólica", "litio", "refinería", "subsidio energético",
             "tarifas eléctricas", "soberanía energética",
         ],
@@ -359,7 +359,7 @@ CATEGORIAS = {
         "keywords": [
             "derechos humanos", "CNDH", "discriminación", "igualdad",
             "género", "migración", "migrante", "refugiado", "indígena",
-            "diversidad", "LGBT", "aborto", "violencia de género",
+            "diversidad sexual", "LGBT", "aborto", "violencia de género",
             "trata de personas", "libertad de expresión", "periodista",
             "defensor", "amnistía",
         ],
@@ -379,10 +379,13 @@ CATEGORIAS = {
     "infraestructura": {
         "nombre": "Infraestructura",
         "keywords": [
-            "infraestructura", "carretera", "tren", "aeropuerto", "AIFA",
-            "Tren Maya", "transporte", "obra pública", "construcción",
-            "vivienda", "agua", "Conagua", "drenaje", "puente",
+            "infraestructura", "carretera", "aeropuerto", "AIFA",
+            "Tren Maya", "tren interurbano", "tren suburbano",
+            "sistema de transporte", "red de transporte",
+            "obra pública", "obra de infraestructura",
+            "vivienda social", "Infonavit", "Conagua", "drenaje", "puente",
             "corredor interoceánico", "telecomunicaciones",
+            "abastecimiento de agua", "crisis hídrica",
             "terremoto", "sismo", "inundación", "huracán", "desastre natural",
             "protección civil", "reconstrucción", "declaratoria de emergencia",
             "damnificados", "derrumbe", "evacuación",
@@ -406,10 +409,10 @@ CATEGORIAS = {
     "agro_rural": {
         "nombre": "Agro y Desarrollo Rural",
         "keywords": [
-            "agricultura", "campo", "campesino", "agro", "ganadería",
+            "agricultura", "campo mexicano", "campesino", "agro", "ganadería",
             "pesca", "maíz", "glifosato", "transgénico", "Segalmex",
             "Sembrando Vida", "fertilizante", "sequía", "cosecha",
-            "ejido", "tierra", "reforma agraria", "soberanía alimentaria",
+            "ejido", "tenencia de tierra", "reforma agraria", "soberanía alimentaria",
             "productos agropecuarios", "exportación agropecuaria",
             "certificación agropecuaria",
         ],
@@ -429,7 +432,7 @@ CATEGORIAS = {
             "relaciones exteriores", "diplomacia", "embajada", "tratado",
             "T-MEC", "Estados Unidos", "frontera", "aranceles", "ONU",
             "cancillería", "SRE", "consulado", "extradición",
-            "soberanía", "intervención", "deportación",
+            "soberanía nacional", "intervención extranjera", "deportación",
         ],
         "comisiones": [
             # Diputados
@@ -452,7 +455,7 @@ CATEGORIAS = {
         "keywords": [
             "corrupción", "transparencia", "INAI", "ASF", "auditoría",
             "conflicto de interés", "enriquecimiento ilícito", "soborno",
-            "licitación", "contrato", "nepotismo", "lavado de dinero",
+            "licitación", "contrato público", "nepotismo", "lavado de dinero",
             "declaración patrimonial", "Sistema Nacional Anticorrupción",
             "SNA", "UIF", "extinción de dominio",
         ],
@@ -527,12 +530,13 @@ CATEGORIAS = {
     "medios_comunicacion": {
         "nombre": "Medios de Comunicación",
         "keywords": [
-            "radio", "televisión", "cinematografía", "medios de comunicación",
-            "concesión de radiodifusión", "IFT", "contenido audiovisual",
-            "streaming", "plataforma digital", "regulación de medios",
-            "ley de telecomunicaciones", "derecho a la información",
-            "comunicación social", "radiodifusión", "espectro radioeléctrico",
-            "televisión pública", "censura mediática",
+            "televisión abierta", "televisión pública", "cinematografía",
+            "medios de comunicación", "concesión de radiodifusión", "IFT",
+            "regulación de medios", "ley de telecomunicaciones",
+            "derecho a la información", "radiodifusión",
+            "espectro radioeléctrico", "censura mediática",
+            "concesión de televisión", "medio radiofónico",
+            "regulación de contenidos", "ley de radiodifusión",
         ],
         "comisiones": [
             # Senado LXVI
