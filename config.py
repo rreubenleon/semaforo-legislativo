@@ -219,6 +219,18 @@ TWITTER_ACCOUNTS = [
         "medio": "Coord. MC – Senado",
         "peso": 1.3,
     },
+    {
+        "handle": "@RoDeleyja",
+        "nombre": "Rodrigo Deleyja",
+        "medio": "Periodista político",
+        "peso": 1.0,
+    },
+    {
+        "handle": "@RutaElectoralmx",
+        "nombre": "Ruta Electoral MX",
+        "medio": "Análisis electoral",
+        "peso": 1.0,
+    },
 ]
 
 # Twitter/X API v2 — Bearer Token (PPU plan)
