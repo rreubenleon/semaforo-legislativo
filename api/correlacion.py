@@ -303,15 +303,22 @@ def calcular_momentum(categoria_clave, umbral=40.0):
         return {"dias_consecutivos": 0, "semanas_en_agenda": 0,
                 "tendencia": "stable", "etiqueta": ""}
 
-    # Días consecutivos por encima del umbral (desde el más reciente)
-    dias_consecutivos = 0
+    # Días en agenda con tolerancia: permite hasta 2 días seguidos
+    # por debajo del umbral sin romper la racha
+    dias_en_agenda = 0
+    dias_bajo_seguidos = 0
+    max_gracia = 2  # días de gracia permitidos
+
     for row in rows:
         if row["score_total"] >= umbral:
-            dias_consecutivos += 1
+            dias_en_agenda += 1 + dias_bajo_seguidos  # recupera días de gracia
+            dias_bajo_seguidos = 0
         else:
-            break
+            dias_bajo_seguidos += 1
+            if dias_bajo_seguidos > max_gracia:
+                break
 
-    semanas = dias_consecutivos // 7
+    semanas = dias_en_agenda // 7
 
     # Tendencia: promedio últimos 3 vs anteriores 3
     scores_list = [r["score_total"] for r in rows]
@@ -329,13 +336,13 @@ def calcular_momentum(categoria_clave, umbral=40.0):
     # Etiqueta concisa
     if semanas >= 2:
         etiqueta = f"Semana {semanas} en agenda"
-    elif dias_consecutivos >= 3:
-        etiqueta = f"{dias_consecutivos} dias activo"
+    elif dias_en_agenda >= 3:
+        etiqueta = f"{dias_en_agenda} dias activo"
     else:
         etiqueta = ""
 
     return {
-        "dias_consecutivos": dias_consecutivos,
+        "dias_consecutivos": dias_en_agenda,
         "semanas_en_agenda": semanas,
         "tendencia": tendencia,
         "etiqueta": etiqueta,
