@@ -261,7 +261,8 @@ CATEGORIAS = {
             },
             "justicia_penal": {
                 "nombre": "Justicia penal y reforma judicial",
-                "keywords": ["código penal", "ministerio público", "proceso penal", "jueces", "fiscalía", "reforma judicial", "poder judicial", "penal"],
+                "keywords": ["código penal", "ministerio público", "proceso penal", "jueces", "fiscalía", "reforma judicial", "poder judicial", "penal",
+                             "código civil", "Ley de Amparo", "solución de controversias"],
             },
             "crimen_organizado": {
                 "nombre": "Crimen organizado",
@@ -302,7 +303,8 @@ CATEGORIAS = {
         "subcategorias": {
             "politica_fiscal": {
                 "nombre": "Política fiscal y recaudación",
-                "keywords": ["impuestos", "SAT", "reforma fiscal", "IEPS", "IVA", "ISR", "recaudación", "contribuyente"],
+                "keywords": ["impuestos", "SAT", "reforma fiscal", "IEPS", "IVA", "ISR", "recaudación", "contribuyente",
+                             "evasión fiscal", "coordinación fiscal", "código fiscal"],
             },
             "presupuesto_gasto": {
                 "nombre": "Presupuesto y gasto público",
@@ -310,7 +312,7 @@ CATEGORIAS = {
             },
             "politica_monetaria": {
                 "nombre": "Política monetaria y macroeconomía",
-                "keywords": ["inflación", "tipo de cambio", "peso mexicano", "Banxico", "tasa de interés", "PIB"],
+                "keywords": ["inflación", "tipo de cambio", "peso mexicano", "Banxico", "tasa de interés", "PIB", "Banco de México"],
             },
             "comercio_exterior": {
                 "nombre": "Comercio exterior e inversión",
@@ -379,7 +381,8 @@ CATEGORIAS = {
             },
             "epidemiologia": {
                 "nombre": "Epidemiología",
-                "keywords": ["epidemia", "pandemia", "enfermedad", "brote", "vigilancia epidemiológica"],
+                "keywords": ["epidemia", "pandemia", "enfermedad", "brote", "vigilancia epidemiológica",
+                             "alerta epidemiológica", "tamizaje"],
             },
         },
     },
@@ -429,7 +432,8 @@ CATEGORIAS = {
             },
             "derechos_laborales": {
                 "nombre": "Derechos laborales",
-                "keywords": ["jornada laboral", "prestaciones", "aguinaldo", "vacaciones dignas", "subcontratación", "outsourcing"],
+                "keywords": ["jornada laboral", "prestaciones", "aguinaldo", "vacaciones dignas", "subcontratación", "outsourcing",
+                             "derechos laborales", "Ley Federal del Trabajo", "permisos laborales"],
             },
             "seguridad_social_pensiones": {
                 "nombre": "Seguridad social y pensiones",
@@ -511,7 +515,8 @@ CATEGORIAS = {
             },
             "derechos_ninez": {
                 "nombre": "Derechos de la niñez",
-                "keywords": ["niñez", "adolescencia", "trabajo infantil", "adopción", "menor de edad"],
+                "keywords": ["niñez", "adolescencia", "trabajo infantil", "adopción", "menor de edad",
+                             "matrimonio infantil", "matrimonio forzado"],
             },
         },
     },
@@ -536,7 +541,8 @@ CATEGORIAS = {
         "subcategorias": {
             "transporte_movilidad": {
                 "nombre": "Transporte y movilidad",
-                "keywords": ["sistema de transporte", "red de transporte", "Tren Maya", "tren interurbano", "tren suburbano", "carretera", "aeropuerto", "AIFA"],
+                "keywords": ["sistema de transporte", "red de transporte", "Tren Maya", "tren interurbano", "tren suburbano", "carretera", "aeropuerto", "AIFA",
+                             "seguridad vial", "movilidad"],
             },
             "obra_publica": {
                 "nombre": "Obra pública",
@@ -589,7 +595,8 @@ CATEGORIAS = {
             },
             "desarrollo_rural_tierra": {
                 "nombre": "Desarrollo rural y tierra",
-                "keywords": ["campo mexicano", "campesino", "ejido", "tenencia de tierra", "reforma agraria", "Sembrando Vida"],
+                "keywords": ["campo mexicano", "campesino", "ejido", "tenencia de tierra", "reforma agraria", "Sembrando Vida",
+                             "desarrollo rural"],
             },
             "comercio_agropecuario": {
                 "nombre": "Comercio agropecuario",
@@ -681,7 +688,7 @@ CATEGORIAS = {
             "conservacion_biodiversidad": {
                 "nombre": "Conservación y biodiversidad",
                 "keywords": ["biodiversidad", "área natural protegida", "Semarnat", "Profepa", "deforestación", "especies en peligro",
-                             "vida silvestre", "equilibrio ecológico"],
+                             "vida silvestre", "equilibrio ecológico", "ecosistema", "áreas naturales"],
             },
             "contaminacion_residuos": {
                 "nombre": "Contaminación y residuos",
