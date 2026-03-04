@@ -278,6 +278,11 @@ CATEGORIAS = {
                 "nombre": "Violencia y víctimas",
                 "keywords": ["homicidio", "feminicidio", "desaparición forzada", "violencia", "impunidad", "víctimas"],
             },
+            "justicia_constitucional": {
+                "nombre": "Justicia constitucional",
+                "keywords": ["suprema corte", "SCJN", "controversia constitucional", "acción de inconstitucionalidad",
+                             "constitucionalidad", "división de poderes", "tribunal constitucional"],
+            },
         },
     },
     "economia_hacienda": {
@@ -312,6 +317,11 @@ CATEGORIAS = {
             "fomento_economico": {
                 "nombre": "Fomento económico",
                 "keywords": ["economía", "inversión pública", "fomento económico", "emprendimiento", "Pymes", "competitividad", "hacienda", "política fiscal"],
+            },
+            "competencia_mercados": {
+                "nombre": "Competencia y mercados",
+                "keywords": ["competencia económica", "Cofece", "monopolio", "prácticas monopólicas",
+                             "regulación de mercado", "control de precios", "libre competencia"],
             },
         },
     },
@@ -539,6 +549,11 @@ CATEGORIAS = {
                 "nombre": "Protección civil y desastres",
                 "keywords": ["terremoto", "sismo", "inundación", "huracán", "desastre natural", "protección civil",
                              "reconstrucción", "declaratoria de emergencia", "damnificados", "derrumbe", "evacuación"],
+            },
+            "megaproyectos": {
+                "nombre": "Megaproyectos federales",
+                "keywords": ["Tren Maya", "corredor interoceánico", "Dos Bocas", "AIFA",
+                             "megaproyecto", "proyecto estratégico", "infraestructura federal"],
             },
         },
     },
