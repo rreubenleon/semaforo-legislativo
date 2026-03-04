@@ -693,13 +693,15 @@ def _insertar_documentos(conn, documentos):
         if existe:
             continue
 
+        # Normalizar whitespace en título y resumen (la Gaceta mete \n\t)
+        _limpiar = lambda t: " ".join(t.split()) if t else t
         registro = {
             "fecha": doc["fecha"],
             "tipo": doc["tipo"],
-            "titulo": doc["titulo"],
+            "titulo": _limpiar(doc["titulo"]),
             "autor": doc.get("autor", "No identificado"),
             "comision": doc.get("comision") or "No especificada",
-            "resumen": doc.get("resumen", doc["titulo"]),
+            "resumen": _limpiar(doc.get("resumen", doc["titulo"])),
             "url": doc.get("url", ""),
             "url_pdf": doc.get("url_pdf", ""),
             "numero_doc": doc.get("numero_doc", ""),

@@ -320,7 +320,8 @@ CATEGORIAS = {
             },
             "fomento_economico": {
                 "nombre": "Fomento económico",
-                "keywords": ["economía", "inversión pública", "fomento económico", "emprendimiento", "Pymes", "competitividad", "hacienda", "política fiscal"],
+                "keywords": ["economía", "inversión pública", "fomento económico", "emprendimiento", "Pymes", "competitividad", "hacienda", "política fiscal",
+                             "Protección al Consumidor"],
             },
             "competencia_mercados": {
                 "nombre": "Competencia y mercados",
@@ -437,7 +438,7 @@ CATEGORIAS = {
             },
             "seguridad_social_pensiones": {
                 "nombre": "Seguridad social y pensiones",
-                "keywords": ["pensión", "AFORE", "seguridad social", "jubilación", "retiro"],
+                "keywords": ["pensión", "AFORE", "seguridad social", "jubilación", "retiro", "Seguro Social", "ISSSTE"],
             },
             "relaciones_laborales": {
                 "nombre": "Relaciones laborales",
@@ -694,7 +695,7 @@ CATEGORIAS = {
                 "nombre": "Contaminación y residuos",
                 "keywords": ["contaminación ambiental", "residuos peligrosos", "contingencia ambiental", "calidad del aire",
                              "economía circular", "ley ambiental", "norma ambiental", "impacto ambiental", "política ambiental",
-                             "gestión de residuos", "residuos sólidos"],
+                             "gestión de residuos", "residuos sólidos", "Gestión Integral de los Residuos"],
             },
             "recursos_forestales": {
                 "nombre": "Recursos forestales",

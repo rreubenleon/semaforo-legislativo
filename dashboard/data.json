@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generado": "2026-03-04T15:33:37.426358+00:00",
+    "generado": "2026-03-04T16:46:15.911811+00:00",
     "version": "3.2",
     "formula": "SCORE = (0.25*Media) + (0.15*Trends) + (0.30*Congreso) + (0.15*Mañanera) + (0.15*Urgencia)",
     "umbrales": {
@@ -54,12 +54,12 @@
     {
       "categoria": "infraestructura",
       "nombre": "Infraestructura",
-      "score_total": 62.51,
-      "score_media": 80.5,
+      "score_total": 62.76,
+      "score_media": 81.31,
       "score_trends": 0.0,
       "score_congreso": 100.0,
       "score_mananera": 24.47,
-      "score_urgencia": 58.07,
+      "score_urgencia": 58.42,
       "color": "amarillo",
       "fecha": "2026-03-04",
       "momentum": {
@@ -77,7 +77,7 @@
         {
           "clave": "transporte_movilidad",
           "nombre": "Transporte y movilidad",
-          "peso": 0.7
+          "peso": 0.65
         },
         {
           "clave": "proteccion_civil",
@@ -88,6 +88,11 @@
           "clave": "agua_saneamiento",
           "nombre": "Agua y saneamiento",
           "peso": 0.5
+        },
+        {
+          "clave": "megaproyectos",
+          "nombre": "Megaproyectos federales",
+          "peso": 0.33
         },
         {
           "clave": "vivienda_urbano",
@@ -104,12 +109,12 @@
     {
       "categoria": "seguridad_justicia",
       "nombre": "Seguridad y Justicia",
-      "score_total": 61.49,
-      "score_media": 89.78,
+      "score_total": 61.63,
+      "score_media": 90.25,
       "score_trends": 0.0,
       "score_congreso": 100.0,
       "score_mananera": 26.79,
-      "score_urgencia": 33.5,
+      "score_urgencia": 33.65,
       "color": "amarillo",
       "fecha": "2026-03-04",
       "momentum": {
@@ -127,27 +132,32 @@
         {
           "clave": "violencia_victimas",
           "nombre": "Violencia y víctimas",
-          "peso": 0.89
+          "peso": 0.91
         },
         {
           "clave": "crimen_organizado",
           "nombre": "Crimen organizado",
-          "peso": 0.73
-        },
-        {
-          "clave": "justicia_penal",
-          "nombre": "Justicia penal y reforma judicial",
-          "peso": 0.58
+          "peso": 0.7
         },
         {
           "clave": "sistema_penitenciario",
           "nombre": "Sistema penitenciario",
+          "peso": 0.52
+        },
+        {
+          "clave": "justicia_penal",
+          "nombre": "Justicia penal y reforma judicial",
           "peso": 0.51
         },
         {
           "clave": "fuerzas_armadas",
           "nombre": "Fuerzas armadas y defensa",
           "peso": 0.11
+        },
+        {
+          "clave": "justicia_constitucional",
+          "nombre": "Justicia constitucional",
+          "peso": 0.09
         }
       ]
     },
@@ -195,11 +205,11 @@
       "categoria": "economia_hacienda",
       "nombre": "Economía y Hacienda",
       "score_total": 61.26,
-      "score_media": 93.05,
+      "score_media": 93.06,
       "score_trends": 0.0,
       "score_congreso": 100.0,
       "score_mananera": 16.74,
-      "score_urgencia": 36.57,
+      "score_urgencia": 36.58,
       "color": "amarillo",
       "fecha": "2026-03-04",
       "momentum": {
@@ -217,32 +227,32 @@
         {
           "clave": "presupuesto_gasto",
           "nombre": "Presupuesto y gasto público",
-          "peso": 0.24
+          "peso": 0.27
         },
         {
           "clave": "politica_monetaria",
           "nombre": "Política monetaria y macroeconomía",
-          "peso": 0.17
+          "peso": 0.23
         },
         {
           "clave": "fomento_economico",
           "nombre": "Fomento económico",
-          "peso": 0.12
+          "peso": 0.13
         },
         {
           "clave": "comercio_exterior",
           "nombre": "Comercio exterior e inversión",
-          "peso": 0.09
+          "peso": 0.1
         }
       ]
     },
     {
       "categoria": "relaciones_exteriores",
       "nombre": "Relaciones Exteriores",
-      "score_total": 58.88,
+      "score_total": 60.44,
       "score_media": 83.45,
       "score_trends": 0.0,
-      "score_congreso": 94.80000000000001,
+      "score_congreso": 100.0,
       "score_mananera": 4.66,
       "score_urgencia": 59.19,
       "color": "amarillo",
@@ -279,10 +289,10 @@
     {
       "categoria": "salud",
       "nombre": "Salud",
-      "score_total": 54.52,
+      "score_total": 54.91,
       "score_media": 71.8,
       "score_trends": 0.0,
-      "score_congreso": 98.71,
+      "score_congreso": 100.0,
       "score_mananera": 14.6,
       "score_urgencia": 31.78,
       "color": "amarillo",
@@ -312,7 +322,47 @@
         {
           "clave": "epidemiologia",
           "nombre": "Epidemiología",
-          "peso": 0.14
+          "peso": 0.13
+        }
+      ]
+    },
+    {
+      "categoria": "trabajo",
+      "nombre": "Trabajo",
+      "score_total": 52.86,
+      "score_media": 70.89,
+      "score_trends": 0.0,
+      "score_congreso": 100.0,
+      "score_mananera": 5.65,
+      "score_urgencia": 28.61,
+      "color": "amarillo",
+      "fecha": "2026-03-04",
+      "momentum": {
+        "dias_consecutivos": 16,
+        "semanas_en_agenda": 2,
+        "tendencia": "stable",
+        "etiqueta": "Semana 2 en agenda"
+      },
+      "subcategorias_activas": [
+        {
+          "clave": "empleo_salario",
+          "nombre": "Empleo y salarios",
+          "peso": 1.0
+        },
+        {
+          "clave": "derechos_laborales",
+          "nombre": "Derechos laborales",
+          "peso": 0.64
+        },
+        {
+          "clave": "relaciones_laborales",
+          "nombre": "Relaciones laborales",
+          "peso": 0.27
+        },
+        {
+          "clave": "seguridad_social_pensiones",
+          "nombre": "Seguridad social y pensiones",
+          "peso": 0.15
         }
       ]
     },
@@ -340,14 +390,14 @@
           "peso": 1.0
         },
         {
-          "clave": "pueblos_indigenas",
-          "nombre": "Pueblos indígenas",
-          "peso": 0.51
-        },
-        {
           "clave": "migracion_refugio",
           "nombre": "Migración y refugio",
           "peso": 0.45
+        },
+        {
+          "clave": "pueblos_indigenas",
+          "nombre": "Pueblos indígenas",
+          "peso": 0.4
         },
         {
           "clave": "genero_diversidad",
@@ -357,57 +407,62 @@
         {
           "clave": "derechos_ninez",
           "nombre": "Derechos de la niñez",
-          "peso": 0.15
+          "peso": 0.21
         }
       ]
     },
     {
-      "categoria": "trabajo",
-      "nombre": "Trabajo",
-      "score_total": 44.28,
-      "score_media": 69.48,
+      "categoria": "medio_ambiente",
+      "nombre": "Medio Ambiente y Cambio Climático",
+      "score_total": 49.85,
+      "score_media": 65.95,
       "score_trends": 0.0,
-      "score_congreso": 73.06,
-      "score_mananera": 5.65,
-      "score_urgencia": 27.64,
+      "score_congreso": 77.07000000000001,
+      "score_mananera": 1.72,
+      "score_urgencia": 66.57,
       "color": "amarillo",
       "fecha": "2026-03-04",
       "momentum": {
-        "dias_consecutivos": 16,
-        "semanas_en_agenda": 2,
+        "dias_consecutivos": 1,
+        "semanas_en_agenda": 0,
         "tendencia": "stable",
-        "etiqueta": "Semana 2 en agenda"
+        "etiqueta": ""
       },
       "subcategorias_activas": [
         {
-          "clave": "empleo_salario",
-          "nombre": "Empleo y salarios",
+          "clave": "recursos_forestales",
+          "nombre": "Recursos forestales",
           "peso": 1.0
         },
         {
-          "clave": "derechos_laborales",
-          "nombre": "Derechos laborales",
-          "peso": 0.64
+          "clave": "contaminacion_residuos",
+          "nombre": "Contaminación y residuos",
+          "peso": 0.51
         },
         {
-          "clave": "relaciones_laborales",
-          "nombre": "Relaciones laborales",
-          "peso": 0.31
+          "clave": "conservacion_biodiversidad",
+          "nombre": "Conservación y biodiversidad",
+          "peso": 0.38
         },
         {
-          "clave": "seguridad_social_pensiones",
-          "nombre": "Seguridad social y pensiones",
-          "peso": 0.13
+          "clave": "fenomenos_naturales",
+          "nombre": "Fenómenos naturales",
+          "peso": 0.19
+        },
+        {
+          "clave": "cambio_climatico",
+          "nombre": "Cambio climático",
+          "peso": 0.02
         }
       ]
     },
     {
       "categoria": "politica_social",
       "nombre": "Política Social",
-      "score_total": 41.77,
+      "score_total": 43.4,
       "score_media": 63.81,
       "score_trends": 0.0,
-      "score_congreso": 48.519999999999996,
+      "score_congreso": 53.949999999999996,
       "score_mananera": 0.0,
       "score_urgencia": 75.05,
       "color": "amarillo",
@@ -482,14 +537,14 @@
       ]
     },
     {
-      "categoria": "medio_ambiente",
-      "nombre": "Medio Ambiente y Cambio Climático",
-      "score_total": 36.0,
-      "score_media": 65.6,
+      "categoria": "agro_rural",
+      "nombre": "Agro y Desarrollo Rural",
+      "score_total": 34.83,
+      "score_media": 58.96,
       "score_trends": 0.0,
-      "score_congreso": 33.59,
-      "score_mananera": 1.72,
-      "score_urgencia": 61.78,
+      "score_congreso": 35.089999999999996,
+      "score_mananera": 6.0,
+      "score_urgencia": 57.76,
       "color": "rojo",
       "fecha": "2026-03-04",
       "momentum": {
@@ -500,29 +555,19 @@
       },
       "subcategorias_activas": [
         {
-          "clave": "recursos_forestales",
-          "nombre": "Recursos forestales",
+          "clave": "agricultura_cultivos",
+          "nombre": "Agricultura y cultivos",
           "peso": 1.0
         },
         {
-          "clave": "contaminacion_residuos",
-          "nombre": "Contaminación y residuos",
-          "peso": 0.61
+          "clave": "desarrollo_rural_tierra",
+          "nombre": "Desarrollo rural y tierra",
+          "peso": 0.72
         },
         {
-          "clave": "conservacion_biodiversidad",
-          "nombre": "Conservación y biodiversidad",
-          "peso": 0.46
-        },
-        {
-          "clave": "fenomenos_naturales",
-          "nombre": "Fenómenos naturales",
-          "peso": 0.2
-        },
-        {
-          "clave": "cambio_climatico",
-          "nombre": "Cambio climático",
-          "peso": 0.02
+          "clave": "ganaderia_pesca",
+          "nombre": "Ganadería y pesca",
+          "peso": 0.6
         }
       ]
     },
@@ -563,41 +608,6 @@
           "clave": "gobernanza_digital",
           "nombre": "Gobernanza digital",
           "peso": 0.01
-        }
-      ]
-    },
-    {
-      "categoria": "agro_rural",
-      "nombre": "Agro y Desarrollo Rural",
-      "score_total": 31.57,
-      "score_media": 58.96,
-      "score_trends": 0.0,
-      "score_congreso": 24.22,
-      "score_mananera": 6.0,
-      "score_urgencia": 57.76,
-      "color": "rojo",
-      "fecha": "2026-03-04",
-      "momentum": {
-        "dias_consecutivos": 0,
-        "semanas_en_agenda": 0,
-        "tendencia": "down",
-        "etiqueta": ""
-      },
-      "subcategorias_activas": [
-        {
-          "clave": "agricultura_cultivos",
-          "nombre": "Agricultura y cultivos",
-          "peso": 1.0
-        },
-        {
-          "clave": "desarrollo_rural_tierra",
-          "nombre": "Desarrollo rural y tierra",
-          "peso": 0.72
-        },
-        {
-          "clave": "ganaderia_pesca",
-          "nombre": "Ganadería y pesca",
-          "peso": 0.6
         }
       ]
     },
@@ -1170,17 +1180,17 @@
     }
   ],
   "distribucion_categorias": {
-    "economia_hacienda": 285,
-    "electoral_politico": 916,
+    "economia_hacienda": 287,
+    "electoral_politico": 923,
     "agro_rural": 45,
-    "trabajo": 103,
-    "seguridad_justicia": 511,
-    "derechos_humanos": 79,
+    "trabajo": 106,
+    "seguridad_justicia": 514,
+    "derechos_humanos": 81,
     "educacion": 158,
     "infraestructura": 111,
     "anticorrupcion": 66,
-    "medio_ambiente": 42,
-    "politica_social": 65,
+    "medio_ambiente": 43,
+    "politica_social": 66,
     "relaciones_exteriores": 197,
     "energia": 140,
     "salud": 218,
@@ -1383,6 +1393,12 @@
         },
         {
           "fuente": "la_jornada",
+          "titulo": "SCJN niega amparo a Walmart para eliminar el IVA a más productos de higiene menstrual",
+          "url": "https://www.jornada.com.mx/2026/03/04/politica/013n2pol?partner=rss",
+          "fecha": "2026-03-04"
+        },
+        {
+          "fuente": "la_jornada",
           "titulo": "Arrestan a ex director de Tránsito de Iguala por el caso de los 43",
           "url": "https://www.jornada.com.mx/2026/03/04/politica/011n3pol?partner=rss",
           "fecha": "2026-03-04"
@@ -1446,64 +1462,108 @@
           "titulo": "Ecatepec sale del top 10 en feminicidios y reduce 29% la violencia sexual",
           "url": "https://www.razon.com.mx/estados/2026/03/03/ecatepec-sale-del-top-10-en-feminicidios-y-reduce-29-la-violencia-sexual/",
           "fecha": "2026-03-04"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "Van detenidos 44 falsos elementos de la Fiscalía Edomex",
-          "url": "https://24-horas.mx/estados/van-detenidos-44-falsos-elementos-de-la-fiscalia-edomex/",
-          "fecha": "2026-03-04"
         }
       ],
       "documentos_gaceta": [
         {
           "tipo": "iniciativa",
-          "titulo": "Que reforma el artículo 189 de la Ley del Impuesto sobre la Renta, en\n\tmateria de producción y distribución cinematográfica nacional de\n\tcontenido que",
-          "autor": "Emilio Lara Calderón",
-          "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-5.html#Iniciativa17",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-5-1.pdf",
-          "numero_doc": "17"
-        },
-        {
-          "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, para exhortar a la GN y la Sedena a coordinar\n\tacciones para reforzar el blindaje y la protección a la ciudadanía, con\n\tlas corp",
+          "titulo": "Que adiciona los artículos 366 Quinquies al Código Penal Federal y 14 Bis a la Ley General para Prevenir y Sancionar los Delitos en Materia de Secuest",
           "autor": "No identificado",
           "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-III-5.html#Proposicion7",
+          "fecha": "2026-03-04",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-2.html#Iniciativa2",
           "url_pdf": "",
-          "numero_doc": "7"
+          "numero_doc": "2"
         },
         {
           "tipo": "iniciativa",
-          "titulo": "Que adiciona diversas disposiciones de la Ley General del Sistema\n\tNacional de Seguridad Pública, en materia de profesionalización\n\tpolicial y coordin",
-          "autor": "Marcela Guerra Castillo",
+          "titulo": "Que reforma el artículo 381 del Código Penal Federal, a cargo del diputado Carlos Arturo Madrazo Silva, del Grupo Parlamentario del PVEM",
+          "autor": "Carlos Arturo Madrazo Silva",
           "comision": "No especificada",
-          "fecha": "2026-02-17",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260217-II-5.html#Iniciativa4",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/feb/20260217-II-5-1.pdf",
+          "fecha": "2026-03-04",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-3.html#Iniciativa4",
+          "url_pdf": "",
           "numero_doc": "4"
         },
         {
-          "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, por el que se reconoce y se respalda la\n\tEstrategia Nacional de Seguridad impulsada por la presidenta Claudia\n\tSheinbaum Pardo; ",
-          "autor": "Fernando Jorge Castro Trenti",
+          "tipo": "iniciativa",
+          "titulo": "Que reforma y adiciona el artículo 220 del Código Penal Federal, en materia de prevención de actos de extorsión y abuso de autoridad, a cargo del dipu",
+          "autor": "Héctor Alfonso de la Garza Villarreal",
           "comision": "No especificada",
-          "fecha": "2026-02-17",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260217-III-1.html#Proposicion3",
+          "fecha": "2026-03-04",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-3.html#Iniciativa6",
           "url_pdf": "",
-          "numero_doc": "3"
+          "numero_doc": "6"
         },
         {
-          "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, para exhortar al Ejecutivo federal a prevenir,\n\tatender y erradicar el reclutamiento de niñas, niños y adolescentes por\n\tparte d",
-          "autor": "Ofelia Socorro Jasso Nieto",
+          "tipo": "iniciativa",
+          "titulo": "Que adiciona la fracción VIII Bis al Apartado A del artículo 11 Bis del Código Penal Federal, para incluir en el catálogo del régimen de responsabilid",
+          "autor": "J",
           "comision": "No especificada",
-          "fecha": "2026-02-10",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260210-III-5.html#Proposicion7",
-          "url_pdf": "",
-          "numero_doc": "7"
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-1.html#Iniciativa1",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-1-2.pdf",
+          "numero_doc": "1"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que reforma el primer párrafo del artículo 199 Septies, 199 Octies y el último párrafo del artículo 202, todos del Código Penal Federal, en materia de",
+          "autor": "Magda Erika Salgado Ponce",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-1.html#Iniciativa2",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-1-2.pdf",
+          "numero_doc": "2"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que adiciona un artículo 419 Ter al Código Penal Federal, en materia de protección animal, a cargo de la diputada Giselle Yunueen Arellano Ávila, del ",
+          "autor": "No identificado",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-1.html#Iniciativa25",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-1-2.pdf",
+          "numero_doc": "25"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que reforma la denominación del Título Noveno; y adiciona un Capítulo III y un artículo 211 Bis 8 al Código Penal Federal, en materia de uso indebido ",
+          "autor": "Daniel Murguía Lardizábal",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-1.html#Iniciativa29",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-1-2.pdf",
+          "numero_doc": "29"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que adiciona un artículo 387 Bis al Código Penal Federal, en materia de suplantación de identidad digital, suscrita por la diputada Nancy Aracely Olgu",
+          "autor": "No identificado",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-2.html#Iniciativa8",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-2-1.pdf",
+          "numero_doc": "8"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que reforma el artículo 164 del Código Penal Federal, a cargo de la diputada Cindy Winkler Trujillo, del Grupo Parlamentario del PVEM",
+          "autor": "Cindy Winkler Trujillo",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-3.html#Iniciativa6",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-3-1.pdf",
+          "numero_doc": "6"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que reforma el artículo 139 del Código Penal Federal, a cargo de la diputada Cindy Winkler Trujillo, del Grupo Parlamentario del PVEM",
+          "autor": "Cindy Winkler Trujillo",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-3.html#Iniciativa8",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-3-1.pdf",
+          "numero_doc": "8"
         }
       ],
       "google_trends": [
@@ -1738,13 +1798,13 @@
       ],
       "documentos_gaceta": [
         {
-          "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, por el que se solicita respetuosamente a la\n\tProfeco, al SAT y a la SCJN, a fin de garantizar la correcta aplicación\n\tde la tasa",
-          "autor": "No identificado",
+          "tipo": "iniciativa",
+          "titulo": "Que reforma el artículo 5o. de la Ley del Banco de México, en materia de accesibilidad e inclusión en el papel moneda, a cargo de la diputada Ivonne A",
+          "autor": "Ivonne Aracelly Ortega Pacheco",
           "comision": "No especificada",
-          "fecha": "2026-02-10",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260210-III-1.html#Proposicion1",
-          "url_pdf": "",
+          "fecha": "2026-02-17",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260217-II-6.html#Iniciativa1",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/feb/20260217-II-6-1.pdf",
           "numero_doc": "1"
         }
       ],
@@ -1963,28 +2023,7 @@
           "fecha": "2026-03-03"
         }
       ],
-      "documentos_gaceta": [
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma y adiciona diversas disposiciones a la Ley del Sector\n\tEléctrico y a la Ley de la Empresa Pública del Estado, Comisión Federal\n\tde Electri",
-          "autor": "No identificado",
-          "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-2.html#Iniciativa3",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-2-1.pdf",
-          "numero_doc": "3"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma y adiciona diversas disposiciones de la Ley General para la\n\tPrevención y Gestión Integral de los Residuos, en materia de promoción\n\tde la",
-          "autor": "Noel Chávez Velázquez",
-          "comision": "No especificada",
-          "fecha": "2026-02-10",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260210-II-5.html#Iniciativa6",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/feb/20260210-II-5-1.pdf",
-          "numero_doc": "6"
-        }
-      ],
+      "documentos_gaceta": [],
       "google_trends": [
         {
           "keyword": "CFE",
@@ -2150,7 +2189,17 @@
       "documentos_gaceta": [
         {
           "tipo": "iniciativa",
-          "titulo": "Que adiciona un segundo párrafo al artículo tercero transitorio del\n\t“decreto por el que se reforman, adicionan y derogan diversas\n\tdisposiciones de l",
+          "titulo": "Que reforma y adiciona diversas disposiciones de la Ley General de Salud, en materia de centros de rehabilitación, suscrita por la diputada Mónica Bec",
+          "autor": "Mónica Becerra Moreno y las y los legisladores integrantes",
+          "comision": "No especificada",
+          "fecha": "2026-03-04",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-2.html#Iniciativa3",
+          "url_pdf": "",
+          "numero_doc": "3"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que adiciona un segundo párrafo al artículo tercero transitorio del “decreto por el que se reforman, adicionan y derogan diversas disposiciones de la ",
           "autor": "Lucero Higareda Segura",
           "comision": "No especificada",
           "fecha": "2026-03-03",
@@ -2160,7 +2209,17 @@
         },
         {
           "tipo": "iniciativa",
-          "titulo": "Que adiciona el artículo 50 de la Ley General de los Derechos de Niñas,\n\tNiños y Adolescentes, para la atención de la salud mental de niñas,\n\tniños y ",
+          "titulo": "Que reforma la fracción XVI del artículo 50 de la Ley General de los Derechos de las Niñas, Niños y Adolescentes, en materia de salud mental, a cargo ",
+          "autor": "Alma Marina Vitela Rodríguez",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-1.html#Iniciativa33",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-1-2.pdf",
+          "numero_doc": "33"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que adiciona el artículo 50 de la Ley General de los Derechos de Niñas, Niños y Adolescentes, para la atención de la salud mental de niñas, niños y ad",
           "autor": "No identificado",
           "comision": "No especificada",
           "fecha": "2026-03-03",
@@ -2170,27 +2229,37 @@
         },
         {
           "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, para exhortar al CSG a revisar en los datos\n\toficiales relativos a la magnitud, persistencia y expansión territorial\n\tdel brote ",
-          "autor": "Graciela Ortiz González",
+          "titulo": "Con punto de acuerdo, de urgente u obvia resolución, por el que se solicita a la Ssa federal y a las autoridades competentes a fortalecer de manera in",
+          "autor": "Alma Marina Vitela Rodríguez",
           "comision": "No especificada",
           "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-III-5.html#Proposicion6",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-III-1.html#Proposicion9",
           "url_pdf": "",
-          "numero_doc": "6"
+          "numero_doc": "9"
         },
         {
           "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, para exhortar a la SABG a investigar y, en su\n\tcaso, sancionar las irregularidades en el abasto, almacenaje y\n\tdesechamiento de ",
-          "autor": "Rubén Ignacio Moreira Valdez",
+          "titulo": "Con punto de acuerdo, para exhortar al director general del ISSSTE y a la vocal ejecutiva del Fovissste a ordenar la cancelación de la aplicación de l",
+          "autor": "No identificado",
           "comision": "No especificada",
           "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-III-5.html#Proposicion11",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-III-2.html#Proposicion9",
           "url_pdf": "",
-          "numero_doc": "11"
+          "numero_doc": "9"
         },
         {
           "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, para exhortar a diversas autoridades a impulsar\n\tacciones de comunicación institucional para la concientización y\n\tvisibilizació",
+          "titulo": "Con punto de acuerdo, para exhortar a la SEP para que presente un informe a la opinión pública respecto a la situación actual que guardan las Universi",
+          "autor": "No identificado",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-III-2.html#Proposicion10",
+          "url_pdf": "",
+          "numero_doc": "10"
+        },
+        {
+          "tipo": "proposicion",
+          "titulo": "Con punto de acuerdo, para exhortar a diversas autoridades a impulsar acciones de comunicación institucional para la concientización y visibilización ",
           "autor": "No identificado",
           "comision": "No especificada",
           "fecha": "2026-03-03",
@@ -2200,53 +2269,23 @@
         },
         {
           "tipo": "iniciativa",
-          "titulo": "Que reforma y adiciona diversas disposiciones a la Ley General de\n\tSalud, en materia de salud mental para niñas, niños y adolescentes, a\n\tcargo de la ",
-          "autor": "Celeste Mora Eguiluz",
+          "titulo": "Que adiciona los párrafos segundo y tercero al artículo 144 de la Ley General de Salud, en materia de vacunación obligatoria en educación básica, a ca",
+          "autor": "Alma Marina Vitela Rodríguez",
           "comision": "No especificada",
           "fecha": "2026-02-24",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-II-1.html#Iniciativa28",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-II-1.html#Iniciativa14",
           "url_pdf": "",
-          "numero_doc": "28"
+          "numero_doc": "14"
         },
         {
           "tipo": "iniciativa",
-          "titulo": "Que adiciona diversas disposiciones de la Ley General de los Derechos\n\tde Niñas, Niños y Adolescentes, en materia de seguimiento, continuidad\n\ty atenc",
-          "autor": "No identificado",
+          "titulo": "Que adiciona diversas disposiciones de la Ley General de Salud, en materia de creación del registro nacional digital de vacunación infantil vinculado ",
+          "autor": "Carlos Ignacio Mier Bañuelos",
           "comision": "No especificada",
           "fecha": "2026-02-24",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-II-2.html#Iniciativa10",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-II-1.html#Iniciativa20",
           "url_pdf": "",
-          "numero_doc": "10"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que adiciona el artículo 50 de la Ley General de los Derechos de Niñas,\n\tNiños y Adolescentes, para la atención de la salud mental de niñas,\n\tniños y ",
-          "autor": "No identificado",
-          "comision": "No especificada",
-          "fecha": "2026-02-24",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-II-5.html#Iniciativa11",
-          "url_pdf": "",
-          "numero_doc": "11"
-        },
-        {
-          "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, para exhortar a diversas autoridades del estado\n\tde Jalisco a reforzar de manera inmediata y coordinada las campañas de\n\tvacunac",
-          "autor": "Alonso de Jesús Vázquez Jiménez",
-          "comision": "No especificada",
-          "fecha": "2026-02-24",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-III-2.html#Proposicion1",
-          "url_pdf": "",
-          "numero_doc": "1"
-        },
-        {
-          "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, para exhortar a la Ssa y al IMSS-Bienestar a\n\tgestionar los recursos económicos y materiales urgentes, necesarios y\n\tsuficientes",
-          "autor": "Carlos Enrique Canturosas Villarreal",
-          "comision": "No especificada",
-          "fecha": "2026-02-24",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-III-3.html#Proposicion6",
-          "url_pdf": "",
-          "numero_doc": "6"
+          "numero_doc": "20"
         }
       ],
       "google_trends": [
@@ -2451,24 +2490,104 @@
       ],
       "documentos_gaceta": [
         {
+          "tipo": "iniciativa",
+          "titulo": "Que reforma y adiciona diversas disposiciones de los artículos 3o. y 41 de la Constitución Política de los Estados Unidos Mexicanos, en materia de for",
+          "autor": "Rosa María Castro Salinas",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-1.html#Iniciativa7",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-1-2.pdf",
+          "numero_doc": "7"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que adiciona el artículo 30 de la Ley General de Educación, para establecer la obligatoriedad de la inclusión de la cultura democrática y la importanc",
+          "autor": "Emilio Suárez Licona",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-5.html#Iniciativa22",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-5-1.pdf",
+          "numero_doc": "22"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que reforma el artículo 4o. de la Ley del Instituto Mexicano de la Juventud, en materia de fortalecimiento de la política pública de juventud, a cargo",
+          "autor": "Ivonne Aracelly Ortega Pacheco",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-6.html#Iniciativa1",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-6-1.pdf",
+          "numero_doc": "1"
+        },
+        {
           "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, para exhortar al gobernador constitucional del\n\testado de Zacatecas, en coordinación con las dependencias que\n\tcorresponda, a pr",
+          "titulo": "Con punto de acuerdo, para exhortar a la SEP a garantizar que la elaboración, revisión y corrección de los libros de texto gratuitos se realice con ap",
+          "autor": "Ofelia Socorro Jasso Nieto",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-III-5.html#Proposicion1",
+          "url_pdf": "",
+          "numero_doc": "1"
+        },
+        {
+          "tipo": "proposicion",
+          "titulo": "De la Unidad de Enlace de la Secretaría de Gobernación, con la que remite contestación a punto de acuerdo aprobado por la Cámara de Diputados por el q",
           "autor": "No identificado",
           "comision": "No especificada",
           "fecha": "2026-02-24",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-III-2.html#Proposicion6",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-I.html#ComunicacionOficial6",
           "url_pdf": "",
           "numero_doc": "6"
         },
         {
+          "tipo": "iniciativa",
+          "titulo": "Que adiciona el Capítulo VIII y los artículos 156, 157, 158, 159, 160 y 161 de la Ley General de Cultura Física y Deporte, en materia de violencia dep",
+          "autor": "Bertha Osorio Ferral",
+          "comision": "No especificada",
+          "fecha": "2026-02-24",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-II-1.html#Iniciativa6",
+          "url_pdf": "",
+          "numero_doc": "6"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que reforma diversas disposiciones de la Ley General de Cultura Física y Deporte, a cargo del diputado José Armando Fernández Samaniego, del Grupo Par",
+          "autor": "José Armando Fernández Samaniego",
+          "comision": "No especificada",
+          "fecha": "2026-02-24",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-II-1.html#Iniciativa34",
+          "url_pdf": "",
+          "numero_doc": "34"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que reforma y adiciona diversas disposiciones de la Ley Federal del Trabajo, en materia de jornada máxima de cuarenta horas semanales, derecho a la de",
+          "autor": "Marcelo de Jesús Torres Cofiño y las y los legisladores integrantes",
+          "comision": "No especificada",
+          "fecha": "2026-02-24",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-II-2.html#Iniciativa18",
+          "url_pdf": "",
+          "numero_doc": "18"
+        },
+        {
           "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, por el que se solicita respetuosamente a la SE\n\tpara que, en coordinación con la Secretaría de Economía e Innovación\n\tdel estado",
+          "titulo": "Con punto de acuerdo, por el que se hace respetuosamente la atenta invitación a la Jucopo y a la Comisión de Cultura y Cinematografía de la Cámara de ",
           "autor": "No identificado",
           "comision": "No especificada",
-          "fecha": "2026-02-10",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260210-III-1.html#Proposicion7",
+          "fecha": "2026-02-24",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-III-1.html#Proposicion1",
           "url_pdf": "",
-          "numero_doc": "7"
+          "numero_doc": "1"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que adiciona diversas disposiciones de la Ley Federal de Juegos y Sorteos y de la Ley General de Cultura Física y Deporte, en materia de conflictos de",
+          "autor": "No identificado",
+          "comision": "No especificada",
+          "fecha": "2026-02-18",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260218-II-2.html#Iniciativa10",
+          "url_pdf": "",
+          "numero_doc": "10"
         }
       ],
       "google_trends": [
@@ -2674,101 +2793,81 @@
       "documentos_gaceta": [
         {
           "tipo": "iniciativa",
-          "titulo": "Que reforma y adiciona el artículo 123 de la Constitución Política de\n\tlos Estados Unidos Mexicanos, en materia de jornada laboral de 40 horas\n\tcon 2 ",
-          "autor": "No identificado",
-          "comision": "No especificada",
-          "fecha": "2026-03-04",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-6.html#Iniciativa1",
-          "url_pdf": "",
-          "numero_doc": "1"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma el artículo 170 de la Ley Federal del Trabajo, a fin de\n\treconocer el derecho de las madres trabajadoras a la extracción de\n\tleche materna",
-          "autor": "Graciela Ortiz González",
-          "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-5.html#Iniciativa19",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-5-1.pdf",
-          "numero_doc": "19"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que adiciona los artículos 5o. y 8o. del Reglamento de la Cámara de\n\tDiputados, con el fin de ampliar la jornada laboral de legisladores, a\n\tcargo de ",
-          "autor": "Laura Iraís Ballesteros Mancilla",
-          "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-6.html#Iniciativa7",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-6-1.pdf",
-          "numero_doc": "7"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma y adiciona un artículo 13 Bis a la Ley Orgánica del\n\tCongreso General de los Estados Unidos Mexicanos, con el fin de ampliar\n\tla jornada l",
+          "titulo": "Que adiciona el artículo 170 Ter a la Ley Federal del Trabajo, en materia de licencias especiales y permisos con goce de salario para personas menstru",
           "autor": "No identificado",
           "comision": "No especificada",
           "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-6.html#Iniciativa8",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-6.html#Iniciativa3",
           "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-6-1.pdf",
-          "numero_doc": "8"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma el artículo 239-C de la Ley del Seguro Social, en materia\n\tde cobertura mensual de las personas trabajadoras del hogar a la\n\tseguridad soc",
-          "autor": "Gibrán Ramírez Reyes",
-          "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-6.html#Iniciativa12",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-6-1.pdf",
-          "numero_doc": "12"
+          "numero_doc": "3"
         },
         {
           "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, para exhortar a la SHCP, al Indep y a la CNDH a\n\tintervenir en la suspensión de remates de garantías y se implemente un\n\tprogram",
+          "titulo": "Con punto de acuerdo, para exhortar al director general del ISSSTE y a la vocal ejecutiva del Fovissste a ordenar la cancelación de la aplicación de l",
           "autor": "No identificado",
           "comision": "No especificada",
           "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-III-4.html#Proposicion1",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-III-2.html#Proposicion9",
+          "url_pdf": "",
+          "numero_doc": "9"
+        },
+        {
+          "tipo": "proposicion",
+          "titulo": "Con punto de acuerdo, para exhortar a la SHCP, a la SEP, así como al director general del TECNM, a esclarecer la situación relacionada con los retraso",
+          "autor": "No identificado",
+          "comision": "No especificada",
+          "fecha": "2026-02-24",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-III-2.html#Proposicion3",
+          "url_pdf": "",
+          "numero_doc": "3"
+        },
+        {
+          "tipo": "proposicion",
+          "titulo": "Con punto de acuerdo, para exhortar a la Ssa a respetar las horas establecidas en la NOM-001-SSA-2023 en el ISSSTE, instituciones nacionales e institu",
+          "autor": "Margarita García García",
+          "comision": "No especificada",
+          "fecha": "2026-02-24",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-III-4.html#Proposicion2",
+          "url_pdf": "",
+          "numero_doc": "2"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que adiciona el artículo 132 de la Ley Federal del Trabajo, en materia de permisos laborales para madres, padres o personas tutoras de niñas y niños c",
+          "autor": "No identificado",
+          "comision": "No especificada",
+          "fecha": "2026-02-18",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260218-II-2.html#Iniciativa4",
+          "url_pdf": "",
+          "numero_doc": "4"
+        },
+        {
+          "tipo": "proposicion",
+          "titulo": "Con punto de acuerdo, para exhortar al gobierno federal, a través de la Ssa, a actualizar los profesiogramas y tabuladores de las instituciones de sal",
+          "autor": "Ivonne Aracelly Ortega Pacheco",
+          "comision": "No especificada",
+          "fecha": "2026-02-18",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260218-III-6.html#Proposicion1",
           "url_pdf": "",
           "numero_doc": "1"
         },
         {
           "tipo": "iniciativa",
-          "titulo": "Que reforma diversas disposiciones a la Ley del Instituto de Seguridad\n\ty Servicios Sociales de los Trabajadores del Estado, en materia de\n\treconocimi",
+          "titulo": "Que adiciona el artículo 132 de la Ley Federal del Trabajo, en materia del derecho al cuidado y permisos laborales para acompañar a adultos mayores a ",
           "autor": "No identificado",
           "comision": "No especificada",
-          "fecha": "2026-02-18",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260218-II-1.html#Iniciativa9",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/feb/20260218-II-1-1.pdf",
+          "fecha": "2026-02-17",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260217-II-3.html#Iniciativa9",
+          "url_pdf": "",
           "numero_doc": "9"
         },
         {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma y adiciona diversas disposiciones de la Constitución\n\tPolítica de los Estados Unidos Mexicanos, a fin de establecer 5 días de\n\ttrabajo con",
-          "autor": "No identificado",
+          "tipo": "proposicion",
+          "titulo": "Con punto de acuerdo, para exhortar a la Sedatu, al Infonavit, a la Conavi y al Fovissste el no uso de conductores CCA para instalaciones en viviendas",
+          "autor": "Laura Ivonne Ruiz Moreno",
           "comision": "No especificada",
-          "fecha": "2026-02-18",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260218-II-2.html#Iniciativa7",
-          "url_pdf": "",
-          "numero_doc": "7"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma y adiciona diversas disposiciones de la Ley Federal del\n\tTrabajo y de la Ley del Impuesto sobre la Renta, a fin de establecer\n\tincentivos ",
-          "autor": "No identificado",
-          "comision": "No especificada",
-          "fecha": "2026-02-18",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260218-II-2.html#Iniciativa8",
-          "url_pdf": "",
-          "numero_doc": "8"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma el artículo 47 de la Ley del Instituto de Seguridad Social\n\tpara las Fuerzas Armadas Mexicanas, en materia de adopciones para las\n\tfuerzas",
-          "autor": "Anayeli Muñoz Moreno",
-          "comision": "No especificada",
-          "fecha": "2026-02-18",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260218-II-6.html#Iniciativa4",
+          "fecha": "2026-02-10",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260210-III-5.html#Proposicion4",
           "url_pdf": "",
           "numero_doc": "4"
         }
@@ -2980,104 +3079,104 @@
       ],
       "documentos_gaceta": [
         {
-          "tipo": "decreto",
-          "titulo": "Del Congreso de Nuevo León, con proyecto de decreto por el que se\n\tadiciona el inciso d) a la fracción XXI del artículo 73 de la\n\tConstitución Polític",
-          "autor": "No identificado",
+          "tipo": "iniciativa",
+          "titulo": "Que reforma el artículo 123 de la Constitución Política de los Estados Unidos Mexicanos, a fin de reconocer el derecho de las madres trabajadoras a la",
+          "autor": "Graciela Ortiz González",
           "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-I.html#Iniciativa1",
+          "fecha": "2026-03-04",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-5.html#Iniciativa1",
           "url_pdf": "",
           "numero_doc": "1"
         },
         {
-          "tipo": "decreto",
-          "titulo": "Del Congreso de Nuevo León, con proyecto de decreto por el que se\n\tadiciona una fracción II Bis I al artículo 61 de la Ley General de\n\tSalud",
-          "autor": "No identificado",
+          "tipo": "iniciativa",
+          "titulo": "Que adiciona un artículo 63 Ter a la Ley General de Responsabilidades Administrativas. a cargo de la diputada Leticia Barrera Maldonado, del Grupo Par",
+          "autor": "Leticia Barrera Maldonado",
           "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-I.html#Iniciativa2",
+          "fecha": "2026-03-04",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-5.html#Iniciativa2",
           "url_pdf": "",
           "numero_doc": "2"
         },
         {
-          "tipo": "decreto",
-          "titulo": "Del Congreso de Nuevo León, con proyecto de decreto por el que se\n\treforma la fracción X del artículo 7, el tercer párrafo del artículo 8\n\ty se adicio",
-          "autor": "No identificado",
+          "tipo": "iniciativa",
+          "titulo": "Que reforma y adiciona el artículo 3o. de la Ley de los Derechos de las Personas Adultas Mayores, en materia de vivienda adecuada, a cargo de la diput",
+          "autor": "Ofelia Socorro Jasso Nieto",
           "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-I.html#Iniciativa3",
+          "fecha": "2026-03-04",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-5.html#Iniciativa3",
           "url_pdf": "",
           "numero_doc": "3"
         },
         {
-          "tipo": "decreto",
-          "titulo": "Del Congreso de Nuevo León, con proyecto de decreto por el que se\n\treforma la fracción I del artículo 61 de la Ley General de Salud",
-          "autor": "No identificado",
+          "tipo": "iniciativa",
+          "titulo": "Que reforma el artículo 27 de la Ley Orgánica de la Administración Pública Federal, sobre la coordinación y difusión del calendario oficial, a cargo d",
+          "autor": "Graciela Ortiz González",
           "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-I.html#Iniciativa4",
+          "fecha": "2026-03-04",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-5.html#Iniciativa4",
           "url_pdf": "",
           "numero_doc": "4"
         },
         {
-          "tipo": "decreto",
-          "titulo": "Del Congreso de Nuevo León, con proyecto de decreto por el que se\n\tadiciona un artículo 263 Bis a la Ley General de Salud",
-          "autor": "No identificado",
+          "tipo": "iniciativa",
+          "titulo": "Que reforma los artículos 78 y 81 de la Ley Federal del Trabajo, para establecer el sistema de permuta y cesión de días de vacaciones entre personas t",
+          "autor": "Paloma Domínguez Ugarte y Rubén Ignacio Moreira Valdez",
           "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-I.html#Iniciativa5",
+          "fecha": "2026-03-04",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-5.html#Iniciativa5",
           "url_pdf": "",
           "numero_doc": "5"
         },
         {
           "tipo": "iniciativa",
-          "titulo": "Que reforma los numerales 3 y 6 y se recorre el subsecuente, del\n\tartículo 261 del Reglamento de la Cámara de Diputados, para otorgar la\n\tmedalla “Car",
-          "autor": "No identificado",
+          "titulo": "Que reforma el artículo 36 de la Ley Federal sobre Monumentos y Zonas Arqueológicos, Artísticos e Históricos, en materia de protección a bienes inmueb",
+          "autor": "Paola Michell Longoria López",
           "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-1.html#Iniciativa22",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-1-2.pdf",
-          "numero_doc": "22"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma y adiciona un artículo 13 Bis a la Ley Orgánica del\n\tCongreso General de los Estados Unidos Mexicanos, con el fin de ampliar\n\tla jornada l",
-          "autor": "No identificado",
-          "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-6.html#Iniciativa8",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-6-1.pdf",
-          "numero_doc": "8"
-        },
-        {
-          "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, por el cual la Cámara de Diputados del honorable\n\tCongreso de la Unión emite un pronunciamiento sobre la situación actual\n\tde la",
-          "autor": "No identificado",
-          "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-III-1.html#Proposicion3",
+          "fecha": "2026-03-04",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-6.html#Iniciativa3",
           "url_pdf": "",
           "numero_doc": "3"
         },
         {
           "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, para exhortar los congresos de diversas entidades\n\tfederativas a derogar los artículos referentes al delito de peligro de\n\tconta",
-          "autor": "Laura Hernández García",
-          "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-III-6.html#Proposicion5",
-          "url_pdf": "",
-          "numero_doc": "5"
-        },
-        {
-          "tipo": "decreto",
-          "titulo": "Del Congreso de la Ciudad de México, con proyecto de decreto por el que\n\tse adiciona un párrafo quinto, recorriéndose los subsecuentes al\n\tartículo 4o",
+          "titulo": "Con punto de acuerdo, por el que se exhorta a la Sader a convocar, lo más pronto posible, a sesión ordinaria del pleno del Consejo Mexicano de Desarro",
           "autor": "No identificado",
           "comision": "No especificada",
-          "fecha": "2026-02-24",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-I.html#Iniciativa1",
+          "fecha": "2026-03-04",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-III-5.html#Proposicion1",
           "url_pdf": "",
           "numero_doc": "1"
+        },
+        {
+          "tipo": "proposicion",
+          "titulo": "Con punto de acuerdo, por el que se exhorta a diversas autoridades a garantizar el seguimiento judicial, la no impunidad y la protección de los derech",
+          "autor": "No identificado",
+          "comision": "No especificada",
+          "fecha": "2026-03-04",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-III-5.html#Proposicion2",
+          "url_pdf": "",
+          "numero_doc": "2"
+        },
+        {
+          "tipo": "proposicion",
+          "titulo": "Con punto de acuerdo, por el que se exhorta a la Fiscalía General del Estado de Morelos a concluir a la brevedad la integración de la carpeta de inves",
+          "autor": "No identificado",
+          "comision": "No especificada",
+          "fecha": "2026-03-04",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-III-6.html#Proposicion2",
+          "url_pdf": "",
+          "numero_doc": "2"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que reforma el primer párrafo del artículo 199 Septies, 199 Octies y el último párrafo del artículo 202, todos del Código Penal Federal, en materia de",
+          "autor": "Magda Erika Salgado Ponce",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-1.html#Iniciativa2",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-1-2.pdf",
+          "numero_doc": "2"
         }
       ],
       "google_trends": [
@@ -3236,6 +3335,12 @@
           "fecha": "2026-03-04"
         },
         {
+          "fuente": "ovaciones",
+          "titulo": "Chiquita Boxing y una noble iniciativa para la niñez de Nezahualcóyotl",
+          "url": "https://ovaciones.com/chiquita-boxing-y-una-noble-iniciativa-para-la-ninez-de-nezahualcoyotl/?utm_source=rss&utm_medium=rss&utm_campaign=chiquita-boxing-y-una-noble-iniciativa-para-la-ninez-de-nezahualcoyotl",
+          "fecha": "2026-03-04"
+        },
+        {
           "fuente": "politico_mx",
           "titulo": "PVEM presume ‘libertad de expresión’, pero anticipa voto en bloque para la reforma electoral",
           "url": "https://www.politico.mx/2026/03/04/pvem-presume-libertad-de-expresion-pero-anticipa-voto-en-bloque-para-la-reforma-electoral/",
@@ -3303,117 +3408,21 @@
         },
         {
           "fuente": "cronica",
-          "titulo": "Legisladores de Morena se reúnen con la CDHCM para fortalecer la agenda de derechos humanos",
-          "url": "https://www.cronica.com.mx/metropoli/2026/03/02/legisladores-de-morena-se-reunen-con-la-cdhcm-para-fortalecer-la-agenda-de-derechos-humanos/",
-          "fecha": "2026-03-02"
-        },
-        {
-          "fuente": "animal_politico",
-          "titulo": "Editatonas y una escuela de mujeres wikipedistas: ¿cómo reducir brechas de género?",
-          "url": "https://animalpolitico.com/editatonas-escuela-mujeres-wikipedistas-reducir-brechas-genero-enciclopedia",
+          "titulo": "DIF Coahuila llevará a cabo 3 juegos con causa a beneficio de la niñez",
+          "url": "https://www.cronica.com.mx/estados/2026/03/02/dif-coahuila-llevara-a-cabo-3-juegos-con-causa-a-beneficio-de-la-ninez/",
           "fecha": "2026-03-02"
         }
       ],
       "documentos_gaceta": [
         {
-          "tipo": "iniciativa",
-          "titulo": "Que adiciona la fracción XXXV al artículo 2o. de la Ley General para la\n\tInclusión de las Personas con Discapacidad, en materia de\n\tdiscriminación por",
-          "autor": "Jazmín Yaneli Villanueva Moo",
-          "comision": "No especificada",
-          "fecha": "2026-03-04",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-1.html#Iniciativa1",
-          "url_pdf": "",
-          "numero_doc": "1"
-        },
-        {
           "tipo": "decreto",
-          "titulo": "Con proyecto de decreto, por el que se reforma y adiciona la Ley\n\tGeneral de Bibliotecas, en materia de acervos en lenguas indígenas",
+          "titulo": "Con proyecto de decreto, por el que se declara el tercer sábado de agosto de cada año “Día Nacional de la Adopción Responsable de Animales de Compañía",
           "autor": "No identificado",
           "comision": "No especificada",
           "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-I.html#Minuta1",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-I.html#Minuta4",
           "url_pdf": "",
-          "numero_doc": "1"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma los artículos 1o. y 9o. de la Ley Federal para Prevenir y\n\tEliminar la Discriminación, a cargo de la diputada Merilyn Gómez Pozos,\n\tdel Gr",
-          "autor": "Merilyn Gómez Pozos",
-          "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-1.html#Iniciativa24",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-1-2.pdf",
-          "numero_doc": "24"
-        },
-        {
-          "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, para exhortar al DIF del estado de Nuevo León a\n\taceptar cumplir íntegramente la recomendación 148/2025 emitida por la\n\tCNDH, re",
-          "autor": "Nancy Aracely Olguín Díaz",
-          "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-III-2.html#Proposicion1",
-          "url_pdf": "",
-          "numero_doc": "1"
-        },
-        {
-          "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, para exhortar a la SHCP, al Indep y a la CNDH a\n\tintervenir en la suspensión de remates de garantías y se implemente un\n\tprogram",
-          "autor": "No identificado",
-          "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-III-4.html#Proposicion1",
-          "url_pdf": "",
-          "numero_doc": "1"
-        },
-        {
-          "tipo": "proposicion",
-          "titulo": "De la Unidad de Enlace de la Secretaría de Gobernación, con la que\n\tremite contestación a punto de acuerdo aprobado por la Cámara de\n\tDiputados por el",
-          "autor": "No identificado",
-          "comision": "No especificada",
-          "fecha": "2026-02-24",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-I.html#ComunicacionOficial6",
-          "url_pdf": "",
-          "numero_doc": "6"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que adiciona una fracción XVI al artículo 13 de la Ley General de\n\tDerechos Lingüísticos de los Pueblos Indígenas, a cargo de la diputada\n\tLeide Avilé",
-          "autor": "Leide Avilés Domínguez",
-          "comision": "No especificada",
-          "fecha": "2026-02-24",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-II-1.html#Iniciativa29",
-          "url_pdf": "",
-          "numero_doc": "29"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que adiciona diversas disposiciones de la Ley Orgánica del Congreso\n\tGeneral de los Estados Unidos Mexicanos, para crear el Centro de\n\tAnálisis y Cons",
-          "autor": "No identificado",
-          "comision": "No especificada",
-          "fecha": "2026-02-18",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260218-II-1.html#Iniciativa1",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/feb/20260218-II-1-1.pdf",
-          "numero_doc": "1"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que adiciona diversas disposiciones del Reglamento de la Cámara de\n\tDiputados, para crear el Centro de Análisis y Consulta Indígena, a\n\tcargo de la di",
-          "autor": "Naty Poob Pijy Jiménez Vásquez",
-          "comision": "No especificada",
-          "fecha": "2026-02-18",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260218-II-1.html#Iniciativa2",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/feb/20260218-II-1-1.pdf",
-          "numero_doc": "2"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma el artículo 16 de la Ley General de Derechos Lingüísticos\n\tde los Pueblos Indígenas, a cargo de la diputada Gloria Sánchez López,\n\tdel Gru",
-          "autor": "Gloria Sánchez López",
-          "comision": "No especificada",
-          "fecha": "2026-02-18",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260218-II-1.html#Iniciativa5",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/feb/20260218-II-1-1.pdf",
-          "numero_doc": "5"
+          "numero_doc": "4"
         }
       ],
       "google_trends": [
@@ -3592,14 +3601,84 @@
       ],
       "documentos_gaceta": [
         {
-          "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, para exhortar al CSG a revisar en los datos\n\toficiales relativos a la magnitud, persistencia y expansión territorial\n\tdel brote ",
-          "autor": "Graciela Ortiz González",
+          "tipo": "iniciativa",
+          "titulo": "Que reforma y adiciona diversas disposiciones de la Ley General de Asentamientos Humanos, Ordenamiento Territorial y Desarrollo Urbano, en materia de ",
+          "autor": "No identificado",
+          "comision": "No especificada",
+          "fecha": "2026-03-04",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-3.html#Iniciativa3",
+          "url_pdf": "",
+          "numero_doc": "3"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que reforma y adiciona diversas disposiciones de la Ley General de Asentamientos Humanos, Ordenamiento Territorial y Desarrollo Urbano, en materia de ",
+          "autor": "No identificado",
           "comision": "No especificada",
           "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-III-5.html#Proposicion6",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-1.html#Iniciativa4",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-1-2.pdf",
+          "numero_doc": "4"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que adiciona un tercer párrafo al artículo 61 de la Ley General de Asentamientos Humanos, Ordenamiento Territorial y Desarrollo Urbano, en materia de ",
+          "autor": "Carlos Ignacio Mier Bañuelos",
+          "comision": "No especificada",
+          "fecha": "2026-02-24",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-II-1.html#Iniciativa21",
+          "url_pdf": "",
+          "numero_doc": "21"
+        },
+        {
+          "tipo": "proposicion",
+          "titulo": "Con punto de acuerdo, por el que se solicita a la SICT, en coordinación con la GN, a implementar acciones para revisar que el autotransporte público f",
+          "autor": "Alberto Maldonado Chavarín",
+          "comision": "No especificada",
+          "fecha": "2026-02-24",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-III-1.html#Proposicion4",
+          "url_pdf": "",
+          "numero_doc": "4"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que reforma y adiciona diversas disposiciones de la Leyes General de Desarrollo Forestal Sustentable, y General de Asentamientos Humanos, Ordenamiento",
+          "autor": "Ivonne Aracelly Ortega Pacheco",
+          "comision": "No especificada",
+          "fecha": "2026-02-18",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260218-II-6.html#Iniciativa3",
+          "url_pdf": "",
+          "numero_doc": "3"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que reforma el artículo 32 de la Ley General de Asentamientos Humanos, Ordenamiento Territorial y Desarrollo Urbano, en materia de fortalecimiento de ",
+          "autor": "Juan Moreno de Haro",
+          "comision": "No especificada",
+          "fecha": "2026-02-17",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260217-II-5.html#Iniciativa6",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/feb/20260217-II-5-1.pdf",
+          "numero_doc": "6"
+        },
+        {
+          "tipo": "proposicion",
+          "titulo": "Con punto de acuerdo, para exhortar a la SSPC a reforzar la estrategia de seguridad en las carreteras federales y nodos logísticos estratégicos, con e",
+          "autor": "José Guillermo Anaya Llamas",
+          "comision": "No especificada",
+          "fecha": "2026-02-17",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260217-III-2.html#Proposicion6",
           "url_pdf": "",
           "numero_doc": "6"
+        },
+        {
+          "tipo": "proposicion",
+          "titulo": "Con punto de acuerdo, para exhortar a la SSPC y a la GN a reforzar la estrategia de seguridad en carreteras federales, a cargo de la diputada María Le",
+          "autor": "María Leonor Noyola Cervantes",
+          "comision": "No especificada",
+          "fecha": "2026-02-17",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260217-III-3.html#Proposicion1",
+          "url_pdf": "",
+          "numero_doc": "1"
         }
       ],
       "google_trends": [
@@ -3810,34 +3889,14 @@
       ],
       "documentos_gaceta": [
         {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma y adiciona el artículo 24 de la Ley General de Pesca y\n\tAcuacultura Sustentables, en materia de protección y fomento a la pesca\n\tartesanal",
-          "autor": "Alejandro Avilés Álvarez",
+          "tipo": "proposicion",
+          "titulo": "Con punto de acuerdo, para exhortar a la Sader, a Alimentación para el Bienestar y al Poder Ejecutivo del estado de Zacatecas a garantizar la transpar",
+          "autor": "Noemí Berenice Luna Ayala",
           "comision": "No especificada",
-          "fecha": "2026-02-17",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260217-II-3.html#Iniciativa6",
+          "fecha": "2026-02-24",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-III-2.html#Proposicion5",
           "url_pdf": "",
-          "numero_doc": "6"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que expide la Ley Federal para el Fomento de la Ganadería de Precisión\n\ty Regenerativa, a cargo del diputado José Braña Mojica, del Grupo\n\tParlamentar",
-          "autor": "José Braña Mojica",
-          "comision": "No especificada",
-          "fecha": "2026-02-11",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260211-II-3.html#Iniciativa1",
-          "url_pdf": "",
-          "numero_doc": "1"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma y adiciona diversas disposiciones de la Ley General de\n\tPesca y Acuacultura Sustentables, a cargo de la diputada Ma. del Carmen\n\tCabrera L",
-          "autor": "Ma",
-          "comision": "No especificada",
-          "fecha": "2026-02-10",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260210-II-3.html#Iniciativa8",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/feb/20260210-II-3-1.pdf",
-          "numero_doc": "8"
+          "numero_doc": "5"
         }
       ],
       "google_trends": [
@@ -3980,103 +4039,13 @@
       "documentos_gaceta": [
         {
           "tipo": "iniciativa",
-          "titulo": "Que adiciona los artículos 366 Quinquies al Código Penal Federal y 14\n\tBis a la Ley General para Prevenir y Sancionar los Delitos en Materia\n\tde Secue",
+          "titulo": "Que reforma diversas disposiciones de la Constitución Política de los Estados Unidos Mexicanos, en materia de fortalecimiento de la soberanía nacional",
           "autor": "No identificado",
           "comision": "No especificada",
-          "fecha": "2026-03-04",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-2.html#Iniciativa2",
-          "url_pdf": "",
-          "numero_doc": "2"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma y adiciona el artículo 4o. de la Constitución Política de\n\tlos Estados Unidos Mexicanos, para reconocer el derecho humano al\n\tcuidado y lo",
-          "autor": "José Braña Mojica",
-          "comision": "No especificada",
-          "fecha": "2026-03-04",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-3.html#Iniciativa2",
-          "url_pdf": "",
-          "numero_doc": "2"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma y adiciona el artículo 123 de la Constitución Política de\n\tlos Estados Unidos Mexicanos, en materia de jornada laboral de 40 horas\n\tcon 2 ",
-          "autor": "No identificado",
-          "comision": "No especificada",
-          "fecha": "2026-03-04",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-6.html#Iniciativa1",
-          "url_pdf": "",
-          "numero_doc": "1"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma los artículos 95, 96 y 97 de la Constitución Política de\n\tlos Estados Unidos Mexicanos, en materia de proceso de selección de\n\tcandidatas ",
-          "autor": "Pablo Vázquez Ahued y Juan Ignacio Zavala Gutiérrez",
-          "comision": "No especificada",
-          "fecha": "2026-03-04",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-6.html#Iniciativa4",
+          "fecha": "2026-02-17",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260217-II-2.html#Iniciativa4",
           "url_pdf": "",
           "numero_doc": "4"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que adiciona los artículos 35 y 105 de la Constitución Política de los\n\tEstados Unidos Mexicanos, en materia de legitimación ciudadana para\n\tpromover ",
-          "autor": "No identificado",
-          "comision": "No especificada",
-          "fecha": "2026-03-04",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-6.html#Iniciativa5",
-          "url_pdf": "",
-          "numero_doc": "5"
-        },
-        {
-          "tipo": "decreto",
-          "titulo": "Del Congreso de Nuevo León, con proyecto de decreto por el que se\n\tadiciona el inciso d) a la fracción XXI del artículo 73 de la\n\tConstitución Polític",
-          "autor": "No identificado",
-          "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-I.html#Iniciativa1",
-          "url_pdf": "",
-          "numero_doc": "1"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma y adiciona diversas disposiciones de los artículos 3o. y 41\n\tde la Constitución Política de los Estados Unidos Mexicanos, en materia\n\tde f",
-          "autor": "Rosa María Castro Salinas",
-          "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-1.html#Iniciativa7",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-1-2.pdf",
-          "numero_doc": "7"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma los artículos 26, 73 y 109 de la Constitución Política de\n\tlos Estados Unidos Mexicanos, a cargo del diputado Mario Miguel\n\tCarrillo Cubil",
-          "autor": "No identificado",
-          "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-1.html#Iniciativa16",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-1-2.pdf",
-          "numero_doc": "16"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma y adiciona los artículos 1o. y 6o. de la Ley de Amparo,\n\tReglamentaria de los artículos 103 y 107 de la Constitución Política de\n\tlos Esta",
-          "autor": "No identificado",
-          "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-6.html#Iniciativa2",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-6-1.pdf",
-          "numero_doc": "2"
-        },
-        {
-          "tipo": "iniciativa",
-          "titulo": "Que reforma y adiciona un artículo 13 Bis a la Ley Orgánica del\n\tCongreso General de los Estados Unidos Mexicanos, con el fin de ampliar\n\tla jornada l",
-          "autor": "No identificado",
-          "comision": "No especificada",
-          "fecha": "2026-03-03",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-6.html#Iniciativa8",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-6-1.pdf",
-          "numero_doc": "8"
         }
       ],
       "google_trends": [
@@ -4273,8 +4242,18 @@
       ],
       "documentos_gaceta": [
         {
+          "tipo": "proposicion",
+          "titulo": "Con punto de acuerdo, para exhortar a la Conagua, al Órgano Interno de Control de este mismo y al Organismo de Cuenca y Cuenca Centrales del Norte a r",
+          "autor": "Ricardo Sóstenes Mejía Berdeja",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-III-4.html#Proposicion3",
+          "url_pdf": "",
+          "numero_doc": "3"
+        },
+        {
           "tipo": "iniciativa",
-          "titulo": "Que reforma el artículo 27 de la Ley General de Movilidad y Seguridad\n\tVial, en materia de transparencia, datos abiertos y seguimiento de\n\tindicadores",
+          "titulo": "Que reforma el artículo 27 de la Ley General de Movilidad y Seguridad Vial, en materia de transparencia, datos abiertos y seguimiento de indicadores d",
           "autor": "No identificado",
           "comision": "No especificada",
           "fecha": "2026-02-24",
@@ -4283,24 +4262,14 @@
           "numero_doc": "2"
         },
         {
-          "tipo": "proposicion",
-          "titulo": "Con punto de acuerdo, para exhortar a la SFP a realizar una auditoría\n\tintegral de cumplimiento normativo sobre la plantilla de personal\n\textranjero q",
-          "autor": "Asael Hernández Cerón",
-          "comision": "No especificada",
-          "fecha": "2026-02-18",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260218-III-2.html#Proposicion3",
-          "url_pdf": "",
-          "numero_doc": "3"
-        },
-        {
           "tipo": "iniciativa",
-          "titulo": "Que reforma y diversas disposiciones de las Leyes Federal del Trabajo;\n\tOrgánica de la Administración Pública Federal; General de Desarrollo\n\tSocial; ",
-          "autor": "José Elías Lixa Abimerhi",
+          "titulo": "Que reforma el artículo 49 de la Ley General de Responsabilidades Administrativas, en materia de incumplimiento reiterado de las obligaciones de decla",
+          "autor": "Luis Gerardo Sánchez Sánchez",
           "comision": "No especificada",
-          "fecha": "2026-02-11",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260211-II-2.html#Iniciativa4",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/feb/20260211-II-2-1.pdf",
-          "numero_doc": "4"
+          "fecha": "2026-02-24",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-II-5.html#Iniciativa12",
+          "url_pdf": "",
+          "numero_doc": "12"
         }
       ],
       "google_trends": [
@@ -4610,7 +4579,18 @@
           "fecha": "2026-02-27"
         }
       ],
-      "documentos_gaceta": [],
+      "documentos_gaceta": [
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que reforma los artículos 199 Octies y 211 Bis 1 del Código Penal Federal, en materia de imágenes alteradas con inteligencia artificial o “deepfakes”,",
+          "autor": "Laura Iraís Ballesteros Mancilla",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-6.html#Iniciativa6",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-6-1.pdf",
+          "numero_doc": "6"
+        }
+      ],
       "google_trends": [],
       "menciones_csp": [
         {
@@ -4717,13 +4697,103 @@
       "documentos_gaceta": [
         {
           "tipo": "iniciativa",
-          "titulo": "Que reforma la fracción XII y se recorre la subsecuente del artículo\n\t4o. de la Ley de Asistencia Social, a cargo de la diputada María\n\tDamaris Silva ",
+          "titulo": "Que adiciona la fracción XXXV al artículo 2o. de la Ley General para la Inclusión de las Personas con Discapacidad, en materia de discriminación por s",
+          "autor": "Jazmín Yaneli Villanueva Moo",
+          "comision": "No especificada",
+          "fecha": "2026-03-04",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260304-II-1.html#Iniciativa1",
+          "url_pdf": "",
+          "numero_doc": "1"
+        },
+        {
+          "tipo": "decreto",
+          "titulo": "De decreto por el que se declara el 4 de octubre de cada año “Día Nacional del Bienestar Animal”, a cargo del diputado Fernando Jorge Castro Trenti, d",
           "autor": "No identificado",
           "comision": "No especificada",
-          "fecha": "2026-02-18",
-          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260218-II-1.html#Iniciativa8",
-          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/feb/20260218-II-1-1.pdf",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-1.html#Iniciativa3",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-1-2.pdf",
+          "numero_doc": "3"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que reforma y adiciona diversas disposiciones de la Ley General para la Inclusión de las Personas con Discapacidad, a cargo de la diputada Mónica Herr",
+          "autor": "Mónica Herrera Villavicencio",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-1.html#Iniciativa5",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-1-2.pdf",
+          "numero_doc": "5"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que reforma el numeral 5 del artículo 280 de la Ley General de Instituciones y Procedimientos Electorales, en materia de inclusión y accesibilidad ele",
+          "autor": "Jorge Luis Sánchez Reyes",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-1.html#Iniciativa8",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-1-2.pdf",
           "numero_doc": "8"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que reforma el artículo 132 de la Ley Federal del Trabajo, estableciendo una cuota de contratación obligatoria de personas con discapacidad del 5 por ",
+          "autor": "No identificado",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-1.html#Iniciativa9",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-1-2.pdf",
+          "numero_doc": "9"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que deroga la fracción III del artículo 22 de la Ley de la Comisión Nacional de Energía, en materia de respeto a los derechos humanos y capacidad jurí",
+          "autor": "Kenia López Rabadán y las y los legisladores integrantes",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-II-2.html#Iniciativa6",
+          "url_pdf": "https://gaceta.diputados.gob.mx/PDF/66/2026/mar/20260303-II-2-1.pdf",
+          "numero_doc": "6"
+        },
+        {
+          "tipo": "proposicion",
+          "titulo": "Con punto de acuerdo, para exhortar a la SEP para que presente un informe a la opinión pública respecto a la situación actual que guardan las Universi",
+          "autor": "No identificado",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-III-2.html#Proposicion10",
+          "url_pdf": "",
+          "numero_doc": "10"
+        },
+        {
+          "tipo": "proposicion",
+          "titulo": "Con punto de acuerdo, para exhortar a la Ssa y a la Dirección General del IMSS Bienestar a establecer de manera inmediata una mesa de diálogo instituc",
+          "autor": "No identificado",
+          "comision": "No especificada",
+          "fecha": "2026-03-03",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/mar/20260303-III-5.html#Proposicion5",
+          "url_pdf": "",
+          "numero_doc": "5"
+        },
+        {
+          "tipo": "iniciativa",
+          "titulo": "Que reforma los artículos 2o. y 17 de la Ley General para la Inclusión de las Personas con Discapacidad, para garantizar la accesibilidad a las person",
+          "autor": "No identificado",
+          "comision": "No especificada",
+          "fecha": "2026-02-24",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-II-4.html#Iniciativa7",
+          "url_pdf": "",
+          "numero_doc": "7"
+        },
+        {
+          "tipo": "proposicion",
+          "titulo": "Con punto de acuerdo, para exhortar a la Sader, a Alimentación para el Bienestar y al Poder Ejecutivo del estado de Zacatecas a garantizar la transpar",
+          "autor": "Noemí Berenice Luna Ayala",
+          "comision": "No especificada",
+          "fecha": "2026-02-24",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260224-III-2.html#Proposicion5",
+          "url_pdf": "",
+          "numero_doc": "5"
         }
       ],
       "google_trends": [],
@@ -4903,7 +4973,18 @@
           "fecha": "2026-03-01"
         }
       ],
-      "documentos_gaceta": [],
+      "documentos_gaceta": [
+        {
+          "tipo": "proposicion",
+          "titulo": "Con punto de acuerdo, para exhortar a la CNPC y a la Sectur a supervisar, fortalecer y verificar los programas internos de protección civil en los est",
+          "autor": "No identificado",
+          "comision": "No especificada",
+          "fecha": "2026-02-11",
+          "url": "https://gaceta.diputados.gob.mx/Gaceta/66/2026/feb/20260211-III-4.html#Proposicion1",
+          "url_pdf": "",
+          "numero_doc": "1"
+        }
+      ],
       "google_trends": [],
       "menciones_csp": [
         {
@@ -4953,7 +5034,7 @@
           68.7,
           67.7,
           64.2,
-          61.5
+          61.6
         ],
         "colores": [
           "amarillo",
@@ -5070,7 +5151,7 @@
           58.9,
           58.5,
           58.4,
-          54.5
+          54.9
         ],
         "colores": [
           "amarillo",
@@ -5148,7 +5229,7 @@
           47.9,
           46.1,
           53.6,
-          44.3
+          52.9
         ],
         "colores": [
           "amarillo",
@@ -5265,7 +5346,7 @@
           69.7,
           51.7,
           54.4,
-          62.5
+          62.8
         ],
         "colores": [
           "amarillo",
@@ -5304,7 +5385,7 @@
           30.7,
           26.8,
           25.1,
-          31.6
+          34.8
         ],
         "colores": [
           "rojo",
@@ -5343,7 +5424,7 @@
           54.3,
           54.0,
           53.0,
-          58.9
+          60.4
         ],
         "colores": [
           "verde",
@@ -5421,7 +5502,7 @@
           38.4,
           38.9,
           35.5,
-          36.0
+          49.9
         ],
         "colores": [
           null,
@@ -5439,7 +5520,7 @@
           "rojo",
           "rojo",
           "rojo",
-          "rojo"
+          "amarillo"
         ]
       },
       "inteligencia_artificial": {
@@ -5499,7 +5580,7 @@
           30.2,
           36.6,
           39.4,
-          41.8
+          43.4
         ],
         "colores": [
           null,
@@ -45215,6 +45296,7 @@
       "abreviatura": "COA",
       "total_articulos": 5,
       "categorias": [
+        "derechos_humanos:0.6059",
         "electoral_politico:0.5183",
         "seguridad_justicia:1.1777"
       ],
@@ -45247,7 +45329,7 @@
           "titulo": "DIF Coahuila llevará a cabo 3 juegos con causa a beneficio de la niñez",
           "fecha": "2026-03-02 23:19:27",
           "url": "https://www.cronica.com.mx/estados/2026/03/02/dif-coahuila-llevara-a-cabo-3-juegos-con-causa-a-beneficio-de-la-ninez/",
-          "categorias": ""
+          "categorias": "derechos_humanos:0.6059"
         }
       ]
     },
