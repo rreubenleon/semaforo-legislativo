@@ -89,19 +89,21 @@
 
         function ScoreRing({ score, color, size = 80 }) {
             const radius = (size - 8) / 2;
+            const half = size / 2;
             const circumference = 2 * Math.PI * radius;
             const offset = circumference - (score / 100) * circumference;
             const colors = { verde: '#2e7d32', amarillo: '#c6972b', rojo: '#c62828' };
             const strokeColor = colors[color] || '#9ca3af';
+            const fontSize = size > 70 ? '16px' : size > 50 ? '13px' : '11px';
             return (
-                <svg width={size} height={size} className="transform -rotate-90">
-                    <circle cx={size/2} cy={size/2} r={radius} stroke="#e5e7eb" strokeWidth="6" fill="none" />
-                    <circle cx={size/2} cy={size/2} r={radius} stroke={strokeColor} strokeWidth="6" fill="none"
+                <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                    <circle cx={half} cy={half} r={radius} stroke="#e5e7eb" strokeWidth="6" fill="none" />
+                    <circle cx={half} cy={half} r={radius} stroke={strokeColor} strokeWidth="6" fill="none"
                         strokeDasharray={circumference} strokeDashoffset={offset}
-                        strokeLinecap="round" className="score-ring" />
-                    <text x={size/2} y={size/2} textAnchor="middle" dominantBaseline="central"
-                        className="transform rotate-90" style={{transformOrigin:'center', fontSize: size > 60 ? '16px' : '12px'}}
-                        fill="#1a365d" fontWeight="bold">
+                        strokeLinecap="round" className="score-ring"
+                        transform={`rotate(-90 ${half} ${half})`} />
+                    <text x={half} y={half} textAnchor="middle" dominantBaseline="central"
+                        style={{fontSize}} fill="#1a365d" fontWeight="bold">
                         {score.toFixed(0)}%
                     </text>
                 </svg>
