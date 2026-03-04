@@ -483,7 +483,7 @@ def paso_7_exportar_dashboard():
             if preds:
                 autoria[cat_clave] = [
                     {
-                        "nombre": invertir_nombre(p["nombre"]),
+                        "nombre": invertir_nombre(p["nombre"]) if "Diputados" in (p.get("camara") or "") else p["nombre"],
                         "partido": p["partido"],
                         "camara": p["camara"],
                         "estado": p["estado"] or "",
