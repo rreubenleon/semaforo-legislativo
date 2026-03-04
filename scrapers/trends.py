@@ -49,7 +49,7 @@ def consultar_trends_categoria(pytrends, categoria_clave, max_keywords=5):
     Google Trends acepta máximo 5 keywords por consulta.
     """
     cat_config = CATEGORIAS[categoria_clave]
-    keywords = obtener_keywords_categoria(categoria_clave)[:max_keywords]
+    keywords = cat_config.get("trends_keywords", obtener_keywords_categoria(categoria_clave)[:max_keywords])
 
     logger.info(f"Consultando Trends para {cat_config['nombre']}: {keywords}")
 

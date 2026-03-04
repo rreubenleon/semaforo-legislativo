@@ -253,6 +253,7 @@ CATEGORIAS = {
             "Justicia", "Seguridad Pública", "Defensa Nacional",
             "Guardia Nacional", "Marina",
         ],
+        "trends_keywords": ["inseguridad", "guardia nacional", "narcotráfico", "feminicidio", "crimen organizado"],
         "subcategorias": {
             "seguridad_publica": {
                 "nombre": "Seguridad pública y policía",
@@ -297,6 +298,7 @@ CATEGORIAS = {
             "Defensa de los Consumidores",
             "Desarrollo Regional",
         ],
+        "trends_keywords": ["inflación", "SAT impuestos", "peso mexicano", "economía México", "deuda pública"],
         "subcategorias": {
             "politica_fiscal": {
                 "nombre": "Política fiscal y recaudación",
@@ -333,6 +335,7 @@ CATEGORIAS = {
             # Senado LXVI
             "Energía", "Minería",
         ],
+        "trends_keywords": ["Pemex", "CFE", "precio gasolina", "luz eléctrica", "apagón"],
         "subcategorias": {
             "pemex_petroleo": {
                 "nombre": "Pemex y petróleo",
@@ -360,6 +363,7 @@ CATEGORIAS = {
             # Senado LXVI
             "Salud", "Seguridad Social",
         ],
+        "trends_keywords": ["IMSS", "medicamentos", "salud pública", "hospitales México", "vacuna"],
         "subcategorias": {
             "sistema_salud": {
                 "nombre": "Sistema de salud",
@@ -389,6 +393,7 @@ CATEGORIAS = {
             "Ciencia, Humanidades, Tecnología e Innovación",
             "Cultura", "Juventud", "Deporte",
         ],
+        "trends_keywords": ["SEP", "UNAM", "becas", "libros de texto", "escuelas México"],
         "subcategorias": {
             "educacion_basica": {
                 "nombre": "Educación básica",
@@ -416,6 +421,7 @@ CATEGORIAS = {
             # Senado LXVI
             "Trabajo y Previsión Social", "Seguridad Social",
         ],
+        "trends_keywords": ["empleo México", "salario mínimo", "desempleo", "pensiones", "AFORE"],
         "subcategorias": {
             "empleo_salario": {
                 "nombre": "Empleo y salarios",
@@ -451,6 +457,7 @@ CATEGORIAS = {
             "Reglamentos y Prácticas Parlamentarias",
             "Medalla Belisario Domínguez",
         ],
+        "trends_keywords": ["elecciones México", "INE", "Morena partido", "congreso México", "reforma electoral"],
         "subcategorias": {
             "reforma_electoral": {
                 "nombre": "Reforma electoral",
@@ -484,6 +491,7 @@ CATEGORIAS = {
             "Asuntos Migratorios",
             "Pueblos Indígenas y Afromexicanos",
         ],
+        "trends_keywords": ["derechos humanos México", "migración México", "feminismo", "discriminación", "CNDH"],
         "subcategorias": {
             "derechos_fundamentales": {
                 "nombre": "Derechos fundamentales",
@@ -524,6 +532,7 @@ CATEGORIAS = {
             "Desarrollo Municipal",
             "Desarrollo Regional",
         ],
+        "trends_keywords": ["Tren Maya", "AIFA", "agua potable", "vivienda", "carreteras México"],
         "subcategorias": {
             "transporte_movilidad": {
                 "nombre": "Transporte y movilidad",
@@ -568,6 +577,7 @@ CATEGORIAS = {
             "Reforma Agraria",
             "Autosuficiencia Alimentaria",
         ],
+        "trends_keywords": ["agricultura México", "maíz", "campo mexicano", "fertilizante", "precio tortilla"],
         "subcategorias": {
             "agricultura_cultivos": {
                 "nombre": "Agricultura y cultivos",
@@ -604,6 +614,7 @@ CATEGORIAS = {
             "Asuntos de la Frontera Norte",
             "Asuntos de la Frontera Sur",
         ],
+        "trends_keywords": ["T-MEC", "aranceles México", "frontera México", "Estados Unidos México", "deportación"],
         "subcategorias": {
             "relacion_eeuu": {
                 "nombre": "Relación con EE.UU.",
@@ -632,6 +643,7 @@ CATEGORIAS = {
             "Anticorrupción y Transparencia",
             "Jurisdiccional",
         ],
+        "trends_keywords": ["corrupción México", "transparencia", "INAI", "lavado de dinero", "auditoría"],
         "subcategorias": {
             "sistema_anticorrupcion": {
                 "nombre": "Sistema anticorrupción",
@@ -660,6 +672,7 @@ CATEGORIAS = {
             # Senado LXVI
             "Medio Ambiente, Recursos Naturales y Cambio Climático",
         ],
+        "trends_keywords": ["cambio climático", "contaminación", "sequía México", "incendio forestal", "calidad del aire"],
         "subcategorias": {
             "cambio_climatico": {
                 "nombre": "Cambio climático",
@@ -696,6 +709,7 @@ CATEGORIAS = {
             "Ciberseguridad",
             "Derechos Digitales",
         ],
+        "trends_keywords": ["inteligencia artificial", "ciberseguridad", "datos personales", "deepfake", "ChatGPT"],
         "subcategorias": {
             "regulacion_ia": {
                 "nombre": "Regulación de IA",
@@ -723,6 +737,7 @@ CATEGORIAS = {
             # Senado LXVI
             "Bienestar",
         ],
+        "trends_keywords": ["pensión bienestar", "programas sociales", "pobreza México", "becas Benito Juárez", "bienestar"],
         "subcategorias": {
             "programas_federales": {
                 "nombre": "Programas federales",
@@ -749,6 +764,7 @@ CATEGORIAS = {
             # Senado LXVI
             "Radio, Televisión y Cinematografía",
         ],
+        "trends_keywords": ["libertad de prensa", "periodistas México", "televisión", "censura", "IFT"],
         "subcategorias": {
             "regulacion_medios": {
                 "nombre": "Regulación de medios",
@@ -775,6 +791,7 @@ CATEGORIAS = {
             # Senado LXVI
             "Turismo",
         ],
+        "trends_keywords": ["turismo México", "hoteles Cancún", "pueblo mágico", "turistas", "vuelos baratos"],
         "subcategorias": {
             "politica_turistica": {
                 "nombre": "Política turística",
