@@ -210,9 +210,21 @@ def calcular_relevancia_mexico(titulo, resumen=""):
     return 0.6       # Sin señales claras: penalización leve
 
 
+# ── Señales de instrumentos legislativos ──────────────────────────────
+# Cuando un artículo menciona estos términos, es evidencia directa de
+# actividad legislativa real (no solo cobertura mediática). Se aplica un
+# boost multiplicativo a las categorías que ya matchearon.
+SEÑALES_LEGISLATIVAS = [
+    "iniciativa", "proyecto de decreto", "punto de acuerdo",
+    "dictamen", "reforma constitucional", "minuta",
+    "proyecto de ley", "proposición con punto de acuerdo",
+    "gaceta parlamentaria", "diario oficial",
+]
+
+
 def clasificar_texto(titulo, resumen=""):
     """
-    Clasifica un texto en las 12 categorías legislativas.
+    Clasifica un texto en las 17 categorías legislativas.
     Retorna dict {categoria: score} ordenado por relevancia.
 
     El score combina:
@@ -220,6 +232,7 @@ def clasificar_texto(titulo, resumen=""):
     - Coincidencia parcial / tokens compartidos (peso bajo)
     - Bonus por keywords en título vs resumen
     - Filtro de relevancia México (penaliza artículos internacionales)
+    - Boost por señales de instrumentos legislativos
     """
     # Filtro 1: Excluir deportes y entretenimiento
     if _es_contexto_no_legislativo(titulo, resumen):
@@ -239,6 +252,10 @@ def clasificar_texto(titulo, resumen=""):
 
     tf_titulo = calcular_tf(tokens_titulo)
     tf_resumen = calcular_tf(tokens_resumen)
+
+    # Detección de señales legislativas (una vez para todo el texto)
+    texto_completo = f"{titulo} {resumen}".lower()
+    hits_legislativos = sum(1 for señal in SEÑALES_LEGISLATIVAS if señal in texto_completo)
 
     scores = {}
 
@@ -270,6 +287,13 @@ def clasificar_texto(titulo, resumen=""):
 
         # Aplicar multiplicador de relevancia México
         score = score * relevancia
+
+        # Boost legislativo: instrumentos legislativos amplifican categorías con match
+        # Un artículo con "iniciativa" o "dictamen" es actividad legislativa real,
+        # señal mucho más fuerte que cualquier keyword temática
+        if hits_legislativos > 0 and score > 0.15:
+            boost = min(1.0 + (hits_legislativos * 0.35), 2.5)
+            score = score * boost
 
         if score >= NLP_CONFIG["min_confianza"]:
             scores[cat_clave] = round(score, 4)
