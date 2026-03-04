@@ -13,7 +13,7 @@ from pathlib import Path
 
 import requests
 
-from config import CATEGORIAS, DATABASE
+from config import CATEGORIAS, DATABASE, obtener_keywords_categoria
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +133,7 @@ def _clasificar_sintesis(texto):
     bloques = re.split(r"\n{2,}|\n(?=[A-ZÁÉÍÓÚÑ]{3,})", texto)
 
     for cat_clave, cat_config in CATEGORIAS.items():
-        keywords = cat_config["keywords"]
+        keywords = obtener_keywords_categoria(cat_clave)
         menciones = 0
         extractos = []
 

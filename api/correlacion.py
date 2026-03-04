@@ -11,7 +11,7 @@ from pathlib import Path
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import CATEGORIAS, SCORING, URGENCIA, DATABASE
+from config import CATEGORIAS, SCORING, URGENCIA, DATABASE, obtener_keywords_categoria
 from scrapers.medios import obtener_score_media
 from scrapers.gaceta import obtener_score_congreso
 from scrapers.trends import obtener_score_trends
@@ -216,7 +216,7 @@ def calcular_score_categoria(categoria_clave):
     SCORE = (0.25×Media) + (0.15×Trends) + (0.30×Congreso) + (0.15×Mañanera) + (0.15×Urgencia)
     """
     cat_config = CATEGORIAS[categoria_clave]
-    keywords = cat_config["keywords"]
+    keywords = obtener_keywords_categoria(categoria_clave)
     pesos = SCORING["pesos"]
 
     # Componente 1: Presión mediática (0.30)

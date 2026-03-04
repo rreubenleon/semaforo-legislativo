@@ -126,6 +126,7 @@
             const momentum = data.momentum || {};
             const trendArrow = momentum.tendencia === 'up' ? '\u2191' : momentum.tendencia === 'down' ? '\u2193' : '';
             const trendColor = momentum.tendencia === 'up' ? 'text-green-600' : momentum.tendencia === 'down' ? 'text-red-500' : 'text-gray-400';
+            const topSubs = (data.subcategorias_activas || []).slice(0, 2);
             return (
                 <div onClick={() => onClick(data)}
                     className={`glass border ${colorClasses[data.color]} rounded-xl p-4 cursor-pointer transition-all duration-300 hover:scale-[1.02] ${pulseClass}`}>
@@ -144,6 +145,15 @@
                         </div>
                         <ScoreRing score={data.score_total} color={data.color} size={56} />
                     </div>
+                    {topSubs.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-2">
+                            {topSubs.map(s => (
+                                <span key={s.clave} className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] bg-gray-100 text-gray-600 border border-gray-200">
+                                    {s.nombre}
+                                </span>
+                            ))}
+                        </div>
+                    )}
                     <div className="grid grid-cols-5 gap-1 text-xs text-gray-500">
                         <div className="text-center"><div className="text-gray-700 font-medium">{data.score_media.toFixed(0)}%</div><div>Media</div></div>
                         <div className="text-center"><div className="text-gray-700 font-medium">{data.score_trends.toFixed(0)}%</div><div>Trends</div></div>
@@ -534,6 +544,22 @@
                             <div className="bg-rose-50 border border-rose-200 rounded-lg p-2 text-center"><div className="font-bold text-rose-600">{(data.score_mananera || 0).toFixed(0)}%</div><div className="text-gray-500">CSP</div></div>
                             <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 text-center"><div className="font-bold text-purple-800">{data.score_urgencia.toFixed(0)}%</div><div className="text-gray-500">Urgencia</div></div>
                         </div>
+                        {data.subcategorias_activas?.length > 0 && (
+                            <div className="bg-gray-50/50 border border-gray-100 rounded-lg p-3">
+                                <div className="text-[10px] text-gray-400 mb-2 uppercase tracking-wider font-medium">Subtemas activos</div>
+                                <div className="space-y-1.5">
+                                    {data.subcategorias_activas.map(sub => (
+                                        <div key={sub.clave} className="flex items-center gap-2">
+                                            <span className="text-xs text-gray-700 w-40 truncate flex-shrink-0">{sub.nombre}</span>
+                                            <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                                <div className="h-full rounded-full transition-all" style={{width: `${Math.max(sub.peso * 100, 4)}%`, backgroundColor: colors[data.color]}} />
+                                            </div>
+                                            <span className="text-[10px] text-gray-400 w-8 text-right">{(sub.peso * 100).toFixed(0)}%</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         <div>
                             <div className="flex gap-0 border-b border-gray-200 mb-3 flex-wrap">
                                 {[['media', `Medios (${nMedia})`], ['gaceta', `Gaceta (${nGaceta})`], ['csp', `Mención CSP (${nCSP})`], ['trends', `Trends (${nTrends})`], ['urgencia', 'Urgencia']].map(([key, label]) => (

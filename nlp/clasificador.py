@@ -1,5 +1,5 @@
 """
-Clasificador NLP por 12 categorías legislativas
+Clasificador NLP por 17 categorías legislativas con subcategorías
 Fase 1: Keyword matching con TF-IDF ponderado
 Fase 2 (futuro): Transformers fine-tuned
 """
@@ -14,7 +14,7 @@ from pathlib import Path
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import CATEGORIAS, NLP_CONFIG, DATABASE, KEYWORDS_NEGATIVOS, KEYWORDS_MEXICO
+from config import CATEGORIAS, NLP_CONFIG, DATABASE, KEYWORDS_NEGATIVOS, KEYWORDS_MEXICO, obtener_keywords_categoria
 
 logger = logging.getLogger(__name__)
 
@@ -243,7 +243,7 @@ def clasificar_texto(titulo, resumen=""):
     scores = {}
 
     for cat_clave, cat_config in CATEGORIAS.items():
-        keywords = cat_config["keywords"]
+        keywords = obtener_keywords_categoria(cat_clave)
         score = 0.0
 
         for keyword in keywords:
@@ -281,6 +281,57 @@ def clasificar_texto(titulo, resumen=""):
     )
 
     return scores_ordenados
+
+
+def detectar_subcategorias(titulo, resumen, cat_clave):
+    """
+    Para una categoría ya clasificada, identifica qué subcategorías matchean.
+    Usa la misma lógica de keyword matching que clasificar_texto pero
+    a nivel subcategoría.
+
+    Retorna dict {subcategoria_clave: score} ordenado por score desc.
+    Ejemplo: {"crimen_organizado": 0.72, "fuerzas_armadas": 0.35}
+    """
+    cat_config = CATEGORIAS.get(cat_clave)
+    if not cat_config or "subcategorias" not in cat_config:
+        return {}
+
+    tokens_titulo = normalizar_texto(titulo)
+    tokens_resumen = normalizar_texto(resumen)
+    tf_titulo = calcular_tf(tokens_titulo)
+    tf_resumen = calcular_tf(tokens_resumen)
+
+    resultados = {}
+
+    for sub_clave, sub_config in cat_config["subcategorias"].items():
+        keywords = sub_config["keywords"]
+        score = 0.0
+
+        for keyword in keywords:
+            kw_tokens = normalizar_texto(keyword)
+
+            for kw_token in kw_tokens:
+                if kw_token in tf_titulo:
+                    score += tf_titulo[kw_token] * 3.0
+                if kw_token in tf_resumen:
+                    score += tf_resumen[kw_token] * 1.0
+
+            # Bonus por keyword compuesta encontrada completa
+            kw_lower = keyword.lower()
+            if kw_lower in titulo.lower():
+                score += 2.0
+            if resumen and kw_lower in resumen.lower():
+                score += 0.8
+
+        # Normalizar por número de keywords de esta subcategoría
+        if keywords:
+            score = score / math.sqrt(len(keywords))
+
+        if score > 0.1:  # Umbral bajo: sólo necesita alguna señal
+            resultados[sub_clave] = round(score, 4)
+
+    # Ordenar por score descendente
+    return dict(sorted(resultados.items(), key=lambda x: x[1], reverse=True))
 
 
 def clasificar_y_etiquetar(articulo):

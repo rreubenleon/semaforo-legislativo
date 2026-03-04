@@ -241,17 +241,11 @@ TWITTER_BEARER_TOKEN = os.environ.get(
 )
 
 # ─────────────────────────────────────────────
-# 12 CATEGORÍAS LEGISLATIVAS (basadas en comisiones)
+# 17 CATEGORÍAS LEGISLATIVAS CON SUBCATEGORÍAS
 # ─────────────────────────────────────────────
 CATEGORIAS = {
     "seguridad_justicia": {
         "nombre": "Seguridad y Justicia",
-        "keywords": [
-            "seguridad", "justicia", "penal", "policía", "guardia nacional",
-            "crimen organizado", "narcotráfico", "homicidio", "violencia", "fiscalía",
-            "ministerio público", "cárcel", "prisión", "delito", "impunidad",
-            "extorsión", "secuestro", "feminicidio", "desaparición forzada",
-        ],
         "comisiones": [
             # Diputados
             "Justicia", "Seguridad Pública", "Defensa Nacional",
@@ -259,16 +253,35 @@ CATEGORIAS = {
             "Justicia", "Seguridad Pública", "Defensa Nacional",
             "Guardia Nacional", "Marina",
         ],
+        "subcategorias": {
+            "seguridad_publica": {
+                "nombre": "Seguridad pública y policía",
+                "keywords": ["policía", "guardia nacional", "seguridad pública", "operativo", "patrullaje", "estrategia de seguridad"],
+            },
+            "justicia_penal": {
+                "nombre": "Justicia penal y reforma judicial",
+                "keywords": ["código penal", "ministerio público", "proceso penal", "jueces", "fiscalía", "reforma judicial", "poder judicial", "penal"],
+            },
+            "crimen_organizado": {
+                "nombre": "Crimen organizado",
+                "keywords": ["narcotráfico", "crimen organizado", "extorsión", "secuestro", "cártel", "fentanilo", "delito"],
+            },
+            "fuerzas_armadas": {
+                "nombre": "Fuerzas armadas y defensa",
+                "keywords": ["sedena", "semar", "fuerzas armadas", "defensa nacional", "seguridad nacional", "ejército", "marina"],
+            },
+            "sistema_penitenciario": {
+                "nombre": "Sistema penitenciario",
+                "keywords": ["cárcel", "prisión", "sistema penitenciario", "reclusorio", "reinserción social"],
+            },
+            "violencia_victimas": {
+                "nombre": "Violencia y víctimas",
+                "keywords": ["homicidio", "feminicidio", "desaparición forzada", "violencia", "impunidad", "víctimas"],
+            },
+        },
     },
     "economia_hacienda": {
         "nombre": "Economía y Hacienda",
-        "keywords": [
-            "economía", "hacienda", "presupuesto", "impuestos", "SAT",
-            "inflación", "PIB", "deuda", "gasto público", "política fiscal",
-            "reforma fiscal", "aranceles", "comercio exterior", "inversión extranjera",
-            "inversión pública", "tipo de cambio", "peso mexicano",
-            "recaudación", "IEPS", "IVA", "ISR", "déficit",
-        ],
         "comisiones": [
             # Diputados
             "Hacienda y Crédito Público", "Economía, Comercio y Competitividad",
@@ -279,45 +292,85 @@ CATEGORIAS = {
             "Defensa de los Consumidores",
             "Desarrollo Regional",
         ],
+        "subcategorias": {
+            "politica_fiscal": {
+                "nombre": "Política fiscal y recaudación",
+                "keywords": ["impuestos", "SAT", "reforma fiscal", "IEPS", "IVA", "ISR", "recaudación", "contribuyente"],
+            },
+            "presupuesto_gasto": {
+                "nombre": "Presupuesto y gasto público",
+                "keywords": ["presupuesto", "gasto público", "PEF", "deuda pública", "déficit", "austeridad", "deuda"],
+            },
+            "politica_monetaria": {
+                "nombre": "Política monetaria y macroeconomía",
+                "keywords": ["inflación", "tipo de cambio", "peso mexicano", "Banxico", "tasa de interés", "PIB"],
+            },
+            "comercio_exterior": {
+                "nombre": "Comercio exterior e inversión",
+                "keywords": ["aranceles", "comercio exterior", "inversión extranjera", "exportación", "importación", "balanza comercial"],
+            },
+            "fomento_economico": {
+                "nombre": "Fomento económico",
+                "keywords": ["economía", "inversión pública", "fomento económico", "emprendimiento", "Pymes", "competitividad", "hacienda", "política fiscal"],
+            },
+        },
     },
     "energia": {
         "nombre": "Energía",
-        "keywords": [
-            "energía", "petróleo", "Pemex", "CFE", "electricidad",
-            "hidrocarburos", "gasolina", "gas natural", "gas LP", "renovable", "solar",
-            "eólica", "litio", "refinería", "subsidio energético",
-            "tarifas eléctricas", "soberanía energética",
-        ],
         "comisiones": [
             # Diputados
             "Energía",
             # Senado LXVI
             "Energía", "Minería",
         ],
+        "subcategorias": {
+            "pemex_petroleo": {
+                "nombre": "Pemex y petróleo",
+                "keywords": ["Pemex", "petróleo", "hidrocarburos", "gasolina", "refinería", "producción petrolera"],
+            },
+            "cfe_electricidad": {
+                "nombre": "CFE y electricidad",
+                "keywords": ["CFE", "electricidad", "tarifas eléctricas", "apagón", "generación eléctrica", "subsidio energético"],
+            },
+            "energias_renovables": {
+                "nombre": "Energías renovables",
+                "keywords": ["renovable", "solar", "eólica", "transición energética", "energía limpia"],
+            },
+            "mineria_recursos": {
+                "nombre": "Minería y recursos",
+                "keywords": ["litio", "minería", "concesión minera", "gas natural", "gas LP", "gasoducto", "soberanía energética"],
+            },
+        },
     },
     "salud": {
         "nombre": "Salud",
-        "keywords": [
-            "salud", "IMSS", "ISSSTE", "hospital", "medicamento",
-            "vacuna", "epidemia", "pandemia", "médico", "enfermedad",
-            "INSABI", "IMSS-Bienestar", "desabasto", "farmacia",
-            "salud mental", "adicciones", "fentanilo",
-        ],
         "comisiones": [
             # Diputados
             "Salud",
             # Senado LXVI
             "Salud", "Seguridad Social",
         ],
+        "subcategorias": {
+            "sistema_salud": {
+                "nombre": "Sistema de salud",
+                "keywords": ["IMSS", "ISSSTE", "IMSS-Bienestar", "hospital", "clínica", "atención médica", "INSABI"],
+            },
+            "medicamentos_abasto": {
+                "nombre": "Medicamentos y abasto",
+                "keywords": ["medicamento", "desabasto", "farmacia", "vacuna", "compra consolidada"],
+            },
+            "salud_mental_adicciones": {
+                "nombre": "Salud mental y adicciones",
+                "keywords": ["salud mental", "adicciones", "fentanilo", "rehabilitación", "prevención de adicciones"],
+            },
+            "epidemiologia": {
+                "nombre": "Epidemiología",
+                "keywords": ["epidemia", "pandemia", "enfermedad", "brote", "vigilancia epidemiológica"],
+            },
+        },
     },
     "educacion": {
         "nombre": "Educación",
-        "keywords": [
-            "educación", "SEP", "escuela", "universidad", "maestro",
-            "profesor", "becas", "libros de texto", "CONACYT", "Conahcyt",
-            "investigación", "ciencia", "tecnología", "UNAM", "IPN",
-            "rezago educativo", "deserción escolar",
-        ],
         "comisiones": [
             # Diputados
             "Educación", "Ciencia, Tecnología e Innovación",
@@ -326,31 +379,54 @@ CATEGORIAS = {
             "Ciencia, Humanidades, Tecnología e Innovación",
             "Cultura", "Juventud", "Deporte",
         ],
+        "subcategorias": {
+            "educacion_basica": {
+                "nombre": "Educación básica",
+                "keywords": ["SEP", "escuela", "maestro", "profesor", "libros de texto", "rezago educativo", "deserción escolar"],
+            },
+            "educacion_superior": {
+                "nombre": "Educación superior e investigación",
+                "keywords": ["universidad", "UNAM", "IPN", "Conahcyt", "CONACYT", "investigación", "becas", "posgrado"],
+            },
+            "ciencia_tecnologia": {
+                "nombre": "Ciencia y tecnología",
+                "keywords": ["ciencia", "tecnología", "innovación", "desarrollo tecnológico", "patente"],
+            },
+            "cultura_deporte": {
+                "nombre": "Cultura y deporte",
+                "keywords": ["cultura", "patrimonio cultural", "juventud", "deporte", "biblioteca"],
+            },
+        },
     },
     "trabajo": {
         "nombre": "Trabajo",
-        "keywords": [
-            "trabajo", "empleo", "salario", "sindicato", "outsourcing",
-            "subcontratación", "pensión", "AFORE", "desempleo", "informalidad",
-            "salario mínimo", "jornada laboral", "huelga", "STPS",
-            "prestaciones", "aguinaldo", "vacaciones dignas",
-        ],
         "comisiones": [
             # Diputados
             "Trabajo y Previsión Social",
             # Senado LXVI
             "Trabajo y Previsión Social", "Seguridad Social",
         ],
+        "subcategorias": {
+            "empleo_salario": {
+                "nombre": "Empleo y salarios",
+                "keywords": ["empleo", "salario", "salario mínimo", "desempleo", "informalidad", "mercado laboral"],
+            },
+            "derechos_laborales": {
+                "nombre": "Derechos laborales",
+                "keywords": ["jornada laboral", "prestaciones", "aguinaldo", "vacaciones dignas", "subcontratación", "outsourcing"],
+            },
+            "seguridad_social_pensiones": {
+                "nombre": "Seguridad social y pensiones",
+                "keywords": ["pensión", "AFORE", "seguridad social", "jubilación", "retiro"],
+            },
+            "relaciones_laborales": {
+                "nombre": "Relaciones laborales",
+                "keywords": ["sindicato", "huelga", "STPS", "contrato colectivo", "conflicto laboral"],
+            },
+        },
     },
     "electoral_politico": {
         "nombre": "Electoral y Político",
-        "keywords": [
-            "elección", "INE", "TEPJF", "partido político", "voto", "campaña electoral",
-            "reforma electoral", "democracia", "diputado", "senador",
-            "congreso", "legislatura", "gobernador", "presidencia",
-            "Morena", "PAN", "PRI", "coalición", "oposición",
-            "revocación de mandato", "consulta popular",
-        ],
         "comisiones": [
             # Diputados
             "Gobernación y Población", "Reforma Política-Electoral",
@@ -365,16 +441,27 @@ CATEGORIAS = {
             "Reglamentos y Prácticas Parlamentarias",
             "Medalla Belisario Domínguez",
         ],
+        "subcategorias": {
+            "reforma_electoral": {
+                "nombre": "Reforma electoral",
+                "keywords": ["reforma electoral", "INE", "TEPJF", "voto", "campaña electoral", "elección", "casilla"],
+            },
+            "partidos_coaliciones": {
+                "nombre": "Partidos y coaliciones",
+                "keywords": ["Morena", "PAN", "PRI", "coalición", "oposición", "partido político", "bancada"],
+            },
+            "gobernabilidad": {
+                "nombre": "Gobernabilidad",
+                "keywords": ["congreso", "legislatura", "gobernador", "presidencia", "diputado", "senador"],
+            },
+            "participacion_ciudadana": {
+                "nombre": "Participación ciudadana",
+                "keywords": ["consulta popular", "revocación de mandato", "democracia", "referéndum", "plebiscito"],
+            },
+        },
     },
     "derechos_humanos": {
         "nombre": "Derechos Humanos",
-        "keywords": [
-            "derechos humanos", "CNDH", "discriminación", "igualdad",
-            "género", "migración", "migrante", "refugiado", "indígena",
-            "diversidad sexual", "LGBT", "aborto", "violencia de género",
-            "trata de personas", "libertad de expresión", "periodista",
-            "defensor", "amnistía",
-        ],
         "comisiones": [
             # Diputados
             "Derechos Humanos", "Igualdad de Género",
@@ -387,21 +474,31 @@ CATEGORIAS = {
             "Asuntos Migratorios",
             "Pueblos Indígenas y Afromexicanos",
         ],
+        "subcategorias": {
+            "derechos_fundamentales": {
+                "nombre": "Derechos fundamentales",
+                "keywords": ["derechos humanos", "CNDH", "discriminación", "igualdad", "libertad de expresión", "defensor"],
+            },
+            "genero_diversidad": {
+                "nombre": "Género y diversidad",
+                "keywords": ["género", "violencia de género", "aborto", "diversidad sexual", "LGBT", "feminismo"],
+            },
+            "migracion_refugio": {
+                "nombre": "Migración y refugio",
+                "keywords": ["migración", "migrante", "refugiado", "asilo", "deportación", "caravana migrante"],
+            },
+            "pueblos_indigenas": {
+                "nombre": "Pueblos indígenas",
+                "keywords": ["indígena", "pueblos originarios", "lengua indígena", "autonomía indígena", "afromexicano"],
+            },
+            "derechos_ninez": {
+                "nombre": "Derechos de la niñez",
+                "keywords": ["niñez", "adolescencia", "trabajo infantil", "adopción", "menor de edad"],
+            },
+        },
     },
     "infraestructura": {
         "nombre": "Infraestructura",
-        "keywords": [
-            "infraestructura", "carretera", "aeropuerto", "AIFA",
-            "Tren Maya", "tren interurbano", "tren suburbano",
-            "sistema de transporte", "red de transporte",
-            "obra pública", "obra de infraestructura",
-            "vivienda social", "Infonavit", "Conagua", "drenaje", "puente",
-            "corredor interoceánico", "telecomunicaciones",
-            "abastecimiento de agua", "crisis hídrica",
-            "terremoto", "sismo", "inundación", "huracán", "desastre natural",
-            "protección civil", "reconstrucción", "declaratoria de emergencia",
-            "damnificados", "derrumbe", "evacuación",
-        ],
         "comisiones": [
             # Diputados
             "Infraestructura", "Comunicaciones y Transportes",
@@ -417,17 +514,36 @@ CATEGORIAS = {
             "Desarrollo Municipal",
             "Desarrollo Regional",
         ],
+        "subcategorias": {
+            "transporte_movilidad": {
+                "nombre": "Transporte y movilidad",
+                "keywords": ["sistema de transporte", "red de transporte", "Tren Maya", "tren interurbano", "tren suburbano", "carretera", "aeropuerto", "AIFA"],
+            },
+            "obra_publica": {
+                "nombre": "Obra pública",
+                "keywords": ["obra pública", "obra de infraestructura", "corredor interoceánico", "licitación de obra", "puente"],
+            },
+            "agua_saneamiento": {
+                "nombre": "Agua y saneamiento",
+                "keywords": ["Conagua", "abastecimiento de agua", "crisis hídrica", "drenaje", "saneamiento", "presa"],
+            },
+            "vivienda_urbano": {
+                "nombre": "Vivienda y desarrollo urbano",
+                "keywords": ["vivienda social", "Infonavit", "desarrollo urbano", "ordenamiento territorial"],
+            },
+            "telecomunicaciones": {
+                "nombre": "Telecomunicaciones",
+                "keywords": ["telecomunicaciones", "banda ancha", "conectividad", "cobertura digital"],
+            },
+            "proteccion_civil": {
+                "nombre": "Protección civil y desastres",
+                "keywords": ["terremoto", "sismo", "inundación", "huracán", "desastre natural", "protección civil",
+                             "reconstrucción", "declaratoria de emergencia", "damnificados", "derrumbe", "evacuación"],
+            },
+        },
     },
     "agro_rural": {
         "nombre": "Agro y Desarrollo Rural",
-        "keywords": [
-            "agricultura", "campo mexicano", "campesino", "agro", "ganadería",
-            "pesca", "maíz", "glifosato", "transgénico", "Segalmex",
-            "Sembrando Vida", "fertilizante", "sequía", "cosecha",
-            "ejido", "tenencia de tierra", "reforma agraria", "soberanía alimentaria",
-            "productos agropecuarios", "exportación agropecuaria",
-            "certificación agropecuaria",
-        ],
         "comisiones": [
             # Diputados
             "Desarrollo y Conservación Rural, Agrícola y Autosuficiencia Alimentaria",
@@ -437,15 +553,27 @@ CATEGORIAS = {
             "Reforma Agraria",
             "Autosuficiencia Alimentaria",
         ],
+        "subcategorias": {
+            "agricultura_cultivos": {
+                "nombre": "Agricultura y cultivos",
+                "keywords": ["agricultura", "maíz", "glifosato", "transgénico", "fertilizante", "cosecha", "Segalmex", "soberanía alimentaria"],
+            },
+            "ganaderia_pesca": {
+                "nombre": "Ganadería y pesca",
+                "keywords": ["ganadería", "pesca", "acuacultura", "producción pecuaria"],
+            },
+            "desarrollo_rural_tierra": {
+                "nombre": "Desarrollo rural y tierra",
+                "keywords": ["campo mexicano", "campesino", "ejido", "tenencia de tierra", "reforma agraria", "Sembrando Vida"],
+            },
+            "comercio_agropecuario": {
+                "nombre": "Comercio agropecuario",
+                "keywords": ["productos agropecuarios", "exportación agropecuaria", "certificación agropecuaria", "precio de garantía"],
+            },
+        },
     },
     "relaciones_exteriores": {
         "nombre": "Relaciones Exteriores",
-        "keywords": [
-            "relaciones exteriores", "diplomacia", "embajada", "tratado",
-            "T-MEC", "Estados Unidos", "frontera", "aranceles", "ONU",
-            "cancillería", "SRE", "consulado", "extradición",
-            "soberanía nacional", "intervención extranjera", "deportación",
-        ],
         "comisiones": [
             # Diputados
             "Relaciones Exteriores",
@@ -461,16 +589,27 @@ CATEGORIAS = {
             "Asuntos de la Frontera Norte",
             "Asuntos de la Frontera Sur",
         ],
+        "subcategorias": {
+            "relacion_eeuu": {
+                "nombre": "Relación con EE.UU.",
+                "keywords": ["Estados Unidos", "T-MEC", "frontera", "aranceles", "relación bilateral"],
+            },
+            "diplomacia_organismos": {
+                "nombre": "Diplomacia y organismos",
+                "keywords": ["diplomacia", "embajada", "ONU", "cancillería", "SRE", "consulado", "tratado", "organismos internacionales"],
+            },
+            "america_latina": {
+                "nombre": "América Latina",
+                "keywords": ["América Latina", "integración regional", "CELAC", "alianza del pacífico"],
+            },
+            "soberania_fronteras": {
+                "nombre": "Soberanía y fronteras",
+                "keywords": ["soberanía nacional", "intervención extranjera", "extradición", "deportación", "frontera norte", "frontera sur"],
+            },
+        },
     },
     "anticorrupcion": {
         "nombre": "Anticorrupción",
-        "keywords": [
-            "corrupción", "transparencia", "INAI", "ASF", "auditoría",
-            "conflicto de interés", "enriquecimiento ilícito", "soborno",
-            "licitación", "contrato público", "nepotismo", "lavado de dinero",
-            "declaración patrimonial", "Sistema Nacional Anticorrupción",
-            "SNA", "UIF", "extinción de dominio",
-        ],
         "comisiones": [
             # Diputados
             "Transparencia y Anticorrupción",
@@ -478,22 +617,27 @@ CATEGORIAS = {
             "Anticorrupción y Transparencia",
             "Jurisdiccional",
         ],
+        "subcategorias": {
+            "sistema_anticorrupcion": {
+                "nombre": "Sistema anticorrupción",
+                "keywords": ["corrupción", "Sistema Nacional Anticorrupción", "SNA", "ASF", "auditoría", "fiscalización"],
+            },
+            "transparencia_acceso": {
+                "nombre": "Transparencia y acceso a información",
+                "keywords": ["transparencia", "INAI", "acceso a la información", "rendición de cuentas", "datos abiertos"],
+            },
+            "delitos_financieros": {
+                "nombre": "Delitos financieros",
+                "keywords": ["lavado de dinero", "UIF", "enriquecimiento ilícito", "extinción de dominio", "soborno"],
+            },
+            "etica_publica": {
+                "nombre": "Ética pública",
+                "keywords": ["conflicto de interés", "nepotismo", "declaración patrimonial", "contrato público", "licitación"],
+            },
+        },
     },
     "medio_ambiente": {
         "nombre": "Medio Ambiente y Cambio Climático",
-        "keywords": [
-            "medio ambiente", "cambio climático", "contaminación ambiental",
-            "deforestación", "biodiversidad", "emisiones de carbono",
-            "Semarnat", "Profepa", "Conafor", "área natural protegida",
-            "calentamiento global", "gases de efecto invernadero",
-            "economía circular", "contingencia ambiental",
-            "ley ambiental", "norma ambiental", "impacto ambiental",
-            "política ambiental", "residuos peligrosos", "Acuerdo de París",
-            "sequía", "incendio forestal", "ola de calor", "fenómeno natural",
-            "forestal", "desarrollo forestal", "reforestación",
-            "certificación ambiental", "productos forestales",
-            "tala", "silvicultura",
-        ],
         "comisiones": [
             # Diputados
             "Medio Ambiente, Sustentabilidad, Cambio Climático y Recursos Naturales",
@@ -501,18 +645,33 @@ CATEGORIAS = {
             # Senado LXVI
             "Medio Ambiente, Recursos Naturales y Cambio Climático",
         ],
+        "subcategorias": {
+            "cambio_climatico": {
+                "nombre": "Cambio climático",
+                "keywords": ["cambio climático", "calentamiento global", "emisiones de carbono", "gases de efecto invernadero", "Acuerdo de París"],
+            },
+            "conservacion_biodiversidad": {
+                "nombre": "Conservación y biodiversidad",
+                "keywords": ["biodiversidad", "área natural protegida", "Semarnat", "Profepa", "deforestación", "especies en peligro"],
+            },
+            "contaminacion_residuos": {
+                "nombre": "Contaminación y residuos",
+                "keywords": ["contaminación ambiental", "residuos peligrosos", "contingencia ambiental", "calidad del aire",
+                             "economía circular", "ley ambiental", "norma ambiental", "impacto ambiental", "política ambiental"],
+            },
+            "recursos_forestales": {
+                "nombre": "Recursos forestales",
+                "keywords": ["Conafor", "forestal", "reforestación", "tala", "silvicultura", "incendio forestal",
+                             "productos forestales", "desarrollo forestal", "certificación ambiental"],
+            },
+            "fenomenos_naturales": {
+                "nombre": "Fenómenos naturales",
+                "keywords": ["sequía", "ola de calor", "fenómeno natural"],
+            },
+        },
     },
     "inteligencia_artificial": {
         "nombre": "Inteligencia Artificial",
-        "keywords": [
-            "inteligencia artificial", "regulación de inteligencia artificial",
-            "ley de inteligencia artificial", "iniciativa inteligencia artificial",
-            "regulación tecnológica", "regulación algorítmica",
-            "deepfake", "ética de la inteligencia artificial",
-            "sesgo algorítmico", "gobernanza digital",
-            "ley de ciberseguridad", "regulación de plataformas digitales",
-            "protección de datos personales", "ley de datos",
-        ],
         "comisiones": [
             # Diputados
             "Ciencia, Tecnología e Innovación",
@@ -522,54 +681,120 @@ CATEGORIAS = {
             "Ciberseguridad",
             "Derechos Digitales",
         ],
+        "subcategorias": {
+            "regulacion_ia": {
+                "nombre": "Regulación de IA",
+                "keywords": ["inteligencia artificial", "regulación de inteligencia artificial", "ley de inteligencia artificial",
+                             "iniciativa inteligencia artificial", "ética de la inteligencia artificial"],
+            },
+            "gobernanza_digital": {
+                "nombre": "Gobernanza digital",
+                "keywords": ["regulación tecnológica", "regulación algorítmica", "gobernanza digital",
+                             "regulación de plataformas digitales", "sesgo algorítmico"],
+            },
+            "ciberseguridad_datos": {
+                "nombre": "Ciberseguridad y datos",
+                "keywords": ["ley de ciberseguridad", "protección de datos personales", "ley de datos", "ciberataque", "privacidad digital"],
+            },
+            "contenido_digital": {
+                "nombre": "Contenido digital",
+                "keywords": ["deepfake", "desinformación", "contenido sintético", "moderación de contenido"],
+            },
+        },
     },
     "politica_social": {
         "nombre": "Política Social",
-        "keywords": [
-            "bienestar", "programa social", "subsidio", "pobreza",
-            "marginación", "pensión bienestar", "beca benito juárez",
-            "jóvenes construyendo el futuro", "tandas para el bienestar",
-            "adultos mayores", "personas con discapacidad",
-            "desarrollo social", "asistencia social", "vulnerabilidad",
-            "desigualdad", "rezago social", "carencia social",
-            "Coneval", "pobreza extrema", "ingreso mínimo",
-        ],
         "comisiones": [
             # Senado LXVI
             "Bienestar",
         ],
+        "subcategorias": {
+            "programas_federales": {
+                "nombre": "Programas federales",
+                "keywords": ["programa social", "pensión bienestar", "beca benito juárez", "jóvenes construyendo el futuro",
+                             "tandas para el bienestar", "Sembrando Vida"],
+            },
+            "pobreza_desigualdad": {
+                "nombre": "Pobreza y desigualdad",
+                "keywords": ["pobreza", "pobreza extrema", "desigualdad", "marginación", "rezago social", "Coneval", "carencia social"],
+            },
+            "grupos_vulnerables": {
+                "nombre": "Grupos vulnerables",
+                "keywords": ["adultos mayores", "personas con discapacidad", "vulnerabilidad", "asistencia social"],
+            },
+            "bienestar_desarrollo": {
+                "nombre": "Bienestar y desarrollo social",
+                "keywords": ["bienestar", "desarrollo social", "subsidio", "ingreso mínimo", "transferencia directa"],
+            },
+        },
     },
     "medios_comunicacion": {
         "nombre": "Medios de Comunicación",
-        "keywords": [
-            "televisión abierta", "televisión pública", "cinematografía",
-            "medios de comunicación", "concesión de radiodifusión", "IFT",
-            "regulación de medios", "ley de telecomunicaciones",
-            "derecho a la información", "radiodifusión",
-            "espectro radioeléctrico", "censura mediática",
-            "concesión de televisión", "medio radiofónico",
-            "regulación de contenidos", "ley de radiodifusión",
-        ],
         "comisiones": [
             # Senado LXVI
             "Radio, Televisión y Cinematografía",
         ],
+        "subcategorias": {
+            "regulacion_medios": {
+                "nombre": "Regulación de medios",
+                "keywords": ["regulación de medios", "ley de telecomunicaciones", "concesión de radiodifusión", "IFT",
+                             "espectro radioeléctrico", "ley de radiodifusión"],
+            },
+            "television_radio": {
+                "nombre": "Televisión y radio",
+                "keywords": ["televisión abierta", "televisión pública", "medio radiofónico", "concesión de televisión", "radiodifusión"],
+            },
+            "libertad_prensa": {
+                "nombre": "Libertad de prensa",
+                "keywords": ["censura mediática", "derecho a la información", "libertad de prensa", "periodista amenazado", "regulación de contenidos"],
+            },
+            "industria_audiovisual": {
+                "nombre": "Industria audiovisual",
+                "keywords": ["cinematografía", "producción audiovisual", "industria cinematográfica"],
+            },
+        },
     },
     "turismo": {
         "nombre": "Turismo",
-        "keywords": [
-            "turismo", "turista", "Sectur", "hotel", "hotelería",
-            "destino turístico", "pueblo mágico", "ecoturismo",
-            "turismo cultural", "ocupación hotelera", "derrama económica",
-            "industria hotelera", "viajero", "crucero",
-            "turismo sustentable", "infraestructura turística",
-        ],
         "comisiones": [
             # Senado LXVI
             "Turismo",
         ],
+        "subcategorias": {
+            "politica_turistica": {
+                "nombre": "Política turística",
+                "keywords": ["turismo", "Sectur", "política turística", "turismo sustentable"],
+            },
+            "infraestructura_turistica": {
+                "nombre": "Infraestructura turística",
+                "keywords": ["hotel", "hotelería", "industria hotelera", "infraestructura turística", "ocupación hotelera", "crucero"],
+            },
+            "destinos_programas": {
+                "nombre": "Destinos y programas",
+                "keywords": ["destino turístico", "pueblo mágico", "ecoturismo", "turismo cultural", "turismo de naturaleza"],
+            },
+            "economia_turistica": {
+                "nombre": "Economía turística",
+                "keywords": ["turista", "viajero", "derrama económica", "divisas turísticas", "empleo turístico"],
+            },
+        },
     },
 }
+
+
+# ─────────────────────────────────────────────
+# HELPER: Obtener keywords planos por categoría
+# ─────────────────────────────────────────────
+def obtener_keywords_categoria(cat_clave):
+    """Retorna la unión de keywords de todas las subcategorías de una categoría.
+    Backward-compatible: si la categoría aún tiene 'keywords' (legacy), los retorna directamente."""
+    cat = CATEGORIAS[cat_clave]
+    if "keywords" in cat:  # fallback legacy
+        return cat["keywords"]
+    todos = set()
+    for sub in cat.get("subcategorias", {}).values():
+        todos.update(sub["keywords"])
+    return list(todos)
 
 # ─────────────────────────────────────────────
 # SCORING - Fórmula del Semáforo

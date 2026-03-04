@@ -10,7 +10,7 @@ from pathlib import Path
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import CATEGORIAS, GOOGLE_TRENDS, DATABASE
+from config import CATEGORIAS, GOOGLE_TRENDS, DATABASE, obtener_keywords_categoria
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ def consultar_trends_categoria(pytrends, categoria_clave, max_keywords=5):
     Google Trends acepta máximo 5 keywords por consulta.
     """
     cat_config = CATEGORIAS[categoria_clave]
-    keywords = cat_config["keywords"][:max_keywords]
+    keywords = obtener_keywords_categoria(categoria_clave)[:max_keywords]
 
     logger.info(f"Consultando Trends para {cat_config['nombre']}: {keywords}")
 

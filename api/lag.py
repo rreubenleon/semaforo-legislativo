@@ -19,7 +19,7 @@ from scipy.signal import correlate
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import CATEGORIAS, LAG_CONFIG, DATABASE
+from config import CATEGORIAS, LAG_CONFIG, DATABASE, obtener_keywords_categoria
 from scrapers.medios import contar_menciones_por_fecha
 from scrapers.gaceta import contar_actividad_por_fecha
 from scrapers.trends import obtener_serie_temporal
@@ -273,7 +273,7 @@ def analizar_categoria(categoria_clave, dias=None):
 
     # Obtener series temporales
     # Serie 1: Menciones en medios (usar keyword principal)
-    keyword_principal = cat_config["keywords"][0]
+    keyword_principal = obtener_keywords_categoria(categoria_clave)[0]
     menciones_medios = contar_menciones_por_fecha(keyword_principal, dias)
 
     # Serie 2: Actividad en Gaceta (general, no filtrada por keyword)

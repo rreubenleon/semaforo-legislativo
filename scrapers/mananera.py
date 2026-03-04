@@ -28,7 +28,7 @@ from bs4 import BeautifulSoup
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import CATEGORIAS, DATABASE
+from config import CATEGORIAS, DATABASE, obtener_keywords_categoria
 
 logger = logging.getLogger(__name__)
 
@@ -336,7 +336,7 @@ def buscar_menciones_por_categoria(bloques):
     menciones = {}
 
     for cat_clave, cat_config in CATEGORIAS.items():
-        keywords = cat_config["keywords"]
+        keywords = obtener_keywords_categoria(cat_clave)
         mejor_fragmento = None
         mejor_score = 0
 

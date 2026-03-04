@@ -17,7 +17,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-from config import LOGGING, DATABASE, CATEGORIAS, SCORING
+from config import LOGGING, DATABASE, CATEGORIAS, SCORING, obtener_keywords_categoria
 from scrapers.medios import scrape_todos_medios, obtener_articulos_recientes
 from scrapers.medios_html import scrape_todos_html
 from scrapers.gaceta import scrape_gaceta_rango
@@ -33,7 +33,7 @@ from scrapers.sil import (
 from scrapers.mananera import scrape_mananeras
 from scrapers.sintesis_legislativa import scrape_sintesis_legislativa
 from scrapers.twitter import scrape_twitter
-from nlp.clasificador import actualizar_categorias_en_db, obtener_distribucion_categorias
+from nlp.clasificador import actualizar_categorias_en_db, obtener_distribucion_categorias, detectar_subcategorias
 from api.correlacion import (
     calcular_todos_los_scores,
     obtener_scores_actuales,
@@ -327,7 +327,7 @@ def obtener_fuentes_por_categoria():
 
     fuentes = {}
     for cat_clave, cat_config in CATEGORIAS.items():
-        keywords = cat_config["keywords"]
+        keywords = obtener_keywords_categoria(cat_clave)
 
         # Artículos de medios que coinciden con esta categoría
         articulos = []
@@ -502,7 +502,7 @@ def paso_7_exportar_dashboard():
     data = {
         "metadata": {
             "generado": datetime.now(timezone.utc).isoformat(),
-            "version": "3.1",
+            "version": "3.2",
             "formula": "SCORE = (0.25*Media) + (0.15*Trends) + (0.30*Congreso) + (0.15*Mañanera) + (0.15*Urgencia)",
             "umbrales": SCORING["umbrales"],
             "sil_docs": sil_stats.get("total", 0),
@@ -521,10 +521,50 @@ def paso_7_exportar_dashboard():
         "resoluciones": obtener_resoluciones(semanas=12),
     }
 
-    # Construir datos del semáforo con nombres + momentum
+    # Construir datos del semáforo con nombres + momentum + subcategorías activas
+    import sqlite3
+    db_path_sub = ROOT / DATABASE["archivo"]
+    conn_sub = sqlite3.connect(str(db_path_sub))
+    conn_sub.row_factory = sqlite3.Row
+
     for score in scores:
         cat_clave = score.get("categoria", "")
         cat_config = CATEGORIAS.get(cat_clave, {})
+
+        # Detectar subcategorías activas analizando artículos recientes (7 días)
+        subcats_activas = []
+        if "subcategorias" in cat_config:
+            try:
+                from datetime import timedelta
+                fecha_lim = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
+                arts = conn_sub.execute("""
+                    SELECT titulo, resumen FROM articulos
+                    WHERE categorias LIKE ? AND fecha >= ?
+                    ORDER BY fecha DESC LIMIT 50
+                """, (f"%{cat_clave}%", fecha_lim)).fetchall()
+
+                # Acumular pesos de subcategorías a través de todos los artículos
+                pesos_acum = {}
+                for art in arts:
+                    subs = detectar_subcategorias(
+                        art["titulo"] or "", art["resumen"] or "", cat_clave
+                    )
+                    for sub_clave, sub_score in subs.items():
+                        pesos_acum[sub_clave] = pesos_acum.get(sub_clave, 0) + sub_score
+
+                # Normalizar y ordenar
+                if pesos_acum:
+                    max_peso = max(pesos_acum.values())
+                    for sub_clave, peso in sorted(pesos_acum.items(), key=lambda x: x[1], reverse=True):
+                        sub_config = cat_config["subcategorias"].get(sub_clave, {})
+                        subcats_activas.append({
+                            "clave": sub_clave,
+                            "nombre": sub_config.get("nombre", sub_clave),
+                            "peso": round(peso / max_peso, 2) if max_peso > 0 else 0,
+                        })
+            except Exception as e:
+                logger.warning(f"Error detectando subcategorías para {cat_clave}: {e}")
+
         data["semaforo"].append({
             "categoria": cat_clave,
             "nombre": cat_config.get("nombre", cat_clave),
@@ -537,7 +577,10 @@ def paso_7_exportar_dashboard():
             "color": score.get("color", "rojo"),
             "fecha": score.get("fecha", ""),
             "momentum": calcular_momentum(cat_clave),
+            "subcategorias_activas": subcats_activas,
         })
+
+    conn_sub.close()
 
     # Escribir JSON
     DASHBOARD_DATA.parent.mkdir(parents=True, exist_ok=True)

@@ -22,7 +22,7 @@ from bs4 import BeautifulSoup
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import CATEGORIAS, DATABASE
+from config import CATEGORIAS, DATABASE, obtener_keywords_categoria
 
 logger = logging.getLogger(__name__)
 
@@ -354,7 +354,7 @@ def _clasificar_documento(titulo, sinopsis=""):
 
     for cat_clave, cat_config in CATEGORIAS.items():
         score = 0
-        for kw in cat_config["keywords"]:
+        for kw in obtener_keywords_categoria(cat_clave):
             kw_lower = kw.lower()
             if len(kw_lower) <= 4:
                 if re.search(r'\b' + re.escape(kw_lower) + r'\b', texto):
@@ -391,7 +391,7 @@ def scrape_sil_completo(fecha_desde="2025-09-01", detalle_max=200):
     todos_ids = {}  # key: (seg_id, asu_id) -> {titulo, sinopsis, tipo_badge}
 
     for cat_clave, cat_config in CATEGORIAS.items():
-        queries = [kw for kw in cat_config["keywords"] if len(kw) >= 5][:4]
+        queries = [kw for kw in obtener_keywords_categoria(cat_clave) if len(kw) >= 5][:4]
 
         for query in queries:
             resultados = _buscar_ids(query, max_resultados=200)

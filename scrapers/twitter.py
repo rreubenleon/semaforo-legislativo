@@ -15,7 +15,7 @@ import requests
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import TWITTER_ACCOUNTS, TWITTER_BEARER_TOKEN, CATEGORIAS, DATABASE
+from config import TWITTER_ACCOUNTS, TWITTER_BEARER_TOKEN, CATEGORIAS, DATABASE, obtener_keywords_categoria
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +113,7 @@ def _clasificar_tweet(texto):
     categorias = []
     texto_lower = texto.lower()
     for cat_clave, cat_config in CATEGORIAS.items():
-        for kw in cat_config["keywords"]:
+        for kw in obtener_keywords_categoria(cat_clave):
             if kw.lower() in texto_lower:
                 categorias.append(cat_clave)
                 break
