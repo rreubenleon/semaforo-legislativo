@@ -680,12 +680,14 @@ CATEGORIAS = {
             },
             "conservacion_biodiversidad": {
                 "nombre": "Conservación y biodiversidad",
-                "keywords": ["biodiversidad", "área natural protegida", "Semarnat", "Profepa", "deforestación", "especies en peligro"],
+                "keywords": ["biodiversidad", "área natural protegida", "Semarnat", "Profepa", "deforestación", "especies en peligro",
+                             "vida silvestre", "equilibrio ecológico"],
             },
             "contaminacion_residuos": {
                 "nombre": "Contaminación y residuos",
                 "keywords": ["contaminación ambiental", "residuos peligrosos", "contingencia ambiental", "calidad del aire",
-                             "economía circular", "ley ambiental", "norma ambiental", "impacto ambiental", "política ambiental"],
+                             "economía circular", "ley ambiental", "norma ambiental", "impacto ambiental", "política ambiental",
+                             "gestión de residuos", "residuos sólidos"],
             },
             "recursos_forestales": {
                 "nombre": "Recursos forestales",
