@@ -880,12 +880,12 @@ GOOGLE_TRENDS = {
 # ANÁLISIS TEMPORAL (LAG)
 # ─────────────────────────────────────────────
 LAG_CONFIG = {
-    "ventana_dias": 30,                 # Ventana de análisis
-    "max_lag_dias": 14,                 # Lag máximo a evaluar
-    "granger_max_lag": 7,               # Lags para test de Granger
+    "ventana_dias": 90,                 # Ventana de análisis (90 días para patrones robustos)
+    "max_lag_dias": 30,                 # Lag máximo a evaluar
+    "granger_max_lag": 14,              # Lags para test de Granger
     "p_value_threshold": 0.05,          # Significancia estadística
-    "min_observaciones": 15,            # Mínimo de datos para análisis
-    "cross_correlation_lags": 14,       # Lags para cross-correlation
+    "min_observaciones": 20,            # Mínimo de datos para análisis
+    "cross_correlation_lags": 30,       # Lags para cross-correlation
 }
 
 # ─────────────────────────────────────────────
