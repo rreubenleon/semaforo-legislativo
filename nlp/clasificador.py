@@ -277,10 +277,19 @@ def clasificar_texto(titulo, resumen=""):
 
             # Bonus por keyword compuesta encontrada completa
             kw_lower = keyword.lower()
-            if kw_lower in titulo.lower():
-                score += 2.0
-            if resumen and kw_lower in resumen.lower():
-                score += 0.8
+            # Keywords cortas (≤4 chars, ej: INE, PRI, SAT) usan word boundaries
+            # para evitar falsos positivos (cINE, pRIvada, etc.)
+            if len(kw_lower) <= 4:
+                patron = r'\b' + re.escape(kw_lower) + r'\b'
+                if re.search(patron, titulo.lower()):
+                    score += 2.0
+                if resumen and re.search(patron, resumen.lower()):
+                    score += 0.8
+            else:
+                if kw_lower in titulo.lower():
+                    score += 2.0
+                if resumen and kw_lower in resumen.lower():
+                    score += 0.8
 
         # Normalizar score por número de keywords (evitar sesgo por categorías con más keywords)
         score = score / math.sqrt(len(keywords))
@@ -342,10 +351,17 @@ def detectar_subcategorias(titulo, resumen, cat_clave):
 
             # Bonus por keyword compuesta encontrada completa
             kw_lower = keyword.lower()
-            if kw_lower in titulo.lower():
-                score += 2.0
-            if resumen and kw_lower in resumen.lower():
-                score += 0.8
+            if len(kw_lower) <= 4:
+                patron = r'\b' + re.escape(kw_lower) + r'\b'
+                if re.search(patron, titulo.lower()):
+                    score += 2.0
+                if resumen and re.search(patron, resumen.lower()):
+                    score += 0.8
+            else:
+                if kw_lower in titulo.lower():
+                    score += 2.0
+                if resumen and kw_lower in resumen.lower():
+                    score += 0.8
 
         # Normalizar por número de keywords de esta subcategoría
         if keywords:

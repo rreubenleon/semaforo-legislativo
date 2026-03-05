@@ -278,7 +278,8 @@ CATEGORIAS = {
             },
             "violencia_victimas": {
                 "nombre": "Violencia y víctimas",
-                "keywords": ["homicidio", "feminicidio", "desaparición forzada", "violencia", "impunidad", "víctimas"],
+                "keywords": ["homicidio", "feminicidio", "desaparición forzada", "violencia", "impunidad", "víctimas",
+                             "fosa clandestina", "fosas", "asesinato", "muertos", "restos humanos"],
             },
             "justicia_constitucional": {
                 "nombre": "Justicia constitucional",
@@ -543,7 +544,7 @@ CATEGORIAS = {
             "transporte_movilidad": {
                 "nombre": "Transporte y movilidad",
                 "keywords": ["sistema de transporte", "red de transporte", "Tren Maya", "tren interurbano", "tren suburbano", "carretera", "aeropuerto", "AIFA",
-                             "seguridad vial", "movilidad"],
+                             "seguridad vial", "movilidad", "proyectos carreteros", "carretero", "red carretera"],
             },
             "obra_publica": {
                 "nombre": "Obra pública",
@@ -791,7 +792,8 @@ CATEGORIAS = {
             },
             "industria_audiovisual": {
                 "nombre": "Industria audiovisual",
-                "keywords": ["cinematografía", "producción audiovisual", "industria cinematográfica"],
+                "keywords": ["cinematografía", "producción audiovisual", "industria cinematográfica",
+                             "cine mexicano", "cine nacional", "película", "guión cinematográfico"],
             },
         },
     },

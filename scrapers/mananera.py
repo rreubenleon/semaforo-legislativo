@@ -15,14 +15,10 @@ from pathlib import Path
 
 import subprocess
 
-try:
-    import cloudscraper
-    _scraper = cloudscraper.create_scraper(
-        browser={"browser": "chrome", "platform": "darwin", "desktop": True}
-    )
-except ImportError:
-    import requests
-    _scraper = requests.Session()
+import requests
+_scraper = requests.Session()
+# NOTA: NO usar User-Agent de browser — el WAF de gob.mx bloquea UAs
+# de browser falso con un JS challenge. El UA default de requests pasa limpio.
 
 from bs4 import BeautifulSoup
 
@@ -38,7 +34,7 @@ BASE_URL = "https://www.gob.mx"
 CONF_URL_TEMPLATE = (
     "https://www.gob.mx/presidencia/es/articulos/"
     "version-estenografica-conferencia-de-prensa-de-la-presidenta-"
-    "claudia-sheinbaum-pardo-del-{dia}-de-{mes}-de-{anio}"
+    "claudia-sheinbaum-pardo-del-{dia:02d}-de-{mes}-de-{anio}"
 )
 
 
@@ -63,15 +59,11 @@ def _fetch_robust(url, timeout=30, max_retries=2):
             pass
         time.sleep(2)
 
-    # Intento 2: curl como subprocess (a veces pasa WAFs)
+    # Intento 2: curl como subprocess (sin UA fake — el default pasa el WAF)
     try:
         result = subprocess.run(
             [
                 "curl", "-sL",
-                "-H", "User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                       "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                "-H", "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-                "-H", "Accept-Language: es-MX,es;q=0.9",
                 "--max-time", str(timeout),
                 url,
             ],
