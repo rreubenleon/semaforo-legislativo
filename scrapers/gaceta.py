@@ -764,6 +764,42 @@ def contar_actividad_por_fecha(dias=30):
     return {row[0]: row[1] for row in rows}
 
 
+def _build_like_conditions(kw, campos=("titulo", "resumen", "comision")):
+    """
+    Construye condiciones SQL LIKE para un keyword.
+    Keywords cortos (≤4 chars, ej: INE, SAT) requieren word boundaries
+    para evitar falsos positivos (cINE, pRIvada).
+
+    Word boundaries en SQLite se simulan con patrones:
+      '% KW %' | '% KW,' | '% KW.' | 'KW %' | campo = 'KW'
+
+    Retorna (condicion_sql, params_list).
+    """
+    if len(kw) <= 4:
+        # Word boundary matching para keywords cortos
+        sub_conds = []
+        params = []
+        for campo in campos:
+            # Matchea: inicio, medio con espacios, antes de puntuación, final
+            sub_conds.append(
+                f"({campo} LIKE ? OR {campo} LIKE ? OR {campo} LIKE ? "
+                f"OR {campo} LIKE ? OR {campo} LIKE ?)"
+            )
+            params.extend([
+                f"% {kw} %",    # en medio del texto
+                f"{kw} %",      # al inicio
+                f"% {kw}",      # al final
+                f"% {kw},%",    # antes de coma
+                f"% {kw}.%",    # antes de punto
+            ])
+        return "(" + " OR ".join(sub_conds) + ")", params
+    else:
+        # Keywords largos: substring matching normal
+        conds = " OR ".join(f"{c} LIKE ?" for c in campos)
+        params = [f"%{kw}%" for _ in campos]
+        return f"({conds})", params
+
+
 def obtener_score_congreso(categoria_keywords, dias=7):
     """Calcula un score 0-100 de actividad legislativa para una categoría."""
     db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
@@ -777,11 +813,12 @@ def obtener_score_congreso(categoria_keywords, dias=7):
 
     docs_relevantes = 0
     for kw in categoria_keywords:
-        count = conn.execute("""
+        cond_sql, cond_params = _build_like_conditions(kw)
+        count = conn.execute(f"""
             SELECT COUNT(*) FROM gaceta
             WHERE fecha >= ?
-              AND (titulo LIKE ? OR resumen LIKE ? OR comision LIKE ?)
-        """, (fecha_limite, f"%{kw}%", f"%{kw}%", f"%{kw}%")).fetchone()[0]
+              AND {cond_sql}
+        """, [fecha_limite] + cond_params).fetchone()[0]
         docs_relevantes += count
 
     conn.close()

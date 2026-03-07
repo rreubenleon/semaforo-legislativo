@@ -402,7 +402,8 @@ CATEGORIAS = {
         "subcategorias": {
             "educacion_basica": {
                 "nombre": "Educación básica",
-                "keywords": ["SEP", "escuela", "maestro", "profesor", "libros de texto", "rezago educativo", "deserción escolar"],
+                "keywords": ["SEP", "escuela", "maestro", "profesor", "libros de texto", "rezago educativo", "deserción escolar",
+                             "Ley General de Educación", "educación", "uniforme escolar"],
             },
             "educacion_superior": {
                 "nombre": "Educación superior e investigación",
@@ -471,11 +472,14 @@ CATEGORIAS = {
             },
             "partidos_coaliciones": {
                 "nombre": "Partidos y coaliciones",
-                "keywords": ["Morena", "PAN", "PRI", "coalición", "oposición", "partido político", "bancada"],
+                "keywords": ["coalición legislativa", "oposición parlamentaria",
+                             "partido político", "financiamiento de partidos",
+                             "Ley de Partidos Políticos", "alianza electoral"],
             },
             "gobernabilidad": {
                 "nombre": "Gobernabilidad",
-                "keywords": ["congreso", "legislatura", "gobernador", "presidencia", "diputado", "senador"],
+                "keywords": ["gobernabilidad", "sistema político", "crisis política", "desafuero",
+                             "juicio político", "división de poderes", "Ley Orgánica del Congreso"],
             },
             "participacion_ciudadana": {
                 "nombre": "Participación ciudadana",

@@ -20,7 +20,7 @@ from pathlib import Path
 from config import LOGGING, DATABASE, CATEGORIAS, SCORING, obtener_keywords_categoria
 from scrapers.medios import scrape_todos_medios, obtener_articulos_recientes
 from scrapers.medios_html import scrape_todos_html
-from scrapers.gaceta import scrape_gaceta_rango
+from scrapers.gaceta import scrape_gaceta_rango, _build_like_conditions
 from scrapers.trends import scrape_trends_todas_categorias
 from scrapers.sil import (
     scrape_sil_completo,
@@ -345,14 +345,15 @@ def obtener_fuentes_por_categoria():
             })
 
         # Documentos de Gaceta que coinciden
+        # Usa word boundaries para keywords cortos (≤4 chars) vía _build_like_conditions
         gaceta_docs = []
-        condiciones = " OR ".join(
-            "(titulo LIKE ? OR resumen LIKE ? OR comision LIKE ?)"
-            for _ in keywords[:5]
-        )
+        cond_parts = []
         params = []
         for kw in keywords[:5]:
-            params.extend([f"%{kw}%", f"%{kw}%", f"%{kw}%"])
+            cond_sql, cond_params = _build_like_conditions(kw)
+            cond_parts.append(cond_sql)
+            params.extend(cond_params)
+        condiciones = " OR ".join(cond_parts)
 
         if condiciones:
             rows = conn.execute(f"""
