@@ -595,7 +595,7 @@
                             {tabActiva === 'urgencia' && (
                                 <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 space-y-2 border border-gray-100">
                                     <div className="font-semibold text-gray-800">Como se calcula la urgencia?</div>
-                                    <div>La urgencia se basa en <strong>evidencia historica</strong>, no en suposiciones.</div>
+                                    <div>La urgencia se basa en <strong>evidencia historica</strong>.</div>
                                     <div className="bg-white rounded p-2 text-xs font-mono text-acento border border-gray-200">
                                         urgencia = (correlacion_historica x 0.4) + (actividad_SIL_reciente x 0.4) + (calendario x presion x 0.2)
                                     </div>
@@ -697,7 +697,7 @@
                                     <div className="flex-1 min-w-0">
                                         <div className="text-xs font-semibold uppercase tracking-widest text-white/70 mb-1">Mayor probabilidad de actividad legislativa</div>
                                         <h2 className="text-2xl md:text-3xl font-bold mb-2">{top.nombre}</h2>
-                                        {primerArticulo && <div className="mt-3 text-sm text-white/80"><span className="font-semibold text-white/90">Fuente: </span>{primerArticulo.titulo.length > 120 ? primerArticulo.titulo.substring(0,120) + '...' : primerArticulo.titulo}<span className="ml-2 text-white/60">-- {primerArticulo.fuente}</span></div>}
+                                        {primerArticulo && <div className="mt-3 text-sm text-white/80"><span className="font-semibold text-white/90">Última noticia: </span>{primerArticulo.titulo.length > 120 ? primerArticulo.titulo.substring(0,120) + '...' : primerArticulo.titulo}<span className="ml-2 text-white/60">— {primerArticulo.fuente}</span></div>}
                                     </div>
                                     <div className="flex flex-col items-center ml-6">
                                         <div className={`${colorBadge[top.color]} text-white text-3xl md:text-4xl font-black rounded-2xl px-5 py-3 shadow-inner`}>{top.score_total.toFixed(0)}%</div>
@@ -715,11 +715,11 @@
 
                     {/* Counters */}
                     <div className="grid grid-cols-3 gap-3">
-                        {[['verde', verdes.length, '>=70'], ['amarillo', amarillos.length, '40-69'], ['rojo', rojos.length, '<40']].map(([color, count, range]) => (
+                        {[['verde', verdes.length, 'Alta actividad'], ['amarillo', amarillos.length, 'Actividad moderada'], ['rojo', rojos.length, 'Baja actividad']].map(([color, count, label]) => (
                             <button key={color} onClick={() => setFiltro(f => f === color ? 'todos' : color)}
-                                className={`glass rounded-xl p-4 text-center transition-all border ${filtro === color ? `border-semaforo-${color} ring-1 ring-semaforo-${color}/30` : `border-borde hover:border-semaforo-${color}/50`}`}>
-                                <div className={`text-3xl font-bold text-semaforo-${color}`}>{count}</div>
-                                <div className="text-xs text-gray-500 uppercase tracking-wider">{color.charAt(0).toUpperCase() + color.slice(1)} ({range})</div>
+                                className={`glass rounded-xl px-4 py-2 text-center transition-all border ${filtro === color ? `border-semaforo-${color} ring-1 ring-semaforo-${color}/30` : `border-borde hover:border-semaforo-${color}/50`}`}>
+                                <div className={`text-2xl font-bold text-semaforo-${color}`}>{count}</div>
+                                <div className="text-xs text-gray-500 tracking-wider">{label}</div>
                             </button>
                         ))}
                     </div>
