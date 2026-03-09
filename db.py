@@ -131,12 +131,16 @@ class _ConnectionWrapper:
     Wrapper de conexión libsql que agrega compatibilidad con sqlite3:
     - conn.row_factory = sqlite3.Row  (soportado vía _DictRow)
     - conn.cursor() retorna proxy compatible
-    - cursor.fetchone() retorna objetos dict-like accesibles por nombre
+    - Parámetros dict (:nombre) se convierten a positional (?)
+    - list se convierte a tuple
+    - Reconexión automática cuando el stream de Turso expira
     """
 
-    def __init__(self, conn):
+    def __init__(self, conn, connect_fn=None):
         self._conn = conn
         self._use_dict_rows = False
+        # Función para reconectar si el stream expira
+        self._connect_fn = connect_fn
 
     @property
     def row_factory(self):
@@ -151,6 +155,19 @@ class _ConnectionWrapper:
         """Retorna un proxy de cursor compatible con sqlite3.Cursor."""
         return _CursorProxy(self)
 
+    def _reconnect(self):
+        """Reconecta creando una nueva conexión libsql."""
+        if self._connect_fn is None:
+            return False
+        try:
+            logger.warning("Stream expirado — reconectando a Turso...")
+            self._conn = self._connect_fn()
+            logger.info("Reconexión exitosa")
+            return True
+        except Exception as e:
+            logger.error(f"Error al reconectar: {e}")
+            return False
+
     def _execute_raw(self, sql, parameters=None):
         """Ejecuta SQL con reconexión automática si el stream expiró."""
         for attempt in range(2):
@@ -161,12 +178,9 @@ class _ConnectionWrapper:
                     return self._conn.execute(sql)
             except (ValueError, Exception) as e:
                 err_str = str(e)
-                # Solo reconectar en errores reales de stream expirado,
-                # NO en errores de SQL envueltos en "stream error:"
-                if "stream not found" in err_str:
-                    if attempt == 0 and hasattr(self._conn, "sync"):
-                        logger.warning(f"Stream expirado, re-sincronizando... ({err_str[:80]})")
-                        self._conn.sync()
+                # Solo reconectar en errores reales de stream expirado
+                if "stream not found" in err_str and attempt == 0:
+                    if self._reconnect():
                         continue
                 raise
         # Fallback (no debería llegar aquí)
@@ -221,10 +235,9 @@ class _ConnectionWrapper:
                 return self._conn.executemany(sql, params)
             except (ValueError, Exception) as e:
                 err_str = str(e)
-                if "stream not found" in err_str and attempt == 0 and hasattr(self._conn, "sync"):
-                    logger.warning(f"Stream expirado en executemany, re-sincronizando...")
-                    self._conn.sync()
-                    continue
+                if "stream not found" in err_str and attempt == 0:
+                    if self._reconnect():
+                        continue
                 raise
 
     def commit(self):
@@ -242,6 +255,27 @@ class _ConnectionWrapper:
 # ─────────────────────────────────────────────
 # API pública
 # ─────────────────────────────────────────────
+
+def _create_turso_connection():
+    """Crea una nueva conexión libsql a Turso. Usada internamente para reconexión."""
+    import libsql_experimental as libsql
+
+    url = os.environ.get("TURSO_DATABASE_URL")
+    token = os.environ.get("TURSO_AUTH_TOKEN")
+
+    if _mode == "turso":
+        local_replica = str(ROOT / "local_replica.db")
+        raw_conn = libsql.connect(
+            local_replica,
+            sync_url=url,
+            auth_token=token,
+        )
+        raw_conn.sync()
+    else:
+        raw_conn = libsql.connect(url, auth_token=token)
+
+    return raw_conn
+
 
 def get_connection():
     """
@@ -264,7 +298,7 @@ def get_connection():
 
     if _mode in ("turso", "remote"):
         try:
-            import libsql_experimental as libsql
+            import libsql_experimental as libsql  # noqa: F401
         except ImportError:
             logger.error(
                 "libsql_experimental no está instalado. "
@@ -281,25 +315,12 @@ def get_connection():
                 f"para SEMAFORO_DB_MODE={_mode}"
             )
 
-        if _mode == "turso":
-            # Embedded replica: archivo local como cache + sync con remoto.
-            # Lecturas son locales (rápidas), escrituras van al remoto.
-            local_replica = str(ROOT / "local_replica.db")
-            logger.info(f"Conectando a Turso (embedded replica: {local_replica})")
-            raw_conn = libsql.connect(
-                local_replica,
-                sync_url=url,
-                auth_token=token,
-            )
-            raw_conn.sync()
-            logger.info("Sync inicial completado")
-        else:
-            # Conexión directa al remoto (sin cache local)
-            logger.info("Conectando a Turso (remoto directo)")
-            raw_conn = libsql.connect(url, auth_token=token)
+        raw_conn = _create_turso_connection()
+        logger.info(f"Conectando a Turso ({_mode})")
+        logger.info("Sync inicial completado")
 
-        # Envolver en wrapper de compatibilidad
-        _connection = _ConnectionWrapper(raw_conn)
+        # Envolver en wrapper con función de reconexión
+        _connection = _ConnectionWrapper(raw_conn, connect_fn=_create_turso_connection)
     else:
         # SQLite local (modo desarrollo)
         from config import DATABASE
