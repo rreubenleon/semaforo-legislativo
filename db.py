@@ -90,7 +90,12 @@ class _CursorWrapper:
         return rows
 
     def __iter__(self):
-        for row in self._cursor:
+        # libsql cursors no soportan iteración directa — usar fetchall()
+        try:
+            rows = self._cursor.fetchall()
+        except Exception:
+            return
+        for row in rows:
             yield self._wrap_row(row)
 
 
