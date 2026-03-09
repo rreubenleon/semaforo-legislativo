@@ -12,6 +12,7 @@ Variables de entorno requeridas para modo turso/remote:
 """
 
 import os
+import re
 import sqlite3
 import logging
 from pathlib import Path
@@ -173,10 +174,22 @@ class _ConnectionWrapper:
             return self._conn.execute(sql, parameters)
         return self._conn.execute(sql)
 
+    @staticmethod
+    def _convert_named_params(sql, params_dict):
+        """Convierte SQL con :nombre + dict a SQL con ? + tuple.
+        libsql no soporta parámetros nombrados vía dict."""
+        names = re.findall(r':(\w+)', sql)
+        sql_positional = re.sub(r':(\w+)', '?', sql)
+        values = tuple(params_dict[name] for name in names)
+        return sql_positional, values
+
     def execute(self, sql, parameters=None):
         if parameters is not None:
-            # libsql requiere tuple, no list
-            if isinstance(parameters, list):
+            if isinstance(parameters, dict):
+                # libsql no soporta named params — convertir a positional
+                sql, parameters = self._convert_named_params(sql, parameters)
+            elif isinstance(parameters, list):
+                # libsql requiere tuple, no list
                 parameters = tuple(parameters)
 
         cursor = self._execute_raw(sql, parameters)
@@ -190,7 +203,19 @@ class _ConnectionWrapper:
 
     def executemany(self, sql, parameters):
         # libsql requiere tuples dentro de la secuencia
-        params = [tuple(p) if isinstance(p, list) else p for p in parameters]
+        params_list = list(parameters)
+        if params_list and isinstance(params_list[0], dict):
+            # Convertir named params a positional
+            converted = []
+            sql_positional = None
+            for p in params_list:
+                s, vals = self._convert_named_params(sql, p)
+                sql_positional = s
+                converted.append(vals)
+            sql = sql_positional
+            params = converted
+        else:
+            params = [tuple(p) if isinstance(p, list) else p for p in params_list]
         for attempt in range(2):
             try:
                 return self._conn.executemany(sql, params)
