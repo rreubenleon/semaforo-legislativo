@@ -385,37 +385,49 @@ def scrape_sil_completo(fecha_desde="2025-09-01", detalle_max=200):
     init_db()
     conn = get_connection()
 
-    # Fase 1: recolectar IDs de todas las categorías
+    # Pre-cargar IDs existentes en BD para no repetir búsquedas innecesarias
+    ids_existentes = set()
+    rows_existentes = conn.execute(
+        "SELECT seguimiento_id, asunto_id FROM sil_documentos"
+    ).fetchall()
+    for r in rows_existentes:
+        ids_existentes.add((str(r[0]), str(r[1])))
+    logger.info(f"SIL: {len(ids_existentes)} documentos ya en BD")
+
+    # Fase 1: recolectar IDs NUEVOS de todas las categorías
     todos_ids = {}  # key: (seg_id, asu_id) -> {titulo, sinopsis, tipo_badge}
+    queries_hechas = 0
 
     for cat_clave, cat_config in CATEGORIAS.items():
         queries = [kw for kw in obtener_keywords_categoria(cat_clave) if len(kw) >= 5][:4]
 
         for query in queries:
             resultados = _buscar_ids(query, max_resultados=200)
+            queries_hechas += 1
+
+            nuevos_en_query = 0
             for r in resultados:
                 key = (r["seguimiento_id"], r["asunto_id"])
-                if key not in todos_ids:
+                if key not in ids_existentes and key not in todos_ids:
                     todos_ids[key] = r
+                    nuevos_en_query += 1
+
+            if nuevos_en_query > 0:
+                logger.info(f"SIL query '{query}': {len(resultados)} IDs encontrados, {nuevos_en_query} nuevos")
+            else:
+                logger.info(f"SIL query '{query}': {len(resultados)} IDs encontrados")
+
             time.sleep(1.5)  # respetar servidor
 
-    logger.info(f"SIL Fase 1: {len(todos_ids)} documentos únicos recolectados")
+    logger.info(f"SIL Fase 1: {len(todos_ids)} documentos nuevos de {queries_hechas} búsquedas")
 
-    # Fase 2: filtrar los que ya están en BD y obtener detalle
+    # Fase 2: obtener detalle de docs nuevos
     nuevos = 0
-    existentes = 0
+    existentes = len(ids_existentes)
     sin_detalle = 0
     detalles_obtenidos = 0
 
     for (seg_id, asu_id), info in todos_ids.items():
-        # Verificar si ya existe
-        row = conn.execute(
-            "SELECT id FROM sil_documentos WHERE seguimiento_id=? AND asunto_id=?",
-            (seg_id, asu_id)
-        ).fetchone()
-        if row:
-            existentes += 1
-            continue
 
         # Obtener detalle (con rate limit)
         detalle = None
