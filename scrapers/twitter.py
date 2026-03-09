@@ -15,7 +15,8 @@ import requests
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import TWITTER_ACCOUNTS, TWITTER_BEARER_TOKEN, CATEGORIAS, DATABASE, obtener_keywords_categoria
+from config import TWITTER_ACCOUNTS, TWITTER_BEARER_TOKEN, CATEGORIAS, obtener_keywords_categoria
+from db import get_connection
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +37,7 @@ def _headers():
 
 def _init_tabla():
     """Crea tabla de tweets si no existe."""
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS tweets (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -183,14 +183,13 @@ def scrape_twitter(max_por_cuenta=10):
                 ))
                 conn.commit()
                 nuevos += 1
-            except sqlite3.IntegrityError:
+            except (sqlite3.IntegrityError, ValueError):
                 pass  # Tweet duplicado
 
         total_nuevos += nuevos
         logger.info(f"  @{handle}: {len(tweets)} obtenidos, {nuevos} nuevos")
         time.sleep(1.5)  # Rate limit entre cuentas
 
-    conn.close()
     logger.info(f"Twitter: {cuentas_ok} cuentas, {total_nuevos} tweets nuevos")
     return {"cuentas": cuentas_ok, "tweets_nuevos": total_nuevos}
 
@@ -208,9 +207,8 @@ def obtener_boost_twitter(categoria_clave, dias=7):
     - Ponderado por peso de la cuenta y recencia (half-life 3 días)
     - Boost máximo: 15 pts (se suma al score_media antes del cap)
     """
-    db_path = ROOT / DATABASE["archivo"]
     try:
-        conn = sqlite3.connect(str(db_path))
+        conn = get_connection()
         fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
         rows = conn.execute("""
             SELECT fecha, peso_cuenta FROM tweets
@@ -218,8 +216,7 @@ def obtener_boost_twitter(categoria_clave, dias=7):
               AND fecha >= ?
             ORDER BY fecha DESC
         """, (f"%{categoria_clave}%", fecha_limite)).fetchall()
-        conn.close()
-    except sqlite3.OperationalError:
+    except (sqlite3.OperationalError, ValueError):
         return 0.0
 
     if not rows:

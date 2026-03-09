@@ -10,15 +10,15 @@ from pathlib import Path
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import CATEGORIAS, GOOGLE_TRENDS, DATABASE, obtener_keywords_categoria
+from config import CATEGORIAS, GOOGLE_TRENDS, obtener_keywords_categoria
+from db import get_connection
 
 logger = logging.getLogger(__name__)
 
 
 def init_db():
     """Crea la tabla de trends si no existe."""
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS trends (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -108,7 +108,7 @@ def scrape_trends_todas_categorias():
                         VALUES (?, ?, ?, ?, ?)
                     """, (cat_clave, keyword, fecha, valor, datetime.now().isoformat()))
                     registros_nuevos += 1
-                except sqlite3.IntegrityError:
+                except (sqlite3.IntegrityError, ValueError):
                     # Actualizar valor si ya existe
                     conn.execute("""
                         UPDATE trends SET valor = ?, fecha_consulta = ?
@@ -125,7 +125,6 @@ def scrape_trends_todas_categorias():
         # Pausa entre consultas para no exceder rate limits
         time.sleep(2)
 
-    conn.close()
     logger.info(f"Trends scraping completo para {len(resumen)} categorías")
     return resumen
 
@@ -135,8 +134,7 @@ def obtener_score_trends(categoria_clave, dias=7):
     Calcula score 0-100 de interés en Google Trends para una categoría.
     Usa el promedio de las keywords de la categoría en los últimos N días.
     """
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     # Asegurar que la tabla existe aunque no se haya corrido el scraper
     conn.execute("""
         CREATE TABLE IF NOT EXISTS trends (
@@ -158,8 +156,6 @@ def obtener_score_trends(categoria_clave, dias=7):
         WHERE categoria = ? AND fecha >= ?
     """, (categoria_clave, fecha_limite)).fetchone()
 
-    conn.close()
-
     if rows and rows[0] is not None:
         # Google Trends ya da valores 0-100
         return round(rows[0], 2)
@@ -172,8 +168,7 @@ def obtener_serie_temporal(categoria_clave, dias=30):
     Retorna serie temporal de Trends para análisis de correlación.
     Formato: {fecha: valor_promedio}
     """
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS trends (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -195,8 +190,6 @@ def obtener_serie_temporal(categoria_clave, dias=30):
         GROUP BY fecha
         ORDER BY fecha
     """, (categoria_clave, fecha_limite)).fetchall()
-
-    conn.close()
     return {row[0]: row[1] for row in rows}
 
 

@@ -18,7 +18,8 @@ from pathlib import Path
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import CATEGORIAS, SCORING, DATABASE
+from config import CATEGORIAS, SCORING
+from db import get_connection
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +28,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def init_db_resoluciones():
     """Crea tabla de resoluciones si no existe."""
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS resoluciones (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -121,7 +121,6 @@ def calcular_resoluciones_semanales():
 
     if not rango or not rango["primera"]:
         logger.info("No hay scores para calcular resoluciones")
-        conn.close()
         return 0
 
     fecha_primera = datetime.strptime(rango["primera"], "%Y-%m-%d")
@@ -205,7 +204,6 @@ def calcular_resoluciones_semanales():
         semanas_procesadas += 1
         lunes_actual += timedelta(days=7)
 
-    conn.close()
     logger.info(f"Resoluciones calculadas: {semanas_procesadas} semanas")
     return semanas_procesadas
 
@@ -214,8 +212,7 @@ def obtener_resoluciones(semanas=12):
     """
     Retorna datos de resoluciones para el dashboard.
     """
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     # Semanas disponibles (más recientes primero, luego invertir)
@@ -284,7 +281,6 @@ def obtener_resoluciones(semanas=12):
         (total_aciertos / total_evaluados * 100) if total_evaluados > 0 else 0, 1
     )
 
-    conn.close()
     return result
 
 

@@ -22,7 +22,8 @@ from bs4 import BeautifulSoup
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import CATEGORIAS, DATABASE, obtener_keywords_categoria
+from config import CATEGORIAS, obtener_keywords_categoria
+from db import get_connection
 
 logger = logging.getLogger(__name__)
 
@@ -115,8 +116,7 @@ def normalizar_partido(texto_presentador):
 # ────────────────────────────────────────────
 def init_db():
     """Crea tabla para documentos del SIL."""
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS sil_documentos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -143,10 +143,9 @@ def init_db():
     for col, default in [("presentador", "''"), ("tipo_presentador", "''")]:
         try:
             conn.execute(f"ALTER TABLE sil_documentos ADD COLUMN {col} TEXT DEFAULT {default}")
-        except sqlite3.OperationalError:
+        except (sqlite3.OperationalError, ValueError):
             pass  # Ya existe
     conn.commit()
-    conn.close()
 
 
 # ────────────────────────────────────────────
@@ -384,8 +383,7 @@ def scrape_sil_completo(fecha_desde="2025-09-01", detalle_max=200):
         detalle_max: max documentos a los que pedir detalle (rate limit)
     """
     init_db()
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
 
     # Fase 1: recolectar IDs de todas las categorías
     todos_ids = {}  # key: (seg_id, asu_id) -> {titulo, sinopsis, tipo_badge}
@@ -453,7 +451,7 @@ def scrape_sil_completo(fecha_desde="2025-09-01", detalle_max=200):
                     datetime.now().isoformat(),
                 ))
                 nuevos += 1
-            except sqlite3.IntegrityError:
+            except (sqlite3.IntegrityError, ValueError):
                 existentes += 1
         else:
             # Guardar sin detalle (solo título y sinopsis de búsqueda)
@@ -473,11 +471,10 @@ def scrape_sil_completo(fecha_desde="2025-09-01", detalle_max=200):
                 ))
                 sin_detalle += 1
                 nuevos += 1
-            except sqlite3.IntegrityError:
+            except (sqlite3.IntegrityError, ValueError):
                 existentes += 1
 
     conn.commit()
-    conn.close()
 
     logger.info(
         f"SIL completo: {nuevos} nuevos ({detalles_obtenidos} con detalle, "
@@ -497,8 +494,7 @@ def scrape_sil_completo(fecha_desde="2025-09-01", detalle_max=200):
 # ────────────────────────────────────────────
 def contar_actividad_sil_por_fecha(categoria=None, dias=60):
     """Serie temporal: {fecha: count} de docs del SIL."""
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
 
     fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
 
@@ -518,7 +514,6 @@ def contar_actividad_sil_por_fecha(categoria=None, dias=60):
             GROUP BY fecha_presentacion
         """, (fecha_limite,)).fetchall()
 
-    conn.close()
     return {r[0]: r[1] for r in rows}
 
 
@@ -539,8 +534,7 @@ def obtener_stats_por_partido(dias=180):
     Solo incluye partidos de PARTIDOS_MEXICO (excluye ejecutivo, gobiernos estatales, etc.).
     Retorna dict para el dashboard.
     """
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
 
     # Construir filtro de partidos válidos
@@ -583,8 +577,6 @@ def obtener_stats_por_partido(dias=180):
         ORDER BY partido, semana
     """, (fecha_limite, *PARTIDOS_VALIDOS)).fetchall()
 
-    conn.close()
-
     partidos = {}
     for row in rows_total:
         p = row[0]
@@ -622,8 +614,7 @@ def obtener_stats_por_partido(dias=180):
 
 def obtener_conteo_sil():
     """Retorna conteo total de docs en SIL para estadísticas."""
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     total = conn.execute("SELECT COUNT(*) FROM sil_documentos").fetchone()[0]
     con_partido = conn.execute(
         "SELECT COUNT(*) FROM sil_documentos WHERE partido != '' AND partido IS NOT NULL"
@@ -631,7 +622,6 @@ def obtener_conteo_sil():
     con_fecha = conn.execute(
         "SELECT COUNT(*) FROM sil_documentos WHERE fecha_presentacion != '' AND fecha_presentacion IS NOT NULL"
     ).fetchone()[0]
-    conn.close()
     return {"total": total, "con_partido": con_partido, "con_fecha": con_fecha}
 
 
@@ -644,8 +634,7 @@ def enriquecer_fechas_sil(limite=200):
     Corre en lotes configurables. Usa verify=False para SSL expirado.
     """
     init_db()  # Asegurar columnas nuevas existen
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
 
     # Obtener docs sin fecha
     rows = conn.execute("""
@@ -656,7 +645,6 @@ def enriquecer_fechas_sil(limite=200):
 
     if not rows:
         logger.info("SIL enriquecimiento: todos los documentos ya tienen fecha")
-        conn.close()
         return {"procesados": 0, "enriquecidos": 0, "fallidos": 0}
 
     logger.info(f"SIL enriquecimiento: procesando {len(rows)} documentos sin fecha")
@@ -723,7 +711,6 @@ def enriquecer_fechas_sil(limite=200):
             )
 
     conn.commit()
-    conn.close()
 
     logger.info(
         f"SIL enriquecimiento completado: {enriquecidos}/{len(rows)} enriquecidos"
@@ -743,8 +730,7 @@ def normalizar_partidos_existentes():
     Solo trabaja con datos locales, NO hace HTTP.
     """
     init_db()  # Asegurar columnas presentador/tipo_presentador existen
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
 
     # Docs con partido que no es de PARTIDOS_VALIDOS y no está vacío
     rows = conn.execute("""
@@ -779,7 +765,6 @@ def normalizar_partidos_existentes():
         actualizados += 1
 
     conn.commit()
-    conn.close()
 
     logger.info(f"Partidos normalizados: {actualizados} documentos actualizados")
     return actualizados

@@ -15,6 +15,7 @@ from pathlib import Path
 # ---------------------------------------------------------------------------
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config import DATABASE
+from db import get_connection
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -544,15 +545,17 @@ def clasificar_articulos_por_estado(desde_fecha=None):
 
     Solo incluye estados que tengan al menos un articulo asociado.
     """
-    db_path = ROOT / DATABASE["archivo"]
-
-    if not db_path.exists():
-        return {}
+    import os
+    db_mode = os.environ.get("SEMAFORO_DB_MODE", "local")
+    if db_mode == "local":
+        db_path = ROOT / DATABASE["archivo"]
+        if not db_path.exists():
+            return {}
 
     resultado = {}
 
     try:
-        conn = sqlite3.connect(str(db_path))
+        conn = get_connection()
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
 
@@ -591,12 +594,9 @@ def clasificar_articulos_por_estado(desde_fecha=None):
                     resultado[estado] = []
                 resultado[estado].append(articulo)
 
-    except sqlite3.OperationalError as e:
+    except (sqlite3.OperationalError, ValueError) as e:
         print(f"Error al acceder a la base de datos: {e}")
         return {}
-    finally:
-        if conn:
-            conn.close()
 
     return resultado
 

@@ -18,6 +18,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from config import LOGGING, DATABASE, CATEGORIAS, SCORING, obtener_keywords_categoria
+from db import get_connection, sync as sync_db, close as close_db
 from scrapers.medios import scrape_todos_medios, obtener_articulos_recientes
 from scrapers.medios_html import scrape_todos_html
 from scrapers.gaceta import scrape_gaceta_rango, _build_like_conditions
@@ -321,8 +322,7 @@ def obtener_fuentes_por_categoria():
     Esto es lo que hace al dashboard transparente y verificable.
     """
     import sqlite3
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     fuentes = {}
@@ -405,7 +405,7 @@ def obtener_fuentes_por_categoria():
                     "fragmento": r["fragmento"],
                     "url": r["url"],
                 })
-        except sqlite3.OperationalError:
+        except (sqlite3.OperationalError, ValueError):
             pass  # Tabla no existe aún
 
         # Tweets relevantes de periodistas y coordinadores
@@ -423,7 +423,7 @@ def obtener_fuentes_por_categoria():
                     "texto": r["texto"][:280],
                     "fecha": r["fecha"][:10] if r["fecha"] else "",
                 })
-        except sqlite3.OperationalError:
+        except (sqlite3.OperationalError, ValueError):
             pass  # Tabla no existe aún
 
         fuentes[cat_clave] = {
@@ -434,7 +434,6 @@ def obtener_fuentes_por_categoria():
             "tweets": tweets_relevantes,
         }
 
-    conn.close()
     return fuentes
 
 
@@ -524,8 +523,7 @@ def paso_7_exportar_dashboard():
 
     # Construir datos del semáforo con nombres + momentum + subcategorías activas
     import sqlite3
-    db_path_sub = ROOT / DATABASE["archivo"]
-    conn_sub = sqlite3.connect(str(db_path_sub))
+    conn_sub = get_connection()
     conn_sub.row_factory = sqlite3.Row
 
     for score in scores:
@@ -581,8 +579,6 @@ def paso_7_exportar_dashboard():
             "subcategorias_activas": subcats_activas,
         })
 
-    conn_sub.close()
-
     # Escribir JSON
     DASHBOARD_DATA.parent.mkdir(parents=True, exist_ok=True)
     with open(DASHBOARD_DATA, "w", encoding="utf-8") as f:
@@ -607,6 +603,7 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     paso_2b_scraping_mananera()
     paso_2c_scraping_sintesis()
     paso_2d_scraping_twitter()
+    sync_db()  # Sincronizar datos de scraping con Turso
 
     if not skip_trends:
         paso_3_scraping_trends()
@@ -657,17 +654,23 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     except Exception as e:
         logger.warning(f"Reacciones históricas falló (no crítico): {e}")
 
+    sync_db()  # Sincronizar datos SIL + legisladores con Turso
+
     paso_4_clasificacion_nlp()
     scores = paso_5_scoring()
     paso_5b_resoluciones()
     paso_6_correlacion_temporal()
+    sync_db()  # Sincronizar scores y correlaciones con Turso
+
     data = paso_7_exportar_dashboard()
+    reporte_final = generar_reporte()
+    close_db()  # Sync final + cerrar conexión
 
     duracion_total = time.time() - inicio_total
 
     # Reporte final
     print("\n")
-    print(generar_reporte())
+    print(reporte_final)
     print(f"\nTiempo total: {duracion_total:.1f}s")
     print(f"Dashboard: {DASHBOARD_DATA}")
 
@@ -678,10 +681,15 @@ def ejecutar_solo_scoring():
     """Ejecuta solo el cálculo de scores (sin scraping)."""
     logger.info("Modo: Solo scoring (sin scraping)")
     paso_4_clasificacion_nlp()
+    sync_db()
     paso_5_scoring()
+    sync_db()
     paso_5b_resoluciones()
+    sync_db()
     paso_7_exportar_dashboard()
-    print(generar_reporte())
+    reporte = generar_reporte()
+    close_db()
+    print(reporte)
 
 
 def main():

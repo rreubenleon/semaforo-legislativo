@@ -21,7 +21,8 @@ if hasattr(ssl, "_create_unverified_context"):
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import MEDIOS, DATABASE, CATEGORIAS
+from config import MEDIOS, CATEGORIAS
+from db import get_connection
 
 logger = logging.getLogger(__name__)
 
@@ -36,8 +37,7 @@ HEADERS = {
 
 def init_db():
     """Crea la tabla de artículos si no existe."""
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS articulos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -184,7 +184,7 @@ def scrape_todos_medios():
                 """, art)
                 conn.commit()
                 nuevos += 1
-            except sqlite3.IntegrityError:
+            except (sqlite3.IntegrityError, ValueError):
                 total_existentes += 1
 
         total_nuevos += nuevos
@@ -194,16 +194,13 @@ def scrape_todos_medios():
             "nuevos": nuevos,
         }
 
-    conn.close()
-
     logger.info(f"Scraping completo: {total_nuevos} nuevos, {total_existentes} duplicados")
     return resultados
 
 
 def obtener_articulos_recientes(dias=7, fuente=None):
     """Recupera artículos recientes de la BD."""
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
@@ -219,7 +216,6 @@ def obtener_articulos_recientes(dias=7, fuente=None):
             (fecha_limite,),
         ).fetchall()
 
-    conn.close()
     return [dict(r) for r in rows]
 
 
@@ -228,8 +224,7 @@ def contar_menciones_por_fecha(keyword, dias=30):
     Cuenta artículos que mencionan un keyword por fecha.
     Retorna dict {fecha: count} para análisis temporal.
     """
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
 
     fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
 
@@ -241,8 +236,6 @@ def contar_menciones_por_fecha(keyword, dias=30):
         GROUP BY dia
         ORDER BY dia
     """, (fecha_limite, f"%{keyword}%", f"%{keyword}%")).fetchall()
-
-    conn.close()
     return {row[0]: row[1] for row in rows}
 
 
@@ -258,8 +251,7 @@ def obtener_score_media(categoria_keywords, dias=7):
     """
     import math
 
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
 
     fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
 
@@ -270,7 +262,6 @@ def obtener_score_media(categoria_keywords, dias=7):
     ).fetchone()[0]
 
     if total_peso == 0:
-        conn.close()
         return 0
 
     # Recopilar artículos relevantes con metadata (deduplicando por id)
@@ -290,8 +281,6 @@ def obtener_score_media(categoria_keywords, dias=7):
                     "id": row[0], "peso": row[1],
                     "fuente": row[2], "dia": row[3],
                 })
-
-    conn.close()
 
     if not articulos_data:
         return 0.0

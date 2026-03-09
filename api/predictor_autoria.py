@@ -20,7 +20,8 @@ from pathlib import Path
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import CATEGORIAS, DATABASE
+from config import CATEGORIAS
+from db import get_connection
 
 logger = logging.getLogger(__name__)
 
@@ -67,13 +68,11 @@ def predecir_autores(categoria, estado_evento=None, top_n=10):
     Returns:
         Lista de dicts con legislador, score y desglose
     """
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     # Verificar que la categoría existe
     if categoria not in CATEGORIAS:
-        conn.close()
         return []
 
     # Cargar todos los legisladores con actividad
@@ -85,7 +84,6 @@ def predecir_autores(categoria, estado_evento=None, top_n=10):
     """).fetchall()
 
     if not legisladores:
-        conn.close()
         return []
 
     # Pre-calcular estadísticas globales para normalización
@@ -206,8 +204,6 @@ def predecir_autores(categoria, estado_evento=None, top_n=10):
                 ],
             })
 
-    conn.close()
-
     # Ordenar por score descendente
     predicciones.sort(key=lambda x: x["score_total"], reverse=True)
     return predicciones[:top_n]
@@ -222,8 +218,7 @@ def calcular_reacciones_historicas():
     Usa la tabla de articulos (picos mediáticos) y actividad_legislador
     (presentaciones) para calcular el lag.
     """
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     # Limpiar reacciones anteriores
@@ -326,7 +321,6 @@ def calcular_reacciones_historicas():
                     break  # Solo la primera presentación posterior
 
     conn.commit()
-    conn.close()
 
     logger.info(f"Reacciones históricas calculadas: {total_reacciones}")
     return total_reacciones
@@ -337,8 +331,7 @@ def obtener_ranking_global(top_n=20):
     Ranking de los legisladores más activos en todas las categorías.
     Útil para el dashboard general.
     """
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     ranking = conn.execute("""
@@ -354,7 +347,6 @@ def obtener_ranking_global(top_n=20):
         LIMIT ?
     """, (top_n,)).fetchall()
 
-    conn.close()
     return [dict(r) for r in ranking]
 
 
@@ -375,8 +367,7 @@ def obtener_predicciones_para_dashboard():
 
 def obtener_estadisticas_autoria():
     """Estadísticas generales del módulo de autoría."""
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     stats = {}
@@ -410,7 +401,6 @@ def obtener_estadisticas_autoria():
         LIMIT 10
     """).fetchall()]
 
-    conn.close()
     return stats
 
 

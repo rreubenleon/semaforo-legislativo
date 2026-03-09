@@ -19,7 +19,8 @@ from scipy.signal import correlate
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import CATEGORIAS, LAG_CONFIG, DATABASE, obtener_keywords_categoria
+from config import CATEGORIAS, LAG_CONFIG, obtener_keywords_categoria
+from db import get_connection
 from scrapers.medios import contar_menciones_por_fecha
 from scrapers.gaceta import contar_actividad_por_fecha
 from scrapers.trends import obtener_serie_temporal
@@ -29,8 +30,7 @@ logger = logging.getLogger(__name__)
 
 def init_db():
     """Crea tabla de correlaciones."""
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS correlaciones (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -347,7 +347,7 @@ def analizar_todas_categorias():
                     xcorr.get("interpretacion", ""),
                     fecha_hoy,
                 ))
-            except sqlite3.IntegrityError:
+            except (sqlite3.IntegrityError, ValueError):
                 pass
 
         # Guardar Granger
@@ -373,11 +373,10 @@ def analizar_todas_categorias():
                     f"F={mejor_granger['f_statistic']:.4f}",
                     fecha_hoy,
                 ))
-            except sqlite3.IntegrityError:
+            except (sqlite3.IntegrityError, ValueError):
                 pass
 
     conn.commit()
-    conn.close()
     return resultados
 
 
@@ -386,8 +385,7 @@ def obtener_prediccion(categoria_clave):
     Genera una predicción de actividad legislativa basada en el análisis temporal.
     Combina: lag histórico + picos actuales + tendencia.
     """
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     # Obtener última correlación conocida
@@ -396,8 +394,6 @@ def obtener_prediccion(categoria_clave):
         WHERE categoria = ? AND tipo_analisis = 'xcorr_medios_congreso'
         ORDER BY fecha_analisis DESC LIMIT 1
     """, (categoria_clave,)).fetchone()
-
-    conn.close()
 
     if not row:
         return {

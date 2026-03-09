@@ -32,7 +32,8 @@ from bs4 import BeautifulSoup
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import MEDIOS, DATABASE
+from config import MEDIOS
+from db import get_connection
 
 logger = logging.getLogger(__name__)
 
@@ -348,8 +349,7 @@ def scrape_todos_html():
     Scrapea todos los medios con RSS roto via HTML.
     Inserta en la misma tabla 'articulos' de SQLite.
     """
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS articulos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -381,7 +381,7 @@ def scrape_todos_html():
                         (:hash, :fuente, :titulo, :fecha, :resumen, :url, :categorias, :peso_fuente, :fecha_scraping)
                 """, art)
                 nuevos += 1
-            except sqlite3.IntegrityError:
+            except (sqlite3.IntegrityError, ValueError):
                 pass
 
         conn.commit()
@@ -392,7 +392,6 @@ def scrape_todos_html():
             "nuevos": nuevos,
         }
 
-    conn.close()
     logger.info(f"HTML scraping completo: {total_nuevos} artículos nuevos")
     return resultados
 

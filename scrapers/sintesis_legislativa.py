@@ -13,7 +13,8 @@ from pathlib import Path
 
 import requests
 
-from config import CATEGORIAS, DATABASE, obtener_keywords_categoria
+from config import CATEGORIAS, obtener_keywords_categoria
+from db import get_connection
 
 logger = logging.getLogger(__name__)
 
@@ -226,9 +227,8 @@ def obtener_boost_sintesis(categoria_clave, dias=3):
     - Boost máximo: 30 puntos (se suma al score_congreso antes del cap)
     - Sin menciones → 0 (no afecta)
     """
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
     try:
-        conn = sqlite3.connect(str(db_path))
+        conn = get_connection()
         conn.row_factory = sqlite3.Row
         rows = conn.execute("""
             SELECT fecha, menciones, relevancia FROM sintesis_legislativa
@@ -236,8 +236,7 @@ def obtener_boost_sintesis(categoria_clave, dias=3):
             AND fecha >= date('now', ? || ' days')
             ORDER BY fecha DESC
         """, (categoria_clave, f"-{dias}")).fetchall()
-        conn.close()
-    except sqlite3.OperationalError:
+    except (sqlite3.OperationalError, ValueError):
         return 0.0
 
     if not rows:
@@ -268,8 +267,7 @@ def scrape_sintesis_legislativa():
     Descarga la síntesis legislativa del día, clasifica por categoría,
     guarda en DB. Retorna resumen de lo procesado.
     """
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     _init_tabla(conn)
 
     resultado = {"fuentes_procesadas": 0, "categorias_detectadas": 0}
@@ -337,7 +335,6 @@ def scrape_sintesis_legislativa():
         except OSError:
             pass
 
-    conn.close()
     return resultado
 
 

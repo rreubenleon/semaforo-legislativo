@@ -24,7 +24,8 @@ from bs4 import BeautifulSoup
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import CATEGORIAS, DATABASE, obtener_keywords_categoria
+from config import CATEGORIAS, obtener_keywords_categoria
+from db import get_connection
 
 logger = logging.getLogger(__name__)
 
@@ -108,8 +109,7 @@ NUM_A_MES = {v: k for k, v in MESES_ES.items()}
 
 def init_db():
     """Crea la tabla de mananera si no existe."""
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS mananera (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -411,9 +411,8 @@ def obtener_score_mananera(categoria_clave, dias=14):
     Esto funciona como señal predictiva: cuando CSP habla de un
     tema, es muy probable que el Congreso actúe en días/semanas.
     """
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
     try:
-        conn = sqlite3.connect(str(db_path))
+        conn = get_connection()
         conn.row_factory = sqlite3.Row
 
         rows = conn.execute("""
@@ -423,8 +422,7 @@ def obtener_score_mananera(categoria_clave, dias=14):
             ORDER BY fecha DESC
         """, (categoria_clave, f"-{dias}")).fetchall()
 
-        conn.close()
-    except sqlite3.OperationalError:
+    except (sqlite3.OperationalError, ValueError):
         return 0.0  # Tabla no existe aún
 
     if not rows:
@@ -478,7 +476,6 @@ def scrape_mananeras(dias=14):
 
     if not conferencias:
         logger.info("  No se encontraron conferencias matutinas")
-        conn.close()
         return {"conferencias": 0, "menciones": 0}
 
     for conf in conferencias:
@@ -521,13 +518,11 @@ def scrape_mananeras(dias=14):
                     datetime.now().isoformat(),
                 ))
                 total_menciones += 1
-            except sqlite3.IntegrityError:
+            except (sqlite3.IntegrityError, ValueError):
                 pass
 
         conn.commit()
         time.sleep(1.5)  # Rate limiting entre conferencias
-
-    conn.close()
 
     logger.info(f"Mañaneras: {len(conferencias)} conferencias, {total_menciones} menciones nuevas")
     return {
@@ -544,8 +539,7 @@ if __name__ == "__main__":
     print(f"\nResultado: {resultado}")
 
     # Mostrar menciones guardadas
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     rows = conn.execute("""
@@ -564,5 +558,3 @@ if __name__ == "__main__":
             print()
     else:
         print("\nNo se encontraron menciones de CSP en las conferencias.")
-
-    conn.close()

@@ -11,7 +11,8 @@ from pathlib import Path
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import CATEGORIAS, SCORING, URGENCIA, DATABASE, obtener_keywords_categoria
+from config import CATEGORIAS, SCORING, URGENCIA, obtener_keywords_categoria
+from db import get_connection
 from scrapers.medios import obtener_score_media
 from scrapers.gaceta import obtener_score_congreso
 from scrapers.trends import obtener_score_trends
@@ -24,8 +25,7 @@ logger = logging.getLogger(__name__)
 
 def init_db():
     """Crea tablas de scores y alertas."""
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS scores (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -46,7 +46,7 @@ def init_db():
     try:
         conn.execute("ALTER TABLE scores ADD COLUMN score_mananera REAL DEFAULT 0")
         conn.commit()
-    except sqlite3.OperationalError:
+    except (sqlite3.OperationalError, ValueError):
         pass  # Columna ya existe
     conn.execute("""
         CREATE TABLE IF NOT EXISTS alertas (
@@ -103,8 +103,7 @@ def calcular_score_urgencia_historica(categoria_clave, score_media, score_trends
 
     Si no hay correlación histórica → urgencia baja (sin evidencia).
     """
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     urgencia = 0.0
@@ -194,8 +193,6 @@ def calcular_score_urgencia_historica(categoria_clave, score_media, score_trends
             (score_congreso - umbral_c) / (100 - umbral_c) if score_congreso >= umbral_c and umbral_c < 100 else 0,
         )
         urgencia *= 1.0 + (factor_parc - 1.0) * exceso
-
-    conn.close()
 
     return min(round(urgencia, 2), 100)
 
@@ -287,8 +284,7 @@ def calcular_momentum(categoria_clave, umbral=40.0):
         tendencia: "up" | "down" | "stable"
         etiqueta: "Semana 3 en agenda" | "5 dias activo" | ""
     """
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     rows = conn.execute("""
@@ -297,7 +293,6 @@ def calcular_momentum(categoria_clave, umbral=40.0):
         ORDER BY fecha DESC
         LIMIT 30
     """, (categoria_clave,)).fetchall()
-    conn.close()
 
     if not rows:
         return {"dias_consecutivos": 0, "semanas_en_agenda": 0,
@@ -382,7 +377,7 @@ def calcular_todos_los_scores():
                 resultado["fecha"],
                 f"cal:{resultado['factor_calendario']}",
             ))
-        except sqlite3.IntegrityError:
+        except (sqlite3.IntegrityError, ValueError):
             # Actualizar si ya existe para hoy
             conn.execute("""
                 UPDATE scores
@@ -419,7 +414,6 @@ def calcular_todos_los_scores():
             ))
 
     conn.commit()
-    conn.close()
 
     # Ordenar por score descendente
     resultados.sort(key=lambda x: x["score_total"], reverse=True)
@@ -428,8 +422,7 @@ def calcular_todos_los_scores():
 
 def obtener_scores_actuales():
     """Recupera los scores más recientes de la BD."""
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     rows = conn.execute("""
@@ -441,7 +434,6 @@ def obtener_scores_actuales():
         ORDER BY s.score_total DESC
     """).fetchall()
 
-    conn.close()
     return [dict(r) for r in rows]
 
 
@@ -449,8 +441,7 @@ def obtener_historial_scores(categoria, dias=30):
     """Recupera historial de scores para una categoría."""
     from datetime import timedelta
 
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
@@ -461,21 +452,18 @@ def obtener_historial_scores(categoria, dias=30):
         ORDER BY fecha
     """, (categoria, fecha_limite)).fetchall()
 
-    conn.close()
     return [dict(r) for r in rows]
 
 
 def obtener_alertas_recientes(limite=20):
     """Recupera las alertas más recientes."""
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     rows = conn.execute("""
         SELECT * FROM alertas ORDER BY fecha DESC LIMIT ?
     """, (limite,)).fetchall()
 
-    conn.close()
     return [dict(r) for r in rows]
 
 
@@ -499,8 +487,7 @@ def obtener_historial_scores_todas(dias=180):
     """
     from datetime import timedelta
 
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
@@ -521,8 +508,6 @@ def obtener_historial_scores_todas(dias=180):
         WHERE fecha >= ?
         ORDER BY fecha
     """, (fecha_limite,)).fetchall()
-
-    conn.close()
 
     # Organizar por categoría
     por_cat = {}
@@ -563,7 +548,11 @@ def obtener_historial_scores_todas(dias=180):
 
 def generar_reporte():
     """Genera un reporte en texto del estado actual del semáforo."""
-    resultados = calcular_todos_los_scores()
+    # Usar scores guardados en BD en vez de recalcular
+    resultados = obtener_scores_actuales()
+    if not resultados:
+        # Fallback: calcular si no hay scores guardados
+        resultados = calcular_todos_los_scores()
 
     lineas = [
         "=" * 70,
@@ -576,8 +565,11 @@ def generar_reporte():
 
     for r in resultados:
         icono = iconos.get(r["color"], "⚪")
+        # Obtener nombre: de calcular_todos_los_scores viene 'nombre',
+        # de obtener_scores_actuales viene 'categoria' (clave)
+        nombre = r.get("nombre") or CATEGORIAS.get(r.get("categoria"), {}).get("nombre", r.get("categoria", "?"))
         lineas.append(
-            f"  {icono} {r['nombre']:30s}  {r['score_total']:6.2f}  "
+            f"  {icono} {nombre:30s}  {r['score_total']:6.2f}  "
             f"[M:{r['score_media']:5.1f} T:{r['score_trends']:5.1f} "
             f"C:{r['score_congreso']:5.1f} CSP:{r.get('score_mananera',0):5.1f} "
             f"U:{r['score_urgencia']:5.1f}]"

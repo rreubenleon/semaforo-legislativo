@@ -28,7 +28,8 @@ from bs4 import BeautifulSoup
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import GACETA, DATABASE
+from config import GACETA
+from db import get_connection
 
 logger = logging.getLogger(__name__)
 
@@ -92,8 +93,7 @@ RE_COMISION = re.compile(
 
 def init_db():
     """Crea la tabla de gaceta si no existe, con migración de columnas nuevas."""
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.execute("""
         CREATE TABLE IF NOT EXISTS gaceta (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -113,7 +113,7 @@ def init_db():
     for col, default in [("url_pdf", "''"), ("numero_doc", "''")]:
         try:
             conn.execute(f"ALTER TABLE gaceta ADD COLUMN {col} TEXT DEFAULT {default}")
-        except sqlite3.OperationalError:
+        except (sqlite3.OperationalError, ValueError):
             pass  # Ya existe
     conn.commit()
     return conn
@@ -673,7 +673,6 @@ def scrape_gaceta_rango(dias=7):
                 nuevos = _insertar_documentos(conn, docs)
                 todos_documentos.extend(docs[:nuevos] if nuevos > 0 else [])
 
-    conn.close()
     logger.info(f"Scraping completo: {len(todos_documentos)} documentos nuevos ({total_requests} requests)")
     return todos_documentos
 
@@ -716,7 +715,7 @@ def _insertar_documentos(conn, documentos):
             conn.commit()
             nuevos += 1
             logger.info(f"    [{doc['tipo']}] {doc['titulo'][:80]}...")
-        except sqlite3.IntegrityError:
+        except (sqlite3.IntegrityError, ValueError):
             pass
 
     return nuevos
@@ -728,8 +727,7 @@ def _insertar_documentos(conn, documentos):
 
 def buscar_por_categoria(keyword, dias=30):
     """Busca documentos en la BD que coincidan con un keyword."""
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
@@ -740,15 +738,12 @@ def buscar_por_categoria(keyword, dias=30):
           AND (titulo LIKE ? OR resumen LIKE ? OR comision LIKE ?)
         ORDER BY fecha DESC
     """, (fecha_limite, f"%{keyword}%", f"%{keyword}%", f"%{keyword}%")).fetchall()
-
-    conn.close()
     return [dict(r) for r in resultados]
 
 
 def contar_actividad_por_fecha(dias=30):
     """Retorna conteo de documentos por fecha para análisis temporal."""
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
 
     fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
 
@@ -759,8 +754,6 @@ def contar_actividad_por_fecha(dias=30):
         GROUP BY fecha
         ORDER BY fecha
     """, (fecha_limite,)).fetchall()
-
-    conn.close()
     return {row[0]: row[1] for row in rows}
 
 
@@ -802,8 +795,7 @@ def _build_like_conditions(kw, campos=("titulo", "resumen", "comision")):
 
 def obtener_score_congreso(categoria_keywords, dias=7):
     """Calcula un score 0-100 de actividad legislativa para una categoría."""
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
 
     fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
 
@@ -820,8 +812,6 @@ def obtener_score_congreso(categoria_keywords, dias=7):
               AND {cond_sql}
         """, [fecha_limite] + cond_params).fetchone()[0]
         docs_relevantes += count
-
-    conn.close()
 
     if total_docs == 0:
         return 0

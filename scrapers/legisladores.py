@@ -20,7 +20,7 @@ from bs4 import BeautifulSoup
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import DATABASE
+from db import get_connection
 
 logger = logging.getLogger(__name__)
 
@@ -32,8 +32,7 @@ HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; SemaforoLegislativo/1.0)"}
 # ────────────────────────────────────────────
 def init_db():
     """Crea tablas para legisladores y su historial."""
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
 
     conn.execute("""
         CREATE TABLE IF NOT EXISTS legisladores (
@@ -102,7 +101,7 @@ def init_db():
     ]:
         try:
             conn.execute(idx_sql)
-        except sqlite3.OperationalError:
+        except (sqlite3.OperationalError, ValueError):
             pass
 
     conn.commit()
@@ -517,11 +516,10 @@ def scrape_diputados(max_detalle=500):
             if nuevos % 50 == 0:
                 logger.info(f"  Diputados procesados: {nuevos}...")
                 conn.commit()
-        except sqlite3.IntegrityError:
+        except (sqlite3.IntegrityError, ValueError):
             pass
 
     conn.commit()
-    conn.close()
 
     logger.info(f"Diputados: {nuevos} nuevos registrados de {len(listado)} en listado")
     return {"nuevos": nuevos, "total_listado": len(listado)}
@@ -570,11 +568,10 @@ def scrape_senadores(max_detalle=150):
                 "LXVI", datetime.now().isoformat(),
             ))
             nuevos += 1
-        except sqlite3.IntegrityError:
+        except (sqlite3.IntegrityError, ValueError):
             pass
 
     conn.commit()
-    conn.close()
 
     logger.info(f"Senadores: {nuevos} nuevos registrados de {len(listado)} en listado")
     return {"nuevos": nuevos, "total_listado": len(listado)}
@@ -589,8 +586,7 @@ def poblar_actividad_desde_sil():
     Usa el campo 'presentador' ya almacenado en sil_documentos (sin HTTP extra).
     Si no existe presentador, hace fallback al campo partido.
     """
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     # Cargar legisladores indexados por nombre normalizado
@@ -600,7 +596,6 @@ def poblar_actividad_desde_sil():
 
     if not legisladores:
         logger.warning("No hay legisladores en la BD. Ejecuta scrape_diputados/senadores primero.")
-        conn.close()
         return {"vinculados": 0, "sin_match": 0}
 
     # Procesar documentos SIL que aún no están en actividad_legislador
@@ -652,7 +647,7 @@ def poblar_actividad_desde_sil():
                     presentador if len(autores) > 1 else "",
                 ))
                 vinculados += 1
-            except sqlite3.IntegrityError:
+            except (sqlite3.IntegrityError, ValueError):
                 pass
 
         if not autores:
@@ -663,7 +658,6 @@ def poblar_actividad_desde_sil():
             logger.info(f"  Vinculados: {vinculados}...")
 
     conn.commit()
-    conn.close()
 
     logger.info(f"Actividad legislador: {vinculados} vínculos creados, {sin_match} sin match")
     return {"vinculados": vinculados, "sin_match": sin_match}
@@ -752,8 +746,7 @@ def _buscar_legislador(nombre_norm, legisladores_dict):
 # ────────────────────────────────────────────
 def obtener_legisladores(partido=None, estado=None, camara=None):
     """Retorna lista de legisladores con filtros opcionales."""
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     query = "SELECT * FROM legisladores WHERE 1=1"
@@ -770,19 +763,16 @@ def obtener_legisladores(partido=None, estado=None, camara=None):
         params.append(camara)
 
     rows = conn.execute(query + " ORDER BY nombre", params).fetchall()
-    conn.close()
     return [dict(r) for r in rows]
 
 
 def obtener_perfil_legislador(legislador_id):
     """Retorna perfil completo de un legislador con su actividad."""
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     leg = conn.execute("SELECT * FROM legisladores WHERE id = ?", (legislador_id,)).fetchone()
     if not leg:
-        conn.close()
         return None
 
     perfil = dict(leg)
@@ -813,14 +803,12 @@ def obtener_perfil_legislador(legislador_id):
     ).fetchone()[0]
     perfil["total_instrumentos"] = total
 
-    conn.close()
     return perfil
 
 
 def obtener_stats_legisladores():
     """Estadísticas generales de la tabla de legisladores."""
-    db_path = ROOT / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     stats = {
@@ -838,7 +826,6 @@ def obtener_stats_legisladores():
     for row in conn.execute("SELECT partido, COUNT(*) as n FROM legisladores WHERE partido != '' GROUP BY partido ORDER BY n DESC"):
         stats["por_partido"][row["partido"]] = row["n"]
 
-    conn.close()
     return stats
 
 

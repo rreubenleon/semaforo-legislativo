@@ -14,7 +14,8 @@ from pathlib import Path
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import CATEGORIAS, NLP_CONFIG, DATABASE, KEYWORDS_NEGATIVOS, KEYWORDS_MEXICO, obtener_keywords_categoria
+from config import CATEGORIAS, NLP_CONFIG, KEYWORDS_NEGATIVOS, KEYWORDS_MEXICO, obtener_keywords_categoria
+from db import get_connection
 
 logger = logging.getLogger(__name__)
 
@@ -406,8 +407,7 @@ def actualizar_categorias_en_db():
     """
     Recorre artículos sin categorizar en la BD y les asigna categorías.
     """
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     # Artículos sin categoría o con categoría vacía
@@ -429,7 +429,6 @@ def actualizar_categorias_en_db():
             clasificados += 1
 
     conn.commit()
-    conn.close()
     logger.info(f"Clasificados: {clasificados}/{len(sin_clasificar)}")
     return clasificados
 
@@ -441,8 +440,7 @@ def obtener_distribucion_categorias(dias=7):
     """
     from datetime import timedelta
 
-    db_path = Path(__file__).resolve().parent.parent / DATABASE["archivo"]
-    conn = sqlite3.connect(str(db_path))
+    conn = get_connection()
 
     fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
 
@@ -450,8 +448,6 @@ def obtener_distribucion_categorias(dias=7):
         SELECT categorias FROM articulos
         WHERE fecha >= ? AND categorias IS NOT NULL AND categorias != ''
     """, (fecha_limite,)).fetchall()
-
-    conn.close()
 
     distribucion = Counter()
     for row in rows:
