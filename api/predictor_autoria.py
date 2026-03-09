@@ -268,7 +268,22 @@ def calcular_reacciones_historicas():
         WHERE legislador_id IS NOT NULL AND categoria != ''
     """).fetchall()
 
-    total_reacciones = 0
+    # Pre-cargar todas las presentaciones en un dict para evitar N queries
+    todas_presentaciones = conn.execute("""
+        SELECT legislador_id, categoria, fecha_presentacion
+        FROM actividad_legislador
+        WHERE legislador_id IS NOT NULL AND categoria != ''
+        AND fecha_presentacion IS NOT NULL AND fecha_presentacion != ''
+        ORDER BY fecha_presentacion
+    """).fetchall()
+
+    from collections import defaultdict as dd
+    pres_por_leg_cat = dd(list)
+    for p in todas_presentaciones:
+        pres_por_leg_cat[(p["legislador_id"], p["categoria"])].append(p["fecha_presentacion"])
+
+    # Acumular inserts en batch
+    batch = []
 
     for leg_cat in legisladores_activos:
         leg_id = leg_cat["legislador_id"]
@@ -277,19 +292,9 @@ def calcular_reacciones_historicas():
         if cat not in picos_por_cat:
             continue
 
-        # Obtener presentaciones de este legislador en esta categoría
-        presentaciones = conn.execute("""
-            SELECT fecha_presentacion
-            FROM actividad_legislador
-            WHERE legislador_id = ? AND categoria = ?
-            AND fecha_presentacion IS NOT NULL AND fecha_presentacion != ''
-            ORDER BY fecha_presentacion
-        """, (leg_id, cat)).fetchall()
-
-        if not presentaciones:
+        fechas_pres = pres_por_leg_cat.get((leg_id, cat), [])
+        if not fechas_pres:
             continue
-
-        fechas_pres = [p["fecha_presentacion"] for p in presentaciones]
 
         # Para cada pico mediático, buscar la presentación más cercana posterior
         for pico in picos_por_cat[cat]:
@@ -305,21 +310,24 @@ def calcular_reacciones_historicas():
                         continue
 
                     if 0 <= dias <= 90:  # Máximo 90 días de ventana
-                        conn.execute("""
-                            INSERT INTO reacciones_historicas
-                                (legislador_id, categoria, evento_fecha,
-                                 evento_descripcion, presentacion_fecha,
-                                 dias_reaccion, tipo_instrumento, score_media_evento)
-                            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                        """, (
+                        batch.append((
                             leg_id, cat, fecha_pico,
                             f"Pico mediático: {pico['intensidad']} artículos",
                             fecha_pres, dias, "",
                             min(pico["intensidad"] * 10, 100),
                         ))
-                        total_reacciones += 1
                     break  # Solo la primera presentación posterior
 
+    # Insert batch de una sola vez
+    if batch:
+        conn.executemany("""
+            INSERT INTO reacciones_historicas
+                (legislador_id, categoria, evento_fecha,
+                 evento_descripcion, presentacion_fecha,
+                 dias_reaccion, tipo_instrumento, score_media_evento)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, batch)
+    total_reacciones = len(batch)
     conn.commit()
 
     logger.info(f"Reacciones históricas calculadas: {total_reacciones}")
