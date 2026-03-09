@@ -39,13 +39,7 @@ jobs:
           path: ~/.cache/pip
           key: pip-${{ hashFiles('requirements.txt') }}
 
-      # 3b. Cache de la replica embebida de Turso (acelera sync)
-      - name: Cache Turso embedded replica
-        uses: actions/cache@v4
-        with:
-          path: local_replica.db
-          key: turso-replica-${{ github.run_number }}
-          restore-keys: turso-replica-
+      # 3b. Turso embedded replica (sin cache — se recrea cada run para evitar WAL corrupto)
 
       # 4. Instalar dependencias
       - name: Instalar dependencias

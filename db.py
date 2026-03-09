@@ -270,12 +270,31 @@ def _create_turso_connection():
 
     if _mode == "turso":
         local_replica = str(ROOT / "local_replica.db")
-        raw_conn = libsql.connect(
-            local_replica,
-            sync_url=url,
-            auth_token=token,
-        )
-        raw_conn.sync()
+
+        try:
+            raw_conn = libsql.connect(
+                local_replica,
+                sync_url=url,
+                auth_token=token,
+            )
+            raw_conn.sync()
+        except Exception as e:
+            # Si la réplica local está corrupta (ej: wal_insert_frame failed),
+            # borrarla y empezar de cero
+            logger.warning(f"Sync falló con réplica existente ({e}), recreando...")
+            import glob as globmod
+            for f in globmod.glob(local_replica + "*"):
+                try:
+                    os.remove(f)
+                    logger.info(f"  Eliminado: {f}")
+                except OSError:
+                    pass
+            raw_conn = libsql.connect(
+                local_replica,
+                sync_url=url,
+                auth_token=token,
+            )
+            raw_conn.sync()
     else:
         raw_conn = libsql.connect(url, auth_token=token)
 
