@@ -195,6 +195,7 @@
                             </div>
                             <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400 flex-wrap">
                                 <span className={`px-1.5 py-0.5 rounded text-xs ${tipoColor[d.tipo] || 'bg-gray-100 text-gray-600'}`}>{d.tipo}</span>
+                                <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${d.camara === 'Senado' ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-700'}`}>{d.camara || 'Diputados'}</span>
                                 {d.autor && d.autor !== 'No identificado' && <span className="text-gray-500">{d.autor}</span>}
                                 <span>{d.fecha}</span>
                             </div>
