@@ -110,7 +110,7 @@ def init_db():
         )
     """)
     # Migración: agregar columnas nuevas a DBs existentes
-    for col, default in [("url_pdf", "''"), ("numero_doc", "''")]:
+    for col, default in [("url_pdf", "''"), ("numero_doc", "''"), ("camara", "'Diputados'")]:
         try:
             conn.execute(f"ALTER TABLE gaceta ADD COLUMN {col} TEXT DEFAULT {default}")
         except (sqlite3.OperationalError, ValueError):

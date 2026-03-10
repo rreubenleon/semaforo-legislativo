@@ -22,6 +22,7 @@ from db import get_connection, sync as sync_db, close as close_db
 from scrapers.medios import scrape_todos_medios, obtener_articulos_recientes
 from scrapers.medios_html import scrape_todos_html
 from scrapers.gaceta import scrape_gaceta_rango, _build_like_conditions
+from scrapers.gaceta_senado import scrape_gaceta_senado
 from scrapers.trends import scrape_trends_todas_categorias
 from scrapers.sil import (
     scrape_sil_completo,
@@ -165,6 +166,24 @@ def paso_2_scraping_gaceta(dias=7):
     duracion = time.time() - inicio
 
     logger.info(f"Gaceta: {len(documentos)} documentos nuevos ({duracion:.1f}s)")
+    return documentos
+
+
+def paso_2a_scraping_gaceta_senado(dias=14):
+    """Paso 2a: Scrapear Gaceta del Senado."""
+    logger.info("=" * 60)
+    logger.info("PASO 2a: Scraping de Gaceta del Senado")
+    logger.info("=" * 60)
+
+    inicio = time.time()
+    try:
+        documentos = scrape_gaceta_senado(dias=dias)
+        duracion = time.time() - inicio
+        logger.info(f"Gaceta Senado: {len(documentos)} documentos nuevos ({duracion:.1f}s)")
+    except Exception as e:
+        logger.warning(f"Gaceta Senado falló (no crítico): {e}")
+        documentos = []
+
     return documentos
 
 
@@ -359,7 +378,8 @@ def obtener_fuentes_por_categoria():
             rows = conn.execute(f"""
                 SELECT tipo, titulo, autor, comision, fecha, url,
                        COALESCE(url_pdf, '') as url_pdf,
-                       COALESCE(numero_doc, '') as numero_doc
+                       COALESCE(numero_doc, '') as numero_doc,
+                       COALESCE(camara, 'Diputados') as camara
                 FROM gaceta
                 WHERE {condiciones}
                 ORDER BY fecha DESC LIMIT 10
@@ -374,6 +394,7 @@ def obtener_fuentes_por_categoria():
                     "url": r["url"] or "",
                     "url_pdf": r["url_pdf"] or "",
                     "numero_doc": r["numero_doc"] or "",
+                    "camara": r["camara"] or "Diputados",
                 })
 
         # Google Trends: top keywords y sus valores
@@ -600,6 +621,7 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     # Pasos secuenciales
     paso_1_scraping_medios()
     paso_2_scraping_gaceta(dias=dias_gaceta)
+    paso_2a_scraping_gaceta_senado(dias=dias_gaceta)
     paso_2b_scraping_mananera()
     paso_2c_scraping_sintesis()
     paso_2d_scraping_twitter()
