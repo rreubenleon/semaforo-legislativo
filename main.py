@@ -19,6 +19,7 @@ from pathlib import Path
 
 from config import LOGGING, DATABASE, CATEGORIAS, SCORING, obtener_keywords_categoria
 from db import get_connection, sync as sync_db, close as close_db
+from fts import reconstruir_indice_fts
 from scrapers.medios import scrape_todos_medios, obtener_articulos_recientes
 from scrapers.medios_html import scrape_todos_html
 from scrapers.gaceta import scrape_gaceta_rango, _build_like_conditions
@@ -313,6 +314,21 @@ def paso_5b_resoluciones():
         logger.warning(f"Resoluciones falló (no crítico): {e}")
 
     return n_semanas
+
+
+def paso_5c_indice_busqueda():
+    """Paso 5c: Reconstruir índice FTS5 para búsqueda full-text."""
+    logger.info("=" * 60)
+    logger.info("PASO 5c: Índice de Búsqueda (FTS5)")
+    logger.info("=" * 60)
+
+    inicio = time.time()
+    try:
+        stats = reconstruir_indice_fts()
+        duracion = time.time() - inicio
+        logger.info(f"FTS5: {stats['total']} documentos indexados ({duracion:.1f}s)")
+    except Exception as e:
+        logger.warning(f"FTS5 falló (no crítico): {e}")
 
 
 def paso_6_correlacion_temporal():
@@ -681,6 +697,7 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     paso_4_clasificacion_nlp()
     scores = paso_5_scoring()
     paso_5b_resoluciones()
+    paso_5c_indice_busqueda()
     paso_6_correlacion_temporal()
     sync_db()  # Sincronizar scores y correlaciones con Turso
 
@@ -707,6 +724,7 @@ def ejecutar_solo_scoring():
     paso_5_scoring()
     sync_db()
     paso_5b_resoluciones()
+    paso_5c_indice_busqueda()
     sync_db()
     paso_7_exportar_dashboard()
     reporte = generar_reporte()
