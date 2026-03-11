@@ -698,7 +698,12 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     scores = paso_5_scoring()
     paso_5b_resoluciones()
     paso_5c_indice_busqueda()
-    paso_6_correlacion_temporal()
+
+    try:
+        paso_6_correlacion_temporal()
+    except Exception as e:
+        logger.warning(f"Correlación temporal falló (no crítico): {e}")
+
     sync_db()  # Sincronizar scores y correlaciones con Turso
 
     data = paso_7_exportar_dashboard()

@@ -166,6 +166,11 @@ class _ConnectionWrapper:
             return False
         try:
             logger.warning("Stream expirado — reconectando a Turso...")
+            # Cerrar conexión vieja antes de reconectar
+            try:
+                self._conn.close()
+            except Exception:
+                pass
             self._conn = self._connect_fn()
             logger.info("Reconexión exitosa")
             return True
@@ -183,13 +188,16 @@ class _ConnectionWrapper:
                     return self._conn.execute(sql)
             except (ValueError, Exception) as e:
                 err_str = str(e).lower()
-                # Reconectar en errores de stream expirado o conexión perdida
+                # Reconectar en errores de stream expirado, conexión perdida o WAL corrupto
                 recoverable = (
                     "stream not found" in err_str
                     or "connection reset" in err_str
                     or "connection refused" in err_str
                     or "broken pipe" in err_str
                     or "http error" in err_str
+                    or "wal_insert_frame" in err_str
+                    or "disk image is malformed" in err_str
+                    or "database disk image" in err_str
                 )
                 if recoverable and attempt < 2:
                     import time as _time
@@ -255,6 +263,9 @@ class _ConnectionWrapper:
                     or "connection refused" in err_str
                     or "broken pipe" in err_str
                     or "http error" in err_str
+                    or "wal_insert_frame" in err_str
+                    or "disk image is malformed" in err_str
+                    or "database disk image" in err_str
                 )
                 if recoverable and attempt < 2:
                     import time as _time
