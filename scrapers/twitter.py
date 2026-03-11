@@ -51,6 +51,15 @@ def _init_tabla():
             fecha_scraping TEXT NOT NULL
         )
     """)
+    # Índices para reducir row reads
+    for idx_name, idx_def in [
+        ("idx_tweets_fecha", "tweets(fecha)"),
+        ("idx_tweets_categorias", "tweets(categorias)"),
+    ]:
+        try:
+            conn.execute(f"CREATE INDEX IF NOT EXISTS {idx_name} ON {idx_def}")
+        except (sqlite3.OperationalError, ValueError):
+            pass
     conn.commit()
     return conn
 

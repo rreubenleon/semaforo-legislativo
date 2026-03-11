@@ -59,6 +59,17 @@ def init_db():
             fecha TEXT NOT NULL
         )
     """)
+    # Índices para reducir row reads en Turso
+    for idx_name, idx_def in [
+        ("idx_scores_fecha", "scores(fecha)"),
+        ("idx_scores_categoria_fecha", "scores(categoria, fecha)"),
+        ("idx_alertas_fecha", "alertas(fecha)"),
+        ("idx_alertas_categoria", "alertas(categoria)"),
+    ]:
+        try:
+            conn.execute(f"CREATE INDEX IF NOT EXISTS {idx_name} ON {idx_def}")
+        except (sqlite3.OperationalError, ValueError):
+            pass
     conn.commit()
     return conn
 

@@ -111,63 +111,71 @@ def predecir_autores(categoria, estado_evento=None, top_n=10):
         )
     """).fetchone()[0] or 1
 
+    # ── Pre-cargar datos en bulk (elimina N+1 queries) ──
+    # 1. Docs por legislador en esta categoría
+    docs_por_leg = {}
+    for row in conn.execute("""
+        SELECT legislador_id, COUNT(*) as cnt FROM actividad_legislador
+        WHERE categoria = ? GROUP BY legislador_id
+    """, (categoria,)).fetchall():
+        docs_por_leg[row["legislador_id"]] = row["cnt"]
+
+    # 2. Reacciones históricas por legislador en esta categoría
+    reacciones_por_leg = {}
+    for row in conn.execute("""
+        SELECT legislador_id, AVG(dias_reaccion) as promedio
+        FROM reacciones_historicas
+        WHERE categoria = ? AND dias_reaccion > 0 AND dias_reaccion <= 90
+        GROUP BY legislador_id
+    """, (categoria,)).fetchall():
+        reacciones_por_leg[row["legislador_id"]] = row["promedio"]
+
+    # 3. Actividad reciente por legislador (últimos 60 días)
+    recientes_por_leg = {}
+    for row in conn.execute("""
+        SELECT legislador_id, COUNT(*) as cnt FROM actividad_legislador
+        WHERE fecha_presentacion >= date('now', '-60 days')
+        GROUP BY legislador_id
+    """).fetchall():
+        recientes_por_leg[row["legislador_id"]] = row["cnt"]
+
     predicciones = []
+    comisiones_afines = COMISIONES_POR_CATEGORIA.get(categoria, [])
 
     for leg in legisladores:
         leg_id = leg["id"]
         scores = {}
 
         # ── 1. Historial temático (35%) ──
-        docs_en_cat = conn.execute("""
-            SELECT COUNT(*) FROM actividad_legislador
-            WHERE legislador_id = ? AND categoria = ?
-        """, (leg_id, categoria)).fetchone()[0]
-
+        docs_en_cat = docs_por_leg.get(leg_id, 0)
         scores["historial_tematico"] = min(docs_en_cat / max_docs_cat, 1.0) * 100
 
         # ── 2. Comisión relevante (25%) ──
         comisiones = leg["comisiones"] or ""
         comisiones_cargo = leg["comisiones_cargo"] or ""
-        comisiones_afines = COMISIONES_POR_CATEGORIA.get(categoria, [])
 
         comision_score = 0
         for com_afin in comisiones_afines:
             com_afin_lower = com_afin.lower()
             if com_afin_lower in comisiones.lower():
-                # Verificar si tiene cargo relevante
                 if any(f"{com_afin}:President" in cc for cc in comisiones_cargo.split("|")):
-                    comision_score = 100  # Presidente de comisión afín
+                    comision_score = 100
                 elif any(f"{com_afin}:Secretar" in cc for cc in comisiones_cargo.split("|")):
                     comision_score = max(comision_score, 80)
                 else:
-                    comision_score = max(comision_score, 60)  # Integrante
+                    comision_score = max(comision_score, 60)
 
         scores["comision_relevante"] = comision_score
 
         # ── 3. Velocidad de reacción (15%) ──
-        # Promedio de tiempo entre eventos mediáticos y presentaciones
-        reacciones = conn.execute("""
-            SELECT dias_reaccion FROM reacciones_historicas
-            WHERE legislador_id = ? AND categoria = ?
-            AND dias_reaccion > 0 AND dias_reaccion <= 90
-        """, (leg_id, categoria)).fetchall()
-
-        if reacciones:
-            promedio_dias = sum(r["dias_reaccion"] for r in reacciones) / len(reacciones)
-            # Menos días = más rápido = mejor score
-            # 3 días → 100, 14 días → 50, 30 días → 25, 90 días → 0
+        promedio_dias = reacciones_por_leg.get(leg_id)
+        if promedio_dias is not None:
             scores["velocidad_reaccion"] = max(0, 100 - (promedio_dias * 100 / 90))
         else:
-            # Sin datos de reacción: usar historial como proxy
             scores["velocidad_reaccion"] = min(docs_en_cat * 5, 30)
 
         # ── 4. Actividad reciente (15%) ──
-        docs_recientes = conn.execute("""
-            SELECT COUNT(*) FROM actividad_legislador
-            WHERE legislador_id = ?
-            AND fecha_presentacion >= date('now', '-60 days')
-        """, (leg_id,)).fetchone()[0]
-
+        docs_recientes = recientes_por_leg.get(leg_id, 0)
         scores["actividad_reciente"] = min(docs_recientes / max_reciente, 1.0) * 100
 
         # ── 5. Contexto geográfico (10%) ──

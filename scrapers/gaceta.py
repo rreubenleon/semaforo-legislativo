@@ -115,6 +115,19 @@ def init_db():
             conn.execute(f"ALTER TABLE gaceta ADD COLUMN {col} TEXT DEFAULT {default}")
         except (sqlite3.OperationalError, ValueError):
             pass  # Ya existe
+
+    # Índices para reducir row reads en Turso
+    indices = [
+        ("idx_gaceta_fecha", "gaceta(fecha)"),
+        ("idx_gaceta_fecha_tipo", "gaceta(fecha, tipo)"),
+        ("idx_gaceta_camara", "gaceta(camara)"),
+        ("idx_gaceta_numero_doc_camara", "gaceta(numero_doc, camara)"),
+    ]
+    for idx_name, idx_def in indices:
+        try:
+            conn.execute(f"CREATE INDEX IF NOT EXISTS {idx_name} ON {idx_def}")
+        except (sqlite3.OperationalError, ValueError):
+            pass
     conn.commit()
     return conn
 
@@ -678,29 +691,31 @@ def scrape_gaceta_rango(dias=7):
 
 
 def _insertar_documentos(conn, documentos):
-    """Inserta documentos en la BD, deduplicando por (fecha + titulo_hash)."""
+    """Inserta documentos en la BD, deduplicando por (fecha + tipo + titulo_hash).
+    Usa match exacto con hash en lugar de LIKE para reducir row reads en Turso."""
     nuevos = 0
-    for doc in documentos:
-        t_hash = _titulo_hash(doc["titulo"])
+    _limpiar = lambda t: " ".join(t.split()) if t else t
 
-        # Verificar si ya existe
+    for doc in documentos:
+        titulo_limpio = _limpiar(doc["titulo"])
+
+        # Deduplicación por hash exacto (usa índice, no escanea tabla)
+        t_hash = _titulo_hash(titulo_limpio)
         existe = conn.execute(
-            "SELECT 1 FROM gaceta WHERE fecha = ? AND tipo = ? AND titulo LIKE ?",
-            (doc["fecha"], doc["tipo"], doc["titulo"][:100] + "%")
+            "SELECT 1 FROM gaceta WHERE fecha = ? AND tipo = ? AND numero_doc = ?",
+            (doc["fecha"], doc["tipo"], doc.get("numero_doc", ""))
         ).fetchone()
 
         if existe:
             continue
 
-        # Normalizar whitespace en título y resumen (la Gaceta mete \n\t)
-        _limpiar = lambda t: " ".join(t.split()) if t else t
         registro = {
             "fecha": doc["fecha"],
             "tipo": doc["tipo"],
-            "titulo": _limpiar(doc["titulo"]),
+            "titulo": titulo_limpio[:500],
             "autor": doc.get("autor", "No identificado"),
             "comision": doc.get("comision") or "No especificada",
-            "resumen": _limpiar(doc.get("resumen", doc["titulo"])),
+            "resumen": _limpiar(doc.get("resumen", doc["titulo"]))[:1000],
             "url": doc.get("url", ""),
             "url_pdf": doc.get("url_pdf", ""),
             "numero_doc": doc.get("numero_doc", ""),
@@ -712,11 +727,14 @@ def _insertar_documentos(conn, documentos):
                 INSERT INTO gaceta (fecha, tipo, titulo, autor, comision, resumen, url, url_pdf, numero_doc, fecha_scraping)
                 VALUES (:fecha, :tipo, :titulo, :autor, :comision, :resumen, :url, :url_pdf, :numero_doc, :fecha_scraping)
             """, registro)
-            conn.commit()
             nuevos += 1
             logger.info(f"    [{doc['tipo']}] {doc['titulo'][:80]}...")
         except (sqlite3.IntegrityError, ValueError):
             pass
+
+    # Batch commit al final (en vez de por fila)
+    if nuevos > 0:
+        conn.commit()
 
     return nuevos
 

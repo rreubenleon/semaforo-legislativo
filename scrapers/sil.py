@@ -145,6 +145,20 @@ def init_db():
             conn.execute(f"ALTER TABLE sil_documentos ADD COLUMN {col} TEXT DEFAULT {default}")
         except (sqlite3.OperationalError, ValueError):
             pass  # Ya existe
+
+    # Índices para reducir row reads en Turso
+    for idx_name, idx_def in [
+        ("idx_sil_categoria", "sil_documentos(categoria)"),
+        ("idx_sil_fecha", "sil_documentos(fecha_presentacion)"),
+        ("idx_sil_categoria_fecha", "sil_documentos(categoria, fecha_presentacion)"),
+        ("idx_sil_seguimiento", "sil_documentos(seguimiento_id)"),
+        ("idx_sil_partido", "sil_documentos(partido)"),
+        ("idx_sil_camara", "sil_documentos(camara)"),
+    ]:
+        try:
+            conn.execute(f"CREATE INDEX IF NOT EXISTS {idx_name} ON {idx_def}")
+        except (sqlite3.OperationalError, ValueError):
+            pass
     conn.commit()
 
 

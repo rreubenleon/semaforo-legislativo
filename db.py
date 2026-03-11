@@ -174,17 +174,26 @@ class _ConnectionWrapper:
             return False
 
     def _execute_raw(self, sql, parameters=None):
-        """Ejecuta SQL con reconexión automática si el stream expiró."""
-        for attempt in range(2):
+        """Ejecuta SQL con reconexión automática si el stream expiró o la conexión se perdió."""
+        for attempt in range(3):
             try:
                 if parameters is not None:
                     return self._conn.execute(sql, parameters)
                 else:
                     return self._conn.execute(sql)
             except (ValueError, Exception) as e:
-                err_str = str(e)
-                # Solo reconectar en errores reales de stream expirado
-                if "stream not found" in err_str and attempt == 0:
+                err_str = str(e).lower()
+                # Reconectar en errores de stream expirado o conexión perdida
+                recoverable = (
+                    "stream not found" in err_str
+                    or "connection reset" in err_str
+                    or "connection refused" in err_str
+                    or "broken pipe" in err_str
+                    or "http error" in err_str
+                )
+                if recoverable and attempt < 2:
+                    import time as _time
+                    _time.sleep(2 * (attempt + 1))  # Backoff: 2s, 4s
                     if self._reconnect():
                         continue
                 raise
@@ -235,12 +244,21 @@ class _ConnectionWrapper:
             params = converted
         else:
             params = [tuple(p) if isinstance(p, list) else p for p in params_list]
-        for attempt in range(2):
+        for attempt in range(3):
             try:
                 return self._conn.executemany(sql, params)
             except (ValueError, Exception) as e:
-                err_str = str(e)
-                if "stream not found" in err_str and attempt == 0:
+                err_str = str(e).lower()
+                recoverable = (
+                    "stream not found" in err_str
+                    or "connection reset" in err_str
+                    or "connection refused" in err_str
+                    or "broken pipe" in err_str
+                    or "http error" in err_str
+                )
+                if recoverable and attempt < 2:
+                    import time as _time
+                    _time.sleep(2 * (attempt + 1))
                     if self._reconnect():
                         continue
                 raise
