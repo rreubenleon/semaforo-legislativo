@@ -52,6 +52,7 @@ COMISIONES_POR_CATEGORIA = {
     "anticorrupcion": ["Transparencia", "Anticorrupción"],
     "medio_ambiente": ["Medio Ambiente", "Cambio Climático", "Recursos Naturales"],
     "inteligencia_artificial": ["Ciencia", "Tecnología", "Innovación"],
+    "igualdad_genero": ["Igualdad de Género", "Igualdad", "Género"],
 }
 
 

@@ -827,6 +827,60 @@ CATEGORIAS = {
             },
         },
     },
+    "igualdad_genero": {
+        "nombre": "Igualdad de género",
+        "comisiones": [
+            # Diputados
+            "Igualdad de Género",
+            # Senado LXVI
+            "Para la Igualdad de Género",
+        ],
+        "trends_keywords": [
+            "igualdad de género México", "feminicidio México",
+            "violencia de género", "INMUJERES", "paridad de género",
+        ],
+        "subcategorias": {
+            "violencia_genero": {
+                "nombre": "Violencia de género",
+                "keywords": [
+                    "violencia de género", "feminicidio", "alerta de género",
+                    "violencia doméstica", "violencia contra la mujer",
+                    "refugios para mujeres", "orden de protección",
+                ],
+            },
+            "igualdad_sustantiva": {
+                "nombre": "Igualdad sustantiva",
+                "keywords": [
+                    "igualdad de género", "igualdad sustantiva", "brecha salarial",
+                    "igualdad laboral", "discriminación de género", "equidad salarial",
+                ],
+            },
+            "participacion_politica_mujeres": {
+                "nombre": "Participación política de mujeres",
+                "keywords": [
+                    "paridad de género", "paridad en todo",
+                    "violencia política de género",
+                    "participación política de mujeres", "cuotas de género",
+                ],
+            },
+            "derechos_reproductivos": {
+                "nombre": "Derechos reproductivos",
+                "keywords": [
+                    "aborto", "derechos reproductivos",
+                    "interrupción legal del embarazo",
+                    "salud reproductiva", "maternidad",
+                ],
+            },
+            "instituciones_genero": {
+                "nombre": "Instituciones de género",
+                "keywords": [
+                    "INMUJERES", "instituto de las mujeres",
+                    "política de género", "perspectiva de género",
+                    "igualdad institucional",
+                ],
+            },
+        },
+    },
 }
 
 
