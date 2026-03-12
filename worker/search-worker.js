@@ -1,11 +1,9 @@
 /**
  * FIAT - API de Búsqueda Full-Text
- * Cloudflare Worker que consulta FTS5 en Turso
+ * Cloudflare Worker que consulta FTS5 en D1
  *
- * Endpoint: GET /buscar?q=reforma+fiscal&tipo=gaceta&desde=2025-01-01&hasta=2026-03-11&pagina=1&limite=20
+ * Endpoint: GET /buscar?q=reforma+fiscal&tipo=gaceta&desde=2025-01-01&hasta=2026-03-12&pagina=1&limite=20
  */
-
-import { createClient } from '@libsql/client/web';
 
 const ALLOWED_ORIGINS = [
   'https://rreubenleon.github.io',
@@ -54,11 +52,7 @@ export default {
     }
 
     try {
-      const db = createClient({
-        url: env.TURSO_DATABASE_URL,
-        authToken: env.TURSO_AUTH_TOKEN,
-      });
-
+      const db = env.DB;
       const ftsQuery = sanitizeFTS(q);
       const offset = (pagina - 1) * limite;
 
@@ -82,15 +76,15 @@ export default {
       const where = filters.length > 0 ? 'AND ' + filters.join(' AND ') : '';
 
       // Conteo total
-      const countResult = await db.execute({
-        sql: `SELECT count(*) as total FROM busqueda_fts WHERE busqueda_fts MATCH ? ${where}`,
-        args: params,
-      });
-      const total = Number(countResult.rows[0].total);
+      const countResult = await db
+        .prepare(`SELECT count(*) as total FROM busqueda_fts WHERE busqueda_fts MATCH ? ${where}`)
+        .bind(...params)
+        .first();
+      const total = Number(countResult.total);
 
       // Búsqueda con ranking
-      const searchResult = await db.execute({
-        sql: `
+      const searchResult = await db
+        .prepare(`
           SELECT titulo, contenido, fuente_tipo, fuente_nombre,
                  categoria, fecha, url, extra_json, doc_id, rank
           FROM busqueda_fts
@@ -98,12 +92,12 @@ export default {
           ${where}
           ORDER BY rank
           LIMIT ? OFFSET ?
-        `,
-        args: [...params, limite, offset],
-      });
+        `)
+        .bind(...params, limite, offset)
+        .all();
 
       // Formatear resultados
-      const resultados = searchResult.rows.map(row => {
+      const resultados = searchResult.results.map(row => {
         let extra = {};
         try {
           if (row.extra_json) extra = JSON.parse(row.extra_json);
@@ -124,7 +118,6 @@ export default {
       });
 
       // ── Enriquecer con score del momento ──
-      // Extraer categorías FIAT y rango de fechas de los resultados
       const catSet = new Set();
       let minFecha = '9999', maxFecha = '0000';
       for (const r of resultados) {
@@ -138,16 +131,16 @@ export default {
         try {
           const cats = [...catSet];
           const ph = cats.map(() => '?').join(',');
-          const scoresResult = await db.execute({
-            sql: `SELECT categoria, fecha, score_total, color FROM scores
-                  WHERE categoria IN (${ph}) AND fecha >= ? AND fecha <= ?
-                  ORDER BY categoria, fecha DESC`,
-            args: [...cats, minFecha, maxFecha],
-          });
+          const scoresResult = await db
+            .prepare(`SELECT categoria, fecha, score_total, color FROM scores
+                      WHERE categoria IN (${ph}) AND fecha >= ? AND fecha <= ?
+                      ORDER BY categoria, fecha DESC`)
+            .bind(...cats, minFecha, maxFecha)
+            .all();
 
           // Agrupar: categoria → [{fecha, score, color}] (desc por fecha)
           const porCat = {};
-          for (const s of scoresResult.rows) {
+          for (const s of scoresResult.results) {
             if (!porCat[s.categoria]) porCat[s.categoria] = [];
             porCat[s.categoria].push({ fecha: s.fecha, score: s.score_total, color: s.color });
           }
@@ -193,11 +186,8 @@ export default {
  */
 function extraerCategoriaFIAT(categoriaStr, fuenteTipo) {
   if (!categoriaStr) return null;
-  // Gaceta guarda tipo de documento (iniciativa, proposicion, etc.), no categoría FIAT
   if (fuenteTipo === 'gaceta') return null;
-  // SIL guarda directamente la categoría FIAT
   if (fuenteTipo === 'sil') return categoriaStr;
-  // Artículos: formato "cat1:score,cat2:score" — tomar la primera
   const first = categoriaStr.split(',')[0];
   if (first.includes(':')) return first.split(':')[0].trim();
   return first.trim() || null;

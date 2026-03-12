@@ -2,7 +2,7 @@ name: Semáforo Legislativo - Pipeline Automático
 
 on:
   schedule:
-    - cron: '0 */2 * * *'  # Cada 2 horas: 00, 02, 04, 06, 08, 10, 12, 14, 16, 18, 20, 22 UTC
+    - cron: '0 */4 * * *'  # Cada 4 horas: 00, 04, 08, 12, 16, 20 UTC
   workflow_dispatch:  # Permite ejecutarlo manualmente desde GitHub
 
 permissions:
@@ -66,6 +66,15 @@ jobs:
           TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
           SEMAFORO_DB_MODE: local
         continue-on-error: false
+
+      # 5b. Sync búsqueda FTS + scores a Cloudflare D1
+      - name: Sync búsqueda a D1
+        run: |
+          npm install -g wrangler@3
+          python sync_d1.py
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        continue-on-error: true  # No bloquear pipeline si D1 sync falla
 
       # 6. Commit y push de datos actualizados (solo JSON — DB persiste en cache)
       - name: Commit datos actualizados
