@@ -39,23 +39,35 @@ jobs:
           path: ~/.cache/pip
           key: pip-${{ hashFiles('requirements.txt') }}
 
-      # 3b. Turso embedded replica (sin cache — se recrea cada run para evitar WAL corrupto)
+      # 3b. Cache de SQLite — persiste la DB entre ejecuciones del pipeline
+      - name: Cache SQLite DB
+        id: cache-db
+        uses: actions/cache@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-v1
+
+      # 3c. Si no hay cache, descargar seed desde GitHub Release
+      - name: Descargar DB seed
+        if: steps.cache-db.outputs.cache-hit != 'true'
+        run: gh release download db-seed-v1 --pattern "semaforo.db" --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # 4. Instalar dependencias
       - name: Instalar dependencias
         run: pip install -r requirements.txt
 
       # 5. Ejecutar el pipeline completo (sin Trends para evitar rate limits)
+      #    Modo local: SQLite puro, sin dependencia de Turso
       - name: Ejecutar pipeline
         run: python main.py --skip-trends
         env:
           TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
-          TURSO_DATABASE_URL: ${{ secrets.TURSO_DATABASE_URL }}
-          TURSO_AUTH_TOKEN: ${{ secrets.TURSO_AUTH_TOKEN }}
-          SEMAFORO_DB_MODE: turso
+          SEMAFORO_DB_MODE: local
         continue-on-error: false
 
-      # 6. Commit y push de datos actualizados (solo JSON — DB está en Turso)
+      # 6. Commit y push de datos actualizados (solo JSON — DB persiste en cache)
       - name: Commit datos actualizados
         run: |
           git config user.name "FIAT Bot"
