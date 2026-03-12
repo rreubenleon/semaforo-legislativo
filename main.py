@@ -515,12 +515,30 @@ def paso_7_exportar_dashboard():
 
     # Predicciones de autoría legislativa (¿quién presenta?)
     autoria = {}
+    conn_autoria = get_connection()
     try:
         for cat_clave in CATEGORIAS:
             preds = predecir_autores(cat_clave, top_n=5)
             if preds:
-                autoria[cat_clave] = [
-                    {
+                legs = []
+                for p in preds:
+                    # Obtener últimos 5 instrumentos del legislador en esta categoría
+                    try:
+                        instr_rows = conn_autoria.execute("""
+                            SELECT titulo, tipo_instrumento, fecha_presentacion, estatus
+                            FROM actividad_legislador
+                            WHERE legislador_id = ? AND categoria = ?
+                            ORDER BY fecha_presentacion DESC
+                            LIMIT 5
+                        """, (p["legislador_id"], cat_clave)).fetchall()
+                        instrumentos = [
+                            {"titulo": r[0], "tipo": r[1] or "", "fecha": r[2] or "", "estatus": r[3] or ""}
+                            for r in instr_rows
+                        ]
+                    except Exception:
+                        instrumentos = []
+
+                    legs.append({
                         "nombre": invertir_nombre(p["nombre"]) if "Diputados" in (p.get("camara") or "") else p["nombre"],
                         "partido": p["partido"],
                         "camara": p["camara"],
@@ -529,9 +547,9 @@ def paso_7_exportar_dashboard():
                         "docs_categoria": p["docs_en_categoria"],
                         "comisiones_afines": p["comisiones_afines"],
                         "desglose": p["desglose"],
-                    }
-                    for p in preds
-                ]
+                        "instrumentos": instrumentos,
+                    })
+                autoria[cat_clave] = legs
         autoria_stats = obtener_estadisticas_autoria()
     except Exception as e:
         logger.warning(f"Error en predicciones de autoría: {e}")
