@@ -663,8 +663,8 @@ def obtener_mapa_datos():
             reverse=True,
         )
 
-        # Tomar los 5 articulos mas recientes
-        top_articulos = articulos_ordenados[:5]
+        # Tomar los 10 articulos mas recientes
+        top_articulos = articulos_ordenados[:10]
 
         mapa[estado_key] = {
             "nombre": info_estado["nombre"],

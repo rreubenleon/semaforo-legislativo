@@ -397,8 +397,9 @@ def obtener_fuentes_por_categoria():
                        COALESCE(numero_doc, '') as numero_doc,
                        COALESCE(camara, 'Diputados') as camara
                 FROM gaceta
-                WHERE {condiciones}
-                ORDER BY fecha DESC LIMIT 10
+                WHERE ({condiciones})
+                  AND fecha >= date('now', '-14 days')
+                ORDER BY fecha DESC
             """, params).fetchall()
             for r in rows:
                 gaceta_docs.append({
