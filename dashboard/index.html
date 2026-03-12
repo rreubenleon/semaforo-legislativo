@@ -710,7 +710,10 @@
                                         <div className="flex items-start gap-2">
                                             <span className="text-sm flex-shrink-0 mt-0.5">{tipoIcon[inst.tipo] || '\ud83d\udcc4'}</span>
                                             <div className="min-w-0 flex-1">
-                                                <div className="text-xs text-gray-800 leading-snug line-clamp-2">{inst.titulo}</div>
+                                                {inst.url
+                                                    ? <a href={inst.url} target="_blank" rel="noopener noreferrer" className="text-xs text-acento hover:underline leading-snug line-clamp-2 block">{inst.titulo}</a>
+                                                    : <div className="text-xs text-gray-800 leading-snug line-clamp-2">{inst.titulo}</div>
+                                                }
                                                 <div className="flex items-center gap-2 mt-1">
                                                     {inst.fecha && <span className="text-[10px] text-gray-400">{inst.fecha}</span>}
                                                     {ei && <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${ei.cls}`}>{ei.lbl}</span>}

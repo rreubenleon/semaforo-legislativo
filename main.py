@@ -525,16 +525,20 @@ def paso_7_exportar_dashboard():
                     # Obtener últimos 5 instrumentos del legislador en esta categoría
                     try:
                         instr_rows = conn_autoria.execute("""
-                            SELECT titulo, tipo_instrumento, fecha_presentacion, estatus
-                            FROM actividad_legislador
-                            WHERE legislador_id = ? AND categoria = ?
-                            ORDER BY fecha_presentacion DESC
+                            SELECT al.titulo, al.tipo_instrumento, al.fecha_presentacion, al.estatus,
+                                   sd.seguimiento_id, sd.asunto_id
+                            FROM actividad_legislador al
+                            LEFT JOIN sil_documentos sd ON al.sil_documento_id = sd.id
+                            WHERE al.legislador_id = ? AND al.categoria = ?
+                            ORDER BY al.fecha_presentacion DESC
                             LIMIT 5
                         """, (p["legislador_id"], cat_clave)).fetchall()
-                        instrumentos = [
-                            {"titulo": r[0], "tipo": r[1] or "", "fecha": r[2] or "", "estatus": r[3] or ""}
-                            for r in instr_rows
-                        ]
+                        instrumentos = []
+                        for r in instr_rows:
+                            inst = {"titulo": r[0], "tipo": r[1] or "", "fecha": r[2] or "", "estatus": r[3] or ""}
+                            if r[4] and r[5]:
+                                inst["url"] = f"http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento={r[4]}&Asunto={r[5]}"
+                            instrumentos.append(inst)
                     except Exception:
                         instrumentos = []
 
