@@ -660,19 +660,26 @@ def paso_8_health_check():
 
     conn = get_connection()
 
-    # Fuentes a verificar: (nombre, tabla, columna_fecha)
+    # Fuentes a verificar: (nombre, tabla, columna_fecha, solo_dias_habiles)
     fuentes = [
-        ("Artículos de medios", "articulos", "fecha"),
-        ("Gaceta Parlamentaria", "gaceta", "fecha"),
-        ("SIL Documentos", "sil_documentos", "fecha_presentacion"),
-        ("Tweets", "tweets", "fecha"),
-        ("Conferencias Matutinas", "mananera", "fecha"),
+        ("Artículos de medios", "articulos", "fecha", False),
+        ("Gaceta Parlamentaria", "gaceta", "fecha", False),
+        ("SIL Documentos", "sil_documentos", "fecha_presentacion", True),
+        ("Tweets", "tweets", "fecha", False),
+        ("Conferencias Matutinas", "mananera", "fecha", True),
     ]
+
+    # No alertar fuentes de días hábiles en fin de semana
+    es_fin_de_semana = datetime.now().weekday() >= 5  # sábado=5, domingo=6
 
     saludables = []
     enfermas = []
 
-    for nombre, tabla, col_fecha in fuentes:
+    for nombre, tabla, col_fecha, solo_habiles in fuentes:
+        if solo_habiles and es_fin_de_semana:
+            logger.info(f"  ⏭ {nombre}: omitido (fin de semana)")
+            saludables.append((nombre, -1))  # -1 = omitido
+            continue
         try:
             row = conn.execute(f"""
                 SELECT COUNT(*) as total
