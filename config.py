@@ -254,16 +254,21 @@ CATEGORIAS = {
         "subcategorias": {
             "seguridad_publica": {
                 "nombre": "Seguridad pública y policía",
-                "keywords": ["policía", "guardia nacional", "seguridad pública", "operativo", "patrullaje", "estrategia de seguridad"],
+                "keywords": ["policía", "guardia nacional", "seguridad pública", "operativo", "patrullaje", "estrategia de seguridad",
+                             "balacera", "enfrentamiento armado", "emboscada", "levantón", "toque de queda", "militarización",
+                             "autodefensa", "grupo armado", "célula criminal", "abuso policial", "ejecución extrajudicial"],
             },
             "justicia_penal": {
                 "nombre": "Justicia penal y reforma judicial",
                 "keywords": ["código penal", "ministerio público", "proceso penal", "jueces", "fiscalía", "reforma judicial", "poder judicial", "penal",
-                             "código civil", "Ley de Amparo", "solución de controversias"],
+                             "código civil", "Ley de Amparo", "solución de controversias",
+                             "Norma Piña", "ministro", "ministra", "magistrado", "amparo", "suspensión judicial",
+                             "tribunal", "juzgado", "sentencia", "Arturo Zaldívar", "reforma al poder judicial"],
             },
             "crimen_organizado": {
                 "nombre": "Crimen organizado",
-                "keywords": ["narcotráfico", "crimen organizado", "extorsión", "secuestro", "cártel", "fentanilo", "delito"],
+                "keywords": ["narcotráfico", "crimen organizado", "extorsión", "secuestro", "cártel", "fentanilo", "delito",
+                             "huachicol", "robo de combustible", "célula criminal", "plaza", "sicario", "halcón"],
             },
             "fuerzas_armadas": {
                 "nombre": "Fuerzas armadas y defensa",
@@ -276,12 +281,14 @@ CATEGORIAS = {
             "violencia_victimas": {
                 "nombre": "Violencia y víctimas",
                 "keywords": ["homicidio", "feminicidio", "desaparición forzada", "violencia", "impunidad", "víctimas",
-                             "fosa clandestina", "fosas", "asesinato", "muertos", "restos humanos"],
+                             "fosa clandestina", "fosas", "asesinato", "muertos", "restos humanos",
+                             "desaparecidos", "persona desaparecida", "búsqueda de personas", "tortura", "detención arbitraria"],
             },
             "justicia_constitucional": {
                 "nombre": "Justicia constitucional",
                 "keywords": ["suprema corte", "SCJN", "controversia constitucional", "acción de inconstitucionalidad",
-                             "constitucionalidad", "división de poderes", "tribunal constitucional"],
+                             "constitucionalidad", "división de poderes", "tribunal constitucional",
+                             "controversia", "amparo colectivo"],
             },
         },
     },
@@ -302,24 +309,31 @@ CATEGORIAS = {
             "politica_fiscal": {
                 "nombre": "Política fiscal y recaudación",
                 "keywords": ["impuestos", "SAT", "reforma fiscal", "IEPS", "IVA", "ISR", "recaudación", "contribuyente",
-                             "evasión fiscal", "coordinación fiscal", "código fiscal"],
+                             "evasión fiscal", "coordinación fiscal", "código fiscal",
+                             "SHCP", "Secretaría de Hacienda", "miscelánea fiscal", "Paquete Económico", "Ley de Ingresos"],
             },
             "presupuesto_gasto": {
                 "nombre": "Presupuesto y gasto público",
-                "keywords": ["presupuesto", "gasto público", "PEF", "deuda pública", "déficit", "austeridad", "deuda"],
+                "keywords": ["presupuesto", "gasto público", "PEF", "deuda pública", "déficit", "austeridad", "deuda",
+                             "Rogelio Ramírez de la O", "secretario de hacienda", "subasta", "Cetes", "bonos gubernamentales"],
             },
             "politica_monetaria": {
                 "nombre": "Política monetaria y macroeconomía",
-                "keywords": ["inflación", "tipo de cambio", "peso mexicano", "Banxico", "tasa de interés", "PIB", "Banco de México"],
+                "keywords": ["inflación", "tipo de cambio", "peso mexicano", "Banxico", "tasa de interés", "PIB", "Banco de México",
+                             "recesión", "crecimiento económico", "estancamiento", "precio del dólar", "depreciación",
+                             "volatilidad cambiaria", "calificadora", "Moody's", "Standard & Poor's", "Fitch",
+                             "riesgo país", "mercados financieros", "bolsa mexicana"],
             },
             "comercio_exterior": {
                 "nombre": "Comercio exterior e inversión",
-                "keywords": ["aranceles", "comercio exterior", "inversión extranjera", "exportación", "importación", "balanza comercial"],
+                "keywords": ["aranceles", "comercio exterior", "inversión extranjera", "exportación", "importación", "balanza comercial",
+                             "nearshoring", "relocalización"],
             },
             "fomento_economico": {
                 "nombre": "Fomento económico",
                 "keywords": ["economía", "inversión pública", "fomento económico", "emprendimiento", "Pymes", "competitividad", "hacienda", "política fiscal",
-                             "Protección al Consumidor"],
+                             "Protección al Consumidor",
+                             "clase media", "poder adquisitivo", "canasta básica"],
             },
             "competencia_mercados": {
                 "nombre": "Competencia y mercados",
@@ -340,11 +354,14 @@ CATEGORIAS = {
         "subcategorias": {
             "pemex_petroleo": {
                 "nombre": "Pemex y petróleo",
-                "keywords": ["Pemex", "petróleo", "hidrocarburos", "gasolina", "refinería", "producción petrolera"],
+                "keywords": ["Pemex", "petróleo", "hidrocarburos", "gasolina", "refinería", "producción petrolera",
+                             "Octavio Romero", "director de Pemex", "plataforma petrolera", "producción de barriles",
+                             "precio del petróleo", "mezcla mexicana", "huachicoleo", "toma clandestina", "fracking", "perforación"],
             },
             "cfe_electricidad": {
                 "nombre": "CFE y electricidad",
-                "keywords": ["CFE", "electricidad", "tarifas eléctricas", "apagón", "generación eléctrica", "subsidio energético"],
+                "keywords": ["CFE", "electricidad", "tarifas eléctricas", "apagón", "generación eléctrica", "subsidio energético",
+                             "apagón masivo", "corte de luz", "falla eléctrica", "contrato de electricidad", "tarifa doméstica"],
             },
             "energias_renovables": {
                 "nombre": "Energías renovables",
@@ -352,7 +369,8 @@ CATEGORIAS = {
             },
             "mineria_recursos": {
                 "nombre": "Minería y recursos",
-                "keywords": ["litio", "minería", "concesión minera", "gas natural", "gas LP", "gasoducto", "soberanía energética"],
+                "keywords": ["litio", "minería", "concesión minera", "gas natural", "gas LP", "gasoducto", "soberanía energética",
+                             "reforma energética", "Rocío Nahle", "secretaria de energía"],
             },
         },
     },
@@ -368,11 +386,15 @@ CATEGORIAS = {
         "subcategorias": {
             "sistema_salud": {
                 "nombre": "Sistema de salud",
-                "keywords": ["IMSS", "ISSSTE", "IMSS-Bienestar", "hospital", "clínica", "atención médica", "INSABI"],
+                "keywords": ["IMSS", "ISSSTE", "IMSS-Bienestar", "hospital", "clínica", "atención médica", "INSABI",
+                             "doctor", "médico", "enfermera", "personal de salud", "lista de espera", "cirugía",
+                             "urgencias", "sector salud", "sistema de salud pública", "consultorio",
+                             "primer nivel de atención", "Alcocer", "secretario de salud", "seguro popular"],
             },
             "medicamentos_abasto": {
                 "nombre": "Medicamentos y abasto",
-                "keywords": ["medicamento", "desabasto", "farmacia", "vacuna", "compra consolidada"],
+                "keywords": ["medicamento", "desabasto", "farmacia", "vacuna", "compra consolidada",
+                             "receta médica"],
             },
             "salud_mental_adicciones": {
                 "nombre": "Salud mental y adicciones",
@@ -381,7 +403,9 @@ CATEGORIAS = {
             "epidemiologia": {
                 "nombre": "Epidemiología",
                 "keywords": ["epidemia", "pandemia", "enfermedad", "brote", "vigilancia epidemiológica",
-                             "alerta epidemiológica", "tamizaje"],
+                             "alerta epidemiológica", "tamizaje",
+                             "OMS", "Organización Mundial de la Salud", "dengue", "influenza", "covid",
+                             "cáncer", "diabetes", "obesidad", "hipertensión"],
             },
         },
     },
@@ -400,11 +424,16 @@ CATEGORIAS = {
             "educacion_basica": {
                 "nombre": "Educación básica",
                 "keywords": ["SEP", "escuela", "maestro", "profesor", "libros de texto", "rezago educativo", "deserción escolar",
-                             "Ley General de Educación", "educación", "uniforme escolar"],
+                             "Ley General de Educación", "educación", "uniforme escolar",
+                             "CNTE", "sindicato de maestros", "SNTE", "paro de maestros", "plantón magisterial",
+                             "plan de estudios", "currículo", "nueva escuela mexicana", "evaluación docente",
+                             "carrera magisterial", "infraestructura escolar", "acoso escolar", "bullying",
+                             "Leticia Ramírez", "secretaria de educación", "inscripción", "ciclo escolar", "calendario escolar"],
             },
             "educacion_superior": {
                 "nombre": "Educación superior e investigación",
-                "keywords": ["universidad", "UNAM", "IPN", "Conahcyt", "CONACYT", "investigación", "becas", "posgrado"],
+                "keywords": ["universidad", "UNAM", "IPN", "Conahcyt", "CONACYT", "investigación", "becas", "posgrado",
+                             "beca universal"],
             },
             "ciencia_tecnologia": {
                 "nombre": "Ciencia y tecnología",
@@ -428,12 +457,16 @@ CATEGORIAS = {
         "subcategorias": {
             "empleo_salario": {
                 "nombre": "Empleo y salarios",
-                "keywords": ["empleo", "salario", "salario mínimo", "desempleo", "informalidad", "mercado laboral"],
+                "keywords": ["empleo", "salario", "salario mínimo", "desempleo", "informalidad", "mercado laboral",
+                             "despido", "liquidación", "indemnización", "empleo juvenil", "primer empleo", "reforma laboral"],
             },
             "derechos_laborales": {
                 "nombre": "Derechos laborales",
                 "keywords": ["jornada laboral", "prestaciones", "aguinaldo", "vacaciones dignas", "subcontratación", "outsourcing",
-                             "derechos laborales", "Ley Federal del Trabajo", "permisos laborales"],
+                             "derechos laborales", "Ley Federal del Trabajo", "permisos laborales",
+                             "trabajo remoto", "teletrabajo", "home office", "plataforma digital",
+                             "trabajador de aplicación", "accidente laboral", "riesgo de trabajo",
+                             "brecha salarial", "igualdad salarial"],
             },
             "seguridad_social_pensiones": {
                 "nombre": "Seguridad social y pensiones",
@@ -441,7 +474,8 @@ CATEGORIAS = {
             },
             "relaciones_laborales": {
                 "nombre": "Relaciones laborales",
-                "keywords": ["sindicato", "huelga", "STPS", "contrato colectivo", "conflicto laboral"],
+                "keywords": ["sindicato", "huelga", "STPS", "contrato colectivo", "conflicto laboral",
+                             "Marath Bolaños", "secretario del trabajo", "inspección laboral", "Profedet"],
             },
         },
     },
@@ -465,22 +499,38 @@ CATEGORIAS = {
         "subcategorias": {
             "reforma_electoral": {
                 "nombre": "Reforma electoral",
-                "keywords": ["reforma electoral", "INE", "TEPJF", "voto", "campaña electoral", "elección", "casilla"],
+                "keywords": ["reforma electoral", "INE", "TEPJF", "voto", "campaña electoral", "elección", "casilla",
+                             "jornada electoral", "proceso electoral", "padrón electoral", "credencial de elector",
+                             "lista nominal", "PREP", "conteo rápido", "resultados electorales", "urna", "boleta",
+                             "casilla electoral", "distrito electoral", "circunscripción", "fiscalización de campañas",
+                             "Guadalupe Taddei", "consejero electoral", "consejera electoral", "tribunal electoral",
+                             "impugnación electoral", "tómbola", "insaculación"],
             },
             "partidos_coaliciones": {
                 "nombre": "Partidos y coaliciones",
                 "keywords": ["coalición legislativa", "oposición parlamentaria",
                              "partido político", "financiamiento de partidos",
-                             "Ley de Partidos Políticos", "alianza electoral"],
+                             "Ley de Partidos Políticos", "alianza electoral",
+                             "Morena", "PAN", "PRI", "PVEM", "PT", "MC", "Movimiento Ciudadano",
+                             "bancada", "fracción parlamentaria", "grupo parlamentario",
+                             "mayoría calificada", "mayoría simple", "mayoría absoluta",
+                             "sobrerrepresentación", "plurinominal", "representación proporcional"],
             },
             "gobernabilidad": {
                 "nombre": "Gobernabilidad",
                 "keywords": ["gobernabilidad", "sistema político", "crisis política", "desafuero",
-                             "juicio político", "división de poderes", "Ley Orgánica del Congreso"],
+                             "juicio político", "división de poderes", "Ley Orgánica del Congreso",
+                             "Congreso", "Cámara de Diputados", "Cámara de Senadores", "Senado",
+                             "diputado", "diputada", "senador", "senadora", "legislador", "legisladora",
+                             "periodo de sesiones", "sesión plenaria", "tribuna", "coordinador parlamentario",
+                             "líder parlamentario", "Sheinbaum", "presidenta", "ejecutivo federal"],
             },
             "participacion_ciudadana": {
                 "nombre": "Participación ciudadana",
-                "keywords": ["consulta popular", "revocación de mandato", "democracia", "referéndum", "plebiscito"],
+                "keywords": ["consulta popular", "revocación de mandato", "democracia", "referéndum", "plebiscito",
+                             "encuesta", "preferencia electoral", "intención de voto", "precampaña", "proselitismo",
+                             "candidatura", "candidato", "candidata", "debate", "debate presidencial",
+                             "gubernatura", "gobernador", "gobernadora", "alcalde", "alcaldesa", "elección intermedia"],
             },
         },
     },
@@ -502,15 +552,19 @@ CATEGORIAS = {
         "subcategorias": {
             "derechos_fundamentales": {
                 "nombre": "Derechos fundamentales",
-                "keywords": ["derechos humanos", "CNDH", "discriminación", "igualdad", "libertad de expresión", "defensor"],
+                "keywords": ["derechos humanos", "CNDH", "discriminación", "igualdad", "libertad de expresión", "defensor",
+                             "Rosario Piedra", "ombudsman", "detención arbitraria", "preso político", "activista",
+                             "defensor de derechos humanos", "Corte Interamericana", "CIDH"],
             },
             "genero_diversidad": {
                 "nombre": "Género y diversidad",
-                "keywords": ["género", "violencia de género", "aborto", "diversidad sexual", "LGBT", "feminismo"],
+                "keywords": ["género", "violencia de género", "aborto", "diversidad sexual", "LGBT", "feminismo",
+                             "identidad de género", "matrimonio igualitario"],
             },
             "migracion_refugio": {
                 "nombre": "Migración y refugio",
-                "keywords": ["migración", "migrante", "refugiado", "asilo", "deportación", "caravana migrante"],
+                "keywords": ["migración", "migrante", "refugiado", "asilo", "deportación", "caravana migrante",
+                             "persona desplazada", "desplazamiento forzado", "trata de personas", "tráfico de personas"],
             },
             "pueblos_indigenas": {
                 "nombre": "Pueblos indígenas",
@@ -545,19 +599,24 @@ CATEGORIAS = {
             "transporte_movilidad": {
                 "nombre": "Transporte y movilidad",
                 "keywords": ["sistema de transporte", "red de transporte", "Tren Maya", "tren interurbano", "tren suburbano", "carretera", "aeropuerto", "AIFA",
-                             "seguridad vial", "movilidad", "proyectos carreteros", "carretero", "red carretera"],
+                             "seguridad vial", "movilidad", "proyectos carreteros", "carretero", "red carretera",
+                             "transporte público", "Metro", "Metrobús", "Línea 12", "autopista", "cuota", "peaje",
+                             "Capufe", "bache", "socavón"],
             },
             "obra_publica": {
                 "nombre": "Obra pública",
-                "keywords": ["obra pública", "obra de infraestructura", "corredor interoceánico", "licitación de obra", "puente"],
+                "keywords": ["obra pública", "obra de infraestructura", "corredor interoceánico", "licitación de obra", "puente",
+                             "concesión", "APP", "asociación público privada", "Jorge Nuño Lara", "secretario de infraestructura"],
             },
             "agua_saneamiento": {
                 "nombre": "Agua y saneamiento",
-                "keywords": ["Conagua", "abastecimiento de agua", "crisis hídrica", "drenaje", "saneamiento", "presa"],
+                "keywords": ["Conagua", "abastecimiento de agua", "crisis hídrica", "drenaje", "saneamiento", "presa",
+                             "acueducto", "tubería", "fuga de agua", "corte de agua", "tandeo", "desabasto de agua"],
             },
             "vivienda_urbano": {
                 "nombre": "Vivienda y desarrollo urbano",
-                "keywords": ["vivienda social", "Infonavit", "desarrollo urbano", "ordenamiento territorial"],
+                "keywords": ["vivienda social", "Infonavit", "desarrollo urbano", "ordenamiento territorial",
+                             "Conavi", "crédito de vivienda", "hipoteca"],
             },
             "telecomunicaciones": {
                 "nombre": "Telecomunicaciones",
@@ -590,11 +649,15 @@ CATEGORIAS = {
         "subcategorias": {
             "agricultura_cultivos": {
                 "nombre": "Agricultura y cultivos",
-                "keywords": ["agricultura", "maíz", "glifosato", "transgénico", "fertilizante", "cosecha", "Segalmex", "soberanía alimentaria"],
+                "keywords": ["agricultura", "maíz", "glifosato", "transgénico", "fertilizante", "cosecha", "Segalmex", "soberanía alimentaria",
+                             "sequía agrícola", "helada", "granizada", "pérdida de cosecha", "precio del maíz",
+                             "precio del frijol", "tortilla", "Sader", "secretario de agricultura", "riego",
+                             "temporal", "distrito de riego", "plaga", "importación de maíz", "maíz transgénico"],
             },
             "ganaderia_pesca": {
                 "nombre": "Ganadería y pesca",
-                "keywords": ["ganadería", "pesca", "acuacultura", "producción pecuaria"],
+                "keywords": ["ganadería", "pesca", "acuacultura", "producción pecuaria",
+                             "ganado", "producción lechera", "rastro", "jornalero", "trabajador agrícola"],
             },
             "desarrollo_rural_tierra": {
                 "nombre": "Desarrollo rural y tierra",
@@ -628,19 +691,26 @@ CATEGORIAS = {
         "subcategorias": {
             "relacion_eeuu": {
                 "nombre": "Relación con EE.UU.",
-                "keywords": ["Estados Unidos", "T-MEC", "frontera", "aranceles", "relación bilateral"],
+                "keywords": ["Estados Unidos", "T-MEC", "frontera", "aranceles", "relación bilateral",
+                             "Trump", "Biden", "Casa Blanca", "embajador", "Ken Salazar", "arancel",
+                             "guerra comercial", "proteccionismo", "fentanilo frontera", "tráfico transnacional",
+                             "cooperación bilateral", "cumbre", "reunión bilateral"],
             },
             "diplomacia_organismos": {
                 "nombre": "Diplomacia y organismos",
-                "keywords": ["diplomacia", "embajada", "ONU", "cancillería", "SRE", "consulado", "tratado", "organismos internacionales"],
+                "keywords": ["diplomacia", "embajada", "ONU", "cancillería", "SRE", "consulado", "tratado", "organismos internacionales",
+                             "Alicia Bárcena", "canciller", "secretaria de relaciones", "visa", "pasaporte",
+                             "cita consular", "sanciones", "lista negra", "OFAC"],
             },
             "america_latina": {
                 "nombre": "América Latina",
-                "keywords": ["América Latina", "integración regional", "CELAC", "alianza del pacífico"],
+                "keywords": ["América Latina", "integración regional", "CELAC", "alianza del pacífico",
+                             "Centroamérica", "Guatemala", "Honduras"],
             },
             "soberania_fronteras": {
                 "nombre": "Soberanía y fronteras",
-                "keywords": ["soberanía nacional", "intervención extranjera", "extradición", "deportación", "frontera norte", "frontera sur"],
+                "keywords": ["soberanía nacional", "intervención extranjera", "extradición", "deportación", "frontera norte", "frontera sur",
+                             "remesas", "paisano", "diáspora mexicana"],
             },
         },
     },
@@ -657,19 +727,24 @@ CATEGORIAS = {
         "subcategorias": {
             "sistema_anticorrupcion": {
                 "nombre": "Sistema anticorrupción",
-                "keywords": ["corrupción", "Sistema Nacional Anticorrupción", "SNA", "ASF", "auditoría", "fiscalización"],
+                "keywords": ["corrupción", "Sistema Nacional Anticorrupción", "SNA", "ASF", "auditoría", "fiscalización",
+                             "moches", "desvío de recursos", "peculado", "impunidad", "expediente",
+                             "carpeta de investigación", "Función Pública", "secretario de la función pública"],
             },
             "transparencia_acceso": {
                 "nombre": "Transparencia y acceso a información",
-                "keywords": ["transparencia", "INAI", "acceso a la información", "rendición de cuentas", "datos abiertos"],
+                "keywords": ["transparencia", "INAI", "acceso a la información", "rendición de cuentas", "datos abiertos",
+                             "denuncia ciudadana", "denunciante"],
             },
             "delitos_financieros": {
                 "nombre": "Delitos financieros",
-                "keywords": ["lavado de dinero", "UIF", "enriquecimiento ilícito", "extinción de dominio", "soborno"],
+                "keywords": ["lavado de dinero", "UIF", "enriquecimiento ilícito", "extinción de dominio", "soborno",
+                             "empresa fantasma", "facturera", "Pablo Gómez", "Santiago Nieto", "patrimonio inexplicable"],
             },
             "etica_publica": {
                 "nombre": "Ética pública",
-                "keywords": ["conflicto de interés", "nepotismo", "declaración patrimonial", "contrato público", "licitación"],
+                "keywords": ["conflicto de interés", "nepotismo", "declaración patrimonial", "contrato público", "licitación",
+                             "contratación directa", "adjudicación directa"],
             },
         },
     },
@@ -691,18 +766,23 @@ CATEGORIAS = {
             "conservacion_biodiversidad": {
                 "nombre": "Conservación y biodiversidad",
                 "keywords": ["biodiversidad", "área natural protegida", "Semarnat", "Profepa", "deforestación", "especies en peligro",
-                             "vida silvestre", "equilibrio ecológico", "ecosistema", "áreas naturales"],
+                             "vida silvestre", "equilibrio ecológico", "ecosistema", "áreas naturales",
+                             "jaguar", "tortuga marina", "manglar", "arrecife", "minería a cielo abierto",
+                             "concesión minera", "ambientalista", "Greenpeace"],
             },
             "contaminacion_residuos": {
                 "nombre": "Contaminación y residuos",
                 "keywords": ["contaminación ambiental", "residuos peligrosos", "contingencia ambiental", "calidad del aire",
                              "economía circular", "ley ambiental", "norma ambiental", "impacto ambiental", "política ambiental",
-                             "gestión de residuos", "residuos sólidos", "Gestión Integral de los Residuos"],
+                             "gestión de residuos", "residuos sólidos", "Gestión Integral de los Residuos",
+                             "agua contaminada", "río contaminado", "derrame", "basura", "relleno sanitario",
+                             "tiradero", "smog", "mala calidad del aire", "contingencia"],
             },
             "recursos_forestales": {
                 "nombre": "Recursos forestales",
                 "keywords": ["Conafor", "forestal", "reforestación", "tala", "silvicultura", "incendio forestal",
-                             "productos forestales", "desarrollo forestal", "certificación ambiental"],
+                             "productos forestales", "desarrollo forestal", "certificación ambiental",
+                             "tala ilegal", "tala clandestina", "incendio", "temporada de incendios", "quema"],
             },
             "fenomenos_naturales": {
                 "nombre": "Fenómenos naturales",
@@ -726,16 +806,20 @@ CATEGORIAS = {
             "regulacion_ia": {
                 "nombre": "Regulación de IA",
                 "keywords": ["inteligencia artificial", "regulación de inteligencia artificial", "ley de inteligencia artificial",
-                             "iniciativa inteligencia artificial", "ética de la inteligencia artificial"],
+                             "iniciativa inteligencia artificial", "ética de la inteligencia artificial",
+                             "ChatGPT", "OpenAI", "Claude", "Gemini", "automatización", "robot", "empleo automatizado"],
             },
             "gobernanza_digital": {
                 "nombre": "Gobernanza digital",
                 "keywords": ["regulación tecnológica", "regulación algorítmica", "gobernanza digital",
-                             "regulación de plataformas digitales", "sesgo algorítmico"],
+                             "regulación de plataformas digitales", "sesgo algorítmico",
+                             "brecha digital", "inclusión digital", "startup", "emprendimiento tecnológico"],
             },
             "ciberseguridad_datos": {
                 "nombre": "Ciberseguridad y datos",
-                "keywords": ["ley de ciberseguridad", "protección de datos personales", "ley de datos", "ciberataque", "privacidad digital"],
+                "keywords": ["ley de ciberseguridad", "protección de datos personales", "ley de datos", "ciberataque", "privacidad digital",
+                             "hackeo", "ransomware", "ataque informático", "reconocimiento facial",
+                             "vigilancia masiva", "datos biométricos", "huella digital"],
             },
             "contenido_digital": {
                 "nombre": "Contenido digital",
@@ -964,8 +1048,7 @@ NLP_CONFIG = {
     "min_confianza": 0.5,          # Umbral mínimo para asignar categoría
     "max_categorias": 3,           # Máximo de categorías por artículo
     "stopwords_extra": [
-        "México", "mexicano", "gobierno", "presidente", "federal",
-        "estado", "nacional", "país", "república",
+        "México", "mexicano", "país", "república",
     ],
 }
 
