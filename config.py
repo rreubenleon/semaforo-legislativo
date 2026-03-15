@@ -235,10 +235,7 @@ TWITTER_ACCOUNTS = [
 
 # Twitter/X API v2 — Bearer Token (PPU plan)
 import os
-TWITTER_BEARER_TOKEN = os.environ.get(
-    "TWITTER_BEARER_TOKEN",
-    "AAAAAAAAAAAAAAAAAAAAAFtE7wEAAAAAFJYjhootmF922JDbuebwMdpiGz8=lD9rhkUP4z6ni4rvVwc79hZlMOIKyJb1lhV4fHsknT39ncBloc"
-)
+TWITTER_BEARER_TOKEN = os.environ.get("TWITTER_BEARER_TOKEN", "")
 
 # ─────────────────────────────────────────────
 # 17 CATEGORÍAS LEGISLATIVAS CON SUBCATEGORÍAS
