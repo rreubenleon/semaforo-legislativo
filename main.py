@@ -648,6 +648,81 @@ def paso_7_exportar_dashboard():
     return data
 
 
+def paso_8_health_check():
+    """Paso 8: Verificar que cada fuente de datos tiene registros recientes (últimas 24h).
+
+    Si alguna fuente tiene 0 registros nuevos en 24h, genera health_alert.txt
+    para que GitHub Actions pueda detectarlo y enviar notificación.
+    """
+    logger.info("=" * 60)
+    logger.info("PASO 8: Health Check de Fuentes de Datos")
+    logger.info("=" * 60)
+
+    conn = get_connection()
+
+    # Fuentes a verificar: (nombre, tabla, columna_fecha)
+    fuentes = [
+        ("Artículos de medios", "articulos", "fecha"),
+        ("Gaceta Parlamentaria", "gaceta", "fecha"),
+        ("SIL Documentos", "sil_documentos", "fecha_presentacion"),
+        ("Tweets", "tweets", "fecha"),
+        ("Conferencias Matutinas", "mananera", "fecha"),
+    ]
+
+    saludables = []
+    enfermas = []
+
+    for nombre, tabla, col_fecha in fuentes:
+        try:
+            row = conn.execute(f"""
+                SELECT COUNT(*) as total
+                FROM {tabla}
+                WHERE {col_fecha} >= date('now', '-1 day')
+            """).fetchone()
+            conteo = row[0] if row else 0
+
+            if conteo > 0:
+                saludables.append((nombre, conteo))
+                logger.info(f"  ✓ {nombre}: {conteo} registros en últimas 24h")
+            else:
+                enfermas.append(nombre)
+                logger.warning(f"  ✗ {nombre}: 0 registros en últimas 24h")
+        except Exception as e:
+            enfermas.append(f"{nombre} (error: {e})")
+            logger.warning(f"  ✗ {nombre}: error al consultar — {e}")
+
+    # Generar archivo de alerta si hay fuentes sin datos
+    alert_path = ROOT / "health_alert.txt"
+    if enfermas:
+        ahora = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        lineas = [
+            f"ALERTA DE SALUD DEL PIPELINE — {ahora}",
+            "",
+            "Las siguientes fuentes tienen 0 registros nuevos en las últimas 24 horas:",
+            "",
+        ]
+        for fuente in enfermas:
+            lineas.append(f"  - {fuente}")
+        lineas.append("")
+        lineas.append("Fuentes saludables:")
+        for fuente, conteo in saludables:
+            lineas.append(f"  - {fuente}: {conteo} registros")
+        lineas.append("")
+        lineas.append("Acción requerida: verificar si el scraper correspondiente está funcionando.")
+
+        with open(alert_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(lineas))
+
+        logger.warning(f"HEALTH CHECK: {len(enfermas)} fuente(s) sin datos en 24h → {alert_path}")
+    else:
+        # Limpiar alerta anterior si todo está bien
+        if alert_path.exists():
+            alert_path.unlink()
+        logger.info(f"HEALTH CHECK: Todas las fuentes saludables ({len(saludables)}/{len(fuentes)})")
+
+    return {"saludables": saludables, "enfermas": enfermas}
+
+
 def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     """Ejecuta el pipeline completo de 7 pasos."""
     inicio_total = time.time()
@@ -731,6 +806,10 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
 
     data = paso_7_exportar_dashboard()
     reporte_final = generar_reporte()
+
+    # Health check: verificar que todas las fuentes tienen datos recientes
+    paso_8_health_check()
+
     close_db()  # Sync final + cerrar conexión
 
     duracion_total = time.time() - inicio_total

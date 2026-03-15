@@ -67,6 +67,17 @@ jobs:
           SEMAFORO_DB_MODE: local
         continue-on-error: false
 
+      # 5a. Health check — falla si algún scraper no produjo datos en 24h
+      - name: Health check de scrapers
+        run: |
+          if [ -f health_alert.txt ]; then
+            echo "::error::Alerta de salud del pipeline detectada"
+            cat health_alert.txt
+            exit 1
+          else
+            echo "Todas las fuentes de datos saludables"
+          fi
+
       # 5b. Sync búsqueda FTS + scores a Cloudflare D1
       - name: Sync búsqueda a D1
         run: |
