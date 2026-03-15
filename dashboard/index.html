@@ -418,7 +418,7 @@
             const fecha = new Date(alerta.fecha).toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
             const catData = categorias.find(c => c.categoria === alerta.categoria);
             const catNombre = catData ? catData.nombre : alerta.categoria;
-            const colorLabel = { verde: 'Alta actividad prevista', amarillo: 'Actividad moderada', rojo: 'Baja actividad' };
+            const colorLabel = { verde: 'Alta Actividad Prevista', amarillo: 'Actividad Moderada', rojo: 'Baja Actividad' };
             return (
                 <div className="flex items-start gap-3 py-2 border-b border-gray-100 last:border-0">
                     <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${alerta.color === 'verde' ? 'bg-semaforo-verde' : alerta.color === 'amarillo' ? 'bg-semaforo-amarillo' : 'bg-semaforo-rojo'}`}></div>
@@ -611,7 +611,7 @@
                 <div className="glass border border-borde rounded-xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
                         <div>
-                            <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Tendencia de scores</div>
+                            <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Tendencia de Scores</div>
                             <div className="text-[10px] text-gray-400 mt-0.5">Evolucion del score compuesto por categoria</div>
                         </div>
                         <button onClick={toggleAll}
@@ -969,7 +969,7 @@
 
                     {/* Counters */}
                     <div className="grid grid-cols-3 gap-3">
-                        {[['verde', verdes.length, 'Alta actividad'], ['amarillo', amarillos.length, 'Actividad moderada'], ['rojo', rojos.length, 'Baja actividad']].map(([color, count, label]) => (
+                        {[['verde', verdes.length, 'Alta Actividad'], ['amarillo', amarillos.length, 'Actividad Moderada'], ['rojo', rojos.length, 'Baja Actividad']].map(([color, count, label]) => (
                             <button key={color} onClick={() => setFiltro(f => f === color ? 'todos' : color)}
                                 className={`glass rounded-xl px-4 py-2 text-center transition-all border ${filtro === color ? `border-semaforo-${color} ring-1 ring-semaforo-${color}/30` : `border-borde hover:border-semaforo-${color}/50`}`}>
                                 <div className={`text-2xl font-bold text-semaforo-${color}`}>{count}</div>
@@ -987,9 +987,9 @@
                     ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                             <div className="lg:col-span-2 space-y-5">
-                                {verdes.length > 0 && (<div><h2 className="text-sm font-semibold text-semaforo-verde uppercase tracking-wider mb-2 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-semaforo-verde"></div>Alta probabilidad de actividad ({verdes.length})</h2><div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{verdes.sort((a,b) => b.score_total - a.score_total).map(s => <SemaforoCard key={s.categoria} data={s} onClick={setSelected} />)}</div></div>)}
-                                {amarillos.length > 0 && (<div><h2 className="text-sm font-semibold text-semaforo-amarillo uppercase tracking-wider mb-2 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-semaforo-amarillo"></div>Actividad moderada ({amarillos.length})</h2><div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{amarillos.sort((a,b) => b.score_total - a.score_total).map(s => <SemaforoCard key={s.categoria} data={s} onClick={setSelected} />)}</div></div>)}
-                                {rojos.length > 0 && (<div><h2 className="text-sm font-semibold text-semaforo-rojo uppercase tracking-wider mb-2 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-semaforo-rojo"></div>Baja actividad ({rojos.length})</h2><div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{rojos.sort((a,b) => b.score_total - a.score_total).map(s => <SemaforoCard key={s.categoria} data={s} onClick={setSelected} />)}</div></div>)}
+                                {verdes.length > 0 && (<div><h2 className="text-sm font-semibold text-semaforo-verde uppercase tracking-wider mb-2 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-semaforo-verde"></div>Alta Probabilidad de Actividad ({verdes.length})</h2><div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{verdes.sort((a,b) => b.score_total - a.score_total).map(s => <SemaforoCard key={s.categoria} data={s} onClick={setSelected} />)}</div></div>)}
+                                {amarillos.length > 0 && (<div><h2 className="text-sm font-semibold text-semaforo-amarillo uppercase tracking-wider mb-2 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-semaforo-amarillo"></div>Actividad Moderada ({amarillos.length})</h2><div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{amarillos.sort((a,b) => b.score_total - a.score_total).map(s => <SemaforoCard key={s.categoria} data={s} onClick={setSelected} />)}</div></div>)}
+                                {rojos.length > 0 && (<div><h2 className="text-sm font-semibold text-semaforo-rojo uppercase tracking-wider mb-2 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-semaforo-rojo"></div>Baja Actividad ({rojos.length})</h2><div className="grid grid-cols-1 sm:grid-cols-2 gap-3">{rojos.sort((a,b) => b.score_total - a.score_total).map(s => <SemaforoCard key={s.categoria} data={s} onClick={setSelected} />)}</div></div>)}
                             </div>
                             <div className="space-y-4">
                                 {top5Legisladores.length > 0 && (
@@ -1839,9 +1839,9 @@
                             <img src="fiat-logo.png" alt="FIAT" style={{height: '64px', maxWidth: '192px', objectFit: 'contain', objectPosition: 'left', display: 'block'}} />
                         </div>
                         <div className="relative group">
-                            <span className="text-xs text-gray-500 cursor-help border-b border-dashed border-gray-400 hover:text-acento hover:border-acento transition-colors">¿Qué es FIAT?</span>
+                            <span className="text-xs text-gray-500 cursor-help border-b border-dashed border-gray-400 hover:text-acento hover:border-acento transition-colors font-bold">¿Qué es Fiat?</span>
                             <div className="absolute right-0 top-full mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg p-3 text-xs text-gray-600 leading-relaxed opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                                FIAT es un sistema de predicción legislativa que integra información real del Congreso de México con análisis mediático.
+                                Fiat es un sistema de predicción legislativa que integra información real del Congreso de México con análisis mediático.
                             </div>
                         </div>
                     </header>
@@ -1852,7 +1852,7 @@
                             <button key={key} onClick={() => setPagina(key)} className={`nav-tab whitespace-nowrap ${pagina === key ? 'nav-tab-active' : ''}`}>{label}</button>
                         ))}
                         <div className="ml-auto pl-3 relative flex-shrink-0">
-                            <input type="text" placeholder="Busca en el FIAT..." value={busquedaGlobal} onChange={e => setBusquedaGlobal(e.target.value)}
+                            <input type="text" placeholder="Busca en el Fiat..." value={busquedaGlobal} onChange={e => setBusquedaGlobal(e.target.value)}
                                 data-search-input
                                 className="w-44 md:w-56 pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-acento/30 focus:border-acento" />
                             <svg className="w-4 h-4 text-gray-400 absolute left-5.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
