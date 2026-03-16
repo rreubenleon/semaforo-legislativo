@@ -663,7 +663,7 @@ def paso_8_health_check():
     # Fuentes a verificar: (nombre, tabla, columna_fecha, solo_dias_habiles)
     fuentes = [
         ("Artículos de medios", "articulos", "fecha", False),
-        ("Gaceta Parlamentaria", "gaceta", "fecha", False),
+        ("Gaceta Parlamentaria", "gaceta", "fecha", True),
         ("SIL Documentos", "sil_documentos", "fecha_presentacion", True),
         ("Tweets", "tweets", "fecha", False),
         ("Conferencias Matutinas", "mananera", "fecha", True),
