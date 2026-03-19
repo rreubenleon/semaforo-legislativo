@@ -601,7 +601,10 @@ CATEGORIAS = {
                 "keywords": ["sistema de transporte", "red de transporte", "Tren Maya", "tren interurbano", "tren suburbano", "carretera", "aeropuerto", "AIFA",
                              "seguridad vial", "movilidad", "proyectos carreteros", "carretero", "red carretera",
                              "transporte público", "Metro", "Metrobús", "Línea 12", "autopista", "cuota", "peaje",
-                             "Capufe", "bache", "socavón"],
+                             "Capufe", "bache", "socavón",
+                             "aviación", "aviación civil", "Ley de Aviación", "autotransporte", "autotransporte federal",
+                             "caminos y puentes", "Ley de Caminos", "transporte federal", "transporte terrestre",
+                             "transporte aéreo", "transporte marítimo", "cabotaje", "ferrocarril", "vía férrea"],
             },
             "obra_publica": {
                 "nombre": "Obra pública",
@@ -865,11 +868,14 @@ CATEGORIAS = {
             "regulacion_medios": {
                 "nombre": "Regulación de medios",
                 "keywords": ["regulación de medios", "ley de telecomunicaciones", "concesión de radiodifusión", "IFT",
-                             "espectro radioeléctrico", "ley de radiodifusión"],
+                             "espectro radioeléctrico", "ley de radiodifusión",
+                             "Ley en Materia de Telecomunicaciones", "telecomunicaciones y radiodifusión"],
             },
             "television_radio": {
                 "nombre": "Televisión y radio",
-                "keywords": ["televisión abierta", "televisión pública", "medio radiofónico", "concesión de televisión", "radiodifusión"],
+                "keywords": ["televisión abierta", "televisión pública", "medio radiofónico", "concesión de televisión", "radiodifusión",
+                             "transmisiones deportivas", "transmisión televisiva", "señal abierta",
+                             "televisión de paga", "contenido audiovisual", "canal de televisión"],
             },
             "libertad_prensa": {
                 "nombre": "Libertad de prensa",
@@ -1051,6 +1057,110 @@ NLP_CONFIG = {
         "México", "mexicano", "país", "república",
     ],
 }
+
+# ─────────────────────────────────────────────
+# MAPEO COMISIÓN → CATEGORÍA
+# Fragmentos del nombre de comisión (lowercase) → categoría FIAT.
+# Se busca con "in" sobre el nombre normalizado de la comisión.
+# Orden importa: el primer match gana.
+# ─────────────────────────────────────────────
+COMISION_A_CATEGORIA = [
+    # Seguridad y Justicia
+    ("seguridad pública", "seguridad_justicia"),
+    ("justicia", "seguridad_justicia"),
+    ("defensa nacional", "seguridad_justicia"),
+    ("marina", "seguridad_justicia"),
+    # Economía y Hacienda
+    ("hacienda", "economia_hacienda"),
+    ("economía", "economia_hacienda"),
+    ("economia", "economia_hacienda"),
+    ("defensa de los consumidores", "economia_hacienda"),
+    ("comercio", "economia_hacienda"),
+    # Energía
+    ("energía", "energia"),
+    ("energia", "energia"),
+    ("hidrocarburos", "energia"),
+    # Salud
+    ("salud", "salud"),
+    # Educación
+    ("educación", "educacion"),
+    ("educacion", "educacion"),
+    ("ciencia", "educacion"),
+    # Trabajo
+    ("trabajo", "trabajo"),
+    ("seguridad social", "trabajo"),
+    # Electoral y Político
+    ("gobernación", "electoral_politico"),
+    ("gobernacion", "electoral_politico"),
+    ("reforma del estado", "electoral_politico"),
+    ("puntos constitucionales", "electoral_politico"),
+    ("reglamentos y prácticas parlamentarias", "electoral_politico"),
+    # Derechos Humanos
+    ("derechos humanos", "derechos_humanos"),
+    ("igualdad de género", "derechos_humanos"),
+    ("igualdad de genero", "derechos_humanos"),
+    ("niñez", "derechos_humanos"),
+    ("pueblos indígenas", "derechos_humanos"),
+    ("asuntos migratorios", "derechos_humanos"),
+    ("diversidad sexual", "derechos_humanos"),
+    # Infraestructura
+    ("comunicaciones y transportes", "infraestructura"),
+    ("infraestructura", "infraestructura"),
+    ("recursos hídricos", "infraestructura"),
+    ("recursos hidricos", "infraestructura"),
+    ("desarrollo urbano", "infraestructura"),
+    ("vivienda", "infraestructura"),
+    # Agro y Desarrollo Rural
+    ("agricultura", "agro_rural"),
+    ("desarrollo rural", "agro_rural"),
+    ("pesca", "agro_rural"),
+    # Relaciones Exteriores
+    ("relaciones exteriores", "relaciones_exteriores"),
+    ("frontera norte", "relaciones_exteriores"),
+    ("frontera sur", "relaciones_exteriores"),
+    ("américa del norte", "relaciones_exteriores"),
+    # Anticorrupción
+    ("anticorrupción", "anticorrupcion"),
+    ("anticorrupcion", "anticorrupcion"),
+    ("transparencia", "anticorrupcion"),
+    ("fiscalización", "anticorrupcion"),
+    ("fiscalizacion", "anticorrupcion"),
+    # Medio Ambiente
+    ("medio ambiente", "medio_ambiente"),
+    ("cambio climático", "medio_ambiente"),
+    ("cambio climatico", "medio_ambiente"),
+    ("recursos naturales", "medio_ambiente"),
+    # Inteligencia Artificial
+    ("inteligencia artificial", "inteligencia_artificial"),
+    ("ciberseguridad", "inteligencia_artificial"),
+    # Medios de Comunicación
+    ("radio, televisión", "medios_comunicacion"),
+    ("radio y televisión", "medios_comunicacion"),
+    ("comunicación social", "medios_comunicacion"),
+    # Turismo
+    ("turismo", "turismo"),
+    # Política Social
+    ("bienestar", "politica_social"),
+    ("desarrollo social", "politica_social"),
+    # Igualdad de Género
+    ("igualdad de género", "igualdad_genero"),
+    ("igualdad de genero", "igualdad_genero"),
+    ("contra la trata", "igualdad_genero"),
+    # Deporte (descartable — no es categoría FIAT)
+    ("deporte", None),
+    ("cultura", None),
+]
+
+
+def comision_a_categoria(nombre_comision):
+    """Dado un nombre de comisión, retorna la categoría FIAT o None."""
+    if not nombre_comision or nombre_comision == "No especificada":
+        return None
+    nombre_lower = nombre_comision.lower()
+    for fragmento, categoria in COMISION_A_CATEGORIA:
+        if fragmento in nombre_lower:
+            return categoria
+    return None
 
 # ─────────────────────────────────────────────
 # FILTRO DE RELEVANCIA MÉXICO

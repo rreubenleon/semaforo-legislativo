@@ -14,7 +14,7 @@ from pathlib import Path
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from config import CATEGORIAS, NLP_CONFIG, KEYWORDS_NEGATIVOS, KEYWORDS_MEXICO, obtener_keywords_categoria
+from config import CATEGORIAS, NLP_CONFIG, KEYWORDS_NEGATIVOS, KEYWORDS_MEXICO, obtener_keywords_categoria, comision_a_categoria
 from db import get_connection
 
 logger = logging.getLogger(__name__)
@@ -223,7 +223,7 @@ SEÑALES_LEGISLATIVAS = [
 ]
 
 
-def clasificar_texto(titulo, resumen=""):
+def clasificar_texto(titulo, resumen="", comision=None):
     """
     Clasifica un texto en las 17 categorías legislativas.
     Retorna dict {categoria: score} ordenado por relevancia.
@@ -234,6 +234,7 @@ def clasificar_texto(titulo, resumen=""):
     - Bonus por keywords en título vs resumen
     - Filtro de relevancia México (penaliza artículos internacionales)
     - Boost por señales de instrumentos legislativos
+    - Boost por comisión dictaminadora (si se conoce)
     """
     # Filtro 1: Excluir deportes y entretenimiento
     if _es_contexto_no_legislativo(titulo, resumen):
@@ -307,6 +308,19 @@ def clasificar_texto(titulo, resumen=""):
 
         if score >= NLP_CONFIG["min_confianza"]:
             scores[cat_clave] = round(score, 4)
+
+    # Boost por comisión dictaminadora: si el documento tiene comisión asignada,
+    # la categoría correspondiente recibe un boost fuerte. Si la categoría no tenía
+    # score suficiente por keywords, se le asigna un score mínimo garantizado.
+    if comision:
+        cat_comision = comision_a_categoria(comision)
+        if cat_comision:
+            if cat_comision in scores:
+                # Boost x2 si ya tenía match por keywords
+                scores[cat_comision] = round(scores[cat_comision] * 2.0, 4)
+            else:
+                # Asignar score mínimo garantizado por comisión
+                scores[cat_comision] = round(NLP_CONFIG["min_confianza"] * 1.5, 4)
 
     # Ordenar por score descendente y limitar categorías
     scores_ordenados = dict(
@@ -383,6 +397,7 @@ def clasificar_y_etiquetar(articulo):
     categorias = clasificar_texto(
         articulo.get("titulo", ""),
         articulo.get("resumen", ""),
+        comision=articulo.get("comision"),
     )
 
     if not categorias:
@@ -430,7 +445,58 @@ def actualizar_categorias_en_db():
 
     conn.commit()
     logger.info(f"Clasificados: {clasificados}/{len(sin_clasificar)}")
-    return clasificados
+
+    # ── Clasificar documentos de Gaceta (usando comisión como boost) ──
+    # Agregar columna categorias si no existe
+    try:
+        conn.execute("ALTER TABLE gaceta ADD COLUMN categorias TEXT DEFAULT ''")
+        conn.commit()
+        logger.info("Columna 'categorias' agregada a tabla gaceta")
+    except Exception:
+        pass  # Ya existe
+
+    gaceta_sin = conn.execute("""
+        SELECT id, titulo, resumen, comision FROM gaceta
+        WHERE categorias IS NULL OR categorias = ''
+    """).fetchall()
+    logger.info(f"Gaceta por clasificar: {len(gaceta_sin)}")
+
+    gaceta_ok = 0
+    for row in gaceta_sin:
+        d = dict(row)
+        cats = clasificar_y_etiquetar(d)
+        if cats:
+            conn.execute("UPDATE gaceta SET categorias = ? WHERE id = ?", (cats, d["id"]))
+            gaceta_ok += 1
+
+    conn.commit()
+    logger.info(f"Gaceta clasificados: {gaceta_ok}/{len(gaceta_sin)}")
+
+    # ── Reclasificar SIL documentos sin categoría ──
+    sil_sin = conn.execute("""
+        SELECT id, titulo, sinopsis, comision FROM sil_documentos
+        WHERE categoria IS NULL OR categoria = ''
+    """).fetchall()
+    logger.info(f"SIL por clasificar: {len(sil_sin)}")
+
+    sil_ok = 0
+    for row in sil_sin:
+        d = dict(row)
+        cats = clasificar_texto(
+            d.get("titulo", ""),
+            d.get("sinopsis", ""),
+            comision=d.get("comision"),
+        )
+        if cats:
+            # SIL usa categoría simple (la de mayor score)
+            cat_principal = list(cats.keys())[0]
+            conn.execute("UPDATE sil_documentos SET categoria = ? WHERE id = ?", (cat_principal, d["id"]))
+            sil_ok += 1
+
+    conn.commit()
+    logger.info(f"SIL clasificados: {sil_ok}/{len(sil_sin)}")
+
+    return clasificados + gaceta_ok + sil_ok
 
 
 def obtener_distribucion_categorias(dias=7):
