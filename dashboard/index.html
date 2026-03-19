@@ -10,10 +10,14 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
                     colors: {
                         semaforo: { verde: '#2e7d32', amarillo: '#c6972b', rojo: '#c62828' },
                         fondo: '#ffffff',
@@ -26,7 +30,7 @@
         }
     </script>
     <style>
-        body { background: #ffffff; }
+        body { background: #ffffff; font-family: 'Inter', system-ui, sans-serif; }
         .glass { background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
         .glass:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
         .score-ring { transition: stroke-dashoffset 1s ease-in-out; }
@@ -40,9 +44,21 @@
         .tab-active { border-bottom: 2px solid #1a365d; color: #1a365d; font-weight: 600; }
         .tab-inactive { border-bottom: 2px solid transparent; color: #6b7280; }
         .tab-inactive:hover { color: #374151; }
-        .nav-tab { padding: 8px 16px; font-size: 13px; font-weight: 500; letter-spacing: 0.02em; border-bottom: 3px solid transparent; transition: all 0.2s; cursor: pointer; color: #6b7280; }
-        .nav-tab:hover { color: #1a365d; }
-        .nav-tab-active { color: #1a365d; border-bottom-color: #1a365d; font-weight: 700; }
+        /* Floating nav pill */
+        .nav-pill {
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(0,0,0,0.08);
+            box-shadow: 0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03);
+        }
+        .nav-pill-tab { padding: 6px 14px; font-size: 13px; font-weight: 500; color: #6b7280; border-radius: 9999px; transition: all 0.2s; cursor: pointer; letter-spacing: 0.01em; white-space: nowrap; }
+        .nav-pill-tab:hover { color: #1a365d; }
+        .nav-pill-tab-active { background: #1a365d; color: #ffffff; font-weight: 600; }
+        /* Gradient bars */
+        .bar-alto { background: linear-gradient(90deg, rgba(198,40,40,0.4), #c62828); }
+        .bar-medio { background: linear-gradient(90deg, rgba(198,151,43,0.4), #c6972b); }
+        .bar-bajo { background: linear-gradient(90deg, rgba(46,125,50,0.4), #2e7d32); }
         .estado-hover { transition: all 0.15s; cursor: pointer; }
         .estado-hover:hover { filter: brightness(0.85); }
     </style>
@@ -327,6 +343,9 @@
                             ))}
                         </div>
                     )}
+                    <div className="h-1.5 rounded-full bg-gray-100 overflow-hidden mb-3">
+                        <div className={`h-full rounded-full bar-${data.color === 'verde' ? 'alto' : data.color === 'amarillo' ? 'medio' : 'bajo'} transition-all duration-700`} style={{width: `${data.score_total}%`}}></div>
+                    </div>
                     <div className="grid grid-cols-5 gap-1 text-xs text-gray-500">
                         <div className="text-center"><div className="text-gray-700 font-medium">{data.score_media.toFixed(0)}%</div><div>Media</div></div>
                         <div className="text-center"><div className="text-gray-700 font-medium">{data.score_trends.toFixed(0)}%</div><div>Trends</div></div>
@@ -1832,11 +1851,33 @@
             const fuentes = data.fuentes || {};
 
             return (
-                <div className="max-w-7xl mx-auto px-4 py-6 space-y-4">
-                    {/* Header */}
+                <div className="max-w-7xl mx-auto px-4 pt-20 pb-6 space-y-4">
+                    {/* Floating Nav Pill */}
+                    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+                        <div className="nav-pill rounded-full px-2 py-1.5 flex items-center gap-1">
+                            {[['actividad', 'Actividad'], ['legisladores', 'Legisladores'], ['mapa', 'Mapa'], ['resoluciones', 'Resoluciones'], ['metodologia', 'Metodología']].map(([key, label]) => (
+                                <button key={key} onClick={() => setPagina(key)}
+                                    className={`nav-pill-tab ${pagina === key ? 'nav-pill-tab-active' : ''}`}>{label}</button>
+                            ))}
+                            <div className="w-px h-4 bg-gray-200 mx-1"></div>
+                            <div className="relative flex-shrink-0">
+                                <input type="text" placeholder="Busca en el Fiat..." value={busquedaGlobal} onChange={e => setBusquedaGlobal(e.target.value)}
+                                    data-search-input
+                                    className="w-40 md:w-52 pl-8 pr-3 py-1.5 text-xs border border-gray-200 rounded-full bg-gray-50 text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-acento/20 focus:border-acento focus:bg-white transition-all" />
+                                <svg className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                <BusquedaAvanzada busqueda={busquedaGlobal} onClose={() => setBusquedaGlobal('')} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Header con logo + En Vivo */}
                     <header className="flex flex-row items-center justify-between gap-3">
-                        <div>
-                            <img src="fiat-logo.png" alt="FIAT" style={{height: '64px', maxWidth: '192px', objectFit: 'contain', objectPosition: 'left', display: 'block'}} />
+                        <div className="flex items-center gap-3">
+                            <img src="fiat-logo.png" alt="FIAT" style={{height: '48px', maxWidth: '160px', objectFit: 'contain', objectPosition: 'left', display: 'block'}} />
+                            <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                                <span className="text-[11px] text-emerald-700 font-semibold tracking-wide">EN VIVO</span>
+                            </div>
                         </div>
                         <div className="relative group">
                             <span className="text-xs text-gray-500 cursor-help border-b border-dashed border-gray-400 hover:text-acento hover:border-acento transition-colors font-bold">¿Qué es Fiat?</span>
@@ -1845,20 +1886,6 @@
                             </div>
                         </div>
                     </header>
-
-                    {/* Navigation tabs + search */}
-                    <nav className="flex gap-0 border-b border-gray-200 items-center overflow-x-auto">
-                        {[['actividad', 'Actividad Legislativa'], ['legisladores', 'Legisladores'], ['mapa', 'Mapa de Medios'], ['resoluciones', 'Resoluciones'], ['metodologia', 'Metodologia']].map(([key, label]) => (
-                            <button key={key} onClick={() => setPagina(key)} className={`nav-tab whitespace-nowrap ${pagina === key ? 'nav-tab-active' : ''}`}>{label}</button>
-                        ))}
-                        <div className="ml-auto pl-3 relative flex-shrink-0">
-                            <input type="text" placeholder="Busca en el Fiat..." value={busquedaGlobal} onChange={e => setBusquedaGlobal(e.target.value)}
-                                data-search-input
-                                className="w-44 md:w-56 pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-acento/30 focus:border-acento" />
-                            <svg className="w-4 h-4 text-gray-400 absolute left-5.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                            <BusquedaAvanzada busqueda={busquedaGlobal} onClose={() => setBusquedaGlobal('')} />
-                        </div>
-                    </nav>
 
                     {/* Page content */}
                     {pagina === 'actividad' && <PageActividadLegislativa data={data} setSelected={setSelected} busqueda={busquedaGlobal} />}
