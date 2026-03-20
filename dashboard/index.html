@@ -67,6 +67,8 @@
         .bar-rojo { background: linear-gradient(90deg, rgba(198,40,40,0.4), #c62828); }
         .estado-hover { transition: all 0.15s; cursor: pointer; }
         .estado-hover:hover { filter: brightness(0.85); }
+        /* News ticker animation */
+        .duration-400 { transition-duration: 400ms; }
     </style>
 </head>
 <body class="min-h-screen text-gray-800">
@@ -312,6 +314,49 @@
                     {!loading && resultados && resultados.length === 0 && !error && (
                         <div className="text-center py-8 text-gray-400 text-sm">Sin resultados para "{busqueda}"</div>
                     )}
+                </div>
+            );
+        }
+
+        /* ── News Ticker (auto-scroll de noticias) ── */
+        function NewsTicker({ articulos, max = 5 }) {
+            const [currentIdx, setCurrentIdx] = useState(0);
+            const [isAnimating, setIsAnimating] = useState(false);
+            const items = (articulos || []).slice(0, max);
+
+            useEffect(() => {
+                if (items.length <= 1) return;
+                const interval = setInterval(() => {
+                    setIsAnimating(true);
+                    setTimeout(() => {
+                        setCurrentIdx(prev => (prev + 1) % items.length);
+                        setIsAnimating(false);
+                    }, 400);
+                }, 3500);
+                return () => clearInterval(interval);
+            }, [items.length]);
+
+            if (items.length === 0) return null;
+            const current = items[currentIdx];
+            return (
+                <div className="mt-3 overflow-hidden">
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="text-[10px] font-semibold uppercase tracking-widest text-white/50">Últimas noticias</span>
+                        <div className="flex gap-1 ml-2">
+                            {items.map((_, i) => (
+                                <div key={i} className={`w-1 h-1 rounded-full transition-all duration-300 ${i === currentIdx ? 'bg-white/80 w-3' : 'bg-white/30'}`}></div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className={`transition-all duration-400 ${isAnimating ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}`}>
+                        <div className="flex items-start gap-2">
+                            <span className="text-white/40 text-xs mt-0.5 flex-shrink-0">📰</span>
+                            <div className="min-w-0">
+                                <div className="text-sm text-white/90 leading-snug line-clamp-2">{current.titulo}</div>
+                                <div className="text-[11px] text-white/40 mt-1">{current.fuente?.replace(/_/g, ' ')} · {current.fecha}</div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             );
         }
@@ -976,7 +1021,7 @@
                         const top = [...semaforo].sort((a,b) => b.score_total - a.score_total)[0];
                         if (!top) return null;
                         const topFuentes = fuentes[top.categoria] || {};
-                        const primerArticulo = topFuentes.articulos_medios?.[0];
+                        const topArticulos = topFuentes.articulos_medios || [];
                         const colorBg = { verde: 'from-emerald-600 to-emerald-800', amarillo: 'from-amber-600 to-amber-800', rojo: 'from-red-700 to-red-900' };
                         const colorBadge = { verde: 'bg-emerald-400', amarillo: 'bg-amber-400', rojo: 'bg-red-400' };
                         return (
@@ -985,7 +1030,7 @@
                                     <div className="flex-1 min-w-0">
                                         <div className="text-xs font-semibold uppercase tracking-widest text-white/70 mb-1">Mayor probabilidad de actividad legislativa</div>
                                         <h2 className="text-2xl md:text-3xl font-bold mb-2">{top.nombre}</h2>
-                                        {primerArticulo && <div className="mt-3 text-sm text-white/80"><span className="font-semibold text-white/90">Última noticia: </span>{primerArticulo.titulo.length > 120 ? primerArticulo.titulo.substring(0,120) + '...' : primerArticulo.titulo}<span className="ml-2 text-white/60">— {primerArticulo.fuente}</span></div>}
+                                        <NewsTicker articulos={topArticulos} max={5} />
                                     </div>
                                     <div className="flex flex-col items-center ml-6">
                                         <div className={`${colorBadge[top.color]} text-white text-3xl md:text-4xl font-black rounded-2xl px-5 py-3 shadow-inner`}>{top.score_total.toFixed(0)}%</div>
