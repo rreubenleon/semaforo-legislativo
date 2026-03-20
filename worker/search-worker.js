@@ -6,6 +6,8 @@
  */
 
 const ALLOWED_ORIGINS = [
+  'https://fiatmx.com',
+  'https://www.fiatmx.com',
   'https://rreubenleon.github.io',
   'http://localhost:8000',
   'http://localhost:8080',
