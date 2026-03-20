@@ -26,7 +26,12 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === '/') {
-      return corsResponse({ status: 'ok', endpoint: '/buscar' }, 200, request);
+      return corsResponse({ status: 'ok', endpoints: ['/buscar', '/registro'] }, 200, request);
+    }
+
+    // ── Registro de interesados ──
+    if (url.pathname === '/registro') {
+      return handleRegistro(request, env);
     }
 
     if (url.pathname !== '/buscar') {
@@ -195,6 +200,97 @@ function extraerCategoriaFIAT(categoriaStr, fuenteTipo) {
   return first.trim() || null;
 }
 
+/**
+ * Maneja POST /registro — guarda email en D1 y notifica via Resend
+ */
+async function handleRegistro(request, env) {
+  if (request.method !== 'POST') {
+    return corsResponse({ error: 'Solo POST' }, 405, request);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return corsResponse({ error: 'JSON inválido' }, 400, request);
+  }
+
+  const email = (body.email || '').trim().toLowerCase();
+  if (!email || !email.includes('@') || email.length > 200) {
+    return corsResponse({ error: 'Correo inválido' }, 400, request);
+  }
+
+  const db = env.DB;
+
+  try {
+    // Crear tabla si no existe
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS registros (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT NOT NULL UNIQUE,
+        fecha TEXT NOT NULL DEFAULT (datetime('now')),
+        ip TEXT,
+        user_agent TEXT
+      )
+    `).run();
+
+    // Insertar (ignorar duplicados)
+    const ip = request.headers.get('CF-Connecting-IP') || 'desconocido';
+    const ua = (request.headers.get('User-Agent') || '').slice(0, 300);
+    const result = await db.prepare(
+      'INSERT OR IGNORE INTO registros (email, ip, user_agent) VALUES (?, ?, ?)'
+    ).bind(email, ip, ua).run();
+
+    const nuevo = result.meta?.changes > 0;
+
+    // Enviar notificación por email via Resend (si hay API key)
+    if (nuevo && env.RESEND_API_KEY) {
+      try {
+        const totalResult = await db.prepare('SELECT count(*) as total FROM registros').first();
+        const totalRegistros = totalResult?.total || '?';
+
+        await fetch('https://api.resend.com/emails', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${env.RESEND_API_KEY}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: 'Fiat <notificaciones@fiatmx.com>',
+            to: ['contacto@fiatmx.com'],
+            subject: `Nuevo registro en Fiat: ${email}`,
+            html: `
+              <div style="font-family: Inter, system-ui, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px;">
+                <h2 style="color: #1a1a1a; font-size: 20px; margin-bottom: 8px;">Nuevo interesado en Fiat</h2>
+                <p style="color: #666; font-size: 14px; margin-bottom: 24px;">Alguien dejó su correo para enterarse del lanzamiento.</p>
+                <div style="background: #f8faf8; border: 1px solid #e0e7e0; border-radius: 12px; padding: 20px; margin-bottom: 24px;">
+                  <p style="color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 6px;">Correo registrado</p>
+                  <p style="color: #1a1a1a; font-size: 16px; font-weight: 600; margin: 0;">${email}</p>
+                </div>
+                <p style="color: #999; font-size: 12px;">Total de registros: <strong>${totalRegistros}</strong></p>
+                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                <p style="color: #bbb; font-size: 11px;">Fiat — Sistema Predictivo Legislativo</p>
+              </div>
+            `,
+          }),
+        });
+      } catch (emailErr) {
+        // No bloquear el registro si falla el email
+        console.error('Error enviando notificación:', emailErr.message);
+      }
+    }
+
+    return corsResponse({
+      ok: true,
+      nuevo,
+      mensaje: nuevo ? 'Registro exitoso' : 'Ya estabas registrado',
+    }, 200, request);
+
+  } catch (err) {
+    return corsResponse({ error: 'Error al registrar', detalle: err.message }, 500, request);
+  }
+}
+
 /** Limpia la query para FTS5 (elimina caracteres especiales) */
 function sanitizeFTS(q) {
   return q.replace(/['"()*{}[\]^~<>:]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -232,7 +328,7 @@ function corsResponse(data, status, request) {
   const headers = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': allowedOrigin,
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
   };

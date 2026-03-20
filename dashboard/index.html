@@ -1926,14 +1926,26 @@
             const [enviado, setEnviado] = useState(false);
             const [enviando, setEnviando] = useState(false);
 
-            const handleSubmit = (e) => {
+            const handleSubmit = async (e) => {
                 e.preventDefault();
                 if (!email) return;
                 setEnviando(true);
-                const subject = encodeURIComponent('Quiero registrarme en Fiat');
-                const body = encodeURIComponent(`Hola equipo Fiat,\n\nMe interesa recibir información sobre el lanzamiento.\n\nCorreo: ${email}\n\nSaludos.`);
-                window.open(`mailto:contacto@fiatmx.com?subject=${subject}&body=${body}`, '_blank');
-                setTimeout(() => { setEnviando(false); setEnviado(true); }, 800);
+                try {
+                    const resp = await fetch('https://fiat-busqueda.rreubenleon.workers.dev/registro', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email }),
+                    });
+                    const data = await resp.json();
+                    if (data.ok) {
+                        setEnviado(true);
+                    } else {
+                        alert(data.mensaje || data.error || 'Error al registrar');
+                    }
+                } catch {
+                    alert('No se pudo conectar. Intenta de nuevo.');
+                }
+                setEnviando(false);
             };
 
             return (
