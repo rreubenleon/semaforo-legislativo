@@ -1469,9 +1469,12 @@
                                 </div>
                             </div>
 
+                            {/* Temas más relevantes — debajo del heatgrid, misma columna */}
+                            <TemasSemanales data={data} />
+
                         </div>
 
-                        {/* Right: Detail panel + Hotspots + Temas */}
+                        {/* Right: Detail panel + Hotspots */}
                         <div className="lg:col-span-2 space-y-4">
                             {selectedData ? (
                                 <div className="glass border border-borde rounded-xl p-4 space-y-4">
@@ -1565,9 +1568,6 @@
 
                         </div>
                     </div>
-
-                    {/* Temas más relevantes — full width debajo del grid */}
-                    <TemasSemanales data={data} />
                 </div>
             );
         }
