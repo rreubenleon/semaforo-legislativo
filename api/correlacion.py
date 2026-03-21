@@ -218,21 +218,112 @@ def asignar_color(score):
         return "rojo"
 
 
+def calcular_dominancia_discursiva(categoria_clave, keywords, dias=30):
+    """
+    Mide la relación entre presión mediática y actividad legislativa.
+    Inspirado en Gutiérrez-Meave (2024): la coalición que domina el discurso
+    tiende a determinar el resultado de política pública.
+
+    Señales:
+    - Media alta + Congreso bajo = presión externa, tema calentándose (score alto)
+    - Media alta + Congreso alto = convergencia, punto máximo (score muy alto)
+    - Media baja + Congreso alto = tema cocinándose en silencio (score medio-alto)
+    - Media baja + Congreso bajo = tema inactivo (score bajo)
+
+    Returns: float 0-100
+    """
+    conn = get_connection()
+    cat_pattern = f"%{categoria_clave}%"
+
+    # Contar artículos de medios clasificados en esta categoría (últimos N días)
+    # Usa columna 'categorias' del clasificador NLP (más preciso que keywords en título)
+    try:
+        n_articulos = conn.execute("""
+            SELECT COUNT(*) FROM articulos
+            WHERE fecha >= date('now', ? || ' days')
+              AND LOWER(categorias) LIKE ?
+        """, (f"-{dias}", cat_pattern)).fetchone()[0]
+    except Exception:
+        n_articulos = 0
+
+    # Si no hay resultados por categoría NLP, fallback a keywords en título
+    if n_articulos == 0 and keywords:
+        like_conditions = " OR ".join(["LOWER(titulo) LIKE ?"] * min(len(keywords), 10))
+        params_like = [f"%{kw.lower()}%" for kw in keywords[:10]]
+        try:
+            n_articulos = conn.execute(f"""
+                SELECT COUNT(*) FROM articulos
+                WHERE fecha >= date('now', '-{dias} days')
+                  AND ({like_conditions})
+            """, params_like).fetchone()[0]
+        except Exception:
+            pass
+
+    # Contar documentos legislativos (gaceta + SIL) clasificados en esta categoría
+    try:
+        n_gaceta = conn.execute("""
+            SELECT COUNT(*) FROM gaceta
+            WHERE fecha >= date('now', ? || ' days')
+              AND LOWER(categorias) LIKE ?
+        """, (f"-{dias}", cat_pattern)).fetchone()[0]
+    except Exception:
+        n_gaceta = 0
+
+    try:
+        n_sil = conn.execute("""
+            SELECT COUNT(*) FROM sil_documentos
+            WHERE fecha_presentacion >= date('now', ? || ' days')
+              AND LOWER(categoria) LIKE ?
+        """, (f"-{dias}", cat_pattern)).fetchone()[0]
+    except Exception:
+        n_sil = 0
+
+    n_legislativo = n_gaceta + n_sil
+
+    # Normalizar: escalar a 0-100
+    # Basado en datos reales: mediana ~100 arts/cat/mes, ~30 docs legislativos/mes
+    # Usamos percentil 80 como techo para que no todos saturen
+    media_norm = min(n_articulos / 200.0, 1.0) * 100
+    legis_norm = min(n_legislativo / 60.0, 1.0) * 100
+
+    # Calcular dominancia
+    if media_norm >= 60 and legis_norm >= 60:
+        # Convergencia: ambos activos → máxima señal
+        score = min((media_norm + legis_norm) / 2 * 1.2, 100)
+    elif media_norm >= 40 and legis_norm < 30:
+        # Presión mediática sin respuesta legislativa → tema calentándose
+        score = media_norm * 0.85
+    elif legis_norm >= 40 and media_norm < 30:
+        # Actividad legislativa silenciosa → tema cocinándose
+        score = legis_norm * 0.70
+    else:
+        # Ambos moderados o bajos
+        score = (media_norm * 0.6 + legis_norm * 0.4)
+
+    logger.debug(
+        f"  Dominancia {categoria_clave}: "
+        f"arts={n_articulos} gac={n_gaceta} sil={n_sil} → {score:.1f}"
+    )
+
+    return round(min(score, 100), 2)
+
+
 def calcular_score_categoria(categoria_clave):
     """
     Calcula el score completo para una categoría.
-    SCORE = (0.25×Media) + (0.15×Trends) + (0.30×Congreso) + (0.15×Mañanera) + (0.15×Urgencia)
+    SCORE = (0.20×Media) + (0.15×Trends) + (0.25×Congreso) + (0.10×Mañanera)
+          + (0.15×Urgencia) + (0.15×Dominancia)
     """
     cat_config = CATEGORIAS[categoria_clave]
     keywords = obtener_keywords_categoria(categoria_clave)
     pesos = SCORING["pesos"]
 
-    # Componente 1: Presión mediática (0.30)
+    # Componente 1: Presión mediática (0.20)
     # Base: RSS/HTML + boost de Twitter (periodistas y coordinadores)
     score_media = obtener_score_media(keywords)
     score_media = min(score_media + obtener_boost_twitter(categoria_clave), 100.0)
 
-    # Componente 2: Google Trends (0.20)
+    # Componente 2: Google Trends (0.15)
     score_trends = obtener_score_trends(categoria_clave)
 
     # Componente 3: Actividad en Congreso (0.25)
@@ -240,13 +331,17 @@ def calcular_score_categoria(categoria_clave):
     score_congreso = obtener_score_congreso(keywords)
     score_congreso = min(score_congreso + obtener_boost_sintesis(categoria_clave), 100.0)
 
-    # Componente 4: Mención de la Presidenta CSP (0.15)
+    # Componente 4: Mención de la Presidenta CSP (0.10)
     score_mananera = obtener_score_mananera(categoria_clave)
 
     # Componente 5: Urgencia basada en evidencia histórica (0.15)
     score_urgencia = calcular_score_urgencia_historica(
         categoria_clave, score_media, score_trends, score_congreso
     )
+
+    # Componente 6: Dominancia discursiva (0.15)
+    # Relación entre presión mediática y actividad legislativa
+    score_dominancia = calcular_dominancia_discursiva(categoria_clave, keywords)
 
     # Fórmula principal
     score_total = (
@@ -255,6 +350,7 @@ def calcular_score_categoria(categoria_clave):
         + pesos["congreso"] * score_congreso
         + pesos["mananera"] * score_mananera
         + pesos["urgencia"] * score_urgencia
+        + pesos["dominancia"] * score_dominancia
     )
 
     score_total = min(round(score_total, 2), 100)
@@ -269,6 +365,7 @@ def calcular_score_categoria(categoria_clave):
         "score_congreso": score_congreso,
         "score_mananera": score_mananera,
         "score_urgencia": score_urgencia,
+        "score_dominancia": score_dominancia,
         "color": color,
         "factor_calendario": calcular_factor_urgencia(),
         "fecha": datetime.now().strftime("%Y-%m-%d"),
@@ -278,7 +375,7 @@ def calcular_score_categoria(categoria_clave):
         f"[{color.upper():8s}] {cat_config['nombre']:30s} "
         f"Score: {score_total:6.2f} "
         f"(M:{score_media:.1f} T:{score_trends:.1f} C:{score_congreso:.1f} "
-        f"CSP:{score_mananera:.1f} U:{score_urgencia:.1f})"
+        f"CSP:{score_mananera:.1f} U:{score_urgencia:.1f} D:{score_dominancia:.1f})"
     )
 
     return resultado

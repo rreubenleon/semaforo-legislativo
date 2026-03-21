@@ -990,11 +990,12 @@ def obtener_keywords_categoria(cat_clave):
 # ─────────────────────────────────────────────
 SCORING = {
     "pesos": {
-        "media": 0.25,       # Cobertura mediática (volumen + concentración + diversidad)
+        "media": 0.20,       # Cobertura mediática (volumen + concentración + diversidad)
         "trends": 0.15,      # Google Trends (atención pública, no intención política)
-        "congreso": 0.30,    # Actividad en Gaceta Parlamentaria (señal institucional)
-        "mananera": 0.15,    # Mención de la Presidenta en conferencia matutina
+        "congreso": 0.25,    # Actividad en Gaceta Parlamentaria (señal institucional)
+        "mananera": 0.10,    # Mención de la Presidenta en conferencia matutina
         "urgencia": 0.15,    # Factor de urgencia condicional (amplifica si convergen señales)
+        "dominancia": 0.15,  # Dominancia discursiva: relación media vs congreso
     },
     "umbrales": {
         "verde": 70,         # ≥70: alta probabilidad de actividad legislativa
