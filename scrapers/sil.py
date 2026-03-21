@@ -408,10 +408,36 @@ def scrape_sil_completo(fecha_desde="2025-09-01", detalle_max=200):
         ids_existentes.add((str(r[0]), str(r[1])))
     logger.info(f"SIL: {len(ids_existentes)} documentos ya en BD")
 
-    # Fase 1: recolectar IDs NUEVOS de todas las categorías
+    # Fase 1: recolectar IDs NUEVOS — primero queries genéricas (catch-all),
+    # luego queries temáticas por categoría
     todos_ids = {}  # key: (seg_id, asu_id) -> {titulo, sinopsis, tipo_badge}
     queries_hechas = 0
 
+    # Queries genéricas para capturar todo el flujo legislativo reciente
+    QUERIES_GENERICAS = [
+        "ley", "decreto", "iniciativa", "punto de acuerdo",
+        "dictamen", "proposición", "reforma", "exhorto",
+    ]
+
+    for query in QUERIES_GENERICAS:
+        resultados = _buscar_ids(query, max_resultados=500)
+        queries_hechas += 1
+
+        nuevos_en_query = 0
+        for r in resultados:
+            key = (r["seguimiento_id"], r["asunto_id"])
+            if key not in ids_existentes and key not in todos_ids:
+                todos_ids[key] = r
+                nuevos_en_query += 1
+
+        if nuevos_en_query > 0:
+            logger.info(f"SIL genérica '{query}': {len(resultados)} IDs, {nuevos_en_query} nuevos")
+
+        time.sleep(1.5)
+
+    logger.info(f"SIL Fase 1a (genéricas): {len(todos_ids)} docs nuevos de {queries_hechas} queries")
+
+    # Queries temáticas por categoría (capturan docs nicho)
     for cat_clave, cat_config in CATEGORIAS.items():
         queries = [kw for kw in obtener_keywords_categoria(cat_clave) if len(kw) >= 5][:4]
 
@@ -428,8 +454,6 @@ def scrape_sil_completo(fecha_desde="2025-09-01", detalle_max=200):
 
             if nuevos_en_query > 0:
                 logger.info(f"SIL query '{query}': {len(resultados)} IDs encontrados, {nuevos_en_query} nuevos")
-            else:
-                logger.info(f"SIL query '{query}': {len(resultados)} IDs encontrados")
 
             time.sleep(1.5)  # respetar servidor
 

@@ -759,7 +759,7 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     logger.info("=" * 60)
     try:
         inicio_sil = time.time()
-        sil_result = scrape_sil_completo(fecha_desde="2024-09-01", detalle_max=30)
+        sil_result = scrape_sil_completo(fecha_desde="2024-09-01", detalle_max=100)
         dur_sil = time.time() - inicio_sil
         logger.info(f"SIL: {sil_result['nuevos']} nuevos ({dur_sil:.1f}s)")
     except Exception as e:
