@@ -10,6 +10,8 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
@@ -55,6 +57,9 @@
         .nav-pill-tab { padding: 6px 14px; font-size: 13px; font-weight: 500; color: #6b7280; border-radius: 9999px; transition: all 0.2s; cursor: pointer; letter-spacing: 0.01em; white-space: nowrap; }
         .nav-pill-tab:hover { color: #1a365d; }
         .nav-pill-tab-active { background: #1a365d; color: #ffffff; font-weight: 600; }
+        .leaflet-tooltip-fiat { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .leaflet-tooltip-fiat::before { border-top-color: #e5e7eb; }
+        .leaflet-container { font-family: 'Inter', sans-serif; }
         /* Mobile responsive */
         @media (max-width: 768px) {
             .nav-pill-tab { padding: 5px 8px; font-size: 11px; }
@@ -1273,6 +1278,102 @@
            PAGE: MAPA
            ================================================================ */
 
+        /* ── Coordenadas centro de cada estado de México ── */
+        const ESTADO_COORDS = {
+            aguascalientes: [21.88, -102.29], baja_california: [32.62, -115.45],
+            baja_california_sur: [24.14, -110.31], campeche: [19.83, -90.53],
+            chiapas: [16.75, -93.12], chihuahua: [28.63, -106.09],
+            ciudad_de_mexico: [19.43, -99.13], coahuila: [25.42, -100.99],
+            colima: [19.24, -103.73], durango: [24.02, -104.66],
+            estado_de_mexico: [19.29, -99.66], guanajuato: [21.02, -101.26],
+            guerrero: [17.55, -99.51], hidalgo: [20.12, -98.73],
+            jalisco: [20.66, -103.35], michoacan: [19.70, -101.18],
+            morelos: [18.68, -99.10], nayarit: [21.75, -104.85],
+            nuevo_leon: [25.67, -100.32], oaxaca: [17.07, -96.73],
+            puebla: [19.04, -98.20], queretaro: [20.59, -100.39],
+            quintana_roo: [20.51, -87.38], san_luis_potosi: [22.15, -100.98],
+            sinaloa: [24.81, -107.39], sonora: [29.07, -110.96],
+            tabasco: [17.99, -92.93], tamaulipas: [24.27, -98.84],
+            tlaxcala: [19.32, -98.24], veracruz: [19.53, -96.92],
+            yucatan: [20.97, -89.62], zacatecas: [22.77, -102.58]
+        };
+
+        /* ── Componente MapaMexico con Leaflet ── */
+        function MapaMexico({ estados, maxArts, onSelectEstado, estadoSeleccionado }) {
+            const mapRef = React.useRef(null);
+            const mapInstanceRef = React.useRef(null);
+            const markersRef = React.useRef([]);
+
+            const getMarkerColor = (count) => {
+                const intensity = count / Math.max(maxArts, 1);
+                if (intensity > 0.5) return { fill: '#ef4444', border: '#dc2626', label: 'High' };
+                if (intensity > 0.2) return { fill: '#f59e0b', border: '#d97706', label: 'Elevated' };
+                return { fill: '#22c55e', border: '#16a34a', label: 'Low' };
+            };
+
+            React.useEffect(() => {
+                if (!mapRef.current || mapInstanceRef.current) return;
+                const map = L.map(mapRef.current, {
+                    center: [23.6, -102.5],
+                    zoom: 5,
+                    scrollWheelZoom: true,
+                    zoomControl: true,
+                    attributionControl: false
+                });
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 8, minZoom: 4
+                }).addTo(map);
+                L.control.attribution({position: 'bottomright', prefix: false}).addTo(map);
+                mapInstanceRef.current = map;
+                return () => { map.remove(); mapInstanceRef.current = null; };
+            }, []);
+
+            React.useEffect(() => {
+                const map = mapInstanceRef.current;
+                if (!map) return;
+                /* Clear old markers */
+                markersRef.current.forEach(m => map.removeLayer(m));
+                markersRef.current = [];
+
+                estados.forEach(([key, info]) => {
+                    const coords = ESTADO_COORDS[key];
+                    if (!coords) return;
+                    const { fill, border } = getMarkerColor(info.total_articulos);
+                    const isSelected = estadoSeleccionado === key;
+                    const radius = Math.max(8, Math.min(20, 8 + (info.total_articulos / Math.max(maxArts, 1)) * 14));
+                    const marker = L.circleMarker(coords, {
+                        radius: radius,
+                        fillColor: fill,
+                        color: isSelected ? '#1a365d' : border,
+                        weight: isSelected ? 3 : 1.5,
+                        opacity: 1,
+                        fillOpacity: isSelected ? 0.9 : 0.7
+                    });
+                    marker.bindTooltip(
+                        `<div style="font-family:Inter,sans-serif;font-size:12px;font-weight:600">${info.abreviatura}</div><div style="font-family:Inter,sans-serif;font-size:11px;color:#666">${info.total_articulos} noticias</div>`,
+                        { direction: 'top', offset: [0, -radius], className: 'leaflet-tooltip-fiat' }
+                    );
+                    marker.on('click', () => onSelectEstado(key));
+                    marker.addTo(map);
+                    markersRef.current.push(marker);
+                });
+            }, [estados, estadoSeleccionado, maxArts]);
+
+            return (
+                <div className="glass border border-borde rounded-xl overflow-hidden">
+                    <div className="flex items-center justify-between px-4 pt-3 pb-1">
+                        <h3 className="font-semibold text-gray-700 text-sm">Cobertura por estado</h3>
+                        <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> High</span>
+                            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Elevated</span>
+                            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block"></span> Low</span>
+                        </div>
+                    </div>
+                    <div ref={mapRef} style={{height: '420px', width: '100%'}}></div>
+                </div>
+            );
+        }
+
         function PageMapa({ data }) {
             const [estadoSeleccionado, setEstadoSeleccionado] = useState(null);
             const [filtroCategoria, setFiltroCategoria] = useState(null);
@@ -1336,9 +1437,12 @@
                         ))}
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Left: State ranking table */}
-                        <div className="lg:col-span-2 space-y-4">
+                    {/* Mapa interactivo de México */}
+                    <MapaMexico estados={estadosFiltrados} maxArts={maxArts} onSelectEstado={(key) => setEstadoSeleccionado(estadoSeleccionado === key ? null : key)} estadoSeleccionado={estadoSeleccionado} />
+
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                        {/* Left: Heat grid */}
+                        <div className="lg:col-span-3 space-y-4">
                             {/* Heat grid */}
                             <div className="glass border border-borde rounded-xl p-4">
                                 <div className="flex items-center justify-between mb-3">
@@ -1365,45 +1469,10 @@
                                 </div>
                             </div>
 
-                            {/* Ranking table */}
-                            <div className="glass border border-borde rounded-xl p-4">
-                                <h3 className="font-semibold text-gray-700 text-sm mb-3">Ranking por cobertura mediatica</h3>
-                                <div className="space-y-1 max-h-96 overflow-y-auto fuentes-panel">
-                                    {estadosFiltrados.map(([key, info], idx) => {
-                                        const isSelected = estadoSeleccionado === key;
-                                        const pct = totalArticulos > 0 ? ((info.total_articulos / totalArticulos) * 100) : 0;
-                                        const cleanCats = (info.categorias || []).filter(c => !c.includes(':'));
-                                        return (
-                                            <button key={key} onClick={() => setEstadoSeleccionado(isSelected ? null : key)}
-                                                className={`w-full flex items-center gap-3 p-2 rounded-lg text-left transition-all ${isSelected ? 'bg-acento/5 border border-acento/20' : 'hover:bg-gray-50 border border-transparent'}`}>
-                                                <div className="w-6 text-center text-[10px] font-bold text-gray-400">{idx + 1}</div>
-                                                <div className="w-10 text-center">
-                                                    <div className="text-[10px] font-bold text-acento bg-acento/10 rounded px-1 py-0.5">{info.abreviatura}</div>
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="text-xs font-semibold text-gray-800">{info.nombre}</div>
-                                                    <div className="flex flex-wrap gap-0.5 mt-0.5">
-                                                        {cleanCats.slice(0, 3).map((cat, ci) => (
-                                                            <span key={ci} className="text-[8px] bg-gray-100 text-gray-500 px-1 py-px rounded">{catNombres[cat] || cat}</span>
-                                                        ))}
-                                                        {cleanCats.length > 3 && <span className="text-[8px] text-gray-400">+{cleanCats.length - 3}</span>}
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-2 flex-shrink-0">
-                                                    <div className="w-20 bg-gray-200 rounded-full h-1.5 overflow-hidden hidden sm:block">
-                                                        <div className="h-full rounded-full bg-acento/60 transition-all" style={{width: `${Math.max(pct, 2)}%`}} />
-                                                    </div>
-                                                    <div className="text-xs font-bold text-gray-700 w-8 text-right">{info.total_articulos}</div>
-                                                </div>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
                         </div>
 
-                        {/* Right: Detail panel */}
-                        <div className="space-y-4">
+                        {/* Right: Detail panel + Hotspots + Temas */}
+                        <div className="lg:col-span-2 space-y-4">
                             {selectedData ? (
                                 <div className="glass border border-borde rounded-xl p-4 space-y-4">
                                     <div>
@@ -1421,7 +1490,6 @@
                                     {(() => {
                                         const cleanCats = (selectedData.categorias || []).filter(c => !c.includes(':'));
                                         if (cleanCats.length === 0) return null;
-                                        /* Count articles per category */
                                         const catCounts = {};
                                         (selectedData.articulos || []).forEach(art => {
                                             const artCats = (art.categorias || '').split(',').map(c => c.trim()).filter(Boolean);
@@ -1470,36 +1538,35 @@
                                     </div>
                                 </div>
                             ) : (
-                                <div className="space-y-4">
-                                    <div className="glass border border-borde rounded-xl p-5 text-center text-gray-400">
-                                        <svg className="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
-                                        <div className="text-sm font-medium text-gray-500">Selecciona un estado</div>
-                                        <div className="text-xs text-gray-400 mt-1">Haz click en cualquier estado del grid o la tabla para ver las noticias rastreadas en esa zona</div>
-                                    </div>
-
-                                    {/* Top 5 estados summary */}
-                                    <div className="glass border border-borde rounded-xl p-4">
-                                        <h3 className="font-semibold text-gray-700 text-sm mb-3">Hotspots mediaticos</h3>
-                                        <div className="space-y-2">
-                                            {top5.map(([key, info], i) => (
-                                                <button key={key} onClick={() => setEstadoSeleccionado(key)}
-                                                    className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors text-left">
-                                                    <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{backgroundColor: getHeatColor(info.total_articulos)}}>{i + 1}</div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="text-xs font-semibold text-gray-800">{info.nombre}</div>
-                                                        <div className="text-[10px] text-gray-400">{(info.categorias || []).filter(c => !c.includes(':')).slice(0, 2).map(c => catNombres[c] || c).join(', ')}</div>
-                                                    </div>
-                                                    <div className="text-sm font-bold text-acento">{info.total_articulos}</div>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
+                                <div className="glass border border-borde rounded-xl p-5 text-center text-gray-400">
+                                    <svg className="w-10 h-10 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>
+                                    <div className="text-sm font-medium text-gray-500">Selecciona un estado</div>
+                                    <div className="text-xs text-gray-400 mt-1">Haz click en un punto del mapa, del grid o la tabla</div>
                                 </div>
                             )}
+
+                            {/* Hotspots mediaticos */}
+                            <div className="glass border border-borde rounded-xl p-4">
+                                <h3 className="font-semibold text-gray-700 text-sm mb-3">Hotspots mediaticos</h3>
+                                <div className="space-y-2">
+                                    {top5.map(([key, info], i) => (
+                                        <button key={key} onClick={() => setEstadoSeleccionado(key)}
+                                            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors text-left">
+                                            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0" style={{backgroundColor: getHeatColor(info.total_articulos)}}>{i + 1}</div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="text-xs font-semibold text-gray-800">{info.nombre}</div>
+                                                <div className="text-[10px] text-gray-400">{(info.categorias || []).filter(c => !c.includes(':')).slice(0, 2).map(c => catNombres[c] || c).join(', ')}</div>
+                                            </div>
+                                            <div className="text-sm font-bold text-acento">{info.total_articulos}</div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Temas más relevantes (moved to sidebar) */}
+                            <TemasSemanales data={data} />
                         </div>
                     </div>
-                    {/* Widget: Temas más relevantes de la semana */}
-                    <TemasSemanales data={data} />
                 </div>
             );
         }
@@ -1517,7 +1584,7 @@
             return (
                 <div className="glass border border-borde rounded-xl p-4">
                     <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-semibold text-gray-700 text-sm">🔥 Temas más relevantes de la semana</h3>
+                        <h3 className="font-semibold text-gray-700 text-sm">Temas más relevantes de la semana</h3>
                         <span className="text-[10px] text-gray-400">Top 5 por score FIAT</span>
                     </div>
                     <div className="space-y-2">
