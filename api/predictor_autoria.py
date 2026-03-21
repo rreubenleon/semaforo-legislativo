@@ -4,11 +4,12 @@ Modelo: dado un evento mediático en categoría X, ¿qué legisladores son más
 probables de presentar una iniciativa o punto de acuerdo?
 
 Señales usadas (pesos):
-  1. Historial temático (35%)     — ¿cuánto ha legislado sobre este tema?
-  2. Comisión relevante (25%)     — ¿está en la comisión del tema?
-  3. Contexto geográfico (10%)    — ¿el evento es de su estado?
+  1. Historial temático (30%)     — ¿cuánto ha legislado sobre este tema?
+  2. Comisión relevante (20%)     — ¿está en la comisión del tema?
+  3. Agenda Setting (15%)         — ¿su comisión convocó foros/reuniones recientes?
   4. Velocidad de reacción (15%)  — ¿qué tan rápido reacciona a eventos?
-  5. Actividad reciente (15%)     — ¿está activo en esta legislatura?
+  5. Actividad reciente (10%)     — ¿está activo en esta legislatura?
+  6. Contexto geográfico (10%)    — ¿el evento es de su estado?
 """
 
 import logging
@@ -27,12 +28,13 @@ logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).resolve().parent.parent
 
-# Pesos del modelo
+# Pesos del modelo (6 factores)
 PESOS = {
-    "historial_tematico": 0.35,
-    "comision_relevante": 0.25,
+    "historial_tematico": 0.30,
+    "comision_relevante": 0.20,
+    "agenda_setting": 0.15,
     "velocidad_reaccion": 0.15,
-    "actividad_reciente": 0.15,
+    "actividad_reciente": 0.10,
     "contexto_geografico": 0.10,
 }
 
@@ -140,8 +142,62 @@ def predecir_autores(categoria, estado_evento=None, top_n=10):
     """).fetchall():
         recientes_por_leg[row["legislador_id"]] = row["cnt"]
 
-    predicciones = []
+    # 4. Agenda Setting: eventos/foros/reuniones recientes de comisiones afines
+    #    Señal: si una comisión convocó un foro o reunión, sus miembros
+    #    tienen mayor probabilidad de presentar instrumentos en esa categoría
     comisiones_afines = COMISIONES_POR_CATEGORIA.get(categoria, [])
+    comisiones_activas = {}  # comision_substring -> count de eventos recientes
+
+    if comisiones_afines:
+        # Buscar comunicaciones de Gaceta tipo convocatoria/foro en últimos 30 días
+        try:
+            eventos_gaceta = conn.execute("""
+                SELECT comision, titulo, fecha FROM gaceta
+                WHERE tipo = 'comunicacion'
+                  AND fecha >= date('now', '-30 days')
+                  AND comision != 'No especificada'
+                  AND (LOWER(titulo) LIKE '%convocatoria%'
+                    OR LOWER(titulo) LIKE '%foro%'
+                    OR LOWER(titulo) LIKE '%invitación%'
+                    OR LOWER(titulo) LIKE '%reunión%'
+                    OR LOWER(titulo) LIKE '%audiencia%'
+                    OR LOWER(titulo) LIKE '%parlamento abierto%'
+                    OR LOWER(titulo) LIKE '%conferencia de prensa%')
+            """).fetchall()
+
+            for ev in eventos_gaceta:
+                com_gaceta = (ev["comision"] or "").upper()
+                for com_afin in comisiones_afines:
+                    if com_afin.upper() in com_gaceta:
+                        comisiones_activas[com_afin] = comisiones_activas.get(com_afin, 0) + 1
+        except Exception:
+            pass  # Si gaceta no tiene la estructura esperada
+
+    # Calcular si hay señal de agenda setting para esta categoría
+    agenda_total_eventos = sum(comisiones_activas.values())
+    # Bonus especial si hay foros temáticos (no solo reuniones ordinarias)
+    tiene_foro = False
+    if comisiones_afines:
+        try:
+            foros = conn.execute("""
+                SELECT COUNT(*) FROM gaceta
+                WHERE tipo = 'comunicacion'
+                  AND fecha >= date('now', '-30 days')
+                  AND comision != 'No especificada'
+                  AND (LOWER(titulo) LIKE '%foro%'
+                    OR LOWER(titulo) LIKE '%parlamento abierto%'
+                    OR LOWER(titulo) LIKE '%audiencia pública%'
+                    OR LOWER(titulo) LIKE '%conferencia de prensa%')
+                  AND (""" + " OR ".join(
+                    ["UPPER(comision) LIKE ?"] * len(comisiones_afines)
+                ) + ")",
+                tuple(f"%{c.upper()}%" for c in comisiones_afines)
+            ).fetchone()[0]
+            tiene_foro = foros > 0
+        except Exception:
+            pass
+
+    predicciones = []
 
     for leg in legisladores:
         leg_id = leg["id"]
@@ -168,7 +224,26 @@ def predecir_autores(categoria, estado_evento=None, top_n=10):
 
         scores["comision_relevante"] = comision_score
 
-        # ── 3. Velocidad de reacción (15%) ──
+        # ── 3. Agenda Setting (15%) ──
+        # Si la comisión del legislador convocó foros/reuniones recientes
+        # en la categoría, es una señal fuerte de que el tema está en la agenda
+        agenda_score = 0
+        if agenda_total_eventos > 0 and comision_score > 0:
+            # El legislador pertenece a una comisión afín que tiene eventos recientes
+            base = min(agenda_total_eventos * 15, 80)  # Más eventos → más señal
+            if tiene_foro:
+                base = min(base + 20, 100)  # Foros temáticos dan bonus extra
+            # Presidente/secretario de comisión activa → máxima señal
+            if comision_score == 100:  # presidente
+                agenda_score = min(base * 1.3, 100)
+            elif comision_score == 80:  # secretario
+                agenda_score = min(base * 1.1, 100)
+            else:  # integrante
+                agenda_score = base
+        scores["agenda_setting"] = round(agenda_score, 1)
+
+        # ── 4. Velocidad de reacción (15%) ──
+        # (renumerado de 3 → 4)
         promedio_dias = reacciones_por_leg.get(leg_id)
         if promedio_dias is not None:
             scores["velocidad_reaccion"] = max(0, 100 - (promedio_dias * 100 / 90))
