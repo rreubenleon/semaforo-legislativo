@@ -2162,7 +2162,7 @@
                                 <div className="bg-white border border-gray-200 rounded-2xl shadow-2xl p-5 max-w-xs animate-fade-in" style={{animation: 'fadeIn 0.2s ease-out'}}>
                                     <div className="flex items-start justify-between mb-3">
                                         <div className="flex items-center gap-2">
-                                            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center">
+                                            <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{background: '#307f34'}}>
                                                 <span className="text-white text-xs font-bold">i</span>
                                             </div>
                                             <span className="text-sm font-bold text-gray-800">Acerca de Fiat</span>
@@ -2171,12 +2171,12 @@
                                             className="text-gray-400 hover:text-gray-600 transition-colors text-lg leading-none ml-2">&times;</button>
                                     </div>
                                     <p className="text-[13px] text-gray-600 leading-relaxed">
-                                        Fiat es un sistema de predictibilidad legislativa en México. Estima la actividad en la Cámara de Diputados y en el Senado de la República con base en la trayectoria parlamentaria y el comportamiento de los medios de comunicación. Es una plataforma de inteligencia política y una herramienta social.
+                                        <strong className="text-gray-800">Fiat es un sistema de inteligencia política</strong> que anticipa la actividad legislativa en México a partir de señales del Congreso, los medios y el Ejecutivo. Detecta presión política en tiempo real y la convierte en alertas y probabilidad de acción institucional.
                                     </p>
                                 </div>
                             ) : (
                                 <button onClick={() => setShowInfoBubble(true)}
-                                    className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center group">
+                                    className="w-12 h-12 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center group" style={{background: '#307f34'}}>
                                     <span className="text-white text-xl font-serif italic group-hover:scale-110 transition-transform">i</span>
                                 </button>
                             )}
