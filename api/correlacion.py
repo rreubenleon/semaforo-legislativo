@@ -1,6 +1,6 @@
 """
 Motor de Scoring - Semáforo Legislativo
-Calcula: SCORE = (0.25×Media) + (0.15×Trends) + (0.30×Congreso) + (0.15×Mañanera) + (0.15×Urgencia)
+Calcula: SCORE = (0.20×Media) + (0.15×Trends) + (0.25×Congreso) + (0.10×Mañanera) + (0.15×Urgencia) + (0.15×Dominancia)
 Asigna color: Verde ≥70 | Amarillo 40-69 | Rojo <40
 """
 
@@ -42,12 +42,13 @@ def init_db():
             UNIQUE(categoria, fecha)
         )
     """)
-    # Migración: agregar columna score_mananera si no existe
-    try:
-        conn.execute("ALTER TABLE scores ADD COLUMN score_mananera REAL DEFAULT 0")
-        conn.commit()
-    except (sqlite3.OperationalError, ValueError):
-        pass  # Columna ya existe
+    # Migración: agregar columnas si no existen
+    for col in ["score_mananera", "score_dominancia"]:
+        try:
+            conn.execute(f"ALTER TABLE scores ADD COLUMN {col} REAL DEFAULT 0")
+            conn.commit()
+        except (sqlite3.OperationalError, ValueError):
+            pass  # Columna ya existe
     conn.execute("""
         CREATE TABLE IF NOT EXISTS alertas (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -471,8 +472,8 @@ def calcular_todos_los_scores():
                 INSERT INTO scores
                     (categoria, score_total, score_media, score_trends,
                      score_congreso, score_mananera, score_urgencia,
-                     color, fecha, detalle)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     score_dominancia, color, fecha, detalle)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 resultado["categoria"],
                 resultado["score_total"],
@@ -481,6 +482,7 @@ def calcular_todos_los_scores():
                 resultado["score_congreso"],
                 resultado["score_mananera"],
                 resultado["score_urgencia"],
+                resultado["score_dominancia"],
                 resultado["color"],
                 resultado["fecha"],
                 f"cal:{resultado['factor_calendario']}",
@@ -491,7 +493,7 @@ def calcular_todos_los_scores():
                 UPDATE scores
                 SET score_total=?, score_media=?, score_trends=?,
                     score_congreso=?, score_mananera=?, score_urgencia=?,
-                    color=?, detalle=?
+                    score_dominancia=?, color=?, detalle=?
                 WHERE categoria=? AND fecha=?
             """, (
                 resultado["score_total"],
@@ -500,6 +502,7 @@ def calcular_todos_los_scores():
                 resultado["score_congreso"],
                 resultado["score_mananera"],
                 resultado["score_urgencia"],
+                resultado["score_dominancia"],
                 resultado["color"],
                 f"cal:{resultado['factor_calendario']}",
                 resultado["categoria"],
@@ -680,13 +683,13 @@ def generar_reporte():
             f"  {icono} {nombre:30s}  {r['score_total']:6.2f}  "
             f"[M:{r['score_media']:5.1f} T:{r['score_trends']:5.1f} "
             f"C:{r['score_congreso']:5.1f} CSP:{r.get('score_mananera',0):5.1f} "
-            f"U:{r['score_urgencia']:5.1f}]"
+            f"U:{r['score_urgencia']:5.1f} D:{r.get('score_dominancia',0):5.1f}]"
         )
 
     lineas.extend([
         "",
         "-" * 70,
-        f"  Fórmula: SCORE = (0.25×Media) + (0.15×Trends) + (0.30×Congreso) + (0.15×Mañanera) + (0.15×Urgencia)",
+        f"  Fórmula: SCORE = (0.20×Media) + (0.15×Trends) + (0.25×Congreso) + (0.10×Mañanera) + (0.15×Urgencia) + (0.15×Dominancia)",
         f"  Verde ≥70 | Amarillo 40-69 | Rojo <40",
         "=" * 70,
     ])

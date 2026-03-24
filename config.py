@@ -1263,7 +1263,7 @@ SCORING = {
     },
 }
 
-# SCORE = (0.25×Media) + (0.15×Trends) + (0.30×Congreso) + (0.15×Mañanera) + (0.15×Urgencia)
+# SCORE = (0.20×Media) + (0.15×Trends) + (0.25×Congreso) + (0.10×Mañanera) + (0.15×Urgencia) + (0.15×Dominancia)
 
 # ─────────────────────────────────────────────
 # CONGRESO - Gaceta Parlamentaria

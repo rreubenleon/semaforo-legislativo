@@ -563,7 +563,7 @@ def paso_7_exportar_dashboard():
         "metadata": {
             "generado": datetime.now(timezone.utc).isoformat(),
             "version": "3.2",
-            "formula": "SCORE = (0.25*Media) + (0.15*Trends) + (0.30*Congreso) + (0.15*Mañanera) + (0.15*Urgencia)",
+            "formula": "SCORE = (0.20*Media) + (0.15*Trends) + (0.25*Congreso) + (0.10*Mañanera) + (0.15*Urgencia) + (0.15*Dominancia)",
             "umbrales": SCORING["umbrales"],
             "sil_docs": sil_stats.get("total", 0),
         },

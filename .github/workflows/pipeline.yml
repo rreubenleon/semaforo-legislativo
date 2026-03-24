@@ -58,10 +58,10 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements.txt
 
-      # 5. Ejecutar el pipeline completo (sin Trends para evitar rate limits)
+      # 5. Ejecutar el pipeline completo
       #    Modo local: SQLite puro, sin dependencia de Turso
       - name: Ejecutar pipeline
-        run: python main.py --skip-trends
+        run: python main.py
         env:
           TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
           TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
