@@ -256,7 +256,7 @@ async function handleRegistro(request, env) {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'Fiat <notificaciones@fiatmx.com>',
+            from: 'Fiat <registros@fiatmx.com>',
             to: ['contacto@fiatmx.com'],
             subject: `Nuevo registro en Fiat: ${email}`,
             html: `

@@ -1082,20 +1082,35 @@
                             </div>
                         );
                     })()}
-                    {/* Twitter Feed Widget */}
-                    <div className="lg:col-span-2 glass border border-borde rounded-2xl p-4 flex flex-col">
+                    {/* Twitter Feed Widget - Embed real */}
+                    <div className="lg:col-span-2 glass border border-borde rounded-2xl p-4 flex flex-col overflow-hidden">
                         <div className="flex items-center gap-2 mb-3">
                             <svg className="w-5 h-5 text-gray-800" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                            <span className="text-sm font-semibold text-gray-800">@FiatMX</span>
+                            <a href="https://x.com/Fiat_MX" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-gray-800 hover:text-acento transition-colors">@Fiat_MX</a>
                             <span className="text-[10px] text-gray-400 ml-auto">Alertas automáticas</span>
                         </div>
-                        <div className="flex-1 flex flex-col items-center justify-center text-center py-4">
-                            <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-3">
-                                <svg className="w-6 h-6 text-gray-400" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                            </div>
-                            <div className="text-sm font-medium text-gray-600 mb-1">Próximamente</div>
-                            <div className="text-xs text-gray-400 leading-relaxed max-w-[200px]">Feed en tiempo real con alertas automáticas del semáforo legislativo.</div>
-                            <a href="https://x.com" target="_blank" rel="noopener noreferrer" className="mt-3 text-xs text-acento hover:text-acento/80 font-medium border border-acento/20 px-3 py-1.5 rounded-full hover:bg-acento/5 transition-colors">Seguir @FiatMX</a>
+                        <div className="flex-1 overflow-y-auto" style={{maxHeight: '400px'}} ref={(() => {
+                            const refCallback = (el) => {
+                                if (!el || el.dataset.loaded) return;
+                                el.dataset.loaded = 'true';
+                                const a = document.createElement('a');
+                                a.className = 'twitter-timeline';
+                                a.setAttribute('data-height', '380');
+                                a.setAttribute('data-theme', 'light');
+                                a.setAttribute('data-chrome', 'noheader nofooter noborders transparent');
+                                a.setAttribute('data-dnt', 'true');
+                                a.setAttribute('data-tweet-limit', '5');
+                                a.href = 'https://x.com/Fiat_MX?ref_src=twsrc%5Etfw';
+                                a.textContent = 'Tweets by @Fiat_MX';
+                                el.appendChild(a);
+                                const s = document.createElement('script');
+                                s.src = 'https://platform.twitter.com/widgets.js';
+                                s.async = true;
+                                s.charset = 'utf-8';
+                                el.appendChild(s);
+                            };
+                            return refCallback;
+                        })()}>
                         </div>
                     </div>
                     </div>

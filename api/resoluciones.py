@@ -86,7 +86,7 @@ def _calcular_promedios_historicos(conn):
         rows = conn.execute("""
             SELECT strftime('%Y-%W', fecha_presentacion) as semana, COUNT(*) as n
             FROM sil_documentos
-            WHERE categoria = ?
+            WHERE categoria LIKE ? || ':%'
               AND fecha_presentacion IS NOT NULL
               AND fecha_presentacion != ''
             GROUP BY semana
@@ -165,7 +165,7 @@ def calcular_resoluciones_semanales():
             row_docs = conn.execute("""
                 SELECT COUNT(*) as n
                 FROM sil_documentos
-                WHERE categoria = ?
+                WHERE categoria LIKE ? || ':%'
                   AND fecha_presentacion BETWEEN ? AND ?
                   AND fecha_presentacion IS NOT NULL
                   AND fecha_presentacion != ''

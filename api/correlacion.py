@@ -142,13 +142,13 @@ def calcular_score_urgencia_historica(categoria_clave, score_media, score_trends
     # ¿Se están presentando instrumentos legislativos ahora?
     sil_row = conn.execute("""
         SELECT COUNT(*) as total FROM sil_documentos
-        WHERE categoria = ?
+        WHERE categoria LIKE ? || ':%'
         AND fecha_presentacion >= date('now', '-14 days')
     """, (categoria_clave,)).fetchone()
 
     sil_row_mes = conn.execute("""
         SELECT COUNT(*) as total FROM sil_documentos
-        WHERE categoria = ?
+        WHERE categoria LIKE ? || ':%'
         AND fecha_presentacion >= date('now', '-60 days')
     """, (categoria_clave,)).fetchone()
 

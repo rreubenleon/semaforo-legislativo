@@ -624,8 +624,10 @@ CATEGORIAS = {
             },
             "vivienda_urbano": {
                 "nombre": "Vivienda y desarrollo urbano",
-                "keywords": ["vivienda social", "Infonavit", "desarrollo urbano", "ordenamiento territorial",
-                             "Conavi", "crédito de vivienda", "hipoteca"],
+                "keywords": ["vivienda", "vivienda social", "Infonavit", "desarrollo urbano", "ordenamiento territorial",
+                             "Conavi", "crédito de vivienda", "hipoteca", "Ley de Vivienda",
+                             "vivienda digna", "vivienda adecuada", "vivienda popular",
+                             "Fovissste", "subsidio de vivienda", "rezago habitacional"],
             },
             "telecomunicaciones": {
                 "nombre": "Telecomunicaciones",
@@ -866,6 +868,8 @@ CATEGORIAS = {
     "medios_comunicacion": {
         "nombre": "Medios de Comunicación",
         "comisiones": [
+            # Diputados
+            "Cultura y Cinematografía",
             # Senado LXVI
             "Radio, Televisión y Cinematografía",
         ],
@@ -890,7 +894,12 @@ CATEGORIAS = {
             "industria_audiovisual": {
                 "nombre": "Industria audiovisual",
                 "keywords": ["cinematografía", "producción audiovisual", "industria cinematográfica",
-                             "cine mexicano", "cine nacional", "película", "guión cinematográfico"],
+                             "cine mexicano", "cine nacional", "película", "guión cinematográfico",
+                             "cine", "audiovisual", "Ley Federal de Cinematografía",
+                             "Ley de Cine", "Ley Federal de Cine", "sector audiovisual",
+                             "derechos de creadores", "productor cinematográfico", "cortometraje",
+                             "largometraje", "documental cinematográfico", "IMCINE",
+                             "estímulo fiscal cinematográfico", "EFICINE"],
             },
         },
     },
@@ -1144,6 +1153,9 @@ COMISION_A_CATEGORIA = [
     ("radio, televisión", "medios_comunicacion"),
     ("radio y televisión", "medios_comunicacion"),
     ("comunicación social", "medios_comunicacion"),
+    ("cinematografía", "medios_comunicacion"),
+    ("cinematografia", "medios_comunicacion"),
+    ("cultura y cinemat", "medios_comunicacion"),
     # Turismo
     ("turismo", "turismo"),
     # Política Social
@@ -1155,7 +1167,7 @@ COMISION_A_CATEGORIA = [
     ("contra la trata", "igualdad_genero"),
     # Deporte (descartable — no es categoría FIAT)
     ("deporte", None),
-    ("cultura", None),
+    ("cultura", "educacion"),
 ]
 
 
