@@ -814,6 +814,21 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     data = paso_7_exportar_dashboard()
     reporte_final = generar_reporte()
 
+    # Paso 9: Auto-posting Twitter @Fiat_MX
+    try:
+        from scrapers.twitter_poster import generar_alertas_twitter
+        # Construir dict de scores actuales para el poster
+        scores_para_twitter = {}
+        for s in scores:
+            scores_para_twitter[s["categoria"]] = {
+                "score": s.get("score_compuesto", 0),
+                "color": s.get("color", "verde"),
+            }
+        tw_result = generar_alertas_twitter(scores_para_twitter)
+        logger.info(f"Twitter @Fiat_MX: {tw_result['publicados']} tweets publicados")
+    except Exception as e:
+        logger.warning(f"Twitter poster falló (no crítico): {e}")
+
     # Health check: verificar que todas las fuentes tienen datos recientes
     paso_8_health_check()
 
