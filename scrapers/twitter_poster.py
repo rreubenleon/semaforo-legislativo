@@ -18,8 +18,11 @@ import json
 import logging
 import sqlite3
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+# Zona horaria CDMX (UTC-6)
+_TZ_CDMX = timezone(timedelta(hours=-6))
 
 import requests
 from requests_oauthlib import OAuth1
@@ -111,7 +114,7 @@ def _already_posted(tweet_hash):
     """Verifica si un tweet similar ya se publicó hoy."""
     try:
         conn = get_connection()
-        hoy = datetime.now().strftime("%Y-%m-%d")
+        hoy = datetime.now(_TZ_CDMX).strftime("%Y-%m-%d")
         result = conn.execute(
             "SELECT COUNT(*) FROM tweets_posted WHERE hash = ? AND fecha >= ?",
             (tweet_hash, hoy)
@@ -136,8 +139,8 @@ def _record_posted(tweet_hash, text):
         """)
         conn.execute(
             "INSERT INTO tweets_posted (hash, texto, fecha, fecha_hora) VALUES (?, ?, ?, ?)",
-            (tweet_hash, text[:280], datetime.now().strftime("%Y-%m-%d"),
-             datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+            (tweet_hash, text[:280], datetime.now(_TZ_CDMX).strftime("%Y-%m-%d"),
+             datetime.now(_TZ_CDMX).strftime("%Y-%m-%d %H:%M:%S"))
         )
         conn.commit()
     except Exception as e:
@@ -269,6 +272,7 @@ def generar_alertas_twitter(scores_actuales):
     tweets_publicados = 0
     max_tweets = 3  # Máximo 3 tweets por ciclo para no spamear
 
+    # ── Alertas por cambio de color o score alto ──
     for cat_key, cat_data in scores_actuales.items():
         if tweets_publicados >= max_tweets:
             break
@@ -277,9 +281,7 @@ def generar_alertas_twitter(scores_actuales):
         color = _get_color(score)
         nombre = CATEGORIAS.get(cat_key, {}).get("nombre", cat_key)
         emoji = EMOJI_COLOR.get(color, "⚪")
-        hashtags = HASHTAGS.get(cat_key, "#CongresoMX")
 
-        # Determinar si vale la pena twittear
         should_tweet = False
         motivo = ""
 
@@ -304,39 +306,53 @@ def generar_alertas_twitter(scores_actuales):
         if not should_tweet:
             continue
 
-        # Construir tweet con modelo reactivo de correlación
         tweet = _construir_tweet_correlacion(cat_key, nombre, score, emoji, color)
 
-        # Verificar duplicados
-        th = _tweet_hash(f"{cat_key}-{color}-{datetime.now().strftime('%Y-%m-%d')}")
+        th = _tweet_hash(f"{cat_key}-{color}-{datetime.now(_TZ_CDMX).strftime('%Y-%m-%d')}")
         if _already_posted(th):
             logger.info(f"Tweet para {nombre} ya publicado hoy, saltando")
             continue
 
-        # Publicar
-        logger.info(f"Publicando tweet: {nombre} ({motivo})")
+        logger.info(f"Publicando tweet alerta: {nombre} ({motivo})")
         if _post_tweet(tweet):
             _record_posted(th, tweet)
             tweets_publicados += 1
 
-    # Tweets programados por día de la semana
-    ahora = datetime.now()
-    dia_semana = ahora.weekday()  # 0=lunes, 6=domingo
-    hora = ahora.hour
+    # ── Trigger 4: Tweet diario de la categoría más alta ──
+    # Garantiza al menos 1 tweet al día aunque no haya cambio de color
+    hoy_str = datetime.now(_TZ_CDMX).strftime("%Y-%m-%d")
+    th_diario = _tweet_hash(f"diario-{hoy_str}")
+    if tweets_publicados == 0 and not _already_posted(th_diario):
+        # Encontrar la categoría con score más alto
+        top_cat = max(scores_actuales.items(), key=lambda x: x[1].get("score", 0))
+        cat_key, cat_data = top_cat
+        score = cat_data.get("score", 0)
+        color = _get_color(score)
+        nombre = CATEGORIAS.get(cat_key, {}).get("nombre", cat_key)
+        emoji = EMOJI_COLOR.get(color, "⚪")
 
-    # Solo publicar tweets programados en el primer ciclo del día (6-10 AM)
-    if 6 <= hora <= 10:
-        programados = _tweets_programados(dia_semana, scores_actuales)
-        for tweet_prog in programados:
-            if tweets_publicados >= 5:  # Máximo total incluyendo programados
-                break
-            th = _tweet_hash(tweet_prog["id"])
-            if _already_posted(th):
-                continue
-            logger.info(f"Publicando tweet programado: {tweet_prog['tipo']}")
-            if _post_tweet(tweet_prog["texto"]):
-                _record_posted(th, tweet_prog["texto"])
-                tweets_publicados += 1
+        tweet = _construir_tweet_correlacion(cat_key, nombre, score, emoji, color)
+        logger.info(f"Publicando tweet diario: {nombre} (top del día)")
+        if _post_tweet(tweet):
+            _record_posted(th_diario, tweet)
+            tweets_publicados += 1
+
+    # ── Tweets programados por día de la semana ──
+    ahora = datetime.now(_TZ_CDMX)
+    dia_semana = ahora.weekday()  # 0=lunes, 6=domingo
+
+    # Publicar tweets programados: 1 vez al día (dedup por hash semanal)
+    programados = _tweets_programados(dia_semana, scores_actuales)
+    for tweet_prog in programados:
+        if tweets_publicados >= 5:  # Máximo total incluyendo programados
+            break
+        th = _tweet_hash(tweet_prog["id"])
+        if _already_posted(th):
+            continue
+        logger.info(f"Publicando tweet programado: {tweet_prog['tipo']}")
+        if _post_tweet(tweet_prog["texto"]):
+            _record_posted(th, tweet_prog["texto"])
+            tweets_publicados += 1
 
     return {"publicados": tweets_publicados}
 
@@ -356,7 +372,7 @@ def _tweets_programados(dia_semana, scores_actuales):
       Viernes:   Spotlight legislador + Actividad por partido
     """
     tweets = []
-    semana = datetime.now().strftime("%Y-W%U")
+    semana = datetime.now(_TZ_CDMX).strftime("%Y-W%U")
 
     if dia_semana == 0:  # Lunes
         tweets.extend(_tweet_top5_legisladores(semana))

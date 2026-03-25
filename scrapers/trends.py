@@ -43,46 +43,59 @@ def crear_cliente_trends():
     )
 
 
-def consultar_trends_categoria(pytrends, categoria_clave, max_keywords=5):
+def consultar_trends_categoria(pytrends, categoria_clave, max_keywords=5, reintentos=3):
     """
     Consulta Google Trends para las keywords principales de una categoría.
     Google Trends acepta máximo 5 keywords por consulta.
+    Incluye retry con backoff exponencial para manejar rate limits (429).
     """
+    import time
+
     cat_config = CATEGORIAS[categoria_clave]
     keywords = cat_config.get("trends_keywords", obtener_keywords_categoria(categoria_clave)[:max_keywords])
 
     logger.info(f"Consultando Trends para {cat_config['nombre']}: {keywords}")
 
-    try:
-        pytrends.build_payload(
-            kw_list=keywords,
-            cat=0,
-            timeframe=GOOGLE_TRENDS["timeframe"],
-            geo=GOOGLE_TRENDS["geo"],
-        )
-        df = pytrends.interest_over_time()
+    for intento in range(reintentos):
+        try:
+            pytrends.build_payload(
+                kw_list=keywords,
+                cat=0,
+                timeframe=GOOGLE_TRENDS["timeframe"],
+                geo=GOOGLE_TRENDS["geo"],
+            )
+            df = pytrends.interest_over_time()
 
-        if df.empty:
-            logger.warning(f"Sin datos de Trends para {cat_config['nombre']}")
-            return {}
+            if df.empty:
+                logger.warning(f"Sin datos de Trends para {cat_config['nombre']}")
+                return {}
 
-        # Eliminar columna isPartial si existe
-        if "isPartial" in df.columns:
-            df = df.drop(columns=["isPartial"])
+            # Eliminar columna isPartial si existe
+            if "isPartial" in df.columns:
+                df = df.drop(columns=["isPartial"])
 
-        resultados = {}
-        for keyword in df.columns:
-            serie = {}
-            for fecha, valor in df[keyword].items():
-                fecha_str = fecha.strftime("%Y-%m-%d")
-                serie[fecha_str] = int(valor)
-            resultados[keyword] = serie
+            resultados = {}
+            for keyword in df.columns:
+                serie = {}
+                for fecha, valor in df[keyword].items():
+                    fecha_str = fecha.strftime("%Y-%m-%d")
+                    serie[fecha_str] = int(valor)
+                resultados[keyword] = serie
 
-        return resultados
+            return resultados
 
-    except Exception as e:
-        logger.error(f"Error consultando Trends para {cat_config['nombre']}: {e}")
-        return {}
+        except Exception as e:
+            error_str = str(e)
+            if "429" in error_str and intento < reintentos - 1:
+                espera = 30 * (intento + 1)  # 30s, 60s, 90s
+                logger.warning(f"Rate limit 429 para {cat_config['nombre']}, "
+                               f"reintentando en {espera}s (intento {intento + 1}/{reintentos})")
+                time.sleep(espera)
+            else:
+                logger.error(f"Error consultando Trends para {cat_config['nombre']}: {e}")
+                return {}
+
+    return {}
 
 
 def scrape_trends_todas_categorias():
@@ -122,8 +135,8 @@ def scrape_trends_todas_categorias():
             "registros_nuevos": registros_nuevos,
         }
 
-        # Pausa entre consultas para no exceder rate limits
-        time.sleep(2)
+        # Pausa larga entre consultas — Google rate-limita IPs compartidas de CI
+        time.sleep(12)
 
     logger.info(f"Trends scraping completo para {len(resumen)} categorías")
     return resumen
