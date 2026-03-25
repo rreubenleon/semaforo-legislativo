@@ -549,13 +549,15 @@ def contar_actividad_sil_por_fecha(categoria=None, dias=60):
     fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
 
     if categoria:
+        # Matchea tanto 'seguridad_justicia' como 'seguridad_justicia:0.75'
         rows = conn.execute("""
             SELECT fecha_presentacion, COUNT(*) as n
             FROM sil_documentos
-            WHERE categoria LIKE ? || ':%' AND fecha_presentacion >= ?
+            WHERE (categoria = ? OR categoria LIKE ? || ':%')
+              AND fecha_presentacion >= ?
               AND fecha_presentacion != ''
             GROUP BY fecha_presentacion
-        """, (categoria, fecha_limite)).fetchall()
+        """, (categoria, categoria, fecha_limite)).fetchall()
     else:
         rows = conn.execute("""
             SELECT fecha_presentacion, COUNT(*) as n
