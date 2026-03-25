@@ -292,21 +292,23 @@ def paso_2c_scraping_sintesis():
 def paso_2d_scraping_twitter():
     """Paso 2d: Scrapear tweets de periodistas y coordinadores parlamentarios."""
     logger.info("=" * 60)
-    logger.info("PASO 2d: Scraping de Twitter/X (20 cuentas)")
+    logger.info("PASO 2d: Scraping de Twitter/X — DESACTIVADO (402 CreditsDepleted)")
     logger.info("=" * 60)
 
-    inicio = time.time()
-    try:
-        resultado = scrape_twitter(max_por_cuenta=10)
-        duracion = time.time() - inicio
-        logger.info(
-            f"Twitter: {resultado['cuentas']} cuentas, "
-            f"{resultado['tweets_nuevos']} tweets nuevos ({duracion:.1f}s)"
-        )
-    except Exception as e:
-        logger.warning(f"Twitter falló (no crítico): {e}")
-        resultado = {"cuentas": 0, "tweets_nuevos": 0}
+    # Desactivado: plan gratuito de X API agotó créditos.
+    # Para reactivar, descomentar y contratar plan Basic ($100 USD/mes).
+    # inicio = time.time()
+    # try:
+    #     resultado = scrape_twitter(max_por_cuenta=10)
+    #     duracion = time.time() - inicio
+    #     logger.info(
+    #         f"Twitter: {resultado['cuentas']} cuentas, "
+    #         f"{resultado['tweets_nuevos']} tweets nuevos ({duracion:.1f}s)"
+    #     )
+    # except Exception as e:
+    #     logger.warning(f"Twitter falló (no crítico): {e}")
 
+    resultado = {"cuentas": 0, "tweets_nuevos": 0}
     return resultado
 
 
@@ -875,19 +877,21 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     reporte_final = generar_reporte()
 
     # Paso 9: Auto-posting Twitter @Fiat_MX
-    try:
-        from scrapers.twitter_poster import generar_alertas_twitter
-        # Construir dict de scores actuales para el poster
-        scores_para_twitter = {}
-        for s in scores:
-            scores_para_twitter[s["categoria"]] = {
-                "score": s.get("score_compuesto", 0),
-                "color": s.get("color", "verde"),
-            }
-        tw_result = generar_alertas_twitter(scores_para_twitter)
-        logger.info(f"Twitter @Fiat_MX: {tw_result['publicados']} tweets publicados")
-    except Exception as e:
-        logger.warning(f"Twitter poster falló (no crítico): {e}")
+    # Desactivado: plan gratuito de X API no tiene créditos (402 CreditsDepleted).
+    # Tweets se publican manualmente vía Chrome cuando se requiera.
+    # Para reactivar, descomentar el bloque siguiente y configurar plan Basic ($100 USD/mes).
+    # try:
+    #     from scrapers.twitter_poster import generar_alertas_twitter
+    #     scores_para_twitter = {}
+    #     for s in scores:
+    #         scores_para_twitter[s["categoria"]] = {
+    #             "score": s.get("score_compuesto", 0),
+    #             "color": s.get("color", "verde"),
+    #         }
+    #     tw_result = generar_alertas_twitter(scores_para_twitter)
+    #     logger.info(f"Twitter @Fiat_MX: {tw_result['publicados']} tweets publicados")
+    # except Exception as e:
+    #     logger.warning(f"Twitter poster falló (no crítico): {e}")
 
     # Health check: verificar que todas las fuentes tienen datos recientes
     paso_8_health_check()
