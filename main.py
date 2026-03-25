@@ -292,23 +292,21 @@ def paso_2c_scraping_sintesis():
 def paso_2d_scraping_twitter():
     """Paso 2d: Scrapear tweets de periodistas y coordinadores parlamentarios."""
     logger.info("=" * 60)
-    logger.info("PASO 2d: Scraping de Twitter/X — DESACTIVADO (402 CreditsDepleted)")
+    logger.info("PASO 2d: Scraping de Twitter/X (20 cuentas)")
     logger.info("=" * 60)
 
-    # Desactivado: plan gratuito de X API agotó créditos.
-    # Para reactivar, descomentar y contratar plan Basic ($100 USD/mes).
-    # inicio = time.time()
-    # try:
-    #     resultado = scrape_twitter(max_por_cuenta=10)
-    #     duracion = time.time() - inicio
-    #     logger.info(
-    #         f"Twitter: {resultado['cuentas']} cuentas, "
-    #         f"{resultado['tweets_nuevos']} tweets nuevos ({duracion:.1f}s)"
-    #     )
-    # except Exception as e:
-    #     logger.warning(f"Twitter falló (no crítico): {e}")
+    inicio = time.time()
+    try:
+        resultado = scrape_twitter(max_por_cuenta=10)
+        duracion = time.time() - inicio
+        logger.info(
+            f"Twitter: {resultado['cuentas']} cuentas, "
+            f"{resultado['tweets_nuevos']} tweets nuevos ({duracion:.1f}s)"
+        )
+    except Exception as e:
+        logger.warning(f"Twitter falló (no crítico): {e}")
+        resultado = {"cuentas": 0, "tweets_nuevos": 0}
 
-    resultado = {"cuentas": 0, "tweets_nuevos": 0}
     return resultado
 
 
