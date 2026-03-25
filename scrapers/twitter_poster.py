@@ -1,16 +1,15 @@
 """
 Twitter/X Auto-Poster — OAuth 1.0a
-Publica alertas automáticas en @Fiat_MX cuando hay movimiento legislativo relevante.
+Publica alertas automáticas en @Fiat_MX usando el modelo reactivo de correlación.
 
 Triggers:
-  - Categoría sube a ROJO (score >= 65)
-  - Categoría cambia de color (verde→amarillo, amarillo→rojo)
-  - Nueva iniciativa de alto impacto en Gaceta/SIL
+  - Categoría sube a ROJO (score >= 65) o cambia de color
+  - Score muy alto (>= 75)
 
-Formato de tweets:
-  🔴 ALTA ACTIVIDAD | Seguridad y Justicia: 78%
-  Últimas señales: [titular de nota]
-  #CongresoMX #Seguridad
+Formato de tweets (correlación reactiva):
+  🔴 Electoral y Político alcanzó 71% esta semana.
+  Nuestro modelo detecta que [Legislador] ([Partido]) ha reaccionado
+  al X% de los picos. Históricamente presenta [instrumento] sobre [ley].
   fiatmx.com
 """
 
@@ -173,6 +172,68 @@ def _get_ultima_nota(categoria):
         return None
 
 
+def _get_top_correlacion(categoria):
+    """
+    Obtiene el legislador #1 del modelo reactivo para una categoría.
+    Returns dict con nombre, partido, instrumento_probable, ley_probable,
+    correlacion_score, veces_reaccionado, total_picos, o None.
+    """
+    try:
+        from api.predictor_autoria import predecir_autores
+        predicciones = predecir_autores(categoria, top_n=1)
+        if predicciones:
+            return predicciones[0]
+        return None
+    except Exception as e:
+        logger.warning(f"Error obteniendo correlación para {categoria}: {e}")
+        return None
+
+
+def _construir_tweet_correlacion(cat_key, nombre_cat, score, emoji, color):
+    """
+    Construye un tweet usando el modelo reactivo de correlación.
+    Formato: score + legislador correlacionado + instrumento/ley.
+    """
+    zona = "zona roja" if color == "rojo" else "zona amarilla"
+    verbo = "alcanzó" if color == "rojo" else "está en"
+
+    # Intentar obtener datos de correlación
+    leg = _get_top_correlacion(cat_key)
+
+    if leg and leg.get("veces_reaccionado", 0) > 0 and leg.get("total_picos", 0) > 0:
+        pct_reaccion = round((leg["veces_reaccionado"] / leg["total_picos"]) * 100)
+        instrumento = leg.get("instrumento_probable", "").lower() or "instrumentos"
+        ley = leg.get("ley_probable")
+
+        tweet = f"{emoji} {nombre_cat} {verbo} {score:.0f}%, {zona}.\n"
+        tweet += f"Nuestro modelo detecta que {leg['nombre']} ({leg.get('partido', '')}) "
+        tweet += f"ha reaccionado al {pct_reaccion}% de los picos en esta categoría."
+
+        if instrumento and ley:
+            tweet += f"\nHistóricamente presenta {instrumento} sobre {ley}."
+        elif instrumento and instrumento != "instrumentos":
+            tweet += f"\nHistóricamente presenta {instrumento}."
+
+        tweet += "\nfiatmx.com"
+    else:
+        # Fallback sin datos de correlación: tweet simple con nota
+        nota = _get_ultima_nota(cat_key)
+        tweet = f"{emoji} {nombre_cat} {verbo} {score:.0f}%, {zona}.\n"
+        if nota:
+            tweet += f"📰 {nota}\n"
+        tweet += "Seguimos monitoreando → fiatmx.com"
+
+    # Recortar si excede 280 chars
+    if len(tweet) > 280:
+        # Quitar la línea de instrumento/ley y dejar solo la correlación
+        lineas = tweet.split("\n")
+        while len("\n".join(lineas)) > 280 and len(lineas) > 2:
+            lineas.pop(-2)  # Quitar penúltima línea (antes de fiatmx.com)
+        tweet = "\n".join(lineas)
+
+    return tweet
+
+
 def generar_alertas_twitter(scores_actuales):
     """
     Genera y publica tweets basados en los scores actuales.
@@ -243,28 +304,8 @@ def generar_alertas_twitter(scores_actuales):
         if not should_tweet:
             continue
 
-        # Construir tweet
-        nota = _get_ultima_nota(cat_key)
-
-        if color == "rojo":
-            label = "ALTA ACTIVIDAD"
-        elif color == "amarillo":
-            label = "ACTIVIDAD ELEVADA"
-        else:
-            label = "ACTIVIDAD MODERADA"
-
-        tweet = f"{emoji} {label} | {nombre}: {score:.0f}%\n"
-        if nota:
-            tweet += f"📰 {nota}\n"
-        tweet += f"\n{hashtags}\nfiatmx.com"
-
-        # Verificar que no exceda 280 chars
-        if len(tweet) > 280:
-            # Recortar nota
-            exceso = len(tweet) - 278
-            if nota:
-                nota = nota[:len(nota) - exceso - 3] + "..."
-                tweet = f"{emoji} {label} | {nombre}: {score:.0f}%\n📰 {nota}\n\n{hashtags}\nfiatmx.com"
+        # Construir tweet con modelo reactivo de correlación
+        tweet = _construir_tweet_correlacion(cat_key, nombre, score, emoji, color)
 
         # Verificar duplicados
         th = _tweet_hash(f"{cat_key}-{color}-{datetime.now().strftime('%Y-%m-%d')}")
@@ -333,13 +374,12 @@ def _tweets_programados(dia_semana, scores_actuales):
 
 
 def _tweet_top5_legisladores(semana):
-    """Lunes: Top 5 legisladores con mayor probabilidad de presentar instrumentos."""
+    """Lunes: Top legisladores reactivos en la categoría más alta."""
     try:
         from api.predictor_autoria import predecir_autores
         conn = get_connection()
         conn.row_factory = sqlite3.Row
 
-        # Obtener la categoría con mayor score actual
         top_cat = conn.execute("""
             SELECT categoria, score_total FROM scores
             WHERE fecha = (SELECT MAX(fecha) FROM scores)
@@ -359,19 +399,25 @@ def _tweet_top5_legisladores(semana):
         lineas = []
         for i, p in enumerate(predicciones, 1):
             partido = p.get("partido", "")
-            score = p.get("score_total", 0)
-            lineas.append(f"{i}. {p['nombre']} ({partido}) — {score:.0f}%")
+            instrumento = p.get("instrumento_probable", "")
+            pct = ""
+            if p.get("veces_reaccionado", 0) > 0 and p.get("total_picos", 0) > 0:
+                pct = f" ({round((p['veces_reaccionado']/p['total_picos'])*100)}%)"
+            linea = f"{i}. {p['nombre']} ({partido}){pct}"
+            if instrumento:
+                linea += f" → {instrumento.lower()}"
+            lineas.append(linea)
 
-        tweet = f"📊 Top 5 legisladores con mayor probabilidad de presentar instrumentos en {nombre_cat} esta semana:\n\n"
+        tweet = f"📊 Legisladores más reactivos en {nombre_cat} ({top_cat['score_total']:.0f}%):\n\n"
         tweet += "\n".join(lineas)
-        tweet += "\n\n#CongresoMX #Legisladores\nfiatmx.com"
+        tweet += "\nfiatmx.com"
 
-        if len(tweet) > 280:
-            # Recortar a 3 legisladores
-            lineas = lineas[:3]
-            tweet = f"📊 Top 3 legisladores con mayor probabilidad en {nombre_cat}:\n\n"
+        # Ajustar si excede 280
+        while len(tweet) > 280 and len(lineas) > 3:
+            lineas.pop()
+            tweet = f"📊 Legisladores más reactivos en {nombre_cat} ({top_cat['score_total']:.0f}%):\n\n"
             tweet += "\n".join(lineas)
-            tweet += "\n\n#CongresoMX\nfiatmx.com"
+            tweet += "\nfiatmx.com"
 
         return [{"tipo": "top5_legisladores", "id": f"top5leg-{semana}", "texto": tweet}]
     except Exception as e:
@@ -483,7 +529,7 @@ def _tweet_snapshot_semanal(scores_actuales, semana):
 
 
 def _tweet_spotlight_legislador(semana):
-    """Viernes: Spotlight de un legislador destacado."""
+    """Viernes: Spotlight de un legislador con narrativa reactiva."""
     try:
         from api.predictor_autoria import predecir_autores
         conn = get_connection()
@@ -491,7 +537,7 @@ def _tweet_spotlight_legislador(semana):
 
         # Top categoría actual
         top_cat = conn.execute("""
-            SELECT categoria FROM scores
+            SELECT categoria, score_total FROM scores
             WHERE fecha = (SELECT MAX(fecha) FROM scores)
             ORDER BY score_total DESC LIMIT 1
         """).fetchone()
@@ -505,22 +551,33 @@ def _tweet_spotlight_legislador(semana):
 
         leg = predicciones[0]
         nombre_cat = CATEGORIAS.get(top_cat["categoria"], {}).get("nombre", top_cat["categoria"])
-        camara = "Diputado/a" if "diputad" in (leg.get("camara", "") or "").lower() else "Senador/a"
 
-        comisiones = leg.get("comisiones_afines", [])
-        com_text = f"Comisión: {comisiones[0]}" if comisiones else ""
+        # Construir narrativa compacta
+        instrumento = leg.get("instrumento_probable", "").lower()
+        ley = leg.get("ley_probable", "")
+        veces = leg.get("veces_reaccionado", 0)
+        total = leg.get("total_picos", 0)
 
         tweet = f"🔦 Spotlight legislativo\n\n"
-        tweet += f"{camara} {leg['nombre']} ({leg.get('partido', '')})\n"
-        if com_text:
-            tweet += f"{com_text}\n"
-        tweet += f"\nMayor probabilidad de presentar instrumentos en {nombre_cat} ({leg.get('score_total', 0):.0f}%)\n\n"
-        tweet += "#CongresoMX\nfiatmx.com"
+        tweet += f"{leg['nombre']} ({leg.get('partido', '')})\n"
+
+        if veces > 0 and total > 0:
+            pct = round((veces / total) * 100)
+            tweet += f"Reacciona al {pct}% de los picos en {nombre_cat}.\n"
+
+        if instrumento and ley:
+            tweet += f"Patrón: presenta {instrumento} sobre {ley}.\n"
+        elif instrumento:
+            tweet += f"Patrón: presenta {instrumento}.\n"
+
+        tweet += "fiatmx.com"
 
         if len(tweet) > 280:
-            tweet = f"🔦 Spotlight: {camara} {leg['nombre']} ({leg.get('partido', '')})\n"
-            tweet += f"Mayor probabilidad en {nombre_cat}: {leg.get('score_total', 0):.0f}%\n\n"
-            tweet += "#CongresoMX\nfiatmx.com"
+            # Versión corta
+            tweet = f"🔦 {leg['nombre']} ({leg.get('partido', '')})\n"
+            if veces > 0 and total > 0:
+                tweet += f"Reacciona al {round((veces/total)*100)}% de picos en {nombre_cat}.\n"
+            tweet += "fiatmx.com"
 
         return [{"tipo": "spotlight", "id": f"spot-{semana}", "texto": tweet}]
     except Exception as e:
