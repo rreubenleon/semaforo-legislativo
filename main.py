@@ -553,6 +553,18 @@ def paso_7_exportar_dashboard():
     # Series temporales por categoría (para gráficas de línea)
     # Usamos 540 días para capturar datos desde septiembre 2024
     series_temporales = {}
+    # Debug: verificar estado de fecha_presentacion en sil_documentos
+    try:
+        _dbconn = get_connection()
+        _total_sil = _dbconn.execute("SELECT COUNT(*) FROM sil_documentos").fetchone()[0]
+        _con_fecha = _dbconn.execute("SELECT COUNT(*) FROM sil_documentos WHERE fecha_presentacion IS NOT NULL AND fecha_presentacion != ''").fetchone()[0]
+        _fechas = _dbconn.execute("SELECT fecha_presentacion, COUNT(*) as n FROM sil_documentos WHERE fecha_presentacion != '' GROUP BY fecha_presentacion ORDER BY n DESC LIMIT 5").fetchall()
+        logger.info(f"SIL debug: {_total_sil} total, {_con_fecha} con fecha")
+        for _f in _fechas:
+            logger.info(f"  SIL fecha '{_f[0]}': {_f[1]} docs")
+    except Exception as _e:
+        logger.warning(f"SIL debug error: {_e}")
+
     for cat_clave in CATEGORIAS:
         series_temporales[cat_clave] = obtener_serie_temporal_sil(cat_clave, dias=540)
 
