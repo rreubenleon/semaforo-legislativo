@@ -562,11 +562,40 @@ def paso_7_exportar_dashboard():
         logger.info(f"SIL debug: {_total_sil} total, {_con_fecha} con fecha")
         for _f in _fechas:
             logger.info(f"  SIL fecha '{_f[0]}': {_f[1]} docs")
+        # Debug: probar la query exacta de contar_actividad
+        _test_cat = "seguridad_justicia"
+        _test_rows = _dbconn.execute("""
+            SELECT fecha_presentacion, COUNT(*) as n
+            FROM sil_documentos
+            WHERE categoria LIKE ? || ':%' AND fecha_presentacion >= ?
+              AND fecha_presentacion != ''
+            GROUP BY fecha_presentacion
+            ORDER BY fecha_presentacion DESC LIMIT 5
+        """, (_test_cat, "2025-01-01")).fetchall()
+        logger.info(f"SIL debug query '{_test_cat}': {len(_test_rows)} fechas")
+        for _tr in _test_rows:
+            logger.info(f"  query result: '{_tr[0]}' = {_tr[1]}")
+
+        # Debug: ver categorías raw
+        _cats_raw = _dbconn.execute("""
+            SELECT categoria, COUNT(*) as n FROM sil_documentos
+            WHERE categoria LIKE 'seguridad%'
+            GROUP BY categoria ORDER BY n DESC LIMIT 5
+        """).fetchall()
+        logger.info(f"SIL debug categorías seguridad: {len(_cats_raw)}")
+        for _cr in _cats_raw:
+            logger.info(f"  cat raw: '{_cr[0]}' = {_cr[1]}")
     except Exception as _e:
         logger.warning(f"SIL debug error: {_e}")
 
     for cat_clave in CATEGORIAS:
         series_temporales[cat_clave] = obtener_serie_temporal_sil(cat_clave, dias=540)
+        # Debug: resultado de la serie
+        _con = sum(1 for s in series_temporales[cat_clave] if s.get('count', 0) > 0)
+        if _con == 0:
+            logger.warning(f"Serie temporal '{cat_clave}': TODOS EN CERO ({len(series_temporales[cat_clave])} entries)")
+        else:
+            logger.info(f"Serie temporal '{cat_clave}': {_con} días con datos")
 
     # Estadísticas por partido político
     try:
