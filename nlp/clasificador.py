@@ -128,6 +128,11 @@ STOPWORDS_ES = {
     "algo", "nosotros", "mi", "mis", "tú", "te", "ti", "tu", "tus",
     "ellas", "nosotras", "vosotros", "vosotras", "os", "mío", "mía",
     "fue", "ser", "es", "son", "ha", "han", "era", "será", "sido",
+    # Palabras estructurales de nombres de leyes mexicanas — no aportan señal temática
+    # y causan sesgo hacia categorías con más leyes (economia_hacienda tiene 65 keywords con "ley")
+    "ley", "federal", "general", "nacional", "organica", "orgánica",
+    "reglamentaria", "codigo", "código", "constitución", "constitucion",
+    "reglamento", "estatuto", "decreto",
     *NLP_CONFIG["stopwords_extra"],
 }
 
@@ -153,7 +158,24 @@ def normalizar_texto(texto):
     # Filtrar stopwords y tokens muy cortos
     tokens = [t for t in tokens if t not in STOPWORDS_ES and len(t) > 2]
 
-    return tokens
+    # Stemming básico de plurales en español para mejorar matching
+    # "feminicidios" → "feminicidio", "reformas" → "reforma", "penas" → "pena"
+    stemmed = []
+    for t in tokens:
+        if t.endswith("iones"):
+            stemmed.append(t[:-2] + "ón")    # resoluciones → resolución
+        elif t.endswith("dades"):
+            stemmed.append(t[:-2])            # universidades → universidad (close enough)
+        elif t.endswith("cios") or t.endswith("dios") or t.endswith("rios"):
+            stemmed.append(t[:-1])            # feminicidios → feminicidio, subsidios → subsidio
+        elif t.endswith("es") and len(t) > 4:
+            stemmed.append(t[:-2])            # penales → penal
+        elif t.endswith("s") and len(t) > 3:
+            stemmed.append(t[:-1])            # reformas → reforma
+        else:
+            stemmed.append(t)
+
+    return stemmed
 
 
 def calcular_tf(tokens):
@@ -294,7 +316,9 @@ def clasificar_texto(titulo, resumen="", comision=None):
                     score += 0.8
 
         # Normalizar score por número de keywords (evitar sesgo por categorías con más keywords)
-        score = score / math.sqrt(len(keywords))
+        # Usamos log2 en vez de sqrt porque sqrt penaliza demasiado a categorías con
+        # muchas keywords (ej: seguridad_justicia=148 tras agregar LEYES_FEDERALES)
+        score = score / max(math.log2(len(keywords)), 1)
 
         # Aplicar multiplicador de relevancia México
         score = score * relevancia

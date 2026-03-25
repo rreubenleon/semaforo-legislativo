@@ -1311,7 +1311,7 @@ LAG_CONFIG = {
 NLP_CONFIG = {
     "modelo": "keyword_matching",  # Fase 1: keywords. Fase 2: transformers
     "idioma": "es",
-    "min_confianza": 0.5,          # Umbral mínimo para asignar categoría
+    "min_confianza": 0.4,          # Umbral mínimo (ajustado tras stopwords legales + log2 norm)
     "max_categorias": 3,           # Máximo de categorías por artículo
     "stopwords_extra": [
         "México", "mexicano", "país", "república",
