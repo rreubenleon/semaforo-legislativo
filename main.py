@@ -107,6 +107,65 @@ ROOT = Path(__file__).resolve().parent
 DASHBOARD_DATA = ROOT / "dashboard" / "data.json"
 
 
+def _obtener_tweets_fiat():
+    """
+    Obtiene los últimos tweets de @Fiat_MX via API v2 para mostrar en el dashboard.
+    Retorna lista de dicts: [{text, created_at, id, url}, ...]
+    """
+    import os
+    import requests as req
+    bearer = os.environ.get("TWITTER_BEARER_TOKEN", "")
+    if not bearer:
+        logger.info("Sin TWITTER_BEARER_TOKEN, omitiendo tweets de @Fiat_MX")
+        return []
+
+    try:
+        # Primero obtener el user_id de @Fiat_MX
+        headers = {"Authorization": f"Bearer {bearer}"}
+        resp = req.get(
+            "https://api.x.com/2/users/by/username/Fiat_MX",
+            headers=headers,
+            timeout=10,
+        )
+        if resp.status_code != 200:
+            logger.warning(f"Error obteniendo user_id de @Fiat_MX: {resp.status_code}")
+            return []
+
+        user_id = resp.json().get("data", {}).get("id")
+        if not user_id:
+            return []
+
+        # Obtener últimos 10 tweets
+        resp2 = req.get(
+            f"https://api.x.com/2/users/{user_id}/tweets",
+            headers=headers,
+            params={
+                "max_results": 10,
+                "tweet.fields": "created_at,text",
+            },
+            timeout=10,
+        )
+        if resp2.status_code != 200:
+            logger.warning(f"Error obteniendo tweets de @Fiat_MX: {resp2.status_code}")
+            return []
+
+        tweets_raw = resp2.json().get("data", [])
+        tweets = []
+        for t in tweets_raw:
+            tweets.append({
+                "id": t["id"],
+                "text": t["text"],
+                "created_at": t.get("created_at", ""),
+                "url": f"https://x.com/Fiat_MX/status/{t['id']}",
+            })
+        logger.info(f"Tweets de @Fiat_MX obtenidos: {len(tweets)}")
+        return tweets
+
+    except Exception as e:
+        logger.warning(f"Error obteniendo tweets de @Fiat_MX: {e}")
+        return []
+
+
 def setup_logging():
     """Configura logging según config.py."""
     from logging.handlers import RotatingFileHandler
@@ -579,6 +638,7 @@ def paso_7_exportar_dashboard():
         "autoria_stats": autoria_stats,
         "mapa": obtener_mapa_datos(),
         "resoluciones": obtener_resoluciones(semanas=12),
+        "tweets_fiat": _obtener_tweets_fiat(),
     }
 
     # Construir datos del semáforo con nombres + momentum + subcategorías activas

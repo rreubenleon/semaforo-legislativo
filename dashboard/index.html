@@ -1082,35 +1082,45 @@
                             </div>
                         );
                     })()}
-                    {/* Twitter Feed Widget - Embed real */}
+                    {/* Twitter Feed Widget - Renderizado nativo desde data.json */}
                     <div className="lg:col-span-2 glass border border-borde rounded-2xl p-4 flex flex-col overflow-hidden">
                         <div className="flex items-center gap-2 mb-3">
                             <svg className="w-5 h-5 text-gray-800" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
                             <a href="https://x.com/Fiat_MX" target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-gray-800 hover:text-acento transition-colors">@Fiat_MX</a>
                             <span className="text-[10px] text-gray-400 ml-auto">Alertas automáticas</span>
                         </div>
-                        <div className="flex-1 overflow-y-auto" style={{maxHeight: '400px'}} ref={(() => {
-                            const refCallback = (el) => {
-                                if (!el || el.dataset.loaded) return;
-                                el.dataset.loaded = 'true';
-                                const a = document.createElement('a');
-                                a.className = 'twitter-timeline';
-                                a.setAttribute('data-height', '380');
-                                a.setAttribute('data-theme', 'light');
-                                a.setAttribute('data-chrome', 'noheader nofooter noborders transparent');
-                                a.setAttribute('data-dnt', 'true');
-                                a.setAttribute('data-tweet-limit', '5');
-                                a.href = 'https://x.com/Fiat_MX?ref_src=twsrc%5Etfw';
-                                a.textContent = 'Tweets by @Fiat_MX';
-                                el.appendChild(a);
-                                const s = document.createElement('script');
-                                s.src = 'https://platform.twitter.com/widgets.js';
-                                s.async = true;
-                                s.charset = 'utf-8';
-                                el.appendChild(s);
-                            };
-                            return refCallback;
-                        })()}>
+                        <div className="flex-1 overflow-y-auto space-y-3" style={{maxHeight: '400px'}}>
+                            {data.tweets_fiat && data.tweets_fiat.length > 0 ? data.tweets_fiat.map((tw, i) => (
+                                <a key={tw.id || i} href={tw.url} target="_blank" rel="noopener noreferrer"
+                                   className="block p-3 rounded-xl bg-white/60 hover:bg-white/90 border border-gray-100 hover:border-acento/30 transition-all group">
+                                    <div className="flex items-start gap-2">
+                                        <div className="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-1.5 mb-1">
+                                                <span className="text-xs font-bold text-gray-900">FIAT</span>
+                                                <span className="text-[10px] text-gray-400">@Fiat_MX</span>
+                                                {tw.created_at && <span className="text-[10px] text-gray-400 ml-auto">{(() => {
+                                                    const d = new Date(tw.created_at);
+                                                    const now = new Date();
+                                                    const diffH = Math.floor((now - d) / 3600000);
+                                                    if (diffH < 1) return 'hace un momento';
+                                                    if (diffH < 24) return `hace ${diffH}h`;
+                                                    const diffD = Math.floor(diffH / 24);
+                                                    return diffD === 1 ? 'ayer' : `hace ${diffD}d`;
+                                                })()}</span>}
+                                            </div>
+                                            <p className="text-xs text-gray-700 leading-relaxed whitespace-pre-line group-hover:text-gray-900 transition-colors">{tw.text}</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            )) : (
+                                <div className="flex flex-col items-center justify-center h-full py-8 text-gray-400">
+                                    <svg className="w-8 h-8 mb-2 opacity-50" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                                    <p className="text-xs">Próximamente alertas en @Fiat_MX</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                     </div>
