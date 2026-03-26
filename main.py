@@ -451,18 +451,18 @@ def obtener_fuentes_por_categoria():
               AND fecha >= date('now', '-14 days')
             ORDER BY fecha DESC
         """, (f"%{cat_clave}%",)).fetchall()
-            for r in rows:
-                gaceta_docs.append({
-                    "tipo": r["tipo"],
-                    "titulo": r["titulo"][:150],
-                    "autor": r["autor"][:80] if r["autor"] else "",
-                    "comision": r["comision"][:80] if r["comision"] else "",
-                    "fecha": r["fecha"][:10] if r["fecha"] else "",
-                    "url": r["url"] or "",
-                    "url_pdf": r["url_pdf"] or "",
-                    "numero_doc": r["numero_doc"] or "",
-                    "camara": r["camara"] or "Diputados",
-                })
+        for r in rows:
+            gaceta_docs.append({
+                "tipo": r["tipo"],
+                "titulo": r["titulo"][:150],
+                "autor": r["autor"][:80] if r["autor"] else "",
+                "comision": r["comision"][:80] if r["comision"] else "",
+                "fecha": r["fecha"][:10] if r["fecha"] else "",
+                "url": r["url"] or "",
+                "url_pdf": r["url_pdf"] or "",
+                "numero_doc": r["numero_doc"] or "",
+                "camara": r["camara"] or "Diputados",
+            })
 
         # Google Trends: top keywords y sus valores
         trends_data = []
