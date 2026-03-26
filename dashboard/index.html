@@ -600,21 +600,23 @@
                     const color = CATEGORY_COLORS[colorIdx % CATEGORY_COLORS.length];
                     const isHovered = hoveredCat === cat;
                     const hasHover = hoveredCat !== null;
+                    const scores = catData.scores.map(s => s === null ? undefined : s);
+                    const lastIdx = scores.length - 1;
 
                     return {
                         label: catData.nombre,
-                        data: catData.scores.map(s => s === null ? undefined : s),
-                        borderColor: hasHover && !isHovered ? color + '30' : color,
-                        backgroundColor: color + '08',
-                        borderWidth: isHovered ? 3 : (hasHover ? 1 : 1.5),
+                        data: scores,
+                        borderColor: hasHover && !isHovered ? color + '25' : color,
+                        backgroundColor: 'transparent',
+                        borderWidth: isHovered ? 3.5 : (hasHover ? 1.2 : 2.5),
                         fill: false,
-                        tension: 0.3,
-                        pointRadius: isHovered ? 4 : 0,
-                        pointHitRadius: 8,
-                        pointHoverRadius: 5,
+                        tension: 0.4,
+                        pointRadius: scores.map((_, i) => i === lastIdx ? (isHovered ? 7 : 5) : 0),
+                        pointHitRadius: 10,
+                        pointHoverRadius: 6,
                         pointBackgroundColor: color,
                         pointBorderColor: '#fff',
-                        pointBorderWidth: 2,
+                        pointBorderWidth: isHovered ? 3 : 2,
                         spanGaps: true,
                         order: isHovered ? 0 : 1,
                         _catKey: cat,
@@ -628,26 +630,26 @@
                         if (!chartArea) return;
                         const yScale = scales.y;
 
-                        /* Líneas de umbral solamente, sin fondos de color */
-                        const y70 = yScale.getPixelForValue(70);
-                        const y40 = yScale.getPixelForValue(40);
+                        /* Líneas de umbral estilo Polymarket: sutiles y punteadas */
+                        const thresholds = [
+                            { value: 65, color: 'rgba(46,125,50,0.15)', label: '' },
+                            { value: 40, color: 'rgba(198,40,40,0.15)', label: '' },
+                        ];
 
-                        ctx.setLineDash([4, 4]);
-                        ctx.lineWidth = 1;
+                        ctx.save();
+                        ctx.setLineDash([2, 6]);
+                        ctx.lineWidth = 0.8;
 
-                        ctx.beginPath();
-                        ctx.strokeStyle = 'rgba(46,125,50,0.3)';
-                        ctx.moveTo(chartArea.left, y70);
-                        ctx.lineTo(chartArea.right, y70);
-                        ctx.stroke();
+                        thresholds.forEach(t => {
+                            const y = yScale.getPixelForValue(t.value);
+                            ctx.beginPath();
+                            ctx.strokeStyle = t.color;
+                            ctx.moveTo(chartArea.left, y);
+                            ctx.lineTo(chartArea.right, y);
+                            ctx.stroke();
+                        });
 
-                        ctx.beginPath();
-                        ctx.strokeStyle = 'rgba(198,40,40,0.3)';
-                        ctx.moveTo(chartArea.left, y40);
-                        ctx.lineTo(chartArea.right, y40);
-                        ctx.stroke();
-
-                        ctx.setLineDash([]);
+                        ctx.restore();
                     }
                 };
 
@@ -662,17 +664,19 @@
                         plugins: {
                             legend: { display: false },
                             tooltip: {
-                                backgroundColor: 'rgba(255,255,255,0.97)',
-                                titleColor: '#111827',
-                                bodyColor: '#374151',
-                                borderColor: '#e5e7eb',
+                                backgroundColor: 'rgba(15,23,42,0.92)',
+                                titleColor: '#f1f5f9',
+                                bodyColor: '#cbd5e1',
+                                borderColor: 'rgba(255,255,255,0.08)',
                                 borderWidth: 1,
-                                padding: 12,
+                                padding: { top: 10, bottom: 10, left: 14, right: 14 },
+                                cornerRadius: 10,
                                 displayColors: true,
-                                boxWidth: 10,
-                                boxHeight: 10,
-                                titleFont: { size: 12, weight: 'bold' },
-                                bodyFont: { size: 11 },
+                                boxWidth: 8,
+                                boxHeight: 8,
+                                boxPadding: 6,
+                                titleFont: { size: 12, weight: '600', family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                bodyFont: { size: 11, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
                                 callbacks: {
                                     label: (item) => ` ${item.dataset.label}: ${item.raw?.toFixed(1)}%`
                                 },
@@ -684,22 +688,27 @@
                                 min: 0, max: 100,
                                 position: 'right',
                                 ticks: {
-                                    color: '#9ca3af',
-                                    font: { size: 10 },
-                                    stepSize: 20,
-                                    padding: 8,
+                                    color: '#b0b8c4',
+                                    font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                    stepSize: 25,
+                                    padding: 12,
                                     callback: v => v + '%',
                                 },
-                                grid: { color: '#f3f4f6', drawBorder: false },
-                                border: { display: false },
+                                grid: {
+                                    color: (ctx) => ctx.tick.value === 0 ? 'transparent' : 'rgba(0,0,0,0.04)',
+                                    lineWidth: 0.5,
+                                    drawBorder: false,
+                                    drawTicks: false,
+                                },
+                                border: { display: false, dash: [2, 4] },
                             },
                             x: {
                                 ticks: {
-                                    color: '#9ca3af',
-                                    font: { size: 9 },
+                                    color: '#b0b8c4',
+                                    font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
                                     maxRotation: 0,
-                                    maxTicksLimit: 10,
-                                    padding: 4,
+                                    maxTicksLimit: 8,
+                                    padding: 8,
                                 },
                                 grid: { display: false },
                                 border: { display: false },
@@ -723,7 +732,7 @@
                             {visibleCats.size === catKeys.length ? 'Top 5' : 'Ver todas'}
                         </button>
                     </div>
-                    <div style={{height: '220px'}}><canvas ref={chartRef}></canvas></div>
+                    <div style={{height: '280px'}}><canvas ref={chartRef}></canvas></div>
                     <div className="flex flex-wrap gap-1.5">
                         {catKeys.map((cat, idx) => {
                             const catInfo = categorias[cat];
@@ -853,12 +862,12 @@
                     chartInstance.current = new Chart(chartRef.current, {
                         type: 'line', plugins: [crosshairPlugin],
                         data: { labels, datasets: [
-                            { label: 'Actividad diaria', data: valores, borderColor: lineColor, backgroundColor: lineColor + '08', borderWidth: 1.5, fill: { target: 'origin', above: lineColor + '10' }, tension: 0, pointRadius: 0, pointHitRadius: 8, pointHoverRadius: 4, pointHoverBackgroundColor: lineColor, pointHoverBorderColor: '#fff', pointHoverBorderWidth: 2 },
-                            { label: 'Media movil 7d', data: ma7, borderColor: lineColor + '80', borderWidth: 1, borderDash: [6, 3], fill: false, tension: 0.4, pointRadius: 0, pointHitRadius: 0 }
+                            { label: 'Actividad diaria', data: valores, borderColor: lineColor, backgroundColor: 'transparent', borderWidth: 2.5, fill: false, tension: 0.4, pointRadius: valores.map((_, i) => i === valores.length - 1 ? 5 : 0), pointHitRadius: 10, pointHoverRadius: 6, pointBackgroundColor: lineColor, pointBorderColor: '#fff', pointBorderWidth: 2 },
+                            { label: 'Media movil 7d', data: ma7, borderColor: lineColor + '50', borderWidth: 1.2, borderDash: [4, 6], fill: false, tension: 0.4, pointRadius: 0, pointHitRadius: 0 }
                         ]},
                         options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-                            plugins: { legend: { display: true, position: 'top', align: 'end', labels: { boxWidth: 12, boxHeight: 2, padding: 8, font: { size: 10 }, color: '#9ca3af' } }, tooltip: { backgroundColor: 'rgba(255,255,255,0.95)', titleColor: '#111827', bodyColor: '#374151', borderColor: '#e5e7eb', borderWidth: 1, padding: 10, displayColors: true, boxWidth: 8, boxHeight: 8, titleFont: { size: 11, weight: 'bold' }, bodyFont: { size: 11 }, callbacks: { title: (items) => items[0]?.label || '', label: (item) => item.datasetIndex === 0 ? ` ${item.raw} instrumentos` : ` MA(7): ${item.raw.toFixed(1)}` } } },
-                            scales: { y: { position: 'right', beginAtZero: true, ticks: { color: '#9ca3af', font: { size: 10 }, stepSize: 1, padding: 8 }, grid: { color: '#f3f4f6', drawBorder: false }, border: { display: false } }, x: { ticks: { color: '#9ca3af', font: { size: 9 }, maxRotation: 0, maxTicksLimit: 8, padding: 4 }, grid: { display: false }, border: { display: false } } }
+                            plugins: { legend: { display: true, position: 'top', align: 'end', labels: { boxWidth: 12, boxHeight: 2, padding: 8, font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' }, color: '#b0b8c4' } }, tooltip: { backgroundColor: 'rgba(15,23,42,0.92)', titleColor: '#f1f5f9', bodyColor: '#cbd5e1', borderColor: 'rgba(255,255,255,0.08)', borderWidth: 1, cornerRadius: 10, padding: { top: 8, bottom: 8, left: 12, right: 12 }, displayColors: true, boxWidth: 8, boxHeight: 8, boxPadding: 6, titleFont: { size: 11, weight: '600' }, bodyFont: { size: 11 }, callbacks: { title: (items) => items[0]?.label || '', label: (item) => item.datasetIndex === 0 ? ` ${item.raw} instrumentos` : ` MA(7): ${item.raw.toFixed(1)}` } } },
+                            scales: { y: { position: 'right', beginAtZero: true, ticks: { color: '#b0b8c4', font: { size: 10 }, stepSize: 1, padding: 12 }, grid: { color: 'rgba(0,0,0,0.04)', lineWidth: 0.5, drawBorder: false, drawTicks: false }, border: { display: false } }, x: { ticks: { color: '#b0b8c4', font: { size: 10 }, maxRotation: 0, maxTicksLimit: 8, padding: 8 }, grid: { display: false }, border: { display: false } } }
                         }
                     });
                 }
