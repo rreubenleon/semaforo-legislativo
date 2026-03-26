@@ -438,28 +438,19 @@ def obtener_fuentes_por_categoria():
                 "fecha": r["fecha"][:10] if r["fecha"] else "",
             })
 
-        # Documentos de Gaceta que coinciden
-        # Usa word boundaries para keywords cortos (≤4 chars) vía _build_like_conditions
+        # Documentos de Gaceta que coinciden con esta categoría
+        # Busca por columna categorias (mismo formato que artículos de medios)
         gaceta_docs = []
-        cond_parts = []
-        params = []
-        for kw in keywords[:5]:
-            cond_sql, cond_params = _build_like_conditions(kw)
-            cond_parts.append(cond_sql)
-            params.extend(cond_params)
-        condiciones = " OR ".join(cond_parts)
-
-        if condiciones:
-            rows = conn.execute(f"""
-                SELECT tipo, titulo, autor, comision, fecha, url,
-                       COALESCE(url_pdf, '') as url_pdf,
-                       COALESCE(numero_doc, '') as numero_doc,
-                       COALESCE(camara, 'Diputados') as camara
-                FROM gaceta
-                WHERE ({condiciones})
-                  AND fecha >= date('now', '-14 days')
-                ORDER BY fecha DESC
-            """, params).fetchall()
+        rows = conn.execute("""
+            SELECT tipo, titulo, autor, comision, fecha, url,
+                   COALESCE(url_pdf, '') as url_pdf,
+                   COALESCE(numero_doc, '') as numero_doc,
+                   COALESCE(camara, 'Diputados') as camara
+            FROM gaceta
+            WHERE categorias LIKE ?
+              AND fecha >= date('now', '-14 days')
+            ORDER BY fecha DESC
+        """, (f"%{cat_clave}%",)).fetchall()
             for r in rows:
                 gaceta_docs.append({
                     "tipo": r["tipo"],
@@ -875,21 +866,18 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     reporte_final = generar_reporte()
 
     # Paso 9: Auto-posting Twitter @Fiat_MX
-    # Desactivado: plan gratuito de X API no tiene créditos (402 CreditsDepleted).
-    # Tweets se publican manualmente vía Chrome cuando se requiera.
-    # Para reactivar, descomentar el bloque siguiente y configurar plan Basic ($100 USD/mes).
-    # try:
-    #     from scrapers.twitter_poster import generar_alertas_twitter
-    #     scores_para_twitter = {}
-    #     for s in scores:
-    #         scores_para_twitter[s["categoria"]] = {
-    #             "score": s.get("score_compuesto", 0),
-    #             "color": s.get("color", "verde"),
-    #         }
-    #     tw_result = generar_alertas_twitter(scores_para_twitter)
-    #     logger.info(f"Twitter @Fiat_MX: {tw_result['publicados']} tweets publicados")
-    # except Exception as e:
-    #     logger.warning(f"Twitter poster falló (no crítico): {e}")
+    try:
+        from scrapers.twitter_poster import generar_alertas_twitter
+        scores_para_twitter = {}
+        for s in scores:
+            scores_para_twitter[s["categoria"]] = {
+                "score": s.get("score_compuesto", 0),
+                "color": s.get("color", "verde"),
+            }
+        tw_result = generar_alertas_twitter(scores_para_twitter)
+        logger.info(f"Twitter @Fiat_MX: {tw_result['publicados']} tweets publicados")
+    except Exception as e:
+        logger.warning(f"Twitter poster falló (no crítico): {e}")
 
     # Health check: verificar que todas las fuentes tienen datos recientes
     paso_8_health_check()
