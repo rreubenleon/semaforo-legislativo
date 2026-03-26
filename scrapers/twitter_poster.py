@@ -148,11 +148,12 @@ def _record_posted(tweet_hash, text):
 
 
 def _get_color(score):
+    # En FIAT: score alto = verde (alta actividad), score bajo = rojo (baja actividad)
     if score >= 65:
-        return "rojo"
+        return "verde"
     elif score >= 40:
         return "amarillo"
-    return "verde"
+    return "rojo"
 
 
 def _get_ultima_nota(categoria):
@@ -197,8 +198,8 @@ def _construir_tweet_correlacion(cat_key, nombre_cat, score, emoji, color):
     Construye un tweet usando el modelo reactivo de correlación.
     Formato: score + legislador correlacionado + instrumento/ley.
     """
-    zona = "zona roja" if color == "rojo" else "zona amarilla"
-    verbo = "alcanzó" if color == "rojo" else "está en"
+    zona = "zona verde" if color == "verde" else "zona amarilla" if color == "amarillo" else "zona roja"
+    verbo = "alcanzó" if color == "verde" else "está en"
 
     # Intentar obtener datos de correlación
     leg = _get_top_correlacion(cat_key)
@@ -286,15 +287,15 @@ def generar_alertas_twitter(scores_actuales):
         motivo = ""
 
         prev = scores_previos.get(cat_key, {})
-        prev_color = prev.get("color", "verde")
+        prev_color = prev.get("color", "rojo")  # Default rojo = inactivo
 
-        # Trigger 1: Categoría en ROJO
-        if color == "rojo" and prev_color != "rojo":
+        # Trigger 1: Categoría sube a VERDE (alta actividad)
+        if color == "verde" and prev_color != "verde":
             should_tweet = True
-            motivo = "subió a rojo"
+            motivo = "subió a verde (alta actividad)"
 
-        # Trigger 2: Cambio de color significativo
-        elif color == "amarillo" and prev_color == "verde":
+        # Trigger 2: Categoría sube a AMARILLO desde ROJO
+        elif color == "amarillo" and prev_color == "rojo":
             should_tweet = True
             motivo = "subió a amarillo"
 
@@ -532,9 +533,9 @@ def _tweet_snapshot_semanal(scores_actuales, semana):
         score_top = top[1].get("score", 0)
 
         tweet = f"📈 Snapshot semanal FIAT\n\n"
-        tweet += f"🔴 Alta actividad: {rojos} categorías\n"
+        tweet += f"🟢 Alta actividad: {verdes} categorías\n"
         tweet += f"🟡 Actividad elevada: {amarillos} categorías\n"
-        tweet += f"🟢 Actividad baja: {verdes} categorías\n\n"
+        tweet += f"🔴 Actividad baja: {rojos} categorías\n\n"
         tweet += f"Mayor probabilidad: {nombre_top} ({score_top:.0f}%)\n\n"
         tweet += "#CongresoMX #SemáforoLegislativo\nfiatmx.com"
 
