@@ -48,9 +48,17 @@ HEADERS = {
 # Configuración de scraping HTML por medio
 SCRAPE_CONFIGS = {
     "animal_politico": {
-        "url": "https://animalpolitico.com",
-        "metodo": "nextjs",  # Extraer de __NEXT_DATA__
-        "base_url": "https://animalpolitico.com/",
+        "url": "https://grupoanimal.mx/noticias",
+        "metodo": "links",
+        "patron_href": r"/noticias/",
+        "base_url": "https://grupoanimal.mx",
+    },
+    "milenio": {
+        "url": "https://www.milenio.com/politica",
+        "metodo": "headings",
+        "tags": ["h2"],
+        "base_url": "https://www.milenio.com",
+        "filtro_href": "/politica/",
     },
     "el_universal": {
         "url": "https://www.eluniversal.com.mx/nacion/",
