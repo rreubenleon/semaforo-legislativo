@@ -1482,6 +1482,7 @@ LEYES_FEDERALES = {
     "Ley del Impuesto al Valor Agregado": "economia_hacienda",
     "Ley del ISR": "economia_hacienda",
     "Ley del IEPS": "economia_hacienda",
+    "Ley del Impuesto Especial sobre Producción y Servicios": "economia_hacienda",
     "Ley Federal de Derechos": "economia_hacienda",
     "Ley de Coordinación Fiscal": "economia_hacienda",
     "Ley Federal de Presupuesto y Responsabilidad Hacendaria": "economia_hacienda",
