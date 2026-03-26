@@ -1234,14 +1234,19 @@ CATEGORIAS = {
 # HELPER: Obtener keywords planos por categoría
 # ─────────────────────────────────────────────
 def obtener_keywords_categoria(cat_clave):
-    """Retorna la unión de keywords de todas las subcategorías de una categoría.
+    """Retorna la unión de keywords de todas las subcategorías + nombres de leyes federales.
     Backward-compatible: si la categoría aún tiene 'keywords' (legacy), los retorna directamente."""
     cat = CATEGORIAS[cat_clave]
     if "keywords" in cat:  # fallback legacy
-        return cat["keywords"]
-    todos = set()
-    for sub in cat.get("subcategorias", {}).values():
-        todos.update(sub["keywords"])
+        todos = set(cat["keywords"])
+    else:
+        todos = set()
+        for sub in cat.get("subcategorias", {}).values():
+            todos.update(sub["keywords"])
+    # Agregar nombres de leyes federales mapeadas a esta categoría
+    for ley_nombre, ley_cat in LEYES_FEDERALES.items():
+        if ley_cat == cat_clave:
+            todos.add(ley_nombre)
     return list(todos)
 
 # ─────────────────────────────────────────────
