@@ -100,14 +100,11 @@ jobs:
           git diff --staged --quiet || git commit -m "🔄 Actualización automática $(date -u '+%Y-%m-%d %H:%M UTC')"
           # Pull con rebase para resolver si alguien pusheó durante el pipeline
           git pull --rebase origin main || {
-            # Si rebase falla por conflictos en archivos generados, aceptar los nuestros
-            git checkout --theirs dashboard/data.json 2>/dev/null
+            # Si rebase falla, abortar y usar merge strategy
+            git rebase --abort 2>/dev/null
+            git pull --no-rebase -X theirs origin main
             git add dashboard/data.json 2>/dev/null
-            git rebase --continue 2>/dev/null || git rebase --abort
-            git pull --no-rebase origin main
-            git checkout --ours dashboard/data.json 2>/dev/null
-            git add dashboard/data.json 2>/dev/null
-            git commit -m "🔄 Merge automático con cambios remotos" --allow-empty
+            git diff --staged --quiet || git commit -m "🔄 Merge automático con cambios remotos"
           }
           git push
 
