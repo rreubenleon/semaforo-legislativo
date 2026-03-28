@@ -439,7 +439,7 @@ def obtener_fuentes_por_categoria():
             })
 
         # Documentos de Gaceta que coinciden con esta categoría
-        # Busca por columna categorias (mismo formato que artículos de medios)
+        # Excluye convocatorias/citatorios (van en widget separado)
         gaceta_docs = []
         rows = conn.execute("""
             SELECT tipo, titulo, autor, comision, fecha, url,
@@ -449,6 +449,8 @@ def obtener_fuentes_por_categoria():
             FROM gaceta
             WHERE categorias LIKE ?
               AND fecha >= date('now', '-14 days')
+              AND titulo NOT LIKE '%onvocatoria%'
+              AND titulo NOT LIKE '%CITATORIO%'
             ORDER BY fecha DESC
         """, (f"%{cat_clave}%",)).fetchall()
         for r in rows:
@@ -523,6 +525,47 @@ def obtener_fuentes_por_categoria():
         }
 
     return fuentes
+
+
+def obtener_convocatorias():
+    """
+    Extrae convocatorias a sesión de comisión de la Gaceta.
+    Separadas por cámara para el widget de Próximas Sesiones.
+    """
+    import sqlite3
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+
+    convocatorias = {"Diputados": [], "Senado": []}
+
+    rows = conn.execute("""
+        SELECT tipo, titulo, comision, fecha, url,
+               COALESCE(url_pdf, '') as url_pdf,
+               COALESCE(camara, 'Diputados') as camara
+        FROM gaceta
+        WHERE (titulo LIKE '%onvocatoria%' OR titulo LIKE '%CITATORIO%')
+          AND fecha >= date('now', '-30 days')
+        ORDER BY fecha DESC
+    """).fetchall()
+
+    for r in rows:
+        camara = r["camara"] if r["camara"] in ("Diputados", "Senado") else "Diputados"
+        # Limpiar el título: extraer nombre de comisión y tipo de reunión
+        titulo_raw = r["titulo"] or ""
+        comision = r["comision"] or ""
+        # Si la comisión viene pegada al título, usar comisión del campo
+        if not comision or comision == "No especificada":
+            comision = titulo_raw[:60]
+
+        convocatorias[camara].append({
+            "titulo": titulo_raw[:150],
+            "comision": comision[:80],
+            "fecha": r["fecha"][:10] if r["fecha"] else "",
+            "url": r["url"] or "",
+            "url_pdf": r["url_pdf"] or "",
+        })
+
+    return convocatorias
 
 
 def paso_7_exportar_dashboard():
@@ -630,6 +673,7 @@ def paso_7_exportar_dashboard():
         "mapa": obtener_mapa_datos(),
         "resoluciones": obtener_resoluciones(semanas=12),
         "tweets_fiat": _obtener_tweets_fiat(),
+        "convocatorias": obtener_convocatorias(),
     }
 
     # Construir datos del semáforo con nombres + momentum + subcategorías activas
