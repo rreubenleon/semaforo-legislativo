@@ -496,6 +496,52 @@ def actualizar_categorias_en_db():
     conn.commit()
     logger.info(f"Gaceta clasificados: {gaceta_ok}/{len(gaceta_sin)}")
 
+    # ── Reclasificar gaceta con ley identificable (corrige errores históricos) ──
+    try:
+        from config import LEYES_FEDERALES
+        from api.predictor_autoria import extraer_ley_de_titulo
+
+        gaceta_todos = conn.execute("""
+            SELECT id, titulo, categorias FROM gaceta
+            WHERE categorias IS NOT NULL AND categorias != ''
+        """).fetchall()
+
+        reclasificados = 0
+        for row in gaceta_todos:
+            d = dict(row)
+            ley = extraer_ley_de_titulo(d["titulo"])
+            if not ley:
+                continue
+
+            # Buscar la ley en LEYES_FEDERALES (fuzzy: quitar artículos)
+            import re
+            ley_norm = re.sub(r'\b(de|del|la|las|los|el|para|sobre|en)\b', '', ley.lower()).strip()
+            ley_norm = re.sub(r'\s+', ' ', ley_norm)
+
+            cat_correcta = None
+            for nombre_ley, cat in LEYES_FEDERALES.items():
+                nombre_norm = re.sub(r'\b(de|del|la|las|los|el|para|sobre|en)\b', '', nombre_ley.lower()).strip()
+                nombre_norm = re.sub(r'\s+', ' ', nombre_norm)
+                if ley_norm == nombre_norm or ley_norm in nombre_norm or nombre_norm in ley_norm:
+                    cat_correcta = cat
+                    break
+
+            if not cat_correcta:
+                continue
+
+            # Verificar si la categoría actual es diferente
+            cat_actual = d["categorias"].split(":")[0] if d["categorias"] else ""
+            if cat_actual != cat_correcta:
+                nueva_cat = f"{cat_correcta}:0.75"
+                conn.execute("UPDATE gaceta SET categorias = ? WHERE id = ?", (nueva_cat, d["id"]))
+                reclasificados += 1
+
+        conn.commit()
+        if reclasificados > 0:
+            logger.info(f"Gaceta reclasificados por ley: {reclasificados}")
+    except Exception as e:
+        logger.warning(f"Error reclasificando gaceta por ley: {e}")
+
     # ── Reclasificar SIL documentos sin categoría ──
     sil_sin = conn.execute("""
         SELECT id, titulo, sinopsis, comision FROM sil_documentos
