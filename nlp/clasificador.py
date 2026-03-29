@@ -75,13 +75,18 @@ CONTEXTO_ENTRETENIMIENTO = [
 
 def _es_contexto_no_legislativo(titulo, resumen=""):
     """
-    Detecta si un artículo es claramente deportes o entretenimiento.
+    Detecta si un artículo es claramente deportes, entretenimiento o
+    intervenciones genéricas de agenda política (no instrumentos legislativos).
     Retorna True si debe ser EXCLUIDO de la clasificación legislativa.
 
     IMPORTANTE: No excluye temas sociales (violencia, desastres, crisis)
     porque esos sí pueden generar presión legislativa.
     """
     texto = f"{titulo} {resumen}".lower()
+
+    # Intervenciones genéricas de Agenda Política (no son instrumentos legislativos)
+    if "para referirse a la situación" in texto or "para referirse a la " in texto:
+        return True
 
     # Contar señales deportivas
     hits_deporte = sum(1 for kw in CONTEXTO_DEPORTIVO if kw in texto)
