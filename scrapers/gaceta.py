@@ -686,8 +686,82 @@ def scrape_gaceta_rango(dias=7):
                 nuevos = _insertar_documentos(conn, docs)
                 todos_documentos.extend(docs[:nuevos] if nuevos > 0 else [])
 
+        # Extraer convocatorias de la página principal (sección Convocatorias)
+        docs_conv = _extraer_convocatorias_diputados(html_principal, url_principal, fecha_str)
+        if docs_conv:
+            nuevos_conv = _insertar_documentos(conn, docs_conv)
+            todos_documentos.extend(docs_conv[:nuevos_conv] if nuevos_conv > 0 else [])
+            if nuevos_conv > 0:
+                logger.info(f"    {nuevos_conv} convocatorias de Diputados")
+
     logger.info(f"Scraping completo: {len(todos_documentos)} documentos nuevos ({total_requests} requests)")
     return todos_documentos
+
+
+def _extraer_convocatorias_diputados(html, url_pagina, fecha_str):
+    """
+    Extrae convocatorias de la página principal de Gaceta Diputados.
+    Busca la sección >Convocatorias</a> seguida de <ul><li><a class="Indice">.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    docs = []
+
+    # Buscar el ancla de Convocatorias
+    conv_anchor = None
+    for a in soup.find_all("a"):
+        text = a.get_text(strip=True)
+        if text == "Convocatorias":
+            conv_anchor = a
+            break
+
+    if not conv_anchor:
+        return docs
+
+    # Buscar el <ul> que sigue a la sección de Convocatorias
+    ul = conv_anchor.find_next("ul")
+    if not ul:
+        return docs
+
+    for li in ul.find_all("li", recursive=False):
+        a_tag = li.find("a", class_="Indice")
+        if not a_tag:
+            a_tag = li.find("a")
+        if not a_tag:
+            continue
+
+        titulo = a_tag.get_text(separator=" ", strip=True)
+        if not titulo or len(titulo) < 15:
+            continue
+
+        # Extraer nombre de comisión del título
+        comision = "No especificada"
+        import re
+        com_match = re.search(r'(?:De la |de la )(Comisi[oó]n\s+.+?)(?:,\s+a\s+la|,\s+al)', titulo, re.IGNORECASE)
+        if com_match:
+            comision = com_match.group(1).strip()
+
+        href = a_tag.get("href", "")
+        if href.startswith("#"):
+            doc_url = url_pagina + href
+        elif href.startswith("http"):
+            doc_url = href
+        else:
+            doc_url = url_pagina
+
+        docs.append({
+            "fecha": fecha_str,
+            "tipo": "comunicacion",
+            "titulo": titulo,
+            "autor": "",
+            "comision": comision,
+            "resumen": titulo,
+            "url": doc_url,
+            "url_pdf": "",
+            "numero_doc": f"conv-dip-{fecha_str}-{len(docs)+1}",
+            "camara": "Diputados",
+        })
+
+    return docs
 
 
 def _insertar_documentos(conn, documentos):

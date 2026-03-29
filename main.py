@@ -527,16 +527,67 @@ def obtener_fuentes_por_categoria():
     return fuentes
 
 
+def _extraer_fecha_sesion(titulo):
+    """
+    Extrae la fecha real de la sesión del texto de una convocatoria.
+    Busca patrones como:
+      - "8 de abril de 2026"
+      - "miércoles 12 de marzo"
+      - "21 de abril"
+    Retorna fecha como DD-MM-YYYY o None si no encuentra.
+    """
+    import re
+    from datetime import datetime
+
+    MESES = {
+        "enero": 1, "febrero": 2, "marzo": 3, "abril": 4,
+        "mayo": 5, "junio": 6, "julio": 7, "agosto": 8,
+        "septiembre": 9, "octubre": 10, "noviembre": 11, "diciembre": 12,
+    }
+
+    # Patrón: "día de mes de año" (ej: "8 de abril de 2026")
+    m = re.search(
+        r'(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)\s+(?:de\s+)?(\d{4})',
+        titulo, re.IGNORECASE
+    )
+    if m:
+        dia, mes_str, anio = int(m.group(1)), MESES.get(m.group(2).lower()), int(m.group(3))
+        if mes_str:
+            try:
+                return datetime(anio, mes_str, dia).strftime("%d-%m-%Y")
+            except ValueError:
+                pass
+
+    # Patrón sin año: "día de mes" (ej: "21 de abril") — asumir año actual
+    m2 = re.search(
+        r'(\d{1,2})\s+de\s+(enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)',
+        titulo, re.IGNORECASE
+    )
+    if m2:
+        dia, mes_str = int(m2.group(1)), MESES.get(m2.group(2).lower())
+        if mes_str:
+            anio = datetime.now().year
+            try:
+                return datetime(anio, mes_str, dia).strftime("%d-%m-%Y")
+            except ValueError:
+                pass
+
+    return None
+
+
 def obtener_convocatorias():
     """
     Extrae convocatorias a sesión de comisión de la Gaceta.
     Separadas por cámara para el widget de Próximas Sesiones.
+    Solo incluye convocatorias futuras con fecha real extraída del título.
     """
     import sqlite3
+    from datetime import datetime
     conn = get_connection()
     conn.row_factory = sqlite3.Row
 
     convocatorias = {"Diputados": [], "Senado": []}
+    hoy = datetime.now().strftime("%d-%m-%Y")
 
     rows = conn.execute("""
         SELECT tipo, titulo, comision, fecha, url,
@@ -544,26 +595,43 @@ def obtener_convocatorias():
                COALESCE(camara, 'Diputados') as camara
         FROM gaceta
         WHERE (titulo LIKE '%onvocatoria%' OR titulo LIKE '%CITATORIO%')
-          AND fecha >= date('now', '-30 days')
+          AND fecha >= date('now', '-60 days')
         ORDER BY fecha DESC
     """).fetchall()
 
     for r in rows:
         camara = r["camara"] if r["camara"] in ("Diputados", "Senado") else "Diputados"
-        # Limpiar el título: extraer nombre de comisión y tipo de reunión
         titulo_raw = r["titulo"] or ""
         comision = r["comision"] or ""
-        # Si la comisión viene pegada al título, usar comisión del campo
         if not comision or comision == "No especificada":
             comision = titulo_raw[:60]
+
+        # Extraer fecha REAL de la sesión del título
+        fecha_sesion = _extraer_fecha_sesion(titulo_raw)
+        if not fecha_sesion:
+            continue  # Sin fecha real → no mostrar
+
+        # Solo convocatorias futuras o de hoy
+        try:
+            fecha_dt = datetime.strptime(fecha_sesion, "%d-%m-%Y")
+            if fecha_dt.date() < datetime.now().date():
+                continue  # Sesión ya pasó
+        except ValueError:
+            continue
 
         convocatorias[camara].append({
             "titulo": titulo_raw[:150],
             "comision": comision[:80],
-            "fecha": r["fecha"][:10] if r["fecha"] else "",
+            "fecha": fecha_sesion,
             "url": r["url"] or "",
             "url_pdf": r["url_pdf"] or "",
         })
+
+    # Ordenar por fecha de sesión (más próxima primero)
+    for camara in convocatorias:
+        convocatorias[camara].sort(
+            key=lambda c: datetime.strptime(c["fecha"], "%d-%m-%Y")
+        )
 
     return convocatorias
 
