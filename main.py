@@ -36,7 +36,7 @@ from scrapers.sil import (
 from scrapers.mananera import scrape_mananeras
 from scrapers.sintesis_legislativa import scrape_sintesis_legislativa
 from scrapers.twitter import scrape_twitter
-from nlp.clasificador import actualizar_categorias_en_db, obtener_distribucion_categorias, detectar_subcategorias
+from nlp.clasificador import actualizar_categorias_en_db, obtener_distribucion_categorias, detectar_subcategorias, _es_contexto_no_legislativo
 from api.correlacion import (
     calcular_todos_los_scores,
     obtener_scores_actuales,
@@ -431,6 +431,9 @@ def obtener_fuentes_por_categoria():
             ORDER BY fecha DESC LIMIT 15
         """, (f"%{cat_clave}%",)).fetchall()
         for r in rows:
+            # Filtrar artículos de deportes/entretenimiento que se colaron
+            if _es_contexto_no_legislativo(r["titulo"], ""):
+                continue
             articulos.append({
                 "fuente": r["fuente"],
                 "titulo": r["titulo"][:150],
@@ -451,6 +454,7 @@ def obtener_fuentes_por_categoria():
               AND fecha >= date('now', '-14 days')
               AND titulo NOT LIKE '%onvocatoria%'
               AND titulo NOT LIKE '%CITATORIO%'
+              AND titulo NOT LIKE '%para referirse a la situación%'
             ORDER BY fecha DESC
         """, (f"%{cat_clave}%",)).fetchall()
         for r in rows:
