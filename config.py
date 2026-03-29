@@ -832,7 +832,7 @@ CATEGORIAS = {
         "subcategorias": {
             "agricultura_cultivos": {
                 "nombre": "Agricultura y cultivos",
-                "keywords": ["agricultura", "maíz", "glifosato", "transgénico", "fertilizante", "cosecha", "Segalmex", "soberanía alimentaria",
+                "keywords": ["agricultura", "maíz", "glifosato", "transgénico", "fertilizante", "cosecha", "Segalmex", "soberanía alimentaria", "autosuficiencia alimentaria",
                              "sequía agrícola", "helada", "granizada", "pérdida de cosecha", "precio del maíz",
                              "precio del frijol", "tortilla", "Sader", "secretario de agricultura", "riego",
                              "temporal", "distrito de riego", "plaga", "importación de maíz", "maíz transgénico",
@@ -917,7 +917,9 @@ CATEGORIAS = {
             "soberania_fronteras": {
                 "nombre": "Soberanía y fronteras",
                 "keywords": ["soberanía nacional", "intervención extranjera", "extradición", "deportación", "frontera norte", "frontera sur",
-                             "remesas", "paisano", "diáspora mexicana"],
+                             "remesas", "paisano", "diáspora mexicana",
+                             "custodia de ICE", "detenido por ICE", "mexicano en custodia",
+                             "candidatura para la ONU", "Naciones Unidas"],
             },
         },
     },
@@ -1754,10 +1756,13 @@ KEYWORDS_NEGATIVOS = [
     "Congreso de Colombia", "Congreso de Argentina", "Congreso de Chile",
     "Congreso de Brasil", "Asamblea Nacional de Venezuela",
     "Westminster", "Bundestag", "Dieta de Japón",
-    # Figuras internacionales no-México
+    # Figuras y partidos internacionales no-México
     "Steffon Diggs", "Stefon Diggs", "Tom Brady", "LeBron James",
     "Taylor Swift", "Elon Musk", "Jeff Bezos",
     "Milei", "Boric", "Petro", "Lula",
+    "Fujimori", "Keiko Fujimori", "Bukele", "Maduro",
+    "Bolsonaro", "Castillo", "Arce", "Lacalle Pou",
+    "parlamento de Perú", "congreso peruano",
     # Entretenimiento / farándula / virales
     "Hollywood", "Bollywood", "Oscar de Hollywood",
     "Grammy", "Emmy", "Golden Globe",

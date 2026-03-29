@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 CONTEXTO_DEPORTIVO = [
     # Fútbol mexicano
     "selección mexicana", "selección nacional", "seleccion mexicana",
+    "la selección", "apoyar a la selección",
     "director técnico", "director tecnico", "convocatoria mundialista",
     "mundial 2026", "mundial de futbol", "eliminatoria mundialista",
     "liga mx", "club américa", "club america", "chivas", "pumas unam",
@@ -36,6 +37,9 @@ CONTEXTO_DEPORTIVO = [
     "copa oro", "copa del mundo", "balón de oro", "balon de oro",
     "gol de", "anotó gol", "marcador final", "medio tiempo",
     "fichaje", "transferencia de jugador", "entrenador del equipo",
+    "estadio azteca", "estadio banorte", "estadio akron",
+    "aficionado", "aficionados", "porra", "barra brava",
+    "méxico-portugal", "mexico vs", "méxico vs",
     # Otros deportes
     "juegos olímpicos", "juegos olimpicos", "medallista olímpic",
     "sprint femenino", "sprint masculino", "clavadista",
@@ -97,22 +101,28 @@ def _es_contexto_no_legislativo(titulo, resumen=""):
     if hits_deporte == 0 and hits_entretenimiento == 0:
         return False
 
-    # Señales político-sociales que RESCATAN el artículo aunque tenga
+    # Señales político-legislativas que RESCATAN el artículo aunque tenga
     # contexto deportivo (ej: "Congreso aprueba ley para el Mundial 2026")
+    # NOTA: No incluir señales genéricas como "México", "CDMX" — un partido
+    # de futbol en el Zócalo de CDMX no es tema legislativo.
     rescate_politico = [
         "congreso", "senado", "cámara de diputados", "camara de diputados",
         "iniciativa", "punto de acuerdo", "dictamen", "reforma",
-        "ley", "legisl", "presupuesto", "gobierno federal",
+        "ley ", "legisl", "presupuesto", "gobierno federal",
         "secretaría", "secretaria", "sheinbaum", "morena", "pan ",
         "pri ", "comisión", "comision", "tribunal", "corte suprema",
         "derechos humanos", "feminicidio", "desaparición", "desaparicion",
-        "protesta", "manifestación", "manifestacion", "denuncia",
-        "fiscal", "procurador", "ministerio público",
+        "protesta", "manifestación", "manifestacion", "denuncia penal",
+        "fiscalía general", "procurador", "ministerio público",
     ]
 
     hits_politico = sum(1 for kw in rescate_politico if kw in texto)
 
-    # Si tiene contexto político, NO excluir (es un tema mixto relevante)
+    # Si tiene señales deportivas fuertes (2+), exigir al menos 2 señales políticas
+    if hits_deporte >= 2 and hits_politico < 2:
+        return True
+
+    # Si tiene contexto político claro, NO excluir
     if hits_politico >= 1:
         return False
 
