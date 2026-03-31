@@ -642,6 +642,77 @@ def obtener_convocatorias():
     return convocatorias
 
 
+def obtener_actividad_comisiones():
+    """
+    Calcula actividad legislativa por comisión usando datos de Gaceta.
+    Agrupa por comisión, cuenta documentos por tipo, y mapea a categoría FIAT.
+    """
+    import sqlite3
+    from config import comision_a_categoria, CATEGORIAS
+    conn = get_connection()
+    conn.row_factory = sqlite3.Row
+
+    rows = conn.execute("""
+        SELECT comision, camara, tipo, COUNT(*) as total,
+               MAX(fecha) as ultima_fecha
+        FROM gaceta
+        WHERE comision IS NOT NULL
+          AND comision != ''
+          AND comision != 'No especificada'
+          AND fecha >= date('now', '-60 days')
+        GROUP BY comision, camara, tipo
+        ORDER BY comision
+    """).fetchall()
+
+    # Agregar por comisión
+    comisiones = {}
+    for r in rows:
+        nombre = r["comision"]
+        camara = r["camara"] or "Diputados"
+        key = f"{nombre}|{camara}"
+
+        if key not in comisiones:
+            cat_fiat = comision_a_categoria(nombre)
+            comisiones[key] = {
+                "nombre": nombre[:100],
+                "camara": camara,
+                "categoria_fiat": cat_fiat,
+                "categoria_nombre": CATEGORIAS[cat_fiat]["nombre"] if cat_fiat and cat_fiat in CATEGORIAS else None,
+                "tipos": {},
+                "total_docs": 0,
+                "ultima_actividad": "",
+            }
+
+        c = comisiones[key]
+        tipo = r["tipo"] or "otro"
+        c["tipos"][tipo] = c["tipos"].get(tipo, 0) + r["total"]
+        c["total_docs"] += r["total"]
+        if r["ultima_fecha"] and r["ultima_fecha"] > c["ultima_actividad"]:
+            c["ultima_actividad"] = r["ultima_fecha"]
+
+    # Calcular score de actividad (0-100) basado en documentos y tipos
+    resultado = list(comisiones.values())
+    if resultado:
+        max_docs = max(c["total_docs"] for c in resultado)
+        for c in resultado:
+            # Score base por volumen
+            score_vol = (c["total_docs"] / max_docs * 60) if max_docs > 0 else 0
+            # Bonus por diversidad de tipos (dictámenes valen más)
+            bonus = 0
+            if "dictamen" in c["tipos"]:
+                bonus += 20
+            if "iniciativa" in c["tipos"]:
+                bonus += 10
+            if "proposicion" in c["tipos"]:
+                bonus += 10
+            c["score_actividad"] = min(round(score_vol + bonus, 1), 100)
+
+    # Ordenar por score descendente
+    resultado.sort(key=lambda c: c["score_actividad"], reverse=True)
+
+    return resultado
+
+
 def paso_7_exportar_dashboard():
     """Paso 7: Exportar datos JSON para el dashboard."""
     logger.info("=" * 60)
@@ -748,6 +819,7 @@ def paso_7_exportar_dashboard():
         "resoluciones": obtener_resoluciones(semanas=12),
         "tweets_fiat": _obtener_tweets_fiat(),
         "convocatorias": obtener_convocatorias(),
+        "comisiones_actividad": obtener_actividad_comisiones(),
     }
 
     # Construir datos del semáforo con nombres + momentum + subcategorías activas

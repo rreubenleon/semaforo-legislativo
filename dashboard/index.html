@@ -1299,6 +1299,7 @@
            ================================================================ */
 
         function PageLegisladores({ data }) {
+            const [tabActiva, setTabActiva] = useState('probabilidad');
             const [catSeleccionada, setCatSeleccionada] = useState(null);
             const semaforo = data.semaforo || [];
             const autoria = data.autoria || {};
@@ -1308,67 +1309,226 @@
             const showPopover = (leg, e) => { clearTimeout(popoverTimer.current); const rect = e.currentTarget.getBoundingClientRect(); const left = rect.right + 8 + 320 > window.innerWidth ? Math.max(16, rect.left - 328) : rect.right + 8; setPopoverLeg({ ...leg, _pos: { top: rect.top, left } }); };
             const hidePopover = () => { popoverTimer.current = setTimeout(() => setPopoverLeg(null), 200); };
 
+            // Datos de comisiones
+            const comisionesData = data.comisiones_actividad || [];
+            const [filtroCamara, setFiltroCamara] = useState('todas');
+            const [filtroCategoria, setFiltroCategoria] = useState(null);
+
+            const comisionesFiltradas = comisionesData.filter(c => {
+                if (filtroCamara !== 'todas' && c.camara !== filtroCamara) return false;
+                if (filtroCategoria && c.categoria_fiat !== filtroCategoria) return false;
+                return true;
+            });
+
+            const categoriasComisiones = [...new Set(comisionesData.filter(c => c.categoria_fiat).map(c => c.categoria_fiat))];
+
             return (
                 <div className="space-y-6">
-                    <div>
-                        <h2 className="text-lg font-bold text-gray-800 mb-1">Probabilidad de presentacion por tema</h2>
-                        <p className="text-sm text-gray-500">Selecciona una categoria para ver los legisladores con mayor probabilidad de presentar iniciativas, puntos de acuerdo u otros instrumentos legislativos.</p>
+                    {/* Tabs */}
+                    <div className="flex gap-1 bg-gray-100 rounded-lg p-1 w-fit">
+                        <button onClick={() => setTabActiva('probabilidad')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${tabActiva === 'probabilidad' ? 'bg-white text-acento shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                            Probabilidad
+                        </button>
+                        <button onClick={() => setTabActiva('comisiones')}
+                            className={`px-4 py-2 rounded-md text-sm font-medium transition-all ${tabActiva === 'comisiones' ? 'bg-white text-acento shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                            Comisiones
+                        </button>
                     </div>
 
-                    {/* Category selector */}
-                    <div className="flex flex-wrap gap-2">
-                        {categorias.map(cat => {
-                            const catData = semaforo.find(s => s.categoria === cat);
-                            const nombre = catData?.nombre || cat;
-                            const isActive = catSeleccionada === cat;
-                            const colorDot = catData?.color === 'verde' ? 'bg-semaforo-verde' : catData?.color === 'amarillo' ? 'bg-semaforo-amarillo' : 'bg-semaforo-rojo';
-                            return (
-                                <button key={cat} onClick={() => setCatSeleccionada(isActive ? null : cat)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border flex items-center gap-1.5 ${isActive ? 'bg-acento text-white border-acento' : 'bg-white text-gray-700 border-gray-200 hover:border-acento/50'}`}>
-                                    <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-white' : colorDot}`}></div>
-                                    {nombre}
-                                </button>
-                            );
-                        })}
-                    </div>
+                    {tabActiva === 'probabilidad' && (
+                        <div className="space-y-6">
+                            <div>
+                                <h2 className="text-lg font-bold text-gray-800 mb-1">Probabilidad de presentacion por tema</h2>
+                                <p className="text-sm text-gray-500">Selecciona una categoria para ver los legisladores con mayor probabilidad de presentar iniciativas, puntos de acuerdo u otros instrumentos legislativos.</p>
+                            </div>
 
-                    {/* Results */}
-                    {catSeleccionada && autoria[catSeleccionada] ? (
-                        <div className="space-y-3">
-                            <h3 className="text-sm font-semibold text-acento uppercase tracking-wider">{semaforo.find(s => s.categoria === catSeleccionada)?.nombre || catSeleccionada}</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                {autoria[catSeleccionada].map((leg, i) => (
-                                    <div key={i} className="glass border border-borde rounded-xl p-4 hover:border-acento/30 transition-colors cursor-pointer"
-                                        onMouseEnter={(e) => showPopover(leg, e)} onMouseLeave={hidePopover}>
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-10 h-10 rounded-full bg-acento/10 flex items-center justify-center text-sm font-bold text-acento flex-shrink-0">{i + 1}</div>
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <span className="font-bold text-sm text-gray-800">{leg.nombre}</span>
-                                                    <span className="text-white text-[10px] px-1.5 py-0.5 rounded font-medium" style={{backgroundColor: PARTIDO_COLORS[leg.partido] || '#999'}}>{leg.partido || '?'}</span>
+                            {/* Category selector */}
+                            <div className="flex flex-wrap gap-2">
+                                {categorias.map(cat => {
+                                    const catData = semaforo.find(s => s.categoria === cat);
+                                    const nombre = catData?.nombre || cat;
+                                    const isActive = catSeleccionada === cat;
+                                    const colorDot = catData?.color === 'verde' ? 'bg-semaforo-verde' : catData?.color === 'amarillo' ? 'bg-semaforo-amarillo' : 'bg-semaforo-rojo';
+                                    return (
+                                        <button key={cat} onClick={() => setCatSeleccionada(isActive ? null : cat)}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all border flex items-center gap-1.5 ${isActive ? 'bg-acento text-white border-acento' : 'bg-white text-gray-700 border-gray-200 hover:border-acento/50'}`}>
+                                            <div className={`w-2 h-2 rounded-full ${isActive ? 'bg-white' : colorDot}`}></div>
+                                            {nombre}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Results */}
+                            {catSeleccionada && autoria[catSeleccionada] ? (
+                                <div className="space-y-3">
+                                    <h3 className="text-sm font-semibold text-acento uppercase tracking-wider">{semaforo.find(s => s.categoria === catSeleccionada)?.nombre || catSeleccionada}</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {autoria[catSeleccionada].map((leg, i) => (
+                                            <div key={i} className="glass border border-borde rounded-xl p-4 hover:border-acento/30 transition-colors cursor-pointer"
+                                                onMouseEnter={(e) => showPopover(leg, e)} onMouseLeave={hidePopover}>
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-acento/10 flex items-center justify-center text-sm font-bold text-acento flex-shrink-0">{i + 1}</div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-2 flex-wrap">
+                                                            <span className="font-bold text-sm text-gray-800">{leg.nombre}</span>
+                                                            <span className="text-white text-[10px] px-1.5 py-0.5 rounded font-medium" style={{backgroundColor: PARTIDO_COLORS[leg.partido] || '#999'}}>{leg.partido || '?'}</span>
+                                                        </div>
+                                                        <div className="text-xs text-gray-500 mt-1">{leg.camara}{leg.estado ? ` - ${leg.estado}` : ''}</div>
+                                                        {leg.comisiones_afines?.length > 0 && <div className="text-xs text-gray-400 mt-0.5">Comisiones afines: {leg.comisiones_afines.join(', ')}</div>}
+                                                        <div className="flex items-center gap-2 mt-2">
+                                                            <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden"><div className="h-full rounded-full bg-acento transition-all" style={{width: `${Math.min(leg.score, 100)}%`}} /></div>
+                                                            <span className="text-sm text-acento font-bold">{leg.score.toFixed(0)}%</span>
+                                                        </div>
+                                                        <div className="grid grid-cols-3 gap-2 mt-2 text-[10px] text-gray-400">
+                                                            <div className="text-center"><div className="font-bold text-gray-600">{leg.desglose?.historial_tematico?.toFixed(0) || 0}</div>Historial</div>
+                                                            <div className="text-center"><div className="font-bold text-gray-600">{leg.desglose?.comision_relevante?.toFixed(0) || 0}</div>Comision</div>
+                                                            <div className="text-center"><div className="font-bold text-gray-600">{leg.docs_categoria || 0}</div>Docs previos</div>
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                                <div className="text-xs text-gray-500 mt-1">{leg.camara}{leg.estado ? ` - ${leg.estado}` : ''}</div>
-                                                {leg.comisiones_afines?.length > 0 && <div className="text-xs text-gray-400 mt-0.5">Comisiones afines: {leg.comisiones_afines.join(', ')}</div>}
-                                                <div className="flex items-center gap-2 mt-2">
-                                                    <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden"><div className="h-full rounded-full bg-acento transition-all" style={{width: `${Math.min(leg.score, 100)}%`}} /></div>
-                                                    <span className="text-sm text-acento font-bold">{leg.score.toFixed(0)}%</span>
+                                            </div>
+                                        ))}
+                                        {popoverLeg && <PopoverInstrumentos leg={popoverLeg} pos={popoverLeg._pos} onClose={hidePopover} onKeep={() => clearTimeout(popoverTimer.current)} />}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="text-center text-gray-400 py-12">
+                                    <div className="text-4xl mb-3">&#9878;</div>
+                                    <div>Selecciona una categoria para ver las predicciones de autoria legislativa</div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {tabActiva === 'comisiones' && (
+                        <div className="space-y-6">
+                            <div>
+                                <h2 className="text-lg font-bold text-gray-800 mb-1">Actividad de comisiones</h2>
+                                <p className="text-sm text-gray-500">Comisiones con mayor actividad legislativa en los ultimos 60 dias, medida por volumen y tipo de documentos procesados.</p>
+                            </div>
+
+                            {/* Filtros */}
+                            <div className="flex flex-wrap gap-3 items-center">
+                                <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
+                                    {[['todas', 'Todas'], ['Senado', 'Senado'], ['Diputados', 'Diputados']].map(([val, label]) => (
+                                        <button key={val} onClick={() => setFiltroCamara(val)}
+                                            className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${filtroCamara === val ? 'bg-white text-acento shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {categoriasComisiones.map(cat => {
+                                        const catData = semaforo.find(s => s.categoria === cat);
+                                        const nombre = catData?.nombre || cat;
+                                        const isActive = filtroCategoria === cat;
+                                        return (
+                                            <button key={cat} onClick={() => setFiltroCategoria(isActive ? null : cat)}
+                                                className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all border ${isActive ? 'bg-acento text-white border-acento' : 'bg-white text-gray-600 border-gray-200 hover:border-acento/50'}`}>
+                                                {nombre}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Stats resumen */}
+                            <div className="grid grid-cols-3 gap-3">
+                                <div className="glass border border-borde rounded-xl p-4 text-center">
+                                    <div className="text-2xl font-bold text-acento">{comisionesFiltradas.length}</div>
+                                    <div className="text-xs text-gray-500 mt-1">Comisiones activas</div>
+                                </div>
+                                <div className="glass border border-borde rounded-xl p-4 text-center">
+                                    <div className="text-2xl font-bold text-gray-800">{comisionesFiltradas.reduce((a, c) => a + c.total_docs, 0)}</div>
+                                    <div className="text-xs text-gray-500 mt-1">Documentos procesados</div>
+                                </div>
+                                <div className="glass border border-borde rounded-xl p-4 text-center">
+                                    <div className="text-2xl font-bold text-gray-800">{comisionesFiltradas.filter(c => c.tipos?.dictamen > 0).length}</div>
+                                    <div className="text-xs text-gray-500 mt-1">Con dictamenes</div>
+                                </div>
+                            </div>
+
+                            {/* Lista de comisiones */}
+                            <div className="space-y-2">
+                                {comisionesFiltradas.slice(0, 30).map((c, i) => {
+                                    const colorScore = c.score_actividad >= 65 ? 'bg-semaforo-verde' : c.score_actividad >= 40 ? 'bg-semaforo-amarillo' : 'bg-semaforo-rojo';
+                                    const catData = c.categoria_nombre ? semaforo.find(s => s.categoria === c.categoria_fiat) : null;
+                                    return (
+                                        <div key={i} className="glass border border-borde rounded-xl p-4 hover:border-acento/30 transition-colors">
+                                            <div className="flex items-center gap-4">
+                                                {/* Ranking + Score */}
+                                                <div className="flex-shrink-0 text-center w-12">
+                                                    <div className={`w-10 h-10 rounded-full ${colorScore} bg-opacity-15 flex items-center justify-center text-sm font-bold`}
+                                                        style={{color: c.score_actividad >= 65 ? '#16a34a' : c.score_actividad >= 40 ? '#ca8a04' : '#dc2626'}}>
+                                                        {c.score_actividad.toFixed(0)}
+                                                    </div>
                                                 </div>
-                                                <div className="grid grid-cols-3 gap-2 mt-2 text-[10px] text-gray-400">
-                                                    <div className="text-center"><div className="font-bold text-gray-600">{leg.desglose?.historial_tematico?.toFixed(0) || 0}</div>Historial</div>
-                                                    <div className="text-center"><div className="font-bold text-gray-600">{leg.desglose?.comision_relevante?.toFixed(0) || 0}</div>Comision</div>
-                                                    <div className="text-center"><div className="font-bold text-gray-600">{leg.docs_categoria || 0}</div>Docs previos</div>
+
+                                                {/* Info principal */}
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="font-semibold text-sm text-gray-800 truncate">{c.nombre}</span>
+                                                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${c.camara === 'Senado' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                                                            {c.camara === 'Senado' ? 'Senado' : 'Diputados'}
+                                                        </span>
+                                                        {c.categoria_nombre && (
+                                                            <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-gray-100 text-gray-600">
+                                                                {c.categoria_nombre}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-3 mt-1.5">
+                                                        <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden max-w-xs">
+                                                            <div className={`h-full rounded-full transition-all ${colorScore}`} style={{width: `${Math.min(c.score_actividad, 100)}%`}} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Tipos de documentos */}
+                                                <div className="flex gap-3 text-center flex-shrink-0">
+                                                    {c.tipos?.dictamen > 0 && (
+                                                        <div className="text-center">
+                                                            <div className="text-sm font-bold text-gray-700">{c.tipos.dictamen}</div>
+                                                            <div className="text-[10px] text-gray-400">Dict.</div>
+                                                        </div>
+                                                    )}
+                                                    {c.tipos?.iniciativa > 0 && (
+                                                        <div className="text-center">
+                                                            <div className="text-sm font-bold text-gray-700">{c.tipos.iniciativa}</div>
+                                                            <div className="text-[10px] text-gray-400">Inic.</div>
+                                                        </div>
+                                                    )}
+                                                    {c.tipos?.proposicion > 0 && (
+                                                        <div className="text-center">
+                                                            <div className="text-sm font-bold text-gray-700">{c.tipos.proposicion}</div>
+                                                            <div className="text-[10px] text-gray-400">Prop.</div>
+                                                        </div>
+                                                    )}
+                                                    <div className="text-center">
+                                                        <div className="text-sm font-bold text-acento">{c.total_docs}</div>
+                                                        <div className="text-[10px] text-gray-400">Total</div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
-                                {popoverLeg && <PopoverInstrumentos leg={popoverLeg} pos={popoverLeg._pos} onClose={hidePopover} onKeep={() => clearTimeout(popoverTimer.current)} />}
+                                    );
+                                })}
                             </div>
-                        </div>
-                    ) : (
-                        <div className="text-center text-gray-400 py-12">
-                            <div className="text-4xl mb-3">&#9878;</div>
-                            <div>Selecciona una categoria para ver las predicciones de autoria legislativa</div>
+
+                            {comisionesFiltradas.length === 0 && (
+                                <div className="text-center text-gray-400 py-12">
+                                    <div className="text-4xl mb-3">&#128203;</div>
+                                    <div>No se encontraron comisiones con los filtros seleccionados</div>
+                                </div>
+                            )}
+
+                            {comisionesFiltradas.length > 30 && (
+                                <div className="text-center text-xs text-gray-400">
+                                    Mostrando 30 de {comisionesFiltradas.length} comisiones
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>
@@ -2246,7 +2406,7 @@
             const [infoBubbleDismissed, setInfoBubbleDismissed] = useState(false);
 
             useEffect(() => {
-                fetch('./data.json').then(r => r.ok ? r.json() : Promise.reject()).then(d => { setData(d); setLoading(false); }).catch(() => { setLoading(false); });
+                fetch('./data.json?v=' + Date.now()).then(r => r.ok ? r.json() : Promise.reject()).then(d => { setData(d); setLoading(false); }).catch(() => { setLoading(false); });
             }, []);
 
             if (loading) return (<div className="min-h-screen flex items-center justify-center"><div className="text-center space-y-4"><div className="w-12 h-12 border-4 border-acento border-t-transparent rounded-full animate-spin mx-auto"></div><div className="text-gray-500">Cargando datos...</div></div></div>);
