@@ -452,8 +452,7 @@ def obtener_fuentes_por_categoria():
             FROM gaceta
             WHERE categorias LIKE ?
               AND fecha >= date('now', '-14 days')
-              AND titulo NOT LIKE '%onvocatoria%'
-              AND titulo NOT LIKE '%CITATORIO%'
+              AND tipo != 'comunicacion'
               AND titulo NOT LIKE '%para referirse a la situación%'
             ORDER BY fecha DESC
         """, (f"%{cat_clave}%",)).fetchall()
