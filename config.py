@@ -1756,12 +1756,15 @@ KEYWORDS_NEGATIVOS = [
     "Congreso de Colombia", "Congreso de Argentina", "Congreso de Chile",
     "Congreso de Brasil", "Asamblea Nacional de Venezuela",
     "Westminster", "Bundestag", "Dieta de Japón",
-    # Noticias económicas/políticas de otros países (no relevantes para MX)
+    # Noticias económicas/políticas/turísticas de otros países
     "dólar en Colombia", "peso colombiano", "peso argentino",
     "real brasileño", "sol peruano", "bolívar venezolano",
     "economía de Colombia", "economía de Argentina", "economía de Perú",
     "elecciones en Colombia", "elecciones en Argentina", "elecciones en Chile",
     "elecciones en Perú", "elecciones en Brasil",
+    "desde Chile", "desde Colombia", "desde Argentina", "desde Perú",
+    "desde Brasil", "desde Venezuela",
+    "guía de viaje", "SoloCruceros",
     # Figuras y partidos internacionales no-México
     "Steffon Diggs", "Stefon Diggs", "Tom Brady", "LeBron James",
     "Taylor Swift", "Elon Musk", "Jeff Bezos",
