@@ -794,12 +794,13 @@ def _insertar_documentos(conn, documentos):
             "url_pdf": doc.get("url_pdf", ""),
             "numero_doc": doc.get("numero_doc", ""),
             "fecha_scraping": datetime.now().isoformat(),
+            "camara": doc.get("camara", "Diputados"),
         }
 
         try:
             conn.execute("""
-                INSERT INTO gaceta (fecha, tipo, titulo, autor, comision, resumen, url, url_pdf, numero_doc, fecha_scraping)
-                VALUES (:fecha, :tipo, :titulo, :autor, :comision, :resumen, :url, :url_pdf, :numero_doc, :fecha_scraping)
+                INSERT INTO gaceta (fecha, tipo, titulo, autor, comision, resumen, url, url_pdf, numero_doc, fecha_scraping, camara)
+                VALUES (:fecha, :tipo, :titulo, :autor, :comision, :resumen, :url, :url_pdf, :numero_doc, :fecha_scraping, :camara)
             """, registro)
             nuevos += 1
             logger.info(f"    [{doc['tipo']}] {doc['titulo'][:80]}...")

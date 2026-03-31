@@ -511,6 +511,36 @@ def actualizar_categorias_en_db():
     conn.commit()
     logger.info(f"Gaceta clasificados: {gaceta_ok}/{len(gaceta_sin)}")
 
+    # ── Reclasificar artículos que ahora serían filtrados por mejoras en filtros ──
+    # Revisa artículos ya clasificados que deberían ser excluidos por
+    # _es_contexto_no_legislativo() o calcular_relevancia_mexico()
+    articulos_existentes = conn.execute("""
+        SELECT id, titulo, resumen FROM articulos
+        WHERE categorias IS NOT NULL AND categorias != ''
+          AND fecha >= date('now', '-90 days')
+    """).fetchall()
+
+    reclasificados_art = 0
+    for row in articulos_existentes:
+        d = dict(row)
+        titulo = d.get("titulo", "")
+        resumen = d.get("resumen", "")
+
+        # Verificar si ahora sería excluido
+        if _es_contexto_no_legislativo(titulo, resumen):
+            conn.execute("UPDATE articulos SET categorias = '' WHERE id = ?", (d["id"],))
+            reclasificados_art += 1
+            continue
+
+        relevancia = calcular_relevancia_mexico(titulo, resumen)
+        if relevancia <= 0.3:
+            conn.execute("UPDATE articulos SET categorias = '' WHERE id = ?", (d["id"],))
+            reclasificados_art += 1
+
+    if reclasificados_art > 0:
+        conn.commit()
+        logger.info(f"Artículos reclasificados (filtros mejorados): {reclasificados_art}")
+
     # ── Reclasificar gaceta con ley identificable (corrige errores históricos) ──
     try:
         from config import LEYES_FEDERALES

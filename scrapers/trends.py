@@ -98,37 +98,84 @@ def consultar_trends_categoria(pytrends, categoria_clave, max_keywords=5, reinte
     return {}
 
 
+def _preservar_trends_fallback(conn, categoria_clave):
+    """
+    Cuando Google Trends devuelve 429 (rate limit), replica los últimos
+    valores conocidos con fecha de hoy para que los scores no caigan a 0.
+    Solo replica si los datos más recientes tienen menos de 14 días.
+    """
+    hoy = datetime.now().strftime("%Y-%m-%d")
+    hace_14d = (datetime.now() - timedelta(days=14)).strftime("%Y-%m-%d")
+
+    # Obtener el último valor de cada keyword para esta categoría
+    ultimos = conn.execute("""
+        SELECT keyword, valor, MAX(fecha) as ultima_fecha
+        FROM trends
+        WHERE categoria = ? AND fecha >= ?
+        GROUP BY keyword
+    """, (categoria_clave, hace_14d)).fetchall()
+
+    replicados = 0
+    for row in ultimos:
+        keyword, valor, ultima_fecha = row
+        if ultima_fecha == hoy:
+            continue  # Ya tiene dato de hoy
+        try:
+            conn.execute("""
+                INSERT INTO trends (categoria, keyword, fecha, valor, fecha_consulta)
+                VALUES (?, ?, ?, ?, ?)
+            """, (categoria_clave, keyword, hoy, valor,
+                  datetime.now().isoformat() + "_fallback"))
+            replicados += 1
+        except (sqlite3.IntegrityError, ValueError):
+            pass  # Ya existe
+
+    if replicados > 0:
+        conn.commit()
+        logger.info(f"  Trends fallback: {replicados} valores replicados para {categoria_clave}")
+    return replicados
+
+
 def scrape_trends_todas_categorias():
     """
-    Consulta Google Trends para todas las 12 categorías.
+    Consulta Google Trends para todas las categorías.
     Respeta rate limits insertando pausas entre consultas.
+    Si Google devuelve 429, replica los últimos valores conocidos
+    para que los scores no caigan a 0.
     """
     import time
 
     conn = init_db()
     pytrends = crear_cliente_trends()
     resumen = {}
+    categorias_fallidas = 0
 
     for cat_clave in CATEGORIAS:
         datos = consultar_trends_categoria(pytrends, cat_clave)
 
         registros_nuevos = 0
-        for keyword, serie in datos.items():
-            for fecha, valor in serie.items():
-                try:
-                    conn.execute("""
-                        INSERT INTO trends (categoria, keyword, fecha, valor, fecha_consulta)
-                        VALUES (?, ?, ?, ?, ?)
-                    """, (cat_clave, keyword, fecha, valor, datetime.now().isoformat()))
-                    registros_nuevos += 1
-                except (sqlite3.IntegrityError, ValueError):
-                    # Actualizar valor si ya existe
-                    conn.execute("""
-                        UPDATE trends SET valor = ?, fecha_consulta = ?
-                        WHERE categoria = ? AND keyword = ? AND fecha = ?
-                    """, (valor, datetime.now().isoformat(), cat_clave, keyword, fecha))
+        if datos:
+            for keyword, serie in datos.items():
+                for fecha, valor in serie.items():
+                    try:
+                        conn.execute("""
+                            INSERT INTO trends (categoria, keyword, fecha, valor, fecha_consulta)
+                            VALUES (?, ?, ?, ?, ?)
+                        """, (cat_clave, keyword, fecha, valor, datetime.now().isoformat()))
+                        registros_nuevos += 1
+                    except (sqlite3.IntegrityError, ValueError):
+                        # Actualizar valor si ya existe
+                        conn.execute("""
+                            UPDATE trends SET valor = ?, fecha_consulta = ?
+                            WHERE categoria = ? AND keyword = ? AND fecha = ?
+                        """, (valor, datetime.now().isoformat(), cat_clave, keyword, fecha))
 
-        conn.commit()
+            conn.commit()
+        else:
+            # Google devolvió vacío (probablemente 429) — preservar últimos valores
+            categorias_fallidas += 1
+            _preservar_trends_fallback(conn, cat_clave)
+
         resumen[cat_clave] = {
             "nombre": CATEGORIAS[cat_clave]["nombre"],
             "keywords_consultadas": len(datos),
@@ -138,6 +185,9 @@ def scrape_trends_todas_categorias():
         # Pausa larga entre consultas — Google rate-limita IPs compartidas de CI
         time.sleep(12)
 
+    if categorias_fallidas > 0:
+        logger.warning(f"Trends: {categorias_fallidas}/{len(CATEGORIAS)} categorías "
+                       f"con fallback (429 rate limit)")
     logger.info(f"Trends scraping completo para {len(resumen)} categorías")
     return resumen
 

@@ -597,7 +597,10 @@ def obtener_convocatorias():
                COALESCE(url_pdf, '') as url_pdf,
                COALESCE(camara, 'Diputados') as camara
         FROM gaceta
-        WHERE (titulo LIKE '%onvocatoria%' OR titulo LIKE '%CITATORIO%')
+        WHERE (titulo LIKE '%onvocatoria%'
+               OR titulo LIKE '%CITATORIO%'
+               OR titulo LIKE '%euni_n de%'
+               OR (tipo = 'comunicacion' AND titulo LIKE '%comisi%'))
           AND fecha >= date('now', '-60 days')
         ORDER BY fecha DESC
     """).fetchall()
