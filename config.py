@@ -1879,3 +1879,176 @@ LOGGING = {
     "max_bytes": 10_000_000,  # 10 MB
     "backup_count": 5,
 }
+
+# ─────────────────────────────────────────────
+# COMISIONES OFICIALES DEL SENADO (LXVI Legislatura)
+# 68 ordinarias + 4 especiales = 72 total
+# ─────────────────────────────────────────────
+COMISIONES_SENADO = [
+    "Administración",
+    "Agricultura",
+    "Análisis, Seguimiento y Evaluación sobre la aplicación y desarrollo de la Inteligencia Artificial en México",
+    "Anticorrupción y Transparencia",
+    "Asuntos de la Frontera Norte",
+    "Asuntos de la Frontera Sur",
+    "Asuntos Migratorios",
+    "Bienestar",
+    "Ciberseguridad",
+    "Ciencia, Humanidades, Tecnología e Innovación",
+    "Comunicaciones y Transportes",
+    "Cultura",
+    "Defensa de los Consumidores",
+    "Defensa Nacional",
+    "Deporte",
+    "Derechos de la Niñez y de la Adolescencia",
+    "Derechos Digitales",
+    "Derechos Humanos",
+    "Desarrollo Municipal",
+    "Desarrollo Regional",
+    "Desarrollo Rural",
+    "Desarrollo Urbano y Ordenamiento Territorial",
+    "Economía",
+    "Educación",
+    "Energía",
+    "Estudios Legislativos",
+    "Estudios Legislativos, Primera",
+    "Estudios Legislativos, Segunda",
+    "Federalismo",
+    "Fomento Económico y al Emprendimiento",
+    "Ganadería",
+    "Gobernación",
+    "Guardia Nacional",
+    "Hacienda y Crédito Público",
+    "Infraestructura Ferroviaria",
+    "Jurisdiccional",
+    "Justicia",
+    "Juventud",
+    "Marina",
+    "Medalla Belisario Domínguez",
+    "Medio Ambiente, Recursos Naturales y Cambio Climático",
+    "Minería",
+    "Organismos Internacionales",
+    "Para el Seguimiento a la Implementación de la Agenda 2030",
+    "Para la Igualdad de Género",
+    "Participación Ciudadana",
+    "Pesca y Acuacultura",
+    "Pueblos Indígenas y Afromexicanos",
+    "Puertos e Infraestructura Marítima",
+    "Puntos Constitucionales",
+    "Radio, Televisión y Cinematografía",
+    "Recursos Hídricos e Infraestructura Hidráulica",
+    "Reforma Agraria",
+    "Reglamentos y Prácticas Parlamentarias",
+    "Relaciones Exteriores",
+    "Relaciones Exteriores, África",
+    "Relaciones Exteriores, América del Norte",
+    "Relaciones Exteriores, América Latina y el Caribe",
+    "Relaciones Exteriores, Asia-Pacífico",
+    "Relaciones Exteriores, Europa",
+    "Reordenamiento Urbano y Vivienda",
+    "Salud",
+    "Seguimiento a la Implementación y Revisión del T-MEC",
+    "Seguridad Pública",
+    "Seguridad Social",
+    "Trabajo y Previsión Social",
+    "Turismo",
+    "Zonas Metropolitanas y Movilidad",
+    # Especiales
+    "Comisión Especial de Ciudades Sostenibles",
+    "Comisión Especial de Economía Circular y Desarrollo Empresarial",
+    "Comisión Especial de Seguimiento e Impulso al Corredor Interoceánico del Istmo de Tehuantepec",
+    "Comisión Especial para revisar y vigilar el proceso de quiebra de Altos Hornos de México, S. A. B. de C. V.",
+]
+
+# Índice invertido para normalización rápida (lowercase → nombre canónico)
+_COMISIONES_SENADO_INDEX = {}
+for _c in COMISIONES_SENADO:
+    _COMISIONES_SENADO_INDEX[_c.lower()] = _c
+    # Variantes sin prefijo "Comisión Especial de/para..."
+    if _c.startswith("Comisión Especial de "):
+        _COMISIONES_SENADO_INDEX[_c[21:].lower()] = _c
+    elif _c.startswith("Comisión Especial para "):
+        _COMISIONES_SENADO_INDEX[_c[23:].lower()] = _c
+    # Variante "Asuntos Frontera Sur" sin "de la"
+    if " de la " in _c:
+        _COMISIONES_SENADO_INDEX[_c.replace(" de la ", " ").lower()] = _c
+    if " de los " in _c:
+        _COMISIONES_SENADO_INDEX[_c.replace(" de los ", " ").lower()] = _c
+    # Variante con "y" en vez de coma: "Radio Televisión y Cinematografía"
+    _COMISIONES_SENADO_INDEX[_c.lower().replace(", ", " y ")] = _c
+
+# Variantes comunes con typos o formatos alternativos
+_COMISIONES_SENADO_INDEX["radio televisión y cinematografía"] = "Radio, Televisión y Cinematografía"
+_COMISIONES_SENADO_INDEX["radio television y cinematografía"] = "Radio, Televisión y Cinematografía"
+_COMISIONES_SENADO_INDEX["medo ambiente, recursos naturales y cambio climático"] = "Medio Ambiente, Recursos Naturales y Cambio Climático"
+_COMISIONES_SENADO_INDEX["medio ambiente recursos naturales y cambio climático"] = "Medio Ambiente, Recursos Naturales y Cambio Climático"
+_COMISIONES_SENADO_INDEX["reglamentos y práctica parlamentarias"] = "Reglamentos y Prácticas Parlamentarias"
+_COMISIONES_SENADO_INDEX["recursos e infraestructura hidráulica"] = "Recursos Hídricos e Infraestructura Hidráulica"
+_COMISIONES_SENADO_INDEX["asuntos frontera sur"] = "Asuntos de la Frontera Sur"
+_COMISIONES_SENADO_INDEX["asuntos frontera norte"] = "Asuntos de la Frontera Norte"
+_COMISIONES_SENADO_INDEX["especial de seguimiento a la implementación de la agenda 2030"] = "Para el Seguimiento a la Implementación de la Agenda 2030"
+_COMISIONES_SENADO_INDEX["comisión especial de seguimiento a la implementación de la agenda 2030"] = "Para el Seguimiento a la Implementación de la Agenda 2030"
+_COMISIONES_SENADO_INDEX["especial para revisar y vigilar el proceso de quiebra de altos hornos de méxico"] = "Comisión Especial para revisar y vigilar el proceso de quiebra de Altos Hornos de México, S. A. B. de C. V."
+
+
+def normalizar_comision_senado(nombre_raw):
+    """
+    Normaliza un nombre de comisión del Senado contra la lista oficial.
+    Maneja nombres sucios como 'AGRICULTURAConvocatoria a la...'
+    y comisiones unidas como 'Agricultura y de Estudios Legislativos, Primera'.
+    Retorna el nombre canónico o None si no se reconoce.
+    """
+    if not nombre_raw or nombre_raw == "No especificada":
+        return None
+
+    nombre = nombre_raw.strip()
+
+    # 1. Match exacto (case-insensitive)
+    if nombre.lower() in _COMISIONES_SENADO_INDEX:
+        return _COMISIONES_SENADO_INDEX[nombre.lower()]
+
+    # 2. Comisiones unidas: "X y de Y" → tomar la primera
+    if " y de " in nombre and nombre[0].isupper() and nombre[0:1] != nombre[0:1].upper():
+        primera = nombre.split(" y de ")[0].strip()
+        if primera.lower() in _COMISIONES_SENADO_INDEX:
+            return _COMISIONES_SENADO_INDEX[primera.lower()]
+
+    # 3. Nombre en MAYÚSCULAS pegado a texto (ej: "AGRICULTURAConvocatoria...")
+    #    Buscar la comisión más larga cuyo nombre en mayúsculas sea prefijo
+    nombre_upper = nombre.upper()
+    mejor = None
+    for canonica in COMISIONES_SENADO:
+        prefijo = canonica.upper()
+        if nombre_upper.startswith(prefijo):
+            if mejor is None or len(canonica) > len(mejor):
+                mejor = canonica
+    if mejor:
+        return mejor
+
+    # 4. Prefijo en title case (comisiones unidas con título normal)
+    nombre_lower = nombre.lower()
+    mejor = None
+    for clave, canonica in _COMISIONES_SENADO_INDEX.items():
+        if nombre_lower.startswith(clave) and (mejor is None or len(clave) > len(mejor[0])):
+            mejor = (clave, canonica)
+    if mejor and len(mejor[0]) >= 5:
+        return mejor[1]
+
+    # 5. Prefijo "ESPECIAL DE/PARA" (sin "Comisión"): intentar con prefijo completo
+    if nombre_upper.startswith("ESPECIAL "):
+        return normalizar_comision_senado("Comisión " + nombre)
+
+    # 6. Variante "DE" prefijado: "DEDERECHOS..." o "DE DEPORTE..."
+    if nombre_upper.startswith("DE ") or nombre_upper.startswith("DE"):
+        sin_de = nombre[2:].strip() if nombre_upper.startswith("DE ") else nombre[2:].strip()
+        return normalizar_comision_senado(sin_de)
+
+    # 7. Variante "LA " prefijado
+    if nombre_upper.startswith("LA "):
+        return normalizar_comision_senado(nombre[3:].strip())
+
+    # 8. Prefijo "LOS " → "Derechos de los Consumidores" etc
+    if nombre_upper.startswith("LOS "):
+        return normalizar_comision_senado(nombre[4:].strip())
+
+    return None

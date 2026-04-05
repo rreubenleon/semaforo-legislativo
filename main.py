@@ -648,7 +648,7 @@ def obtener_actividad_comisiones():
     Agrupa por comisión, cuenta documentos por tipo, y mapea a categoría FIAT.
     """
     import sqlite3
-    from config import comision_a_categoria, CATEGORIAS
+    from config import comision_a_categoria, CATEGORIAS, normalizar_comision_senado
     conn = get_connection()
     conn.row_factory = sqlite3.Row
 
@@ -664,19 +664,28 @@ def obtener_actividad_comisiones():
         ORDER BY comision
     """).fetchall()
 
-    # Agregar por comisión
+    # Agregar por comisión, normalizando nombres del Senado
     comisiones = {}
     for r in rows:
-        nombre = r["comision"]
+        nombre_raw = r["comision"]
         camara = r["camara"] or "Diputados"
+
+        # Normalizar contra lista oficial del Senado
+        if camara == "Senado":
+            nombre = normalizar_comision_senado(nombre_raw)
+            if not nombre:
+                continue  # Descartar si no coincide con comisión oficial
+        else:
+            nombre = nombre_raw
+
         key = f"{nombre}|{camara}"
 
         if key not in comisiones:
             cat_fiat = comision_a_categoria(nombre)
             comisiones[key] = {
-                "nombre": nombre[:100],
+                "nombre": nombre,
                 "camara": camara,
-                "categoria_fiat": cat_fiat,
+                "categoria": cat_fiat,
                 "categoria_nombre": CATEGORIAS[cat_fiat]["nombre"] if cat_fiat and cat_fiat in CATEGORIAS else None,
                 "tipos": {},
                 "total_docs": 0,
