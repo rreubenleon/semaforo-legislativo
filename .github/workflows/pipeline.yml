@@ -39,18 +39,25 @@ jobs:
           path: ~/.cache/pip
           key: pip-${{ hashFiles('requirements.txt') }}
 
-      # 3b. Cache de SQLite — persiste la DB entre ejecuciones del pipeline
-      - name: Cache SQLite DB
+      # 3b. Restaurar SQLite DB del cache más reciente
+      - name: Restaurar SQLite DB
         id: cache-db
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: semaforo.db
-          key: semaforo-db-v1
+          key: semaforo-db-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
 
-      # 3c. Si no hay cache, descargar seed desde GitHub Release
-      - name: Descargar DB seed
-        if: steps.cache-db.outputs.cache-hit != 'true'
-        run: gh release download db-seed-v1 --pattern "semaforo.db" --clobber
+      # 3c. Si no se restauró ninguna DB del cache, descargar seed
+      - name: Descargar DB seed si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            echo "No se encontró DB en cache, descargando seed..."
+            gh release download db-seed-v1 --pattern "semaforo.db" --clobber
+          else
+            echo "DB restaurada del cache ($(du -h semaforo.db | cut -f1))"
+          fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -90,6 +97,13 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         continue-on-error: true  # No bloquear pipeline si D1 sync falla
+
+      # 5c. Guardar DB actualizada en cache (key única por run)
+      - name: Guardar SQLite DB en cache
+        uses: actions/cache/save@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-${{ github.run_id }}
 
       # 6. Commit y push de datos actualizados (solo JSON — DB persiste en cache)
       - name: Commit datos actualizados
