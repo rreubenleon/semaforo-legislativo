@@ -654,13 +654,34 @@
                     }
                 };
 
+                /* Plugin: animación de dibujo progresivo (izq → der) solo al cargar */
+                const progressiveRevealPlugin = {
+                    id: 'progressiveReveal',
+                    beforeDatasetsDraw(chart) {
+                        if (chart._revealDone) return;
+                        const { ctx, chartArea } = chart;
+                        if (!chartArea) return;
+                        const progress = chart._revealProgress || 0;
+                        const w = (chartArea.right - chartArea.left) * progress + 2;
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.rect(chartArea.left - 1, chartArea.top - 10, w, chartArea.bottom - chartArea.top + 20);
+                        ctx.clip();
+                    },
+                    afterDatasetsDraw(chart) {
+                        if (chart._revealDone) return;
+                        chart.ctx.restore();
+                    }
+                };
+
                 chartInstance.current = new Chart(chartRef.current, {
                     type: 'line',
-                    plugins: [thresholdPlugin],
+                    plugins: [thresholdPlugin, progressiveRevealPlugin],
                     data: { labels, datasets },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
+                        animation: false,
                         interaction: { mode: 'index', intersect: false },
                         plugins: {
                             legend: { display: false },
@@ -717,6 +738,33 @@
                         },
                     }
                 });
+
+                /* Animación de reveal: 1.8s ease-out, solo la primera vez */
+                const chart = chartInstance.current;
+                if (!window._fiatChartRevealed) {
+                    window._fiatChartRevealed = true;
+                    chart._revealProgress = 0;
+                    chart._revealDone = false;
+                    const duration = 1800;
+                    let start = null;
+                    const easeOut = t => 1 - Math.pow(1 - t, 3); /* cubic ease-out */
+                    const step = (ts) => {
+                        if (!start) start = ts;
+                        const elapsed = ts - start;
+                        const raw = Math.min(elapsed / duration, 1);
+                        chart._revealProgress = easeOut(raw);
+                        chart.draw();
+                        if (raw < 1) {
+                            requestAnimationFrame(step);
+                        } else {
+                            chart._revealDone = true;
+                            chart.draw();
+                        }
+                    };
+                    requestAnimationFrame(step);
+                } else {
+                    chart._revealDone = true;
+                }
 
                 return () => { if (chartInstance.current) chartInstance.current.destroy(); };
             }, [historial, visibleCats, hoveredCat]);
