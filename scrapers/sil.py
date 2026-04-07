@@ -581,6 +581,53 @@ def obtener_serie_temporal_sil(categoria=None, dias=30):
     ]
 
 
+def _contar_actividad_gaceta_por_fecha(categoria=None, dias=60):
+    """Serie temporal: {fecha: count} de docs de Gaceta (Diputados + Senado)."""
+    conn = get_connection()
+    fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
+
+    if categoria:
+        # categorias es texto separado por comas, ej: "seguridad_justicia,electoral_politico"
+        like_pattern = f"%{categoria}%"
+        rows = conn.execute("""
+            SELECT fecha, COUNT(*) as n
+            FROM gaceta
+            WHERE categorias LIKE ?
+              AND fecha >= ?
+              AND fecha != ''
+            GROUP BY fecha
+        """, (like_pattern, fecha_limite)).fetchall()
+    else:
+        rows = conn.execute("""
+            SELECT fecha, COUNT(*) as n
+            FROM gaceta
+            WHERE fecha >= ? AND fecha != ''
+            GROUP BY fecha
+        """, (fecha_limite,)).fetchall()
+
+    return {r[0]: r[1] for r in rows}
+
+
+def obtener_serie_temporal_legislativa(categoria=None, dias=540):
+    """
+    Serie temporal combinada: SIL + Gaceta (Diputados + Senado).
+    SIL = registro oficial, Gaceta = instrumento de publicación.
+    Juntos reflejan la actividad legislativa real por tema.
+    """
+    actividad_sil = contar_actividad_sil_por_fecha(categoria, dias)
+    actividad_gaceta = _contar_actividad_gaceta_por_fecha(categoria, dias)
+
+    # Combinar: sumar conteos de ambas fuentes por fecha
+    hoy = datetime.now()
+    resultado = []
+    for i in range(dias - 1, -1, -1):
+        fecha = (hoy - timedelta(days=i)).strftime("%Y-%m-%d")
+        total = actividad_sil.get(fecha, 0) + actividad_gaceta.get(fecha, 0)
+        resultado.append({"fecha": fecha, "count": total})
+
+    return resultado
+
+
 def obtener_stats_por_partido(dias=180):
     """
     Estadísticas de instrumentos legislativos por partido político real.

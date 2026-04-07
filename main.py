@@ -29,6 +29,7 @@ from scrapers.sil import (
     scrape_sil_completo,
     obtener_stats_por_partido,
     obtener_serie_temporal_sil,
+    obtener_serie_temporal_legislativa,
     obtener_conteo_sil,
     enriquecer_fechas_sil,
     normalizar_partidos_existentes,
@@ -742,7 +743,7 @@ def paso_7_exportar_dashboard():
     # Usamos 540 días para capturar datos desde septiembre 2024
     series_temporales = {}
     for cat_clave in CATEGORIAS:
-        series_temporales[cat_clave] = obtener_serie_temporal_sil(cat_clave, dias=540)
+        series_temporales[cat_clave] = obtener_serie_temporal_legislativa(cat_clave, dias=540)
 
     # Estadísticas por partido político
     try:
