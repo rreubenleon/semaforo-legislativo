@@ -682,7 +682,7 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        animation: false,
+                        animation: { duration: 0 },
                         interaction: { mode: 'index', intersect: false },
                         plugins: {
                             legend: { display: false },
@@ -759,6 +759,7 @@
                             requestAnimationFrame(step);
                         } else {
                             chart._revealDone = true;
+                            chart.options.animation.duration = 300;
                             chart.draw();
                         }
                     };
@@ -1337,18 +1338,6 @@
                                         </div>
                                     </div>
                                 )}
-                                <a href="https://sil.gobernacion.gob.mx/portal" target="_blank" rel="noopener noreferrer" className="glass border border-borde rounded-xl p-3 flex items-center gap-3 hover:border-acento/40 transition-colors group block">
-                                    <div className="w-8 h-8 bg-acento/10 rounded-lg flex items-center justify-center text-acento group-hover:bg-acento/20 transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg></div>
-                                    <div><div className="text-xs font-semibold text-gray-700">Sistema de Informacion Legislativa</div><div className="text-[10px] text-gray-400">sil.gobernacion.gob.mx -- SEGOB</div></div>
-                                </a>
-                                <a href="https://gaceta.diputados.gob.mx" target="_blank" rel="noopener noreferrer" className="glass border border-borde rounded-xl p-3 flex items-center gap-3 hover:border-acento/40 transition-colors group block">
-                                    <div className="w-8 h-8 bg-acento/10 rounded-lg flex items-center justify-center text-acento group-hover:bg-acento/20 transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></div>
-                                    <div><div className="text-xs font-semibold text-gray-700">Gaceta Parlamentaria</div><div className="text-[10px] text-gray-400">gaceta.diputados.gob.mx -- Camara de Diputados</div></div>
-                                </a>
-                                <a href="https://www.senado.gob.mx/65/gaceta_del_senado" target="_blank" rel="noopener noreferrer" className="glass border border-borde rounded-xl p-3 flex items-center gap-3 hover:border-acento/40 transition-colors group block">
-                                    <div className="w-8 h-8 bg-acento/10 rounded-lg flex items-center justify-center text-acento group-hover:bg-acento/20 transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z" /></svg></div>
-                                    <div><div className="text-xs font-semibold text-gray-700">Gaceta del Senado</div><div className="text-[10px] text-gray-400">senado.gob.mx -- Senado de la Republica</div></div>
-                                </a>
                             </div>
                         </div>
                     )}
@@ -2528,6 +2517,12 @@
                                     <button onClick={() => setShowPoliticas(true)} className="hover:text-acento transition-colors">Politicas de uso</button>
                                     <span className="text-gray-300">&middot;</span>
                                     <button onClick={() => setShowFAQ(true)} className="hover:text-acento transition-colors">Preguntas frecuentes</button>
+                                    <span className="text-gray-300">&middot;</span>
+                                    <a href="https://sil.gobernacion.gob.mx/portal" target="_blank" rel="noopener noreferrer" className="hover:text-acento transition-colors">SIL</a>
+                                    <span className="text-gray-300">&middot;</span>
+                                    <a href="https://gaceta.diputados.gob.mx" target="_blank" rel="noopener noreferrer" className="hover:text-acento transition-colors">Gaceta Diputados</a>
+                                    <span className="text-gray-300">&middot;</span>
+                                    <a href="https://www.senado.gob.mx/66/gaceta_del_senado" target="_blank" rel="noopener noreferrer" className="hover:text-acento transition-colors">Gaceta Senado</a>
                                 </div>
                                 <span>Actualizado: {formatearActualizacion(data.metadata.generado)}</span>
                             </div>
