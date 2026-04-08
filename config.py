@@ -594,7 +594,7 @@ CATEGORIAS = {
             },
             "seguridad_social_pensiones": {
                 "nombre": "Seguridad social y pensiones",
-                "keywords": ["pensión", "AFORE", "seguridad social", "jubilación", "retiro", "Seguro Social", "ISSSTE",
+                "keywords": ["pensión", "AFORE", "seguridad social", "jubilación", "retiro laboral", "edad de retiro", "fondo de retiro", "cuenta de retiro", "ahorro para el retiro", "Seguro Social", "ISSSTE",
                              # Leyes federales
                              "Ley del Seguro Social", "Ley del ISSSTE",
                              "Ley de los Sistemas de Ahorro para el Retiro", "Ley del FONACOT"],
