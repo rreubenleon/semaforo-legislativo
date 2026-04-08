@@ -1,12 +1,17 @@
 """
-Scraper de Google Trends para México
-Obtiene interés de búsqueda para keywords de cada categoría legislativa
+Scraper de Google Trends para México — vía SerpAPI
+Obtiene interés de búsqueda para keywords de cada categoría legislativa.
+Usa SerpAPI (100 búsquedas gratis/mes) en vez de pytrends (bloqueado por 429).
 """
 
 import logging
+import os
 import sqlite3
+import time
 from datetime import datetime, timedelta
 from pathlib import Path
+
+import requests
 
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -14,6 +19,9 @@ from config import CATEGORIAS, GOOGLE_TRENDS, obtener_keywords_categoria
 from db import get_connection
 
 logger = logging.getLogger(__name__)
+
+SERPAPI_KEY = os.environ.get("SERPAPI_KEY", "")
+SERPAPI_ENDPOINT = "https://serpapi.com/search.json"
 
 
 def init_db():
@@ -34,92 +42,98 @@ def init_db():
     return conn
 
 
-def crear_cliente_trends():
-    """Crea cliente de pytrends con config de México."""
-    from pytrends.request import TrendReq
-    return TrendReq(
-        hl=GOOGLE_TRENDS["language"],
-        tz=360,  # UTC-6 (CDMX)
-    )
-
-
-def consultar_trends_categoria(pytrends, categoria_clave, max_keywords=5, reintentos=3):
+def consultar_trends_serpapi(categoria_clave, max_keywords=5):
     """
-    Consulta Google Trends para las keywords principales de una categoría.
-    Google Trends acepta máximo 5 keywords por consulta.
-    Incluye retry con backoff exponencial para manejar rate limits (429).
+    Consulta Google Trends vía SerpAPI para una categoría.
+    SerpAPI acepta hasta 5 keywords separadas por coma.
+    Retorna {keyword: {fecha: valor}} o {} si falla.
+    Consume 1 búsqueda del plan por llamada.
     """
-    import time
+    if not SERPAPI_KEY:
+        logger.warning("SERPAPI_KEY no configurada — omitiendo Trends")
+        return {}
 
     cat_config = CATEGORIAS[categoria_clave]
-    keywords = cat_config.get("trends_keywords", obtener_keywords_categoria(categoria_clave)[:max_keywords])
+    keywords = cat_config.get(
+        "trends_keywords",
+        obtener_keywords_categoria(categoria_clave)[:max_keywords]
+    )
 
-    logger.info(f"Consultando Trends para {cat_config['nombre']}: {keywords}")
+    if not keywords:
+        return {}
 
-    for intento in range(reintentos):
-        try:
-            pytrends.build_payload(
-                kw_list=keywords,
-                cat=0,
-                timeframe=GOOGLE_TRENDS["timeframe"],
-                geo=GOOGLE_TRENDS["geo"],
-            )
-            df = pytrends.interest_over_time()
+    # SerpAPI Google Trends: keywords separadas por coma
+    q = ",".join(keywords)
+    logger.info(f"SerpAPI Trends para {cat_config['nombre']}: {keywords}")
 
-            if df.empty:
-                logger.warning(f"Sin datos de Trends para {cat_config['nombre']}")
-                return {}
+    try:
+        resp = requests.get(SERPAPI_ENDPOINT, params={
+            "engine": "google_trends",
+            "q": q,
+            "geo": GOOGLE_TRENDS["geo"],
+            "date": "now 7-d",
+            "tz": "360",       # UTC-6 CDMX
+            "data_type": "TIMESERIES",
+            "api_key": SERPAPI_KEY,
+        }, timeout=30)
 
-            # Eliminar columna isPartial si existe
-            if "isPartial" in df.columns:
-                df = df.drop(columns=["isPartial"])
+        if resp.status_code != 200:
+            logger.error(f"SerpAPI error {resp.status_code}: {resp.text[:200]}")
+            return {}
 
-            resultados = {}
-            for keyword in df.columns:
-                serie = {}
-                for fecha, valor in df[keyword].items():
-                    fecha_str = fecha.strftime("%Y-%m-%d")
-                    serie[fecha_str] = int(valor)
-                resultados[keyword] = serie
+        data = resp.json()
 
-            return resultados
+        # Extraer serie temporal de interest_over_time
+        timeline = data.get("interest_over_time", {}).get("timeline_data", [])
+        if not timeline:
+            logger.warning(f"Sin datos de Trends para {cat_config['nombre']}")
+            return {}
 
-        except Exception as e:
-            error_str = str(e)
-            if "429" in error_str and intento < reintentos - 1:
-                espera = 30 * (intento + 1)  # 30s, 60s, 90s
-                logger.warning(f"Rate limit 429 para {cat_config['nombre']}, "
-                               f"reintentando en {espera}s (intento {intento + 1}/{reintentos})")
-                time.sleep(espera)
+        resultados = {}
+        for point in timeline:
+            # Cada point tiene "date" (texto) y "values" (lista de {query, value, extracted_value})
+            # Usamos timestamp para la fecha
+            timestamp = int(point.get("timestamp", "0"))
+            if timestamp:
+                fecha_str = datetime.fromtimestamp(timestamp).strftime("%Y-%m-%d")
             else:
-                logger.error(f"Error consultando Trends para {cat_config['nombre']}: {e}")
-                return {}
+                continue
 
-    return {}
+            for val_info in point.get("values", []):
+                keyword = val_info.get("query", "")
+                valor = val_info.get("extracted_value", 0)
+                if keyword not in resultados:
+                    resultados[keyword] = {}
+                resultados[keyword][fecha_str] = int(valor)
+
+        return resultados
+
+    except Exception as e:
+        logger.error(f"Error SerpAPI Trends para {cat_config['nombre']}: {e}")
+        return {}
 
 
 def _preservar_trends_fallback(conn, categoria_clave):
     """
-    Cuando Google Trends devuelve 429 (rate limit), replica los últimos
+    Cuando SerpAPI falla o no hay key, replica los últimos
     valores conocidos con fecha de hoy para que los scores no caigan a 0.
-    Solo replica si los datos más recientes tienen menos de 14 días.
+    Solo replica si los datos más recientes tienen menos de 30 días.
     """
     hoy = datetime.now().strftime("%Y-%m-%d")
-    hace_14d = (datetime.now() - timedelta(days=14)).strftime("%Y-%m-%d")
+    hace_30d = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
 
-    # Obtener el último valor de cada keyword para esta categoría
     ultimos = conn.execute("""
         SELECT keyword, valor, MAX(fecha) as ultima_fecha
         FROM trends
         WHERE categoria = ? AND fecha >= ?
         GROUP BY keyword
-    """, (categoria_clave, hace_14d)).fetchall()
+    """, (categoria_clave, hace_30d)).fetchall()
 
     replicados = 0
     for row in ultimos:
         keyword, valor, ultima_fecha = row
         if ultima_fecha == hoy:
-            continue  # Ya tiene dato de hoy
+            continue
         try:
             conn.execute("""
                 INSERT INTO trends (categoria, keyword, fecha, valor, fecha_consulta)
@@ -128,7 +142,7 @@ def _preservar_trends_fallback(conn, categoria_clave):
                   datetime.now().isoformat() + "_fallback"))
             replicados += 1
         except (sqlite3.IntegrityError, ValueError):
-            pass  # Ya existe
+            pass
 
     if replicados > 0:
         conn.commit()
@@ -138,23 +152,22 @@ def _preservar_trends_fallback(conn, categoria_clave):
 
 def scrape_trends_todas_categorias():
     """
-    Consulta Google Trends para todas las categorías.
-    Respeta rate limits insertando pausas entre consultas.
-    Si Google devuelve 429, replica los últimos valores conocidos
-    para que los scores no caigan a 0.
+    Consulta Google Trends vía SerpAPI para todas las categorías.
+    Cada categoría = 1 búsqueda SerpAPI (hasta 5 keywords por consulta).
+    20 categorías = 20 búsquedas/run.
+    Con plan free (100/mes) alcanza para 5 runs/mes = ~1 por semana.
     """
-    import time
-
     conn = init_db()
-    pytrends = crear_cliente_trends()
     resumen = {}
-    categorias_fallidas = 0
+    categorias_ok = 0
+    categorias_fallback = 0
 
     for cat_clave in CATEGORIAS:
-        datos = consultar_trends_categoria(pytrends, cat_clave)
+        datos = consultar_trends_serpapi(cat_clave)
 
         registros_nuevos = 0
         if datos:
+            categorias_ok += 1
             for keyword, serie in datos.items():
                 for fecha, valor in serie.items():
                     try:
@@ -164,7 +177,6 @@ def scrape_trends_todas_categorias():
                         """, (cat_clave, keyword, fecha, valor, datetime.now().isoformat()))
                         registros_nuevos += 1
                     except (sqlite3.IntegrityError, ValueError):
-                        # Actualizar valor si ya existe
                         conn.execute("""
                             UPDATE trends SET valor = ?, fecha_consulta = ?
                             WHERE categoria = ? AND keyword = ? AND fecha = ?
@@ -172,8 +184,7 @@ def scrape_trends_todas_categorias():
 
             conn.commit()
         else:
-            # Google devolvió vacío (probablemente 429) — preservar últimos valores
-            categorias_fallidas += 1
+            categorias_fallback += 1
             _preservar_trends_fallback(conn, cat_clave)
 
         resumen[cat_clave] = {
@@ -182,13 +193,12 @@ def scrape_trends_todas_categorias():
             "registros_nuevos": registros_nuevos,
         }
 
-        # Pausa larga entre consultas — Google rate-limita IPs compartidas de CI
-        time.sleep(12)
+        # Pausa corta entre consultas (SerpAPI no rate-limita agresivo)
+        time.sleep(2)
 
-    if categorias_fallidas > 0:
-        logger.warning(f"Trends: {categorias_fallidas}/{len(CATEGORIAS)} categorías "
-                       f"con fallback (429 rate limit)")
-    logger.info(f"Trends scraping completo para {len(resumen)} categorías")
+    if categorias_fallback > 0:
+        logger.warning(f"Trends: {categorias_fallback}/{len(CATEGORIAS)} categorías con fallback")
+    logger.info(f"Trends: {categorias_ok}/{len(CATEGORIAS)} categorías OK vía SerpAPI")
     return resumen
 
 
@@ -198,7 +208,6 @@ def obtener_score_trends(categoria_clave, dias=7):
     Usa el promedio de las keywords de la categoría en los últimos N días.
     """
     conn = get_connection()
-    # Asegurar que la tabla existe aunque no se haya corrido el scraper
     conn.execute("""
         CREATE TABLE IF NOT EXISTS trends (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -220,7 +229,6 @@ def obtener_score_trends(categoria_clave, dias=7):
     """, (categoria_clave, fecha_limite)).fetchone()
 
     if rows and rows[0] is not None:
-        # Google Trends ya da valores 0-100
         return round(rows[0], 2)
 
     return 0
@@ -258,7 +266,7 @@ def obtener_serie_temporal(categoria_clave, dias=30):
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    print("=== Scraper Google Trends ===")
+    print("=== Scraper Google Trends (SerpAPI) ===")
     resumen = scrape_trends_todas_categorias()
     for cat, info in resumen.items():
         print(f"  {info['nombre']}: {info['keywords_consultadas']} keywords, {info['registros_nuevos']} registros")
