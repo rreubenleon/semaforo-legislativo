@@ -221,8 +221,8 @@ def backfill_diputados():
 
 def backfill_senado():
     """
-    Backfill de Gaceta del Senado: Oct 1 → Nov 26, 2025.
-    (Ya tenemos Nov 27, 2025 → presente)
+    Backfill de Gaceta del Senado.
+    Rango configurable con BACKFILL_DESDE / BACKFILL_HASTA (default: Oct-Nov 2025).
     """
     from scrapers.gaceta_senado import (
         init_db, descubrir_gacetas_mes, fetch_page,
@@ -237,12 +237,25 @@ def backfill_senado():
     ).fetchone()[0]
     logger.info(f"Docs de Senado antes del backfill: {count_antes}")
 
+    # Rango configurable
+    fecha_inicio_str = os.environ.get("BACKFILL_DESDE", "2025-10-01")
+    fecha_fin_str = os.environ.get("BACKFILL_HASTA", "2025-11-26")
+    fecha_inicio = datetime.strptime(fecha_inicio_str, "%Y-%m-%d")
+    fecha_fin = datetime.strptime(fecha_fin_str, "%Y-%m-%d")
+
     total_nuevos = 0
     total_requests = 0
     inicio = time.time()
 
-    # Meses a scrapear: Oct y Nov 2025
-    meses = [(2025, 10), (2025, 11)]
+    # Generar lista de meses a scrapear
+    meses = []
+    current = datetime(fecha_inicio.year, fecha_inicio.month, 1)
+    while current <= fecha_fin:
+        meses.append((current.year, current.month))
+        if current.month == 12:
+            current = datetime(current.year + 1, 1, 1)
+        else:
+            current = datetime(current.year, current.month + 1, 1)
 
     for year, month in meses:
         logger.info(f"\n{'='*50}")
@@ -255,9 +268,8 @@ def backfill_senado():
         logger.info(f"Gacetas disponibles en {year}-{month:02d}: {len(gacetas)}")
 
         for g in sorted(gacetas, key=lambda x: x["fecha"]):
-            # Solo hasta Nov 26 (ya tenemos Nov 27+)
-            if g["fecha"] >= "2025-11-27":
-                logger.info(f"  {g['fecha']}: ya cubierto, saltando")
+            # Filtrar por rango
+            if g["fecha"] < fecha_inicio_str or g["fecha"] > fecha_fin_str:
                 continue
 
             logger.info(f"  Scrapeando {g['fecha']}...")

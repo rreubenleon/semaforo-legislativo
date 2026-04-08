@@ -54,7 +54,7 @@ jobs:
         run: |
           if [ ! -f semaforo.db ]; then
             echo "No se encontró DB en cache, descargando seed..."
-            gh release download db-seed-v1 --pattern "semaforo.db" --clobber
+            gh release download db-seed-v2 --pattern "semaforo.db" --clobber
           else
             echo "DB restaurada del cache ($(du -h semaforo.db | cut -f1))"
           fi
