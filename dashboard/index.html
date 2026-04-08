@@ -2421,7 +2421,6 @@
             const [showPoliticas, setShowPoliticas] = useState(false);
             const [showFAQ, setShowFAQ] = useState(false);
             const [showLogin, setShowLogin] = useState(false);
-            const [showInfoBubble, setShowInfoBubble] = useState(false);
             const [infoBubbleDismissed, setInfoBubbleDismissed] = useState(false);
 
             useEffect(() => {
@@ -2589,31 +2588,13 @@
                     {showRegistro && <RegistroModal onClose={() => setShowRegistro(false)} />}
                     {showLogin && <LoginModal onClose={() => setShowLogin(false)} />}
 
-                    {/* Info Bubble - flotante esquina inferior derecha */}
+                    {/* Info Bubble - abre FAQ, desaparece al cerrar */}
                     {!infoBubbleDismissed && (
-                        <div className="fixed bottom-6 right-6 z-50" style={{fontFamily: 'Inter, sans-serif'}}>
-                            {showInfoBubble ? (
-                                <div className="bg-white border border-gray-200 rounded-2xl shadow-2xl p-5 max-w-xs animate-fade-in" style={{animation: 'fadeIn 0.2s ease-out'}}>
-                                    <div className="flex items-start justify-between mb-3">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{background: '#307f34'}}>
-                                                <span className="text-white text-xs font-bold">i</span>
-                                            </div>
-                                            <span className="text-sm font-bold text-gray-800">Acerca de Fiat</span>
-                                        </div>
-                                        <button onClick={() => { setShowInfoBubble(false); setInfoBubbleDismissed(true); }}
-                                            className="text-gray-400 hover:text-gray-600 transition-colors text-lg leading-none ml-2">&times;</button>
-                                    </div>
-                                    <p className="text-[13px] text-gray-600 leading-relaxed">
-                                        <strong className="text-gray-800">Fiat es un sistema de inteligencia política</strong> que anticipa la actividad legislativa en México a partir de señales del Congreso, los medios y el Ejecutivo. Detecta presión política en tiempo real y la convierte en alertas y probabilidad de acción institucional.
-                                    </p>
-                                </div>
-                            ) : (
-                                <button onClick={() => setShowInfoBubble(true)}
-                                    className="w-12 h-12 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center group" style={{background: '#307f34'}}>
-                                    <span className="text-white text-xl font-serif italic group-hover:scale-110 transition-transform">i</span>
-                                </button>
-                            )}
+                        <div className="fixed bottom-6 right-6 z-50">
+                            <button onClick={() => { setShowFAQ(true); setInfoBubbleDismissed(true); }}
+                                className="w-12 h-12 rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center group" style={{background: '#307f34'}}>
+                                <span className="text-white text-xl font-serif italic group-hover:scale-110 transition-transform">i</span>
+                            </button>
                         </div>
                     )}
                 </div>
