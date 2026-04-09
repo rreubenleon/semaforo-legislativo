@@ -1158,7 +1158,7 @@ CATEGORIAS = {
             },
             "infraestructura_turistica": {
                 "nombre": "Infraestructura turística",
-                "keywords": ["hotel", "hotelería", "industria hotelera", "infraestructura turística", "ocupación hotelera", "crucero"],
+                "keywords": ["hotel", "hotelería", "industria hotelera", "infraestructura turística", "ocupación hotelera", "crucero turístico", "crucero marítimo", "buque crucero"],
             },
             "destinos_programas": {
                 "nombre": "Destinos y programas",
