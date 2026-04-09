@@ -44,6 +44,29 @@
         @keyframes pulse-amarillo { 0%,100% { box-shadow: 0 1px 3px rgba(0,0,0,0.06); } 50% { box-shadow: 0 0 0 3px rgba(198,151,43,0.15); } }
         .pulse-verde { animation: pulse-verde 2.5s infinite; }
         .pulse-amarillo { animation: pulse-amarillo 2.5s infinite; }
+        /* Mapa: pulso radar estilo CIA */
+        @keyframes map-ping {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+            100% { transform: translate(-50%, -50%) scale(3); opacity: 0; }
+        }
+        @keyframes map-ping-slow {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 0.4; }
+            100% { transform: translate(-50%, -50%) scale(4); opacity: 0; }
+        }
+        .map-dot-pulse {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .map-dot-pulse-ring1 { animation: map-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite; }
+        .map-dot-pulse-ring2 { animation: map-ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite 0.5s; }
+        .map-dot-core {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            box-shadow: 0 0 6px 1px currentColor;
+        }
         .fuentes-panel::-webkit-scrollbar { width: 4px; }
         .fuentes-panel::-webkit-scrollbar-track { background: transparent; }
         .fuentes-panel::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -1618,18 +1641,28 @@
                     if (!coords) return;
                     const { fill, border } = getMarkerColor(info.total_articulos);
                     const isSelected = estadoSeleccionado === key;
-                    const radius = Math.max(8, Math.min(20, 8 + (info.total_articulos / Math.max(maxArts, 1)) * 14));
-                    const marker = L.circleMarker(coords, {
-                        radius: radius,
-                        fillColor: fill,
-                        color: isSelected ? '#1a365d' : border,
-                        weight: isSelected ? 3 : 1.5,
-                        opacity: 1,
-                        fillOpacity: isSelected ? 0.9 : 0.7
+                    const intensity = info.total_articulos / Math.max(maxArts, 1);
+                    const coreSize = Math.max(8, Math.min(18, 8 + intensity * 12));
+                    const pulseSize = coreSize * 2.5;
+
+                    /* Dot HTML con pulso radar */
+                    const dotHtml = `<div style="position:relative;width:${pulseSize}px;height:${pulseSize}px">` +
+                        (intensity > 0.15 ? `<div class="map-dot-pulse map-dot-pulse-ring1" style="width:${coreSize}px;height:${coreSize}px;background:${fill};"></div>` : '') +
+                        (intensity > 0.35 ? `<div class="map-dot-pulse map-dot-pulse-ring2" style="width:${coreSize * 0.7}px;height:${coreSize * 0.7}px;background:${fill};"></div>` : '') +
+                        `<div class="map-dot-core" style="width:${coreSize}px;height:${coreSize}px;background:${fill};color:${fill};` +
+                        `border:${isSelected ? '2.5px solid #1a365d' : '1.5px solid ' + border};"></div></div>`;
+
+                    const icon = L.divIcon({
+                        html: dotHtml,
+                        className: '',
+                        iconSize: [pulseSize, pulseSize],
+                        iconAnchor: [pulseSize / 2, pulseSize / 2],
                     });
+
+                    const marker = L.marker(coords, { icon });
                     marker.bindTooltip(
                         `<div style="font-family:Inter,sans-serif;font-size:12px;font-weight:600">${info.abreviatura}</div><div style="font-family:Inter,sans-serif;font-size:11px;color:#666">${info.total_articulos} noticias</div>`,
-                        { direction: 'top', offset: [0, -radius], className: 'leaflet-tooltip-fiat' }
+                        { direction: 'top', offset: [0, -coreSize], className: 'leaflet-tooltip-fiat' }
                     );
                     marker.on('click', () => onSelectEstado(key));
                     marker.addTo(map);
