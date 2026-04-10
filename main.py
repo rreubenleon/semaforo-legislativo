@@ -1021,6 +1021,22 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     except Exception as e:
         logger.warning(f"SIL falló (no crítico): {e}")
 
+    # Paso 3b.1: Barrido ancho del SIL, una vez al día.
+    # El scraper incremental de arriba funciona por IDs nuevos reportados en
+    # listado reciente, pero deja escapar expedientes antiguos que entraron
+    # fuera del ciclo natural. El barrido ancho corre queries genéricas
+    # ('iniciativa','proposición','reforma','decreto','adiciona','expide',
+    # 'exhorta') contra el buscador del SIL sin tope de resultados y cierra
+    # cualquier brecha contra el universo oficial de numeralia. Tarda ~60s.
+    # Solo corre en el run de las 12:00 UTC para no duplicar tráfico al SIL.
+    if hora_utc == 12:
+        try:
+            logger.info("PASO 3b.1: Barrido ancho del SIL (diario)")
+            from scripts.barrido_sil_completo import main as _barrido_sil
+            _barrido_sil(dry_run=False)
+        except Exception as e:
+            logger.warning(f"Barrido ancho SIL falló (no crítico): {e}")
+
     # Paso 3c: Enriquecer fechas faltantes del SIL (lote de 150)
     try:
         enr = enriquecer_fechas_sil(limite=150)
