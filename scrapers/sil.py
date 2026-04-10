@@ -165,13 +165,17 @@ def init_db():
 # ────────────────────────────────────────────
 # Fase 1: Búsqueda masiva
 # ────────────────────────────────────────────
-def _buscar_ids(query, max_resultados=500):
+def _buscar_ids(query, max_resultados=None):
     """
     Busca en el SIL y extrae pares (seguimiento_id, asunto_id, titulo, sinopsis)
     de la tabla de resultados.  Cada fila tiene una sola celda <td> con:
       <div class="tdcriterio"><a href="...?Seguimiento=X&Asunto=Y"><b>TÍTULO</b></a>
        | <div class="badge">TIPO</div></div>
        ... sinopsis ...
+
+    Si max_resultados=None, trae todo el universo que devuelve la query.
+    Una query ancha como 'proposición' devuelve >18k filas y cubre el universo
+    LXVI completo en una sola llamada.
     """
     try:
         resp = requests.get(
@@ -205,7 +209,8 @@ def _buscar_ids(query, max_resultados=500):
     rows = big_table.find_all("tr")[1:]  # saltar header
     resultados = []
 
-    for row in rows[:max_resultados]:
+    rows_iter = rows if max_resultados is None else rows[:max_resultados]
+    for row in rows_iter:
         td = row.find("td")
         if not td:
             continue

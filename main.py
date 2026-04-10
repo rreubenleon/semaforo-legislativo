@@ -1015,7 +1015,7 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     logger.info("=" * 60)
     try:
         inicio_sil = time.time()
-        sil_result = scrape_sil_completo(fecha_desde="2024-09-01", detalle_max=100)
+        sil_result = scrape_sil_completo(fecha_desde="2024-09-01", detalle_max=500)
         dur_sil = time.time() - inicio_sil
         logger.info(f"SIL: {sil_result['nuevos']} nuevos ({dur_sil:.1f}s)")
     except Exception as e:
@@ -1036,6 +1036,25 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
             logger.info(f"SIL normalización: {norm} partidos normalizados")
     except Exception as e:
         logger.warning(f"Normalización de partidos falló (no crítico): {e}")
+
+    # Paso 3d.1: Reclasificar tipos genéricos del SIL por heurística de título.
+    # Idempotente: solo toca filas que quedaron como 'Asunto' / '' / NULL.
+    # Cubre la deuda cuando el detalle individual tope con rate limit.
+    try:
+        from scripts.reconstruir_tipos_sil import main as _reclasif_tipos_sil
+        _reclasif_tipos_sil(dry_run=False)
+    except Exception as e:
+        logger.warning(f"Reclasificación de tipos SIL falló (no crítico): {e}")
+
+    # Paso 3d.2: Marcar duplicados del SIL por seguimiento_id.
+    # Mismo expediente con múltiples asunto_id (flujo cámara origen → minuta)
+    # queda marcado para que scoring y métricas no cuenten doble.
+    # Idempotente: resetea marcas previas y recalcula cada run.
+    try:
+        from scripts.dedupe_sil_cross_camara import main as _dedupe_sil
+        _dedupe_sil(dry_run=False)
+    except Exception as e:
+        logger.warning(f"Dedupe SIL falló (no crítico): {e}")
 
     # Paso 3e: Vincular documentos SIL con legisladores
     logger.info("=" * 60)
