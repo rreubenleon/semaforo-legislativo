@@ -1364,8 +1364,21 @@
         }
 
         /* ================================================================
-           PAGE: RADAR DE LEGISLADORES
+           PAGE: RADAR DE LEGISLADORES (PFF-style Player Props)
            ================================================================ */
+
+        const CATEGORIA_LABEL = {
+            salud: 'Salud', educacion: 'Educación', seguridad_justicia: 'Seguridad',
+            economia_hacienda: 'Economía', electoral_politico: 'Electoral',
+            infraestructura: 'Infraestructura', energia: 'Energía',
+            trabajo: 'Trabajo', derechos_humanos: 'DDHH',
+            medio_ambiente: 'Medio ambiente', relaciones_exteriores: 'Exteriores',
+            agro_rural: 'Agro', anticorrupcion: 'Anticorrupción',
+            igualdad_genero: 'Igualdad', politica_social: 'Pol. Social',
+            medios_comunicacion: 'Medios', turismo: 'Turismo',
+            inteligencia_artificial: 'IA', administracion: 'Administración',
+        };
+        const _catLabel = (c) => CATEGORIA_LABEL[c] || (c || '—');
 
         function PageRadarLegisladores({ data }) {
             const [legisladores, setLegisladores] = useState([]);
@@ -1375,6 +1388,7 @@
             const [totalPaginas, setTotalPaginas] = useState(1);
             const [cargando, setCargando] = useState(false);
             const [error, setError] = useState(null);
+            const [legSeleccionado, setLegSeleccionado] = useState(null);
 
             const [fCamara, setFCamara] = useState('');
             const [fPartido, setFPartido] = useState('');
@@ -1383,7 +1397,7 @@
             const [qInput, setQInput] = useState('');
             const [fSort, setFSort] = useState('hit_rate');
 
-            const LIMITE = 24;
+            const LIMITE = 50;
 
             useEffect(() => {
                 const t = setTimeout(() => { setFQ(qInput.trim()); setPaginaRadar(1); }, 350);
@@ -1425,25 +1439,43 @@
 
             const hayFiltros = fCamara || fPartido || fCategoria || fQ || fSort !== 'hit_rate';
 
+            const chips = [];
+            if (fCamara) chips.push({ k: 'camara', label: fCamara, clear: () => setFCamara('') });
+            if (fPartido) chips.push({ k: 'partido', label: fPartido, clear: () => setFPartido('') });
+            if (fCategoria) chips.push({ k: 'categoria', label: _catLabel(fCategoria), clear: () => setFCategoria('') });
+            if (fQ) chips.push({ k: 'q', label: `"${fQ}"`, clear: () => { setQInput(''); setFQ(''); } });
+
             return (
-                <div className="space-y-5">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <h2 className="text-lg font-bold text-gray-800">Radar de Legisladores</h2>
-                            <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white tracking-wide">BETA</span>
+                <div className="space-y-4">
+                    {/* Header */}
+                    <div className="flex items-end justify-between gap-3 flex-wrap">
+                        <div>
+                            <div className="flex items-center gap-2 mb-1">
+                                <h2 className="text-lg font-bold text-gray-800">Radar de Legisladores</h2>
+                                <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white tracking-wide">BETA</span>
+                            </div>
+                            <p className="text-xs text-gray-500">Player props legislativos · LXVI completa · hit rate, proyecciones 15d y matchup vs comisión dictaminadora</p>
                         </div>
-                        <p className="text-sm text-gray-500">Player props legislativos: proyecciones a 15 días, hit rate histórico y matchup contra comisión dictaminadora. Baseline L3P (últimos 3 periodos parlamentarios).</p>
+                        <div className="text-[11px] text-gray-500">
+                            {cargando ? (
+                                <span className="inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-acento animate-pulse"></span>Cargando…</span>
+                            ) : (
+                                <span><span className="font-semibold text-gray-800">{total.toLocaleString()}</span> legisladores{hayFiltros ? ' · filtrado' : ''}</span>
+                            )}
+                        </div>
                     </div>
 
-                    <div className="glass border border-borde rounded-xl p-3 space-y-3">
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                            <div className="col-span-2 md:col-span-1">
-                                <input type="text" value={qInput} onChange={e => setQInput(e.target.value)} placeholder="Buscar nombre…"
-                                    className="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-acento/20 focus:border-acento" />
+                    {/* Filter bar: search + selects */}
+                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 space-y-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <div className="relative flex-1 min-w-[180px]">
+                                <svg className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                <input type="text" value={qInput} onChange={e => setQInput(e.target.value)} placeholder="Buscar legislador…"
+                                    className="w-full pl-8 pr-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-acento/20 focus:border-acento focus:bg-white transition-all" />
                             </div>
                             <select value={fCamara} onChange={e => { setFCamara(e.target.value); setPaginaRadar(1); }}
-                                className="px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-acento/20">
-                                <option value="">Cámara</option>
+                                className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-acento/20">
+                                <option value="">Cámara · todas</option>
                                 {(meta.camaras || []).map(c => {
                                     const val = typeof c === 'string' ? c : c.camara;
                                     const cnt = typeof c === 'object' ? c.n : null;
@@ -1451,8 +1483,8 @@
                                 })}
                             </select>
                             <select value={fPartido} onChange={e => { setFPartido(e.target.value); setPaginaRadar(1); }}
-                                className="px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-acento/20">
-                                <option value="">Partido</option>
+                                className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-acento/20">
+                                <option value="">Partido · todos</option>
                                 {(meta.partidos || []).map(p => {
                                     const val = typeof p === 'string' ? p : p.partido;
                                     const cnt = typeof p === 'object' ? p.n : null;
@@ -1460,46 +1492,78 @@
                                 })}
                             </select>
                             <select value={fCategoria} onChange={e => { setFCategoria(e.target.value); setPaginaRadar(1); }}
-                                className="px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-acento/20">
-                                <option value="">Categoría</option>
+                                className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-acento/20">
+                                <option value="">Categoría · todas</option>
                                 {(meta.categorias || []).map(c => {
                                     const val = typeof c === 'string' ? c : c.categoria;
                                     const cnt = typeof c === 'object' ? c.n : null;
-                                    return <option key={val} value={val}>{val}{cnt != null ? ` (${cnt})` : ''}</option>;
+                                    return <option key={val} value={val}>{_catLabel(val)}{cnt != null ? ` (${cnt})` : ''}</option>;
                                 })}
                             </select>
-                            <select value={fSort} onChange={e => { setFSort(e.target.value); setPaginaRadar(1); }}
-                                className="px-2 py-1.5 text-xs border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-acento/20">
-                                <option value="hit_rate">Hit rate ↓</option>
-                                <option value="iniciativas">Iniciativas proy. ↓</option>
-                                <option value="proposiciones">Proposiciones proy. ↓</option>
-                                <option value="actividad">Actividad L3P ↓</option>
-                                <option value="nombre">Nombre A-Z</option>
-                            </select>
+                            <div className="ml-auto flex items-center gap-1.5">
+                                <span className="text-[10px] uppercase text-gray-400 font-semibold tracking-wide">Ordenar</span>
+                                <select value={fSort} onChange={e => { setFSort(e.target.value); setPaginaRadar(1); }}
+                                    className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-acento/20">
+                                    <option value="hit_rate">Hit rate</option>
+                                    <option value="iniciativas">Iniciativas proy.</option>
+                                    <option value="proposiciones">Proposiciones proy.</option>
+                                    <option value="actividad">Actividad L3P</option>
+                                    <option value="nombre">Nombre A-Z</option>
+                                </select>
+                            </div>
                         </div>
-                        <div className="flex items-center justify-between text-[11px] text-gray-500">
-                            <span>{cargando ? 'Cargando…' : `${total.toLocaleString()} legisladores`}{hayFiltros ? ' (filtrado)' : ''}</span>
-                            {hayFiltros && (
-                                <button onClick={limpiarFiltros} className="text-acento hover:underline font-medium">Limpiar filtros</button>
-                            )}
-                        </div>
+
+                        {/* Active filter chips */}
+                        {chips.length > 0 && (
+                            <div className="flex items-center gap-1.5 flex-wrap pt-1 border-t border-gray-100">
+                                <span className="text-[10px] uppercase text-gray-400 font-semibold tracking-wide pr-1">Activos</span>
+                                {chips.map(c => (
+                                    <button key={c.k} onClick={() => { c.clear(); setPaginaRadar(1); }}
+                                        className="group inline-flex items-center gap-1 px-2 py-0.5 text-[11px] bg-acento/10 text-acento rounded-full hover:bg-acento/20 transition-colors">
+                                        {c.label}
+                                        <span className="text-acento/60 group-hover:text-acento">×</span>
+                                    </button>
+                                ))}
+                                <button onClick={limpiarFiltros} className="text-[11px] text-gray-400 hover:text-gray-700 ml-1 underline">limpiar todo</button>
+                            </div>
+                        )}
                     </div>
 
                     {error && (
-                        <div className="glass border border-red-200 bg-red-50/50 rounded-xl p-4 text-sm text-red-700">
+                        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
                             Error cargando el radar: {error}
                         </div>
                     )}
                     {!cargando && !error && legisladores.length === 0 && (
-                        <div className="glass border border-borde rounded-xl p-8 text-center text-sm text-gray-500">
+                        <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-sm text-gray-500">
                             No hay legisladores que coincidan con los filtros.
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {legisladores.map(leg => <RadarCard key={leg.id} leg={leg} />)}
-                    </div>
+                    {/* Player-props table */}
+                    {legisladores.length > 0 && (
+                        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                            {/* Header row (desktop) */}
+                            <div className="hidden md:grid grid-cols-[minmax(0,2.3fr)_0.9fr_0.85fr_0.85fr_0.85fr_0.9fr_0.8fr] gap-2 px-3 py-2 bg-gray-50 border-b border-gray-200 text-[10px] uppercase tracking-wider text-gray-500 font-semibold">
+                                <div>Legislador</div>
+                                <div className="text-center">Categoría</div>
+                                <div className="text-center">Hit rate</div>
+                                <div className="text-center">Ini 15d</div>
+                                <div className="text-center">Prop 15d</div>
+                                <div className="text-center">L3P total</div>
+                                <div className="text-center">Matchup</div>
+                            </div>
 
+                            {/* Rows */}
+                            <div className="divide-y divide-gray-100">
+                                {legisladores.map(leg => (
+                                    <RadarRow key={leg.id} leg={leg} onClick={() => setLegSeleccionado(leg)} />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Pagination */}
                     {totalPaginas > 1 && (
                         <div className="flex items-center justify-center gap-2 pt-2">
                             <button onClick={() => setPaginaRadar(p => Math.max(1, p - 1))} disabled={pagina <= 1 || cargando}
@@ -1509,71 +1573,360 @@
                                 className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed">Siguiente →</button>
                         </div>
                     )}
+
+                    {/* Player modal */}
+                    {legSeleccionado && (
+                        <RadarPlayerModal leg={legSeleccionado} onClose={() => setLegSeleccionado(null)} />
+                    )}
                 </div>
             );
         }
 
-        function RadarCard({ leg }) {
+        function RadarRow({ leg, onClick }) {
             const partidoColor = PARTIDO_COLORS[leg.partido] || '#6B7280';
-            const foto = leg.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(leg.nombre || '?')}&background=e5e7eb&color=374151&size=128`;
+            const foto = leg.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(leg.nombre || '?')}&background=e5e7eb&color=374151&size=96`;
+            const hitPct = leg.hit_rate != null ? Math.round(leg.hit_rate * 100) : null;
+            const hitColor = hitPct == null ? 'text-gray-400' : hitPct >= 50 ? 'text-emerald-600' : hitPct >= 25 ? 'text-amber-600' : 'text-gray-500';
+            const iniProy = leg.iniciativas_proy_15d != null ? Number(leg.iniciativas_proy_15d).toFixed(1) : '—';
+            const propProy = leg.proposiciones_proy_15d != null ? Number(leg.proposiciones_proy_15d).toFixed(1) : '—';
+            const l3pTotal = (leg.l3p_iniciativas ?? 0) + (leg.l3p_proposiciones ?? 0);
+            const grade = leg.matchup_grade;
+            const gradeStyle = grade === 'A' ? 'bg-emerald-500 text-white' : grade === 'B' ? 'bg-lime-500 text-white' : grade === 'C' ? 'bg-amber-500 text-white' : grade === 'D' ? 'bg-orange-500 text-white' : grade === 'F' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-500';
+
+            return (
+                <div onClick={onClick}
+                    className="grid grid-cols-[minmax(0,1fr)] md:grid-cols-[minmax(0,2.3fr)_0.9fr_0.85fr_0.85fr_0.85fr_0.9fr_0.8fr] gap-2 px-3 py-2.5 hover:bg-acento/5 cursor-pointer transition-colors items-center">
+                    {/* Player */}
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <img src={foto} alt={leg.nombre}
+                            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(leg.nombre || '?')}&background=e5e7eb&color=374151&size=96`; }}
+                            className="w-9 h-9 rounded-full object-cover bg-gray-100 flex-shrink-0 border border-gray-200" />
+                        <div className="min-w-0 flex-1">
+                            <div className="text-sm font-semibold text-gray-800 truncate" title={leg.nombre}>{leg.nombre}</div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                                {leg.partido && (
+                                    <span className="px-1.5 py-px text-[9px] font-bold rounded text-white tracking-wide" style={{ backgroundColor: partidoColor }}>{leg.partido}</span>
+                                )}
+                                <span className="text-[10px] text-gray-500 truncate">
+                                    {(leg.camara || '').replace('Cámara de ', '')}
+                                    {leg.estado ? ` · ${leg.estado}` : ''}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Mobile: stats row under player */}
+                    <div className="md:hidden grid grid-cols-4 gap-1 mt-1 text-center">
+                        <div><div className="text-[8px] uppercase text-gray-400">Hit</div><div className={`text-sm font-bold ${hitColor}`}>{hitPct != null ? `${hitPct}%` : '—'}</div></div>
+                        <div><div className="text-[8px] uppercase text-gray-400">Ini</div><div className="text-sm font-bold text-gray-800">{iniProy}</div></div>
+                        <div><div className="text-[8px] uppercase text-gray-400">Prop</div><div className="text-sm font-bold text-gray-800">{propProy}</div></div>
+                        <div><div className="text-[8px] uppercase text-gray-400">Match</div><div className={`inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold rounded ${gradeStyle}`}>{grade || '—'}</div></div>
+                    </div>
+
+                    {/* Desktop columns */}
+                    <div className="hidden md:block text-center">
+                        {leg.categoria_dominante ? (
+                            <span className="inline-block px-1.5 py-0.5 text-[10px] rounded bg-acento/10 text-acento font-medium truncate max-w-full" title={leg.categoria_dominante}>
+                                {_catLabel(leg.categoria_dominante)}
+                            </span>
+                        ) : <span className="text-[10px] text-gray-400">—</span>}
+                    </div>
+                    <div className="hidden md:block text-center">
+                        <div className={`text-base font-bold leading-tight ${hitColor}`}>{hitPct != null ? `${hitPct}%` : '—'}</div>
+                        <div className="text-[9px] text-gray-400">{leg.hit_respondio ?? 0}/{leg.hit_total ?? 0}</div>
+                    </div>
+                    <div className="hidden md:block text-center">
+                        <div className="text-base font-bold text-gray-800 leading-tight">{iniProy}</div>
+                        <div className="text-[9px] text-gray-400">L3P {leg.l3p_iniciativas ?? 0}</div>
+                    </div>
+                    <div className="hidden md:block text-center">
+                        <div className="text-base font-bold text-gray-800 leading-tight">{propProy}</div>
+                        <div className="text-[9px] text-gray-400">L3P {leg.l3p_proposiciones ?? 0}</div>
+                    </div>
+                    <div className="hidden md:block text-center">
+                        <div className="text-base font-bold text-gray-800 leading-tight">{l3pTotal}</div>
+                        <div className="text-[9px] text-gray-400">instrumentos</div>
+                    </div>
+                    <div className="hidden md:flex items-center justify-center">
+                        <div className={`inline-flex items-center justify-center w-8 h-8 text-sm font-bold rounded-lg ${gradeStyle}`}
+                            title={grade ? `Matchup vs ${leg.matchup_comision || 'comisión'}${leg.matchup_tasa != null ? ` · ${Math.round(leg.matchup_tasa*100)}%` : ''}` : 'Sin suficientes dictámenes'}>
+                            {grade || '—'}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function RadarPlayerModal({ leg, onClose }) {
+            const [tab, setTab] = useState('overview');
+            const partidoColor = PARTIDO_COLORS[leg.partido] || '#6B7280';
+            const foto = leg.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(leg.nombre || '?')}&background=e5e7eb&color=374151&size=256`;
             const hitPct = leg.hit_rate != null ? Math.round(leg.hit_rate * 100) : null;
             const iniProy = leg.iniciativas_proy_15d != null ? Number(leg.iniciativas_proy_15d).toFixed(1) : '—';
             const propProy = leg.proposiciones_proy_15d != null ? Number(leg.proposiciones_proy_15d).toFixed(1) : '—';
             const l3pIni = leg.l3p_iniciativas ?? 0;
             const l3pProp = leg.l3p_proposiciones ?? 0;
             const grade = leg.matchup_grade;
-            const gradeColor = grade === 'A' ? 'bg-emerald-500' : grade === 'B' ? 'bg-lime-500' : grade === 'C' ? 'bg-amber-500' : grade === 'D' ? 'bg-orange-500' : grade === 'F' ? 'bg-red-500' : 'bg-gray-400';
+            const gradeGlow = grade === 'A' ? 'from-emerald-500 to-emerald-600' : grade === 'B' ? 'from-lime-500 to-lime-600' : grade === 'C' ? 'from-amber-500 to-amber-600' : grade === 'D' ? 'from-orange-500 to-orange-600' : grade === 'F' ? 'from-red-500 to-red-600' : 'from-gray-400 to-gray-500';
+            const gradeLabel = { A: 'GREAT', B: 'GOOD', C: 'FAIR', D: 'POOR', F: 'TOUGH' }[grade] || '';
+
+            // Close on escape
+            useEffect(() => {
+                const h = (e) => { if (e.key === 'Escape') onClose(); };
+                window.addEventListener('keydown', h);
+                return () => window.removeEventListener('keydown', h);
+            }, [onClose]);
+
+            const tabs = [
+                { k: 'overview', label: 'Overview' },
+                { k: 'matchup', label: 'Matchup' },
+                { k: 'hit_rate', label: 'Hit Rate' },
+                { k: 'perfil', label: 'Perfil' },
+            ];
 
             return (
-                <div className="glass border border-borde rounded-xl p-4 hover:border-acento/30 transition-colors">
-                    <div className="flex items-start gap-3 mb-3">
-                        <img src={foto} alt={leg.nombre}
-                            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(leg.nombre || '?')}&background=e5e7eb&color=374151&size=128`; }}
-                            className="w-14 h-14 rounded-lg object-cover bg-gray-100 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                            <div className="font-semibold text-sm text-gray-800 truncate" title={leg.nombre}>{leg.nombre}</div>
-                            <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                                {leg.partido && (
-                                    <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded text-white" style={{ backgroundColor: partidoColor }}>{leg.partido}</span>
-                                )}
-                                <span className="text-[10px] text-gray-500">{leg.camara || '—'}</span>
-                                {leg.estado && <span className="text-[10px] text-gray-400">· {leg.estado}</span>}
-                            </div>
-                            {leg.categoria_dominante && (
-                                <div className="mt-1 inline-block px-1.5 py-0.5 text-[10px] rounded bg-acento/10 text-acento font-medium truncate max-w-full" title={leg.categoria_dominante}>
-                                    {leg.categoria_dominante}
+                <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center bg-black/50 backdrop-blur-sm p-0 md:p-4" onClick={onClose}>
+                    <div className="bg-white w-full md:max-w-2xl md:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-screen md:max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                        {/* Header */}
+                        <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 text-white p-4 md:p-5">
+                            <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 hover:text-white transition-colors">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                            <div className="flex items-start gap-4">
+                                <img src={foto} alt={leg.nombre}
+                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(leg.nombre || '?')}&background=374151&color=ffffff&size=256`; }}
+                                    className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover bg-gray-700 border-2 border-white/20 flex-shrink-0" />
+                                <div className="flex-1 min-w-0 pr-8">
+                                    <div className="text-xl md:text-2xl font-bold leading-tight truncate" title={leg.nombre}>{leg.nombre}</div>
+                                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                                        {leg.partido && (
+                                            <span className="px-2 py-0.5 text-[11px] font-bold rounded tracking-wide" style={{ backgroundColor: partidoColor }}>{leg.partido}</span>
+                                        )}
+                                        <span className="text-xs text-white/80">{(leg.camara || '').replace('Cámara de ', '')}</span>
+                                        {leg.estado && <span className="text-xs text-white/60">· {leg.estado}</span>}
+                                        {leg.distrito && <span className="text-xs text-white/60">· {leg.distrito}</span>}
+                                    </div>
+                                    {leg.categoria_dominante && (
+                                        <div className="mt-2 inline-block px-2 py-0.5 text-[11px] rounded bg-white/10 text-white/90 font-medium">
+                                            Tema dominante: {_catLabel(leg.categoria_dominante)}
+                                        </div>
+                                    )}
                                 </div>
-                            )}
+                                {grade && (
+                                    <div className={`bg-gradient-to-br ${gradeGlow} rounded-xl w-16 h-16 flex flex-col items-center justify-center flex-shrink-0 shadow-lg`}>
+                                        <div className="text-2xl font-black leading-none">{grade}</div>
+                                        <div className="text-[9px] font-bold tracking-wider mt-0.5">{gradeLabel}</div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Headline stats */}
+                            <div className="grid grid-cols-3 gap-2 mt-4">
+                                <div className="bg-white/10 rounded-lg p-2.5 text-center">
+                                    <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Hit rate</div>
+                                    <div className="text-xl font-bold mt-0.5">{hitPct != null ? `${hitPct}%` : '—'}</div>
+                                    <div className="text-[10px] text-white/60">{leg.hit_respondio ?? 0}/{leg.hit_total ?? 0} picos</div>
+                                </div>
+                                <div className="bg-white/10 rounded-lg p-2.5 text-center">
+                                    <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Ini 15d</div>
+                                    <div className="text-xl font-bold mt-0.5">{iniProy}</div>
+                                    <div className="text-[10px] text-white/60">L3P · {l3pIni}</div>
+                                </div>
+                                <div className="bg-white/10 rounded-lg p-2.5 text-center">
+                                    <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Prop 15d</div>
+                                    <div className="text-xl font-bold mt-0.5">{propProy}</div>
+                                    <div className="text-[10px] text-white/60">L3P · {l3pProp}</div>
+                                </div>
+                            </div>
                         </div>
-                        {grade && (
-                            <div className={`${gradeColor} text-white text-xs font-bold w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0`} title={`Matchup grade vs ${leg.matchup_comision || 'comisión'}`}>{grade}</div>
+
+                        {/* Tabs */}
+                        <div className="flex border-b border-gray-200 bg-gray-50 px-2 overflow-x-auto">
+                            {tabs.map(t => (
+                                <button key={t.k} onClick={() => setTab(t.k)}
+                                    className={`px-3.5 py-2.5 text-xs font-semibold border-b-2 transition-colors whitespace-nowrap ${tab === t.k ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+                                    {t.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Tab body */}
+                        <div className="flex-1 overflow-y-auto p-4 md:p-5 text-sm">
+                            {tab === 'overview' && <TabOverview leg={leg} />}
+                            {tab === 'matchup' && <TabMatchup leg={leg} />}
+                            {tab === 'hit_rate' && <TabHitRate leg={leg} />}
+                            {tab === 'perfil' && <TabPerfil leg={leg} />}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function TabOverview({ leg }) {
+            const hitPct = leg.hit_rate != null ? Math.round(leg.hit_rate * 100) : null;
+            const l3pIni = leg.l3p_iniciativas ?? 0;
+            const l3pProp = leg.l3p_proposiciones ?? 0;
+            const l3pTotal = l3pIni + l3pProp;
+            const iniProy = leg.iniciativas_proy_15d;
+            const propProy = leg.proposiciones_proy_15d;
+
+            // Narrativa rule-based
+            const insights = [];
+            if (hitPct != null && hitPct >= 50 && leg.categoria_dominante) {
+                insights.push(`Reacciona rápido a picos mediáticos en ${_catLabel(leg.categoria_dominante)}: ${hitPct}% de los últimos ${leg.hit_total} picos relevantes.`);
+            } else if (hitPct != null && hitPct === 0 && leg.hit_total > 0) {
+                insights.push(`No ha presentado instrumentos dentro de los 7 días de los picos en ${_catLabel(leg.categoria_dominante)}. Bajo oportunismo informativo.`);
+            }
+            if (iniProy != null && iniProy > 1.5) {
+                insights.push(`Proyección agresiva de iniciativas: ${Number(iniProy).toFixed(1)} en los próximos 15 días (acelerando vs baseline LXVI).`);
+            }
+            if (leg.matchup_grade === 'A' || leg.matchup_grade === 'B') {
+                insights.push(`Tiene buena relación con ${leg.matchup_comision || 'su comisión'}: tasa de aprobación ${Math.round((leg.matchup_tasa || 0) * 100)}%.`);
+            } else if (leg.matchup_grade === 'F') {
+                insights.push(`Matchup difícil: solo ${Math.round((leg.matchup_tasa || 0) * 100)}% de aprobación en ${leg.matchup_comision || 'su comisión dominante'}.`);
+            }
+            if (l3pTotal === 0) {
+                insights.push('Sin actividad legislativa registrada en la LXVI. Posible legislador suplente, reciente, o nombre no enlazado todavía.');
+            }
+
+            return (
+                <div className="space-y-4">
+                    <div>
+                        <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-2">Key Insights</div>
+                        {insights.length > 0 ? (
+                            <ul className="space-y-2">
+                                {insights.map((it, i) => (
+                                    <li key={i} className="flex gap-2 text-sm text-gray-700"><span className="text-acento">▸</span><span>{it}</span></li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <div className="text-xs text-gray-500 italic">Sin insights destacados todavía.</div>
                         )}
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 mb-3">
-                        <div className="bg-gray-50 rounded-lg p-2 text-center">
-                            <div className="text-[9px] uppercase tracking-wide text-gray-500 font-semibold">Hit rate</div>
-                            <div className="text-lg font-bold text-gray-800 leading-tight">{hitPct != null ? `${hitPct}%` : '—'}</div>
-                            <div className="text-[9px] text-gray-400">{leg.hit_respondio ?? 0}/{leg.hit_total ?? 0} picos</div>
+                    <div>
+                        <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-2">Totales LXVI</div>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="bg-gray-50 rounded-lg p-3">
+                                <div className="text-[10px] text-gray-500">Iniciativas presentadas</div>
+                                <div className="text-xl font-bold text-gray-800">{l3pIni}</div>
+                            </div>
+                            <div className="bg-gray-50 rounded-lg p-3">
+                                <div className="text-[10px] text-gray-500">Proposiciones presentadas</div>
+                                <div className="text-xl font-bold text-gray-800">{l3pProp}</div>
+                            </div>
                         </div>
-                        <div className="bg-gray-50 rounded-lg p-2 text-center">
-                            <div className="text-[9px] uppercase tracking-wide text-gray-500 font-semibold">Ini. 15d</div>
-                            <div className="text-lg font-bold text-gray-800 leading-tight">{iniProy}</div>
-                            <div className="text-[9px] text-gray-400">proyectadas</div>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-2 text-center">
-                            <div className="text-[9px] uppercase tracking-wide text-gray-500 font-semibold">Prop. 15d</div>
-                            <div className="text-lg font-bold text-gray-800 leading-tight">{propProy}</div>
-                            <div className="text-[9px] text-gray-400">proyectadas</div>
+                    </div>
+                </div>
+            );
+        }
+
+        function TabMatchup({ leg }) {
+            if (!leg.matchup_comision) {
+                return <div className="text-xs text-gray-500 italic">Sin comisión dictaminadora dominante todavía. Necesita más instrumentos resueltos (≥5 decididos).</div>;
+            }
+            const tasa = leg.matchup_tasa != null ? Math.round(leg.matchup_tasa * 100) : null;
+            const grade = leg.matchup_grade;
+            const gradeLabel = { A: 'GREAT', B: 'GOOD', C: 'FAIR', D: 'POOR', F: 'TOUGH' }[grade] || '—';
+
+            return (
+                <div className="space-y-4">
+                    <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 text-white">
+                        <div className="text-[10px] uppercase tracking-wider text-white/60 font-semibold mb-1">Comisión dictaminadora principal</div>
+                        <div className="font-semibold text-base">{leg.matchup_comision}</div>
+                        <div className="mt-3 flex items-end justify-between">
+                            <div>
+                                <div className="text-[10px] uppercase text-white/60 font-semibold">Tasa de aprobación</div>
+                                <div className="text-3xl font-bold mt-0.5">{tasa != null ? `${tasa}%` : '—'}</div>
+                            </div>
+                            <div className="text-right">
+                                <div className="text-[10px] uppercase text-white/60 font-semibold">Grade</div>
+                                <div className="text-2xl font-black">{grade || '—'}</div>
+                                <div className="text-[10px] font-bold tracking-wider text-white/80">{gradeLabel}</div>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="flex items-center justify-between text-[10px] text-gray-500 border-t border-gray-100 pt-2">
-                        <span>L3P: <span className="font-semibold text-gray-700">{l3pIni}</span> ini · <span className="font-semibold text-gray-700">{l3pProp}</span> prop</span>
-                        {leg.matchup_comision && (
-                            <span className="truncate ml-2" title={leg.matchup_comision}>vs {leg.matchup_comision}{leg.matchup_tasa != null ? ` (${Math.round(leg.matchup_tasa * 100)}%)` : ''}</span>
+                    <div className="text-xs text-gray-500 leading-relaxed">
+                        El grade califica qué tan favorable es la comisión a los instrumentos presentados por este legislador durante la LXVI.
+                        A/B indica alta aprobación; F indica que la mayoría son desechados o retirados. Se excluyen pendientes del denominador.
+                    </div>
+                </div>
+            );
+        }
+
+        function TabHitRate({ leg }) {
+            const hitPct = leg.hit_rate != null ? Math.round(leg.hit_rate * 100) : null;
+            const respondio = leg.hit_respondio ?? 0;
+            const total = leg.hit_total ?? 0;
+
+            // Mini barchart visualization
+            const bars = [];
+            for (let i = 0; i < total; i++) {
+                bars.push(i < respondio ? 'hit' : 'miss');
+            }
+
+            return (
+                <div className="space-y-4">
+                    <div className="bg-gray-50 rounded-xl p-4">
+                        <div className="flex items-end justify-between mb-3">
+                            <div>
+                                <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Probabilidad de reacción a pico</div>
+                                <div className="text-4xl font-bold text-gray-800 mt-1">{hitPct != null ? `${hitPct}%` : '—'}</div>
+                                <div className="text-xs text-gray-500 mt-0.5">
+                                    Categoría: <span className="font-semibold text-gray-700">{_catLabel(leg.categoria_dominante)}</span>
+                                </div>
+                            </div>
+                            <div className="text-right text-xs text-gray-500">
+                                <div>{respondio}/{total} picos</div>
+                                <div className="text-[10px] text-gray-400">ventana ±7d</div>
+                            </div>
+                        </div>
+
+                        {total > 0 && (
+                            <div className="flex gap-0.5 h-8">
+                                {bars.map((b, i) => (
+                                    <div key={i} className={`flex-1 rounded-sm ${b === 'hit' ? 'bg-emerald-500' : 'bg-gray-200'}`} title={b === 'hit' ? 'Respondió' : 'No respondió'}></div>
+                                ))}
+                            </div>
                         )}
                     </div>
+
+                    <div className="text-xs text-gray-500 leading-relaxed">
+                        Un <strong>pico mediático</strong> es un día con score_media ≥ 55 en la categoría dominante del legislador.
+                        Contamos como "respondió" si presentó algún instrumento (iniciativa, proposición, etc.) de la misma categoría
+                        dentro de una ventana de ±7 días alrededor del pico. Muestra: últimos 20 picos desde el inicio de la LXVI.
+                    </div>
+                </div>
+            );
+        }
+
+        function TabPerfil({ leg }) {
+            return (
+                <div className="space-y-3 text-sm">
+                    {leg.profesion && (
+                        <div><div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">Profesión</div><div className="text-gray-800">{leg.profesion}</div></div>
+                    )}
+                    {leg.estudios && (
+                        <div><div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">Estudios</div><div className="text-gray-800">{leg.estudios}</div></div>
+                    )}
+                    {leg.anio_nacimiento && (
+                        <div><div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">Año de nacimiento</div><div className="text-gray-800">{leg.anio_nacimiento}</div></div>
+                    )}
+                    {leg.biografia && (
+                        <div>
+                            <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1">Biografía</div>
+                            <div className="text-gray-700 text-xs leading-relaxed whitespace-pre-wrap">{leg.biografia}</div>
+                        </div>
+                    )}
+                    {leg.fuente_perfil && (
+                        <div className="pt-2 border-t border-gray-100 text-[10px] text-gray-400">
+                            Fuente: {leg.fuente_perfil}
+                        </div>
+                    )}
+                    {!leg.profesion && !leg.estudios && !leg.biografia && (
+                        <div className="text-xs text-gray-500 italic">Perfil aún no scrapeado desde SIL.</div>
+                    )}
                 </div>
             );
         }

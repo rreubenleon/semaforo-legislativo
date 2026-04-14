@@ -298,7 +298,13 @@ async function handleRadar(request, env) {
         LEFT JOIN legisladores_perfil p ON p.legislador_id = l.id
         LEFT JOIN legisladores_stats s ON s.legislador_id = l.id
         LEFT JOIN legisladores_hit_rate hr
-          ON hr.legislador_id = l.id AND hr.categoria = s.categoria_dominante
+          ON hr.legislador_id = l.id
+         AND hr.categoria = s.categoria_dominante
+         AND hr.id = (
+           SELECT id FROM legisladores_hit_rate
+           WHERE legislador_id = l.id AND categoria = s.categoria_dominante
+           ORDER BY fecha_calculo DESC LIMIT 1
+         )
         ${whereSql}
         ORDER BY ${orderSql}
         LIMIT ? OFFSET ?
