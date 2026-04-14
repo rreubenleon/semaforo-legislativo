@@ -102,6 +102,23 @@ MEDIOS = {
         "rss": "",  # Sin RSS público para sección México; cubierto por medios_html.py
         "peso": 1.3,  # Peso alto: cobertura internacional de referencia
     },
+    # Talla Política — seguimiento legislativo granular por cámara + secretarías.
+    # Tres feeds RSS separados para detectar señales que anticipen iniciativas.
+    "talla_diputados": {
+        "nombre": "Talla Política (Diputados)",
+        "rss": "https://www.tallapolitica.com.mx/category/camara_de_diputados/feed/",
+        "peso": 1.3,  # Peso alto: cobertura legislativa específica de Diputados
+    },
+    "talla_senadores": {
+        "nombre": "Talla Política (Senadores)",
+        "rss": "https://www.tallapolitica.com.mx/category/camara_de_senadores/feed/",
+        "peso": 1.3,  # Peso alto: cobertura legislativa específica del Senado
+    },
+    "talla_secretarias": {
+        "nombre": "Talla Política (Secretarías)",
+        "rss": "https://www.tallapolitica.com.mx/category/secretarias_de_estado/feed/",
+        "peso": 1.1,  # Señales tempranas de temas que pueden volverse legislativos
+    },
 }
 
 # ─────────────────────────────────────────────
@@ -304,7 +321,7 @@ CATEGORIAS = {
             },
             "violencia_victimas": {
                 "nombre": "Violencia y víctimas",
-                "keywords": ["homicidio", "feminicidio", "desaparición forzada", "violencia", "impunidad", "víctimas",
+                "keywords": ["homicidio", "desaparición forzada", "violencia", "impunidad", "víctimas",
                              "fosa clandestina", "fosas", "asesinato", "muertos", "restos humanos",
                              "desaparecidos", "persona desaparecida", "búsqueda de personas", "tortura", "detención arbitraria",
                              "cadáver", "cadáveres", "cuerpo sin vida", "cuerpos sin vida",
@@ -612,17 +629,17 @@ CATEGORIAS = {
         "nombre": "Electoral y Político",
         "comisiones": [
             # Diputados
-            "Gobernación y Población", "Reforma Política-Electoral",
+            "Reforma Política-Electoral",
             # Senado LXVI
-            "Gobernación", "Puntos Constitucionales",
             "Participación Ciudadana",
             "Estudios Legislativos",
             "Estudios Legislativos, Primera",
             "Estudios Legislativos, Segunda",
-            "Federalismo",
-            "Desarrollo Municipal",
             "Reglamentos y Prácticas Parlamentarias",
             "Medalla Belisario Domínguez",
+            # Nota v3: "Gobernación", "Gobernación y Población", "Puntos Constitucionales",
+            # "Federalismo" y "Desarrollo Municipal" se movieron a la categoría
+            # `administracion` tras el eval set v1 (caso #21).
         ],
         "trends_keywords": ["elecciones México", "INE", "Morena partido", "congreso México", "reforma electoral"],
         "subcategorias": {
@@ -653,23 +670,20 @@ CATEGORIAS = {
             "gobernabilidad": {
                 "nombre": "Gobernabilidad",
                 "keywords": ["gobernabilidad", "sistema político", "crisis política", "desafuero",
-                             "juicio político", "división de poderes", "Ley Orgánica del Congreso",
+                             "juicio político", "Ley Orgánica del Congreso",
                              "periodo de sesiones", "sesión plenaria", "tribuna", "coordinador parlamentario",
                              "líder parlamentario", "ejecutivo federal",
                              "crisis de gobierno", "ingobernabilidad", "vacío de poder",
-                             # Leyes federales
-                             "Constitución Política", "Ley Orgánica de la Administración Pública Federal",
+                             # Leyes federales — sólo las propiamente políticas/parlamentarias.
+                             # Las leyes administrativas (LOAPF, Planeación, Entidades Paraestatales,
+                             # Servicio Profesional, Procedimiento Administrativo, etc.) se movieron
+                             # a la categoría `administracion` en v3.
+                             "Constitución Política",
                              "Reglamento de la Cámara de Diputados", "Reglamento del Senado",
-                             "Ley de Planeación", "Ley de Entidades Paraestatales",
-                             "Ley del Diario Oficial", "Ley General de Comunicación Social",
-                             "Ley General de Población", "Ley del Servicio Profesional de Carrera",
-                             "Ley de Procedimiento Administrativo",
+                             "Ley General de Comunicación Social",
+                             "Ley General de Población",
                              "Ley Reglamentaria del Artículo 5o Constitucional",
-                             "Ley de los Husos Horarios", "Ley sobre el Escudo la Bandera y el Himno",
-                             "Ley de Premios Estímulos y Recompensas Civiles",
-                             "Ley Nacional para Eliminar Trámites Burocráticos",
-                             "Ley de Firma Electrónica Avanzada",
-                             "Estatuto de Gobierno del Distrito Federal"],
+                             "Ley de los Husos Horarios", "Ley sobre el Escudo la Bandera y el Himno"],
             },
             "participacion_ciudadana": {
                 "nombre": "Participación ciudadana",
@@ -1090,7 +1104,12 @@ CATEGORIAS = {
             },
             "bienestar_desarrollo": {
                 "nombre": "Bienestar y desarrollo social",
-                "keywords": ["bienestar", "desarrollo social", "subsidio", "ingreso mínimo", "transferencia directa",
+                # NOTA: "bienestar" suelto se quitó porque generaba FPs en docs sobre
+                # "IMSS-Bienestar" (sistema de salud, no política social). Se mantienen
+                # compuestas seguras: "secretaría de bienestar", "tarjeta bienestar".
+                "keywords": ["secretaría de bienestar", "secretaria de bienestar",
+                             "tarjeta bienestar", "desarrollo social", "subsidio",
+                             "ingreso mínimo", "transferencia directa",
                              # Leyes federales
                              "Ley de la Alimentación Adecuada y Sostenible"],
             },
@@ -1189,6 +1208,11 @@ CATEGORIAS = {
                     "violencia de género", "feminicidio", "alerta de género",
                     "violencia doméstica", "violencia contra la mujer",
                     "refugios para mujeres", "orden de protección",
+                    # Agregadas v2 (eval set v1):
+                    # - "violencia digital" + "ley olimpia" cubren reformas tipo art. 199 Octies CPF
+                    # - "delito de violación", "violación sexual" cubren reformas al CPF tipo #83
+                    "violencia digital", "ley olimpia",
+                    "delito de violación", "violación sexual", "delitos sexuales",
                     # Leyes federales
                     "Ley General de Acceso de las Mujeres a una Vida Libre de Violencias",
                     "Ley para Prevenir Sancionar y Erradicar la Trata de Personas",
@@ -1199,6 +1223,13 @@ CATEGORIAS = {
                 "keywords": [
                     "igualdad de género", "igualdad sustantiva", "brecha salarial",
                     "igualdad laboral", "discriminación de género", "equidad salarial",
+                    # Agregadas v2 (eval set v1) — compuestas con "mujeres" como sujeto temático.
+                    # NO se agrega "mujeres" suelta porque genera FPs en cualquier nota
+                    # política que mencione mujeres en otro contexto.
+                    "derechos de las mujeres", "derechos de la mujer",
+                    "mujeres rurales", "mujeres indígenas", "mujer indígena",
+                    "mujeres afromexicanas", "mujeres emprendedoras",
+                    "empoderamiento de la mujer", "empoderamiento de las mujeres",
                     # Leyes federales
                     "Ley General para la Igualdad Sustantiva entre Mujeres y Hombres",
                 ],
@@ -1209,6 +1240,10 @@ CATEGORIAS = {
                     "paridad de género", "paridad en todo",
                     "violencia política de género",
                     "participación política de mujeres", "cuotas de género",
+                    # Agregadas v2 (eval set v1, caso #73): el clasificador no detectaba
+                    # "comisiones paritarias" porque "paritaria" no se stemifica a "paridad".
+                    "integración paritaria", "comisiones paritarias",
+                    "comisión paritaria", "representación paritaria",
                 ],
             },
             "derechos_reproductivos": {
@@ -1217,6 +1252,9 @@ CATEGORIAS = {
                     "aborto", "derechos reproductivos",
                     "interrupción legal del embarazo",
                     "salud reproductiva", "maternidad",
+                    # Agregadas v2 (eval set v1, caso #56): lactancia materna y salas
+                    # de lactancia entran como derechos reproductivos / maternidad.
+                    "lactancia materna", "salas de lactancia", "sala de lactancia",
                 ],
             },
             "instituciones_genero": {
@@ -1225,6 +1263,110 @@ CATEGORIAS = {
                     "INMUJERES", "instituto de las mujeres",
                     "política de género", "perspectiva de género",
                     "igualdad institucional",
+                ],
+            },
+        },
+    },
+    # ─────────────────────────────────────────────
+    # 19. ADMINISTRACIÓN
+    # Agregada v3 (post eval set v1). Cubre el gap estructural detectado en el
+    # etiquetado manual: reformas constitucionales al art. 25/73, Ley Orgánica
+    # de la APF, servicio profesional de carrera, trámites burocráticos,
+    # planeación nacional, federalismo y desarrollo municipal.
+    # Caso ancla: #21 "Reforma constitucional al art. 25 y 73".
+    # ─────────────────────────────────────────────
+    "administracion": {
+        "nombre": "Administración",
+        "comisiones": [
+            # Diputados
+            "Gobernación y Población",
+            "Reforma del Estado",
+            # Senado LXVI
+            "Gobernación",
+            "Puntos Constitucionales",
+            "Federalismo",
+            "Desarrollo Municipal",
+        ],
+        "trends_keywords": [
+            "administración pública México",
+            "reforma del Estado",
+            "Plan Nacional de Desarrollo",
+            "federalismo México",
+            "simplificación administrativa",
+        ],
+        "subcategorias": {
+            # NOTA v3: el clasificador es token-based + substring, así que keywords
+            # como "reforma constitucional" o "servidores públicos" explotan porque
+            # sus tokens ("reforma", "artículo", "constitucional", "servidor", "público")
+            # son genéricos y aparecen en casi cualquier iniciativa. Las keywords aquí
+            # deben ser frases específicas que capturan el dominio administrativo sin
+            # desparramarse. La recuperación fina de reformas constitucionales
+            # estructurales (casos tipo art. 25/73) se hace vía COMISION_A_CATEGORIA
+            # con "puntos constitucionales" → administracion.
+            "estructura_estado": {
+                "nombre": "Estructura del Estado",
+                "keywords": [
+                    "rectoría del Estado", "rectoría económica del Estado",
+                    "división de poderes",
+                    "facultades del Congreso de la Unión",
+                    "atribuciones del ejecutivo federal",
+                    "competencias concurrentes", "órganos del Estado mexicano",
+                ],
+            },
+            "administracion_publica_federal": {
+                "nombre": "Administración pública federal",
+                "keywords": [
+                    "administración pública federal",
+                    "Ley Orgánica de la Administración Pública Federal",
+                    "secretarías de Estado", "Oficina de la Presidencia",
+                    "gabinete presidencial", "dependencias del ejecutivo federal",
+                    "entidades paraestatales",
+                    "organismo descentralizado", "organismos descentralizados",
+                    "empresa productiva del Estado", "empresas productivas del Estado",
+                    "fideicomiso público federal", "fideicomisos públicos federales",
+                    "órganos desconcentrados",
+                    "consejería jurídica del ejecutivo",
+                    "reestructuración administrativa",
+                    "Ley de Entidades Paraestatales",
+                ],
+            },
+            "servicio_civil": {
+                "nombre": "Servicio civil de carrera",
+                "keywords": [
+                    "servicio profesional de carrera",
+                    "servicio civil de carrera",
+                    "mandos medios y superiores",
+                    "Ley del Servicio Profesional de Carrera",
+                    "Ley de Premios Estímulos y Recompensas Civiles",
+                ],
+            },
+            "procedimiento_administrativo": {
+                "nombre": "Procedimiento administrativo y trámites",
+                "keywords": [
+                    "procedimiento administrativo",
+                    "trámites burocráticos", "simplificación administrativa",
+                    "ventanilla única", "mejora regulatoria",
+                    "firma electrónica avanzada", "gobierno digital",
+                    "digitalización de trámites",
+                    "Ley de Procedimiento Administrativo",
+                    "Ley Nacional para Eliminar Trámites Burocráticos",
+                    "Ley de Firma Electrónica Avanzada",
+                    "Diario Oficial de la Federación",
+                    "Ley del Diario Oficial",
+                ],
+            },
+            "planeacion_federalismo": {
+                "nombre": "Planeación y federalismo",
+                "keywords": [
+                    "Plan Nacional de Desarrollo",
+                    "sistema nacional de planeación",
+                    "planeación democrática",
+                    "Ley de Planeación",
+                    "pacto federal", "coordinación intergubernamental",
+                    "descentralización administrativa",
+                    "conferencia nacional de gobernadores",
+                    "fortalecimiento municipal",
+                    "autonomía municipal",
                 ],
             },
         },
@@ -1319,7 +1461,7 @@ NLP_CONFIG = {
     "modelo": "keyword_matching",  # Fase 1: keywords. Fase 2: transformers
     "idioma": "es",
     "min_confianza": 0.4,          # Umbral mínimo (ajustado tras stopwords legales + log2 norm)
-    "max_categorias": 3,           # Máximo de categorías por artículo
+    "max_categorias": 3,           # Probado v3=4 contra eval set v1 → meseta (recupera 1 TP en derechos_humanos pero mete 4 FPs en categorías ruidosas). Volver a 3 hasta arreglar la precision de electoral_politico/relaciones_exteriores.
     "stopwords_extra": [
         "México", "mexicano", "país", "república",
     ],
@@ -1356,12 +1498,21 @@ COMISION_A_CATEGORIA = [
     # Trabajo
     ("trabajo", "trabajo"),
     ("seguridad social", "trabajo"),
+    # Administración (v3 — movidas desde electoral_politico)
+    ("gobernación", "administracion"),
+    ("gobernacion", "administracion"),
+    ("reforma del estado", "administracion"),
+    ("puntos constitucionales", "administracion"),
+    ("federalismo", "administracion"),
+    ("desarrollo municipal", "administracion"),
     # Electoral y Político
-    ("gobernación", "electoral_politico"),
-    ("gobernacion", "electoral_politico"),
-    ("reforma del estado", "electoral_politico"),
-    ("puntos constitucionales", "electoral_politico"),
+    ("reforma política-electoral", "electoral_politico"),
+    ("reforma politica-electoral", "electoral_politico"),
+    ("participación ciudadana", "electoral_politico"),
+    ("participacion ciudadana", "electoral_politico"),
     ("reglamentos y prácticas parlamentarias", "electoral_politico"),
+    ("medalla belisario", "electoral_politico"),
+    ("estudios legislativos", "electoral_politico"),
     # Derechos Humanos
     ("derechos humanos", "derechos_humanos"),
     ("igualdad de género", "derechos_humanos"),
@@ -1607,24 +1758,25 @@ LEYES_FEDERALES = {
     "Ley de Consulta Popular": "electoral_politico",
     "Ley de Revocación de Mandato": "electoral_politico",
     "Constitución Política": "electoral_politico",
-    "Ley Orgánica de la Administración Pública Federal": "electoral_politico",
     "Ley Orgánica del Congreso": "electoral_politico",
     "Reglamento de la Cámara de Diputados": "electoral_politico",
     "Reglamento del Senado": "electoral_politico",
-    "Ley de Planeación": "electoral_politico",
-    "Ley de Entidades Paraestatales": "electoral_politico",
-    "Ley del Diario Oficial": "electoral_politico",
     "Ley General de Comunicación Social": "electoral_politico",
     "Ley General de Población": "electoral_politico",
-    "Ley del Servicio Profesional de Carrera": "electoral_politico",
-    "Ley de Procedimiento Administrativo": "electoral_politico",
     "Ley Reglamentaria del Artículo 5o Constitucional": "electoral_politico",
     "Ley de los Husos Horarios": "electoral_politico",
     "Ley sobre el Escudo la Bandera y el Himno": "electoral_politico",
-    "Ley de Premios Estímulos y Recompensas Civiles": "electoral_politico",
-    "Ley Nacional para Eliminar Trámites Burocráticos": "electoral_politico",
-    "Ley de Firma Electrónica Avanzada": "electoral_politico",
-    "Estatuto de Gobierno del Distrito Federal": "electoral_politico",
+    # ── administracion (v3 — movidas desde electoral_politico) ──
+    "Ley Orgánica de la Administración Pública Federal": "administracion",
+    "Ley de Planeación": "administracion",
+    "Ley de Entidades Paraestatales": "administracion",
+    "Ley del Diario Oficial": "administracion",
+    "Ley del Servicio Profesional de Carrera": "administracion",
+    "Ley de Procedimiento Administrativo": "administracion",
+    "Ley de Premios Estímulos y Recompensas Civiles": "administracion",
+    "Ley Nacional para Eliminar Trámites Burocráticos": "administracion",
+    "Ley de Firma Electrónica Avanzada": "administracion",
+    "Estatuto de Gobierno del Distrito Federal": "administracion",
     # ── derechos_humanos ──
     "Ley de la CNDH": "derechos_humanos",
     "Ley de Amnistía": "derechos_humanos",
@@ -1765,6 +1917,13 @@ KEYWORDS_NEGATIVOS = [
     "desde Chile", "desde Colombia", "desde Argentina", "desde Perú",
     "desde Brasil", "desde Venezuela",
     "guía de viaje", "SoloCruceros",
+    # Gentilicios como adjetivo (señal fuerte de noticia no-México)
+    "argentino", "argentina", "colombiano", "colombiana",
+    "peruano", "peruana", "chileno", "chilena",
+    "brasileño", "brasileña", "venezolano", "venezolana",
+    "ecuatoriano", "ecuatoriana", "uruguayo", "uruguaya",
+    "paraguayo", "paraguaya", "boliviano", "boliviana",
+    "costarricense", "panameño", "panameña",
     # Figuras y partidos internacionales no-México
     "Steffon Diggs", "Stefon Diggs", "Tom Brady", "LeBron James",
     "Taylor Swift", "Elon Musk", "Jeff Bezos",
@@ -1772,6 +1931,9 @@ KEYWORDS_NEGATIVOS = [
     "Fujimori", "Keiko Fujimori", "Bukele", "Maduro",
     "Bolsonaro", "Castillo", "Arce", "Lacalle Pou",
     "parlamento de Perú", "congreso peruano",
+    # Figuras económicas internacionales
+    "Dujovne", "Sergio Massa", "Luis Caputo",
+    "Paulo Guedes", "Haddad", "Roberto Campos Neto",
     # Entretenimiento / farándula / virales
     "Hollywood", "Bollywood", "Oscar de Hollywood",
     "Grammy", "Emmy", "Golden Globe",

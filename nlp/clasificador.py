@@ -77,14 +77,46 @@ CONTEXTO_ENTRETENIMIENTO = [
     "tendencia de moda", "pasarela de moda",
 ]
 
+# ─────────────────────────────────────────────
+# FILTRO DE CONTEXTO CLIMÁTICO / NOTA ROJA OPERATIVA
+# Artículos sobre lluvias, granizo, alertas meteorológicas y afectaciones
+# operativas al transporte NO son temas legislativos. Si un desastre
+# natural escala a nivel de política pública (declaratoria de emergencia
+# federal, presupuesto de reconstrucción, comparecencia en Congreso),
+# las señales de rescate político lo salvan.
+# ─────────────────────────────────────────────
+CONTEXTO_CLIMATICO = [
+    # Fenómenos meteorológicos
+    "lluvia", "lluvias", "fuertes lluvias", "lluvia intensa", "lluvia torrencial",
+    "granizo", "granizada", "tormenta eléctrica", "tormenta severa",
+    "tromba", "aguacero", "chubasco",
+    # Alertas meteorológicas (no confundir con protección civil legislativa)
+    "alerta amarilla", "alerta naranja", "alerta roja por lluvia",
+    "alerta meteorológica", "alerta metereológica",
+    "pronóstico del tiempo", "pronostico del tiempo",
+    "servicio meteorológico", "servicio meteorologico",
+    # Afectaciones operativas (nota roja de servicios)
+    "encharcamiento", "encharcamientos", "inundación vial",
+    "caída de árbol", "caida de arbol", "caída de árboles",
+    "corte de energía por lluvia", "apagón por tormenta",
+    "retraso por lluvia", "retrasos por lluvia",
+    "fallas por lluvia", "suspensión de servicio por lluvia",
+    # Frío / calor extremo operativo
+    "ola de calor", "golpe de calor", "temperaturas extremas",
+    "helada", "nevada", "neblina densa",
+]
+
 def _es_contexto_no_legislativo(titulo, resumen=""):
     """
-    Detecta si un artículo es claramente deportes, entretenimiento o
-    intervenciones genéricas de agenda política (no instrumentos legislativos).
+    Detecta si un artículo es claramente deportes, entretenimiento,
+    clima operativo, o intervenciones genéricas de agenda política
+    (no instrumentos legislativos).
     Retorna True si debe ser EXCLUIDO de la clasificación legislativa.
 
     IMPORTANTE: No excluye temas sociales (violencia, desastres, crisis)
-    porque esos sí pueden generar presión legislativa.
+    porque esos sí pueden generar presión legislativa. Un desastre natural
+    con contexto político (declaratoria de emergencia, presupuesto de
+    reconstrucción) será rescatado por las señales político-legislativas.
     """
     texto = f"{titulo} {resumen}".lower()
 
@@ -96,15 +128,18 @@ def _es_contexto_no_legislativo(titulo, resumen=""):
     hits_deporte = sum(1 for kw in CONTEXTO_DEPORTIVO if kw in texto)
     # Contar señales de entretenimiento
     hits_entretenimiento = sum(1 for kw in CONTEXTO_ENTRETENIMIENTO if kw in texto)
+    # Contar señales climáticas/operativas
+    hits_clima = sum(1 for kw in CONTEXTO_CLIMATICO if kw in texto)
 
-    # Si no hay señales de deporte/entretenimiento, NO excluir
-    if hits_deporte == 0 and hits_entretenimiento == 0:
+    # Si no hay señales de ningún contexto no-legislativo, NO excluir
+    if hits_deporte == 0 and hits_entretenimiento == 0 and hits_clima == 0:
         return False
 
     # Señales político-legislativas que RESCATAN el artículo aunque tenga
-    # contexto deportivo (ej: "Congreso aprueba ley para el Mundial 2026")
+    # contexto deportivo/climático (ej: "Congreso aprueba ley para el Mundial 2026",
+    # "declaratoria de emergencia federal por inundaciones")
     # NOTA: No incluir señales genéricas como "México", "CDMX" — un partido
-    # de futbol en el Zócalo de CDMX no es tema legislativo.
+    # de futbol en el Zócalo o una lluvia en CDMX no es tema legislativo.
     rescate_politico = [
         "congreso", "senado", "cámara de diputados", "camara de diputados",
         "iniciativa", "punto de acuerdo", "dictamen", "reforma",
@@ -114,9 +149,20 @@ def _es_contexto_no_legislativo(titulo, resumen=""):
         "derechos humanos", "feminicidio", "desaparición", "desaparicion",
         "protesta", "manifestación", "manifestacion", "denuncia penal",
         "fiscalía general", "procurador", "ministerio público",
+        # Rescate específico para desastres que escalan a política pública
+        "declaratoria de emergencia", "declaratoria de desastre",
+        "fondo de desastres", "fonden", "reconstrucción federal",
+        "comparecencia", "exhorto",
     ]
 
     hits_politico = sum(1 for kw in rescate_politico if kw in texto)
+
+    # ── Clima: cualquier señal climática sin contexto político → excluir
+    # "Lluvia afecta Metro" o "alerta amarilla por granizo" no son legislativos.
+    # Si un desastre escala (declaratoria de emergencia, presupuesto de
+    # reconstrucción, exhorto del Senado), las señales de rescate lo salvan.
+    if hits_clima >= 1 and hits_politico == 0:
+        return True
 
     # Si tiene señales deportivas fuertes (2+), exigir al menos 2 señales políticas
     if hits_deporte >= 2 and hits_politico < 2:
@@ -127,7 +173,10 @@ def _es_contexto_no_legislativo(titulo, resumen=""):
         return False
 
     # Si tiene 1+ señales de deporte o entretenimiento SIN contexto político: excluir
-    return True
+    if hits_deporte >= 1 or hits_entretenimiento >= 1:
+        return True
+
+    return False
 
 # Stopwords del español para limpiar texto
 STOPWORDS_ES = {
