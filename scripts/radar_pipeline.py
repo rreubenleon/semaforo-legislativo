@@ -559,36 +559,40 @@ def _leer_refs_en_d1() -> list[int]:
 # Umbral para considerar un día como "pico mediático" en una categoría.
 # Empírico: sobre ~18 meses de `scores` diarios, score_media ≥ 55 cae en
 # ~top 15-20% de los días — se alinea con la noción de "pico" del Radar.
+# Inicio de la LXVI Legislatura — toda la muestra del Radar se ancla aquí
+FECHA_INICIO_LXVI = "2024-09-01"
+
 PICO_SCORE_MEDIA_MIN = 55.0
 
 # Ventanas del hit rate
-HITRATE_VENTANA_PICOS = 10   # últimos N picos por categoría
-HITRATE_VENTANA_DIAS = 7      # días para considerar que el legislador respondió
+HITRATE_VENTANA_PICOS = 20   # últimos N picos por categoría (LXVI completa)
+HITRATE_VENTANA_DIAS = 14     # días para considerar que el legislador respondió
 
 
 def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
     """
-    Para cada legislador con actividad, calcula hit rate en su
-    categoría dominante sobre los últimos N picos mediáticos
-    (score_media_evento > PICO_SCORE_MEDIA_MIN).
+    Hit rate **recalibrado** (Fase 2.5).
 
-    Lectura: `actividad_legislador` para categoría dominante,
-    `reacciones_historicas` para los picos y tiempos de reacción.
+    Antes: leía `reacciones_historicas`, que ya está pre-filtrada a casos
+    donde el legislador reaccionó → hit_rate saturaba ≥0.89. Sesgo grave.
 
-    Escritura: `legisladores_hit_rate` en D1 (UPSERT por UNIQUE).
-    También deja `categoria_dominante` y `prob_reaccion_dominante` en
-    `legisladores_stats`.
+    Ahora: cruza directamente contra `scores` (picos mediáticos reales,
+    hayan respondido o no) y `actividad_legislador` (presentación ≤ ventana).
 
     Fórmula:
-      hit_rate = respondió / total_oportunidades
-      donde "respondió" = `dias_reaccion <= HITRATE_VENTANA_DIAS`
-      sobre los últimos HITRATE_VENTANA_PICOS picos de la categoría
-      dominante del legislador.
-    """
-    logger.info("Cálculo de hit rate por legislador…")
+      - Para cada categoría: extraer los últimos N picos donde
+        score_media ≥ PICO_SCORE_MEDIA_MIN.
+      - Para cada legislador con categoría dominante C:
+        respondio = # picos en C donde el legislador presentó un
+          instrumento de categoría C entre [pico_fecha, pico_fecha+7d]
+        total = # picos evaluados
+        hit_rate = respondio / total
 
-    # 1) Categoría dominante por legislador: la más frecuente en
-    #    actividad_legislador (last 12 meses) con al menos 3 actos.
+    Escritura: `legisladores_hit_rate` + `legisladores_stats` en D1.
+    """
+    logger.info("Cálculo de hit rate por legislador (recalibrado)…")
+
+    # 1) Categoría dominante por legislador (≥3 actos desde inicio LXVI)
     cats_por_leg: dict[int, str] = {}
     for row in db_ro.execute(
         """
@@ -596,11 +600,12 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
         FROM actividad_legislador
         WHERE legislador_id IS NOT NULL
           AND categoria IS NOT NULL AND categoria <> ''
-          AND fecha_presentacion >= date('now', '-365 days')
+          AND fecha_presentacion >= ?
         GROUP BY legislador_id, categoria
         HAVING n >= 3
         ORDER BY legislador_id, n DESC
-        """
+        """,
+        (FECHA_INICIO_LXVI,),
     ):
         leg_id = row["legislador_id"]
         if leg_id not in cats_por_leg:
@@ -608,37 +613,91 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
 
     logger.info(f"  Legisladores con categoría dominante (≥3 actos): {len(cats_por_leg)}")
 
-    # 2) Para cada (legislador, categoría) usamos `reacciones_historicas`
-    #    que ya tiene (evento_fecha, score_media_evento, dias_reaccion).
-    #    Un "pico" = score_media_evento ≥ PICO_SCORE_MEDIA_MIN.
+    # 2) Picos por categoría desde `scores` (fuente de verdad, sin sesgo).
+    #    Ventana amplia para tener historia suficiente, luego cada legislador
+    #    usa sus últimos N picos.
+    picos_por_cat: dict[str, list[str]] = {}  # {cat: [fecha_pico, ...] desc}
+    for row in db_ro.execute(
+        """
+        SELECT categoria, fecha
+        FROM scores
+        WHERE score_media >= ?
+          AND fecha >= ?
+        ORDER BY categoria, fecha DESC
+        """,
+        (PICO_SCORE_MEDIA_MIN, FECHA_INICIO_LXVI),
+    ):
+        picos_por_cat.setdefault(row["categoria"], []).append(row["fecha"])
+
+    logger.info(
+        f"  Picos (score_media≥{PICO_SCORE_MEDIA_MIN}) en "
+        f"{len(picos_por_cat)} categorías · total={sum(len(v) for v in picos_por_cat.values())}"
+    )
+
+    # 3) Pre-cargar set de (legislador_id, categoria, fecha) de actividad
+    #    para lookup O(1) sin hacer 10 queries por legislador.
+    actividad_set: set[tuple[int, str, str]] = set()
+    for row in db_ro.execute(
+        """
+        SELECT legislador_id, categoria, fecha_presentacion
+        FROM actividad_legislador
+        WHERE legislador_id IS NOT NULL
+          AND categoria IS NOT NULL AND categoria <> ''
+          AND fecha_presentacion IS NOT NULL AND fecha_presentacion <> ''
+          AND fecha_presentacion >= ?
+        """,
+        (FECHA_INICIO_LXVI,),
+    ):
+        actividad_set.add(
+            (row["legislador_id"], row["categoria"], row["fecha_presentacion"])
+        )
+    logger.info(f"  Actos de actividad indexados: {len(actividad_set)}")
+
+    # 4) Calcular hit rate por legislador
     batch_sql: list[str] = []
     ahora = datetime.utcnow().isoformat()
-    stats_rows: list[tuple[int, str, float]] = []  # (leg_id, categoria, hit_rate)
+    stats_rows: list[tuple[int, str, float]] = []
     calculados = 0
+    distro_hits = {"0": 0, "<25": 0, "<50": 0, "<75": 0, ">=75": 0}
 
+    from datetime import timedelta
     for leg_id, categoria in cats_por_leg.items():
-        reacciones = db_ro.execute(
-            """
-            SELECT evento_fecha, score_media_evento, dias_reaccion
-            FROM reacciones_historicas
-            WHERE legislador_id = ?
-              AND categoria = ?
-              AND score_media_evento >= ?
-            ORDER BY evento_fecha DESC
-            LIMIT ?
-            """,
-            (leg_id, categoria, PICO_SCORE_MEDIA_MIN, HITRATE_VENTANA_PICOS),
-        ).fetchall()
-
-        if not reacciones:
+        picos = picos_por_cat.get(categoria, [])[:HITRATE_VENTANA_PICOS]
+        if not picos:
             continue
+        total = len(picos)
+        respondio = 0
+        for pico_str in picos:
+            try:
+                d0 = datetime.strptime(pico_str, "%Y-%m-%d").date()
+            except Exception:
+                continue
+            # Ventana bidireccional [d0 - ventana/2, d0 + ventana/2].
+            # El legislador a veces actúa ANTES del pico (puede causarlo).
+            reacciono = False
+            mitad = HITRATE_VENTANA_DIAS // 2
+            for delta in range(-mitad, HITRATE_VENTANA_DIAS - mitad + 1):
+                d = (d0 + timedelta(days=delta)).isoformat()
+                if (leg_id, categoria, d) in actividad_set:
+                    reacciono = True
+                    break
+            if reacciono:
+                respondio += 1
 
-        total = len(reacciones)
-        respondio = sum(
-            1 for r in reacciones
-            if r["dias_reaccion"] is not None and r["dias_reaccion"] <= HITRATE_VENTANA_DIAS
-        )
         hit_rate = respondio / total if total else 0.0
+
+        # Telemetría de distribución
+        pct = hit_rate * 100
+        if pct == 0:
+            distro_hits["0"] += 1
+        elif pct < 25:
+            distro_hits["<25"] += 1
+        elif pct < 50:
+            distro_hits["<50"] += 1
+        elif pct < 75:
+            distro_hits["<75"] += 1
+        else:
+            distro_hits[">=75"] += 1
 
         batch_sql.append(
             "INSERT INTO legisladores_hit_rate "
@@ -662,7 +721,7 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
     if batch_sql:
         ejecutar_sql_d1("\n".join(batch_sql))
 
-    # 3) Stash en legisladores_stats (categoria_dominante + prob)
+    # 5) Actualizar legisladores_stats (categoria_dominante + prob)
     if stats_rows:
         stats_sqls = []
         for leg_id, cat, hr in stats_rows:
@@ -675,26 +734,127 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
                 "categoria_dominante=excluded.categoria_dominante, "
                 "prob_reaccion_dominante=excluded.prob_reaccion_dominante;"
             )
-        # Chunks de 200 por SQL file
         for i in range(0, len(stats_sqls), 200):
             ejecutar_sql_d1("\n".join(stats_sqls[i:i + 200]))
 
-    logger.info(f"Hit rate: {calculados} legisladores con métricas → D1")
-    return {"calculados": calculados}
+    logger.info(
+        f"Hit rate: {calculados} legisladores → D1. "
+        f"Distribución: {distro_hits}"
+    )
+    return {"calculados": calculados, "distribucion": distro_hits}
 
 
 # ────────────────────────────────────────────
 # Paso 3: Matchup grade (stub, Fase 2 posterior)
 # ────────────────────────────────────────────
+MATCHUP_MIN_DECIDIDOS = 5  # mínimo de dictámenes para asignar grade
+
+
 def paso_matchup_grade(db_ro: sqlite3.Connection) -> dict:
     """
-    Grado GREAT/GOOD/FAIR/POOR por legislador frente a su comisión
-    dictaminadora dominante. Requiere cruzar `sil_documentos` con
-    `actividad_legislador` y calcular tasa de dictamen favorable.
-    Pospuesto hasta Fase 2.5 — no bloquea ni hit_rate ni proyecciones.
+    Matchup grade A–F por legislador frente a su comisión dictaminadora
+    más frecuente. Cruza `actividad_legislador` con `sil_documentos` para
+    calcular la tasa de aprobación personal en esa comisión.
+
+    Fórmula:
+      tasa_aprobacion = aprobados / (aprobados + desechados + retiradas)
+      grade = A/B/C/D/F según percentiles absolutos:
+        A: ≥ 85%
+        B: 70–85%
+        C: 55–70%
+        D: 40–55%
+        F: < 40%
+      Pendientes se excluyen del denominador.
+      Mínimo 5 decididos, si no → NULL.
+
+    Escribe matchup_grade / matchup_comision_target / matchup_tasa_dictamen
+    en legisladores_stats.
     """
-    logger.info("Cálculo de matchup grade… (stub — Fase 2.5)")
-    return {"calculados": 0}
+    logger.info("Cálculo de matchup grade por legislador…")
+
+    # Por cada legislador, encontrar comisión de turno dominante y
+    # tasa de aprobación ahí. Hacemos esto en SQL con JOIN para no
+    # iterar N veces.
+    rows = db_ro.execute(
+        """
+        SELECT al.legislador_id,
+               al.comision_turno,
+               SUM(CASE WHEN sd.estatus LIKE '%Aprobado%' THEN 1 ELSE 0 END) AS aprobados,
+               SUM(CASE WHEN sd.estatus LIKE 'Desechado%' OR sd.estatus LIKE 'Retirada%' THEN 1 ELSE 0 END) AS rechazados,
+               COUNT(*) AS total
+        FROM actividad_legislador al
+        JOIN sil_documentos sd ON al.sil_documento_id = sd.id
+        WHERE al.legislador_id IS NOT NULL
+          AND al.comision_turno IS NOT NULL
+          AND al.comision_turno <> ''
+          AND al.fecha_presentacion >= ?
+        GROUP BY al.legislador_id, al.comision_turno
+        HAVING total >= 3
+        """,
+        (FECHA_INICIO_LXVI,),
+    ).fetchall()
+
+    # Para cada legislador, tomar la comisión con más documentos
+    por_leg: dict[int, dict] = {}
+    for r in rows:
+        leg_id = r["legislador_id"]
+        tot = r["total"]
+        prev = por_leg.get(leg_id)
+        if prev is None or tot > prev["total"]:
+            por_leg[leg_id] = dict(r)
+
+    logger.info(f"  Legisladores con comisión dominante (≥3 docs): {len(por_leg)}")
+
+    def _grade(tasa: float) -> str:
+        if tasa >= 0.85: return "A"
+        if tasa >= 0.70: return "B"
+        if tasa >= 0.55: return "C"
+        if tasa >= 0.40: return "D"
+        return "F"
+
+    ahora = datetime.utcnow().isoformat()
+    stats_sqls: list[str] = []
+    distro = {"A": 0, "B": 0, "C": 0, "D": 0, "F": 0, "NULL": 0}
+    calculados = 0
+
+    for leg_id, r in por_leg.items():
+        aprobados = r["aprobados"] or 0
+        rechazados = r["rechazados"] or 0
+        decididos = aprobados + rechazados
+        comision = r["comision_turno"]
+
+        if decididos >= MATCHUP_MIN_DECIDIDOS:
+            tasa = aprobados / decididos
+            grade = _grade(tasa)
+            tasa_val = f"{tasa:.4f}"
+        else:
+            tasa = None
+            grade = None
+            tasa_val = "NULL"
+
+        distro[grade if grade else "NULL"] += 1
+
+        # Upsert parcial — no pisamos categoria_dominante / prob / proy si ya están.
+        stats_sqls.append(
+            "INSERT INTO legisladores_stats "
+            "(legislador_id, fecha_calculo, matchup_grade, "
+            "matchup_comision_target, matchup_tasa_dictamen) VALUES ("
+            f"{leg_id}, {_sql_escape(ahora)}, "
+            f"{_sql_escape(grade) if grade else 'NULL'}, "
+            f"{_sql_escape(comision)}, {tasa_val}) "
+            "ON CONFLICT(legislador_id) DO UPDATE SET "
+            "fecha_calculo=excluded.fecha_calculo, "
+            "matchup_grade=excluded.matchup_grade, "
+            "matchup_comision_target=excluded.matchup_comision_target, "
+            "matchup_tasa_dictamen=excluded.matchup_tasa_dictamen;"
+        )
+        calculados += 1
+
+    for i in range(0, len(stats_sqls), 200):
+        ejecutar_sql_d1("\n".join(stats_sqls[i:i + 200]))
+
+    logger.info(f"Matchup grade: {calculados} legisladores → D1. Distribución: {distro}")
+    return {"calculados": calculados, "distribucion": distro}
 
 
 # ────────────────────────────────────────────
@@ -727,8 +887,29 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
     TIPOS_INICIATIVA = ("iniciativa", "Iniciativa")
     TIPOS_PROPOSICION = ("proposicion", "Proposicion", "proposición", "Proposición")
 
-    def _tasa(leg_id: int, tipos: tuple, dias: int) -> float:
-        """Cuenta actividades del tipo en los últimos `dias` días."""
+    # Días transcurridos desde inicio LXVI (baseline real de la legislatura)
+    fila = db_ro.execute(
+        "SELECT CAST(julianday('now') - julianday(?) AS INTEGER) as d",
+        (FECHA_INICIO_LXVI,),
+    ).fetchone()
+    DIAS_LXVI = max(int(fila["d"] or 0), 1)
+    logger.info(f"  Baseline LXVI: {DIAS_LXVI} días desde {FECHA_INICIO_LXVI}")
+
+    def _tasa_lxvi(leg_id: int, tipos: tuple) -> float:
+        """Actividad del tipo desde inicio LXVI / días_lxvi."""
+        placeholders = ",".join(["?"] * len(tipos))
+        row = db_ro.execute(
+            f"""
+            SELECT COUNT(*) as n FROM actividad_legislador
+            WHERE legislador_id = ?
+              AND tipo_instrumento IN ({placeholders})
+              AND fecha_presentacion >= ?
+            """,
+            (leg_id, *tipos, FECHA_INICIO_LXVI),
+        ).fetchone()
+        return (row["n"] or 0) / DIAS_LXVI
+
+    def _tasa_reciente(leg_id: int, tipos: tuple, dias: int) -> float:
         placeholders = ",".join(["?"] * len(tipos))
         row = db_ro.execute(
             f"""
@@ -741,29 +922,29 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
         ).fetchone()
         return (row["n"] or 0) / dias
 
-    # Set de legisladores con actividad en 270d
+    # Set de legisladores con actividad durante la LXVI
     leg_activos = [
         row["legislador_id"] for row in db_ro.execute(
             """
             SELECT DISTINCT legislador_id FROM actividad_legislador
             WHERE legislador_id IS NOT NULL
-              AND fecha_presentacion >= date('now', ?)
+              AND fecha_presentacion >= ?
             """,
-            (f"-{VENTANA_BASELINE_DIAS} days",),
+            (FECHA_INICIO_LXVI,),
         )
     ]
 
-    logger.info(f"  Legisladores activos en {VENTANA_BASELINE_DIAS}d: {len(leg_activos)}")
+    logger.info(f"  Legisladores activos en LXVI: {len(leg_activos)}")
 
     ahora = datetime.utcnow().isoformat()
     batch_sql: list[str] = []
     calculados = 0
 
     for leg_id in leg_activos:
-        base_ini = _tasa(leg_id, TIPOS_INICIATIVA, VENTANA_BASELINE_DIAS)
-        base_prop = _tasa(leg_id, TIPOS_PROPOSICION, VENTANA_BASELINE_DIAS)
-        rec_ini = _tasa(leg_id, TIPOS_INICIATIVA, 30)
-        rec_prop = _tasa(leg_id, TIPOS_PROPOSICION, 30)
+        base_ini = _tasa_lxvi(leg_id, TIPOS_INICIATIVA)
+        base_prop = _tasa_lxvi(leg_id, TIPOS_PROPOSICION)
+        rec_ini = _tasa_reciente(leg_id, TIPOS_INICIATIVA, 30)
+        rec_prop = _tasa_reciente(leg_id, TIPOS_PROPOSICION, 30)
 
         def _factor(rec: float, base: float) -> float:
             if base <= 0:
@@ -777,9 +958,9 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
         if proy_ini == 0 and proy_prop == 0 and base_ini == 0 and base_prop == 0:
             continue
 
-        # L3P absoluto: en 270d cuántas actividades tuvo
-        prom_l3p_ini = base_ini * VENTANA_BASELINE_DIAS  # = count
-        prom_l3p_prop = base_prop * VENTANA_BASELINE_DIAS
+        # L3P absoluto: total de actividades durante la LXVI
+        prom_l3p_ini = base_ini * DIAS_LXVI  # = count
+        prom_l3p_prop = base_prop * DIAS_LXVI
 
         batch_sql.append(
             "INSERT INTO legisladores_stats "
