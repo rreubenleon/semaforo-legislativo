@@ -1,0 +1,115 @@
+name: Radar de Legisladores - Pipeline Paralelo
+
+# Pipeline SEPARADO del principal (pipeline.yml). No toca el cache de
+# semaforo.db — lo descarga en modo read-only, lee el universo de
+# legisladores y escribe resultados directamente a Cloudflare D1.
+#
+# Cadencia:
+#   - Domingo 12:00 UTC: descubrimiento / refresh completo
+#   - Diario 13:00 UTC:  recálculo ligero de stats agregados
+#
+# Al terminar, este pipeline NO guarda ninguna DB de vuelta al cache.
+# El pipeline principal nunca se entera de que este corrió.
+
+on:
+  schedule:
+    - cron: '0 12 * * 0'   # Domingo 12:00 UTC — scraper SIL semanal
+    - cron: '0 13 * * *'   # Diario 13:00 UTC — stats agregados
+  workflow_dispatch:
+    inputs:
+      skip_scraper:
+        description: 'Omitir scraper SIL (solo recalcular stats)'
+        required: false
+        default: 'false'
+      max_refs:
+        description: 'Limitar cuántas refs SIL procesar (vacío = todas)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "radar-pipeline"
+  cancel-in-progress: false
+
+jobs:
+  radar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      # Descargar el semaforo.db más reciente del cache del pipeline
+      # principal. Modo RO estricto: no se guarda de vuelta.
+      - name: Obtener semaforo.db (read-only)
+        id: cache-db
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-readonly
+          restore-keys: |
+            semaforo-db-
+
+      - name: Fallback a release si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            echo "No se encontró DB en cache, descargando seed..."
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          else
+            echo "DB restaurada del cache ($(du -h semaforo.db | cut -f1))"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Forzar DB en modo solo lectura
+        run: chmod 0444 semaforo.db
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+          npm install -g wrangler@3
+
+      # Determinar si toca correr el scraper SIL según el trigger
+      - name: Decidir modo
+        id: mode
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            SKIP="${{ github.event.inputs.skip_scraper }}"
+            MAX="${{ github.event.inputs.max_refs }}"
+          elif [ "${{ github.event.schedule }}" = "0 12 * * 0" ]; then
+            SKIP=false
+            MAX=""
+          else
+            SKIP=true
+            MAX=""
+          fi
+          echo "skip_scraper=$SKIP" >> $GITHUB_OUTPUT
+          echo "max_refs=$MAX" >> $GITHUB_OUTPUT
+          echo "Modo resuelto: skip_scraper=$SKIP max_refs=$MAX"
+
+      - name: Ejecutar pipeline Radar
+        run: |
+          ARGS=""
+          if [ "${{ steps.mode.outputs.skip_scraper }}" = "true" ]; then
+            ARGS="$ARGS --skip-scraper"
+          fi
+          if [ -n "${{ steps.mode.outputs.max_refs }}" ]; then
+            ARGS="$ARGS --max-refs ${{ steps.mode.outputs.max_refs }}"
+          fi
+          python scripts/radar_pipeline.py $ARGS
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
