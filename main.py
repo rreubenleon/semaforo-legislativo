@@ -37,6 +37,7 @@ from scrapers.sil import (
 from scrapers.mananera import scrape_mananeras
 from scrapers.sintesis_legislativa import scrape_sintesis_legislativa
 from scrapers.twitter import scrape_twitter
+from scrapers.camara_monitoreo import scrape_camara_monitoreo
 from nlp.clasificador import actualizar_categorias_en_db, obtener_distribucion_categorias, detectar_subcategorias, _es_contexto_no_legislativo
 from api.correlacion import (
     calcular_todos_los_scores,
@@ -307,6 +308,41 @@ def paso_2d_scraping_twitter():
     except Exception as e:
         logger.warning(f"Twitter falló (no crítico): {e}")
         resultado = {"cuentas": 0, "tweets_nuevos": 0}
+
+    return resultado
+
+
+def paso_2e_scraping_camara_monitoreo():
+    """
+    Paso 2e: Monitoreo de atención de las Cámaras.
+
+    Scrape de cabeza de comunicacionsocial.senado.gob.mx y del monitoreo
+    regional de Diputados. NO es una fuente visible — alimenta el boost
+    invisible al score_congreso. Budget: <90s (1 página Senado + 3 de
+    Diputados regional con delay de 2.5s entre páginas).
+    """
+    logger.info("=" * 60)
+    logger.info("PASO 2e: Monitoreo de Cámaras (Senado + Diputados regional)")
+    logger.info("=" * 60)
+
+    inicio = time.time()
+    try:
+        resultado = scrape_camara_monitoreo()
+        duracion = time.time() - inicio
+        s = resultado.get("senado", {})
+        d = resultado.get("diputados_regional", {})
+        logger.info(
+            f"Atención Cámaras: Senado {s.get('nuevos', 0)} nuevos / "
+            f"{s.get('duplicados', 0)} dup; "
+            f"Diputados regional {d.get('nuevos', 0)} nuevos / "
+            f"{d.get('duplicados', 0)} dup ({duracion:.1f}s)"
+        )
+    except Exception as e:
+        logger.warning(f"Monitoreo de Cámaras falló (no crítico): {e}")
+        resultado = {
+            "senado": {"nuevos": 0, "duplicados": 0},
+            "diputados_regional": {"nuevos": 0, "duplicados": 0},
+        }
 
     return resultado
 
@@ -997,6 +1033,7 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     paso_2b_scraping_mananera()
     paso_2c_scraping_sintesis()
     paso_2d_scraping_twitter()
+    paso_2e_scraping_camara_monitoreo()
     sync_db()  # Sincronizar datos de scraping con Turso
 
     # SerpAPI free tier: 100 búsquedas/mes. 20 categorías/run = 5 runs/mes.

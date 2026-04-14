@@ -19,6 +19,7 @@ from scrapers.trends import obtener_score_trends
 from scrapers.mananera import obtener_score_mananera
 from scrapers.sintesis_legislativa import obtener_boost_sintesis
 from scrapers.twitter import obtener_boost_twitter
+from scrapers.camara_monitoreo import obtener_boost_atencion_camara
 
 logger = logging.getLogger(__name__)
 
@@ -328,9 +329,16 @@ def calcular_score_categoria(categoria_clave):
     score_trends = obtener_score_trends(categoria_clave)
 
     # Componente 3: Actividad en Congreso (0.25)
-    # Base: Gaceta Parlamentaria + boost de síntesis legislativa diaria
+    # Base: Gaceta Parlamentaria + boost de síntesis legislativa diaria +
+    # boost invisible de atención Cámaras (monitoreo regional de Diputados y
+    # comunicados Senado). El boost de atención no se muestra en el desglose
+    # del dashboard — es secret sauce para detectar temas que las Cámaras
+    # están empujando antes de que tengan instrumento formal.
     score_congreso = obtener_score_congreso(keywords)
     score_congreso = min(score_congreso + obtener_boost_sintesis(categoria_clave), 100.0)
+    score_congreso = min(
+        score_congreso + obtener_boost_atencion_camara(categoria_clave), 100.0
+    )
 
     # Componente 4: Mención de la Presidenta CSP (0.10)
     score_mananera = obtener_score_mananera(categoria_clave)
