@@ -74,9 +74,21 @@ def _fetch(url, session, delay, timeout=30):
 
 
 def backfill_diputados_regional(
-    desde_pagina=1, max_paginas=4380, delay=2.5, progreso_cada=25
+    desde_pagina=1,
+    max_paginas=4380,
+    delay=2.5,
+    progreso_cada=25,
+    desde_fecha=None,
 ):
-    """Baja TODO el monitoreo regional de Diputados desde `desde_pagina`."""
+    """
+    Baja el monitoreo regional de Diputados desde `desde_pagina`.
+
+    Si `desde_fecha` está seteada (YYYY-MM-DD), el backfill se detiene en
+    cuanto encuentra una página donde TODOS los items son anteriores a esa
+    fecha. Los items anteriores al tope no se guardan. La página se publica
+    en orden cronológico descendente (más reciente primero), así que el
+    corte es natural.
+    """
     conn = get_connection()
     init_db(conn)
     pares = _apellidos_legisladores(conn)
@@ -86,6 +98,7 @@ def backfill_diputados_regional(
     total_nuevos = 0
     total_dup = 0
     paginas_sin_items = 0
+    paginas_bajo_corte = 0
 
     for p in range(desde_pagina, max_paginas + 1):
         url = f"{URL_DIPUTADOS_REGIONAL}?p={p}"
@@ -105,6 +118,32 @@ def backfill_diputados_regional(
                 break
             continue
         paginas_sin_items = 0
+
+        # Filtro por fecha: dropea items anteriores al tope
+        if desde_fecha:
+            items_filtrados = [
+                it for it in items
+                if not it.get("fecha") or it["fecha"] >= desde_fecha
+            ]
+            items_descartados = len(items) - len(items_filtrados)
+            if items_filtrados and items_descartados == 0:
+                paginas_bajo_corte = 0
+            elif not items_filtrados:
+                # Página entera bajo el corte — dos seguidas y paramos.
+                paginas_bajo_corte += 1
+                if paginas_bajo_corte >= 2:
+                    logger.info(
+                        f"p={p}: 2 páginas consecutivas bajo {desde_fecha}. "
+                        f"Cortamos backfill."
+                    )
+                    break
+                continue
+            else:
+                # Mezcla: guardamos lo que queda arriba del corte y seguimos,
+                # porque la siguiente página podría traer items "tardíos"
+                # (a veces las fechas no son 100% monótonas).
+                paginas_bajo_corte = 0
+            items = items_filtrados
 
         nuevos, dup = _guardar_items(conn, "diputados_regional", items, pares)
         total_nuevos += nuevos
@@ -208,6 +247,14 @@ def main():
     )
     ap.add_argument("--delay", type=float, default=2.5)
     ap.add_argument("--progreso-cada", type=int, default=25)
+    ap.add_argument(
+        "--desde-fecha",
+        type=str,
+        default=None,
+        help="Tope inferior de fecha (YYYY-MM-DD). Items anteriores se ignoran "
+        "y el backfill corta cuando dos páginas consecutivas quedan bajo el "
+        "tope. Solo aplica a Diputados regional.",
+    )
     args = ap.parse_args()
 
     logging.basicConfig(
@@ -228,6 +275,7 @@ def main():
             max_paginas=args.max_paginas,
             delay=args.delay,
             progreso_cada=args.progreso_cada,
+            desde_fecha=args.desde_fecha,
         )
     if args.fuente in ("senado", "ambas"):
         resultado["senado"] = backfill_senado(
