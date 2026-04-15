@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generado": "2026-04-15T14:30:30.513503+00:00",
+    "generado": "2026-04-15T17:39:05.548917+00:00",
     "version": "3.2",
     "formula": "SCORE = (0.20*Media) + (0.15*Trends) + (0.25*Congreso) + (0.10*Mañanera) + (0.15*Urgencia) + (0.15*Dominancia)",
     "umbrales": {
@@ -8,7 +8,7 @@
       "amarillo": 40,
       "rojo": 0
     },
-    "sil_docs": 15709
+    "sil_docs": 15711
   },
   "semaforo": [
     {
@@ -35,19 +35,19 @@
           "peso": 1.0
         },
         {
-          "clave": "vivienda_urbano",
-          "nombre": "Vivienda y desarrollo urbano",
-          "peso": 0.78
-        },
-        {
           "clave": "agua_saneamiento",
           "nombre": "Agua y saneamiento",
-          "peso": 0.78
+          "peso": 0.83
+        },
+        {
+          "clave": "vivienda_urbano",
+          "nombre": "Vivienda y desarrollo urbano",
+          "peso": 0.71
         },
         {
           "clave": "obra_publica",
           "nombre": "Obra pública",
-          "peso": 0.28
+          "peso": 0.35
         },
         {
           "clave": "megaproyectos",
@@ -90,19 +90,19 @@
           "peso": 1.0
         },
         {
-          "clave": "fomento_economico",
-          "nombre": "Fomento económico",
-          "peso": 0.45
-        },
-        {
           "clave": "presupuesto_gasto",
           "nombre": "Presupuesto y gasto público",
-          "peso": 0.43
+          "peso": 0.47
         },
         {
           "clave": "politica_monetaria",
           "nombre": "Política monetaria y macroeconomía",
-          "peso": 0.36
+          "peso": 0.4
+        },
+        {
+          "clave": "fomento_economico",
+          "nombre": "Fomento económico",
+          "peso": 0.39
         },
         {
           "clave": "comercio_exterior",
@@ -135,29 +135,29 @@
       },
       "subcategorias_activas": [
         {
-          "clave": "crimen_organizado",
-          "nombre": "Crimen organizado",
+          "clave": "violencia_victimas",
+          "nombre": "Violencia y víctimas",
           "peso": 1.0
         },
         {
-          "clave": "violencia_victimas",
-          "nombre": "Violencia y víctimas",
-          "peso": 0.98
+          "clave": "crimen_organizado",
+          "nombre": "Crimen organizado",
+          "peso": 0.93
         },
         {
           "clave": "justicia_penal",
           "nombre": "Justicia penal y reforma judicial",
-          "peso": 0.76
+          "peso": 0.82
         },
         {
           "clave": "justicia_constitucional",
           "nombre": "Justicia constitucional",
-          "peso": 0.61
+          "peso": 0.66
         },
         {
           "clave": "seguridad_publica",
           "nombre": "Seguridad pública y policía",
-          "peso": 0.5
+          "peso": 0.54
         },
         {
           "clave": "fuerzas_armadas",
@@ -167,7 +167,7 @@
         {
           "clave": "sistema_penitenciario",
           "nombre": "Sistema penitenciario",
-          "peso": 0.19
+          "peso": 0.15
         }
       ]
     },
@@ -197,17 +197,17 @@
         {
           "clave": "participacion_ciudadana",
           "nombre": "Participación ciudadana",
-          "peso": 0.52
+          "peso": 0.64
         },
         {
           "clave": "gobernabilidad",
           "nombre": "Gobernabilidad",
-          "peso": 0.18
+          "peso": 0.19
         },
         {
           "clave": "partidos_coaliciones",
           "nombre": "Partidos y coaliciones",
-          "peso": 0.17
+          "peso": 0.18
         }
       ]
     },
@@ -237,7 +237,7 @@
         {
           "clave": "diplomacia_organismos",
           "nombre": "Diplomacia y organismos",
-          "peso": 0.39
+          "peso": 0.34
         },
         {
           "clave": "soberania_fronteras",
@@ -247,7 +247,7 @@
         {
           "clave": "america_latina",
           "nombre": "América Latina",
-          "peso": 0.16
+          "peso": 0.12
         }
       ]
     },
@@ -270,24 +270,69 @@
       },
       "subcategorias_activas": [
         {
-          "clave": "educacion_basica",
-          "nombre": "Educación básica",
-          "peso": 1.0
-        },
-        {
           "clave": "educacion_superior",
           "nombre": "Educación superior e investigación",
-          "peso": 0.96
-        },
-        {
-          "clave": "cultura_deporte",
-          "nombre": "Cultura y deporte",
-          "peso": 0.87
+          "peso": 1.0
         },
         {
           "clave": "ciencia_tecnologia",
           "nombre": "Ciencia y tecnología",
-          "peso": 0.7
+          "peso": 0.84
+        },
+        {
+          "clave": "cultura_deporte",
+          "nombre": "Cultura y deporte",
+          "peso": 0.77
+        },
+        {
+          "clave": "educacion_basica",
+          "nombre": "Educación básica",
+          "peso": 0.72
+        }
+      ]
+    },
+    {
+      "categoria": "medio_ambiente",
+      "nombre": "Medio Ambiente y Cambio Climático",
+      "score_total": 67.16,
+      "score_media": 92.18,
+      "score_trends": 0.0,
+      "score_congreso": 100.0,
+      "score_mananera": 18.59,
+      "score_urgencia": 45.76,
+      "color": "amarillo",
+      "fecha": "2026-04-15",
+      "momentum": {
+        "dias_consecutivos": 7,
+        "semanas_en_agenda": 1,
+        "tendencia": "up",
+        "etiqueta": "7 dias activo"
+      },
+      "subcategorias_activas": [
+        {
+          "clave": "contaminacion_residuos",
+          "nombre": "Contaminación y residuos",
+          "peso": 1.0
+        },
+        {
+          "clave": "recursos_forestales",
+          "nombre": "Recursos forestales",
+          "peso": 0.65
+        },
+        {
+          "clave": "conservacion_biodiversidad",
+          "nombre": "Conservación y biodiversidad",
+          "peso": 0.55
+        },
+        {
+          "clave": "cambio_climatico",
+          "nombre": "Cambio climático",
+          "peso": 0.09
+        },
+        {
+          "clave": "fenomenos_naturales",
+          "nombre": "Fenómenos naturales",
+          "peso": 0.03
         }
       ]
     },
@@ -295,11 +340,11 @@
       "categoria": "derechos_humanos",
       "nombre": "Derechos Humanos",
       "score_total": 64.29,
-      "score_media": 84.52,
+      "score_media": 84.49,
       "score_trends": 0.0,
       "score_congreso": 100.0,
       "score_mananera": 27.68,
-      "score_urgencia": 30.81,
+      "score_urgencia": 30.8,
       "color": "amarillo",
       "fecha": "2026-04-15",
       "momentum": {
@@ -317,17 +362,17 @@
         {
           "clave": "pueblos_indigenas",
           "nombre": "Pueblos indígenas",
-          "peso": 0.82
+          "peso": 0.67
         },
         {
           "clave": "genero_diversidad",
           "nombre": "Género y diversidad",
-          "peso": 0.53
+          "peso": 0.52
         },
         {
           "clave": "migracion_refugio",
           "nombre": "Migración y refugio",
-          "peso": 0.33
+          "peso": 0.32
         },
         {
           "clave": "derechos_ninez",
@@ -339,12 +384,12 @@
     {
       "categoria": "trabajo",
       "nombre": "Trabajo",
-      "score_total": 63.82,
-      "score_media": 89.28,
+      "score_total": 63.78,
+      "score_media": 89.1,
       "score_trends": 0.0,
       "score_congreso": 100.0,
       "score_mananera": 16.27,
-      "score_urgencia": 28.92,
+      "score_urgencia": 28.87,
       "color": "amarillo",
       "fecha": "2026-04-15",
       "momentum": {
@@ -377,59 +422,14 @@
       ]
     },
     {
-      "categoria": "medio_ambiente",
-      "nombre": "Medio Ambiente y Cambio Climático",
-      "score_total": 62.95,
-      "score_media": 92.32,
-      "score_trends": 0.0,
-      "score_congreso": 100.0,
-      "score_mananera": 18.59,
-      "score_urgencia": 17.51,
-      "color": "amarillo",
-      "fecha": "2026-04-15",
-      "momentum": {
-        "dias_consecutivos": 7,
-        "semanas_en_agenda": 1,
-        "tendencia": "up",
-        "etiqueta": "7 dias activo"
-      },
-      "subcategorias_activas": [
-        {
-          "clave": "contaminacion_residuos",
-          "nombre": "Contaminación y residuos",
-          "peso": 1.0
-        },
-        {
-          "clave": "recursos_forestales",
-          "nombre": "Recursos forestales",
-          "peso": 0.62
-        },
-        {
-          "clave": "conservacion_biodiversidad",
-          "nombre": "Conservación y biodiversidad",
-          "peso": 0.45
-        },
-        {
-          "clave": "cambio_climatico",
-          "nombre": "Cambio climático",
-          "peso": 0.09
-        },
-        {
-          "clave": "fenomenos_naturales",
-          "nombre": "Fenómenos naturales",
-          "peso": 0.01
-        }
-      ]
-    },
-    {
       "categoria": "salud",
       "nombre": "Salud",
-      "score_total": 58.18,
-      "score_media": 92.84,
+      "score_total": 58.16,
+      "score_media": 92.73,
       "score_trends": 0.0,
       "score_congreso": 72.11999999999999,
       "score_mananera": 15.18,
-      "score_urgencia": 33.79,
+      "score_urgencia": 33.78,
       "color": "amarillo",
       "fecha": "2026-04-15",
       "momentum": {
@@ -445,14 +445,14 @@
           "peso": 1.0
         },
         {
+          "clave": "medicamentos_abasto",
+          "nombre": "Medicamentos y abasto",
+          "peso": 0.22
+        },
+        {
           "clave": "salud_mental_adicciones",
           "nombre": "Salud mental y adicciones",
           "peso": 0.19
-        },
-        {
-          "clave": "medicamentos_abasto",
-          "nombre": "Medicamentos y abasto",
-          "peso": 0.16
         },
         {
           "clave": "epidemiologia",
@@ -464,12 +464,12 @@
     {
       "categoria": "energia",
       "nombre": "Energía",
-      "score_total": 55.57,
-      "score_media": 94.24,
+      "score_total": 55.7,
+      "score_media": 94.81,
       "score_trends": 0.0,
       "score_congreso": 63.56,
       "score_mananera": 29.82,
-      "score_urgencia": 35.69,
+      "score_urgencia": 35.75,
       "color": "amarillo",
       "fecha": "2026-04-15",
       "momentum": {
@@ -487,29 +487,29 @@
         {
           "clave": "mineria_recursos",
           "nombre": "Minería y recursos",
-          "peso": 0.18
-        },
-        {
-          "clave": "energias_renovables",
-          "nombre": "Energías renovables",
-          "peso": 0.14
+          "peso": 0.27
         },
         {
           "clave": "cfe_electricidad",
           "nombre": "CFE y electricidad",
-          "peso": 0.12
+          "peso": 0.17
+        },
+        {
+          "clave": "energias_renovables",
+          "nombre": "Energías renovables",
+          "peso": 0.15
         }
       ]
     },
     {
       "categoria": "anticorrupcion",
       "nombre": "Anticorrupción",
-      "score_total": 53.73,
-      "score_media": 85.21,
+      "score_total": 54.04,
+      "score_media": 85.97,
       "score_trends": 0.0,
       "score_congreso": 100.0,
       "score_mananera": 17.43,
-      "score_urgencia": 16.21,
+      "score_urgencia": 16.38,
       "color": "amarillo",
       "fecha": "2026-04-15",
       "momentum": {
@@ -527,29 +527,29 @@
         {
           "clave": "transparencia_acceso",
           "nombre": "Transparencia y acceso a información",
-          "peso": 0.36
+          "peso": 0.37
         },
         {
           "clave": "delitos_financieros",
           "nombre": "Delitos financieros",
-          "peso": 0.22
+          "peso": 0.27
         },
         {
           "clave": "etica_publica",
           "nombre": "Ética pública",
-          "peso": 0.17
+          "peso": 0.18
         }
       ]
     },
     {
       "categoria": "agro_rural",
       "nombre": "Agro y Desarrollo Rural",
-      "score_total": 48.14,
-      "score_media": 76.29,
+      "score_total": 48.52,
+      "score_media": 76.18,
       "score_trends": 0.0,
-      "score_congreso": 72.88999999999999,
+      "score_congreso": 73.99999999999999,
       "score_mananera": 18.71,
-      "score_urgencia": 24.03,
+      "score_urgencia": 24.26,
       "color": "amarillo",
       "fecha": "2026-04-15",
       "momentum": {
@@ -572,7 +572,7 @@
         {
           "clave": "desarrollo_rural_tierra",
           "nombre": "Desarrollo rural y tierra",
-          "peso": 0.12
+          "peso": 0.08
         },
         {
           "clave": "ganaderia_pesca",
@@ -584,12 +584,12 @@
     {
       "categoria": "igualdad_genero",
       "nombre": "Igualdad de género",
-      "score_total": 44.91,
-      "score_media": 70.87,
+      "score_total": 44.97,
+      "score_media": 70.72,
       "score_trends": 0.0,
       "score_congreso": 58.45,
       "score_mananera": 0.0,
-      "score_urgencia": 25.2,
+      "score_urgencia": 25.18,
       "color": "amarillo",
       "fecha": "2026-04-15",
       "momentum": {
@@ -607,7 +607,7 @@
         {
           "clave": "igualdad_sustantiva",
           "nombre": "Igualdad sustantiva",
-          "peso": 0.7
+          "peso": 0.71
         },
         {
           "clave": "instituciones_genero",
@@ -617,7 +617,7 @@
         {
           "clave": "participacion_politica_mujeres",
           "nombre": "Participación política de mujeres",
-          "peso": 0.13
+          "peso": 0.12
         },
         {
           "clave": "derechos_reproductivos",
@@ -629,12 +629,12 @@
     {
       "categoria": "medios_comunicacion",
       "nombre": "Medios de Comunicación",
-      "score_total": 43.56,
-      "score_media": 65.76,
+      "score_total": 43.65,
+      "score_media": 66.13,
       "score_trends": 0.0,
       "score_congreso": 83.43,
       "score_mananera": 0.0,
-      "score_urgencia": 29.84,
+      "score_urgencia": 29.94,
       "color": "amarillo",
       "fecha": "2026-04-15",
       "momentum": {
@@ -669,12 +669,12 @@
     {
       "categoria": "politica_social",
       "nombre": "Política Social",
-      "score_total": 43.09,
-      "score_media": 75.5,
+      "score_total": 43.07,
+      "score_media": 75.38,
       "score_trends": 0.0,
       "score_congreso": 40.629999999999995,
       "score_mananera": 10.45,
-      "score_urgencia": 20.33,
+      "score_urgencia": 20.32,
       "color": "amarillo",
       "fecha": "2026-04-15",
       "momentum": {
@@ -709,12 +709,12 @@
     {
       "categoria": "inteligencia_artificial",
       "nombre": "Inteligencia Artificial",
-      "score_total": 33.61,
-      "score_media": 59.25,
+      "score_total": 33.63,
+      "score_media": 59.339999999999996,
       "score_trends": 0.0,
       "score_congreso": 50.190000000000005,
       "score_mananera": 0.0,
-      "score_urgencia": 20.56,
+      "score_urgencia": 20.57,
       "color": "rojo",
       "fecha": "2026-04-15",
       "momentum": {
@@ -744,12 +744,12 @@
     {
       "categoria": "turismo",
       "nombre": "Turismo",
-      "score_total": 23.8,
-      "score_media": 67.32,
+      "score_total": 23.83,
+      "score_media": 67.25,
       "score_trends": 0.0,
       "score_congreso": 13.82,
       "score_mananera": 3.45,
-      "score_urgencia": 25.65,
+      "score_urgencia": 25.64,
       "color": "rojo",
       "fecha": "2026-04-15",
       "momentum": {
@@ -767,7 +767,7 @@
         {
           "clave": "destinos_programas",
           "nombre": "Destinos y programas",
-          "peso": 0.48
+          "peso": 0.53
         },
         {
           "clave": "economia_turistica",
@@ -785,7 +785,7 @@
       "categoria": "administracion",
       "nombre": "Administración",
       "score_total": 22.81,
-      "score_media": 38.21,
+      "score_media": 38.22,
       "score_trends": 0.0,
       "score_congreso": 30.82,
       "score_mananera": 0.0,
@@ -828,6 +828,33 @@
     }
   ],
   "alertas": [
+    {
+      "id": 1005,
+      "categoria": "infraestructura",
+      "tipo_alerta": "score_alto",
+      "score": 73.33,
+      "color": "verde",
+      "mensaje": "ALERTA: Infraestructura con score 73.3 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-04-15T17:38:58.703338"
+    },
+    {
+      "id": 1004,
+      "categoria": "economia_hacienda",
+      "tipo_alerta": "score_alto",
+      "score": 71.35,
+      "color": "verde",
+      "mensaje": "ALERTA: Economía y Hacienda con score 71.3 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-04-15T17:38:55.113270"
+    },
+    {
+      "id": 1003,
+      "categoria": "seguridad_justicia",
+      "tipo_alerta": "score_alto",
+      "score": 70.3,
+      "color": "verde",
+      "mensaje": "ALERTA: Seguridad y Justicia con score 70.3 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-04-15T17:38:54.099487"
+    },
     {
       "id": 1002,
       "categoria": "infraestructura",
@@ -1250,55 +1277,28 @@
       "color": "verde",
       "mensaje": "ALERTA: Infraestructura con score 71.6 - Alta probabilidad de actividad legislativa",
       "fecha": "2026-04-12T17:10:03.091656"
-    },
-    {
-      "id": 955,
-      "categoria": "infraestructura",
-      "tipo_alerta": "score_alto",
-      "score": 71.58,
-      "color": "verde",
-      "mensaje": "ALERTA: Infraestructura con score 71.6 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-04-12T13:43:23.858668"
-    },
-    {
-      "id": 954,
-      "categoria": "infraestructura",
-      "tipo_alerta": "score_alto",
-      "score": 71.58,
-      "color": "verde",
-      "mensaje": "ALERTA: Infraestructura con score 71.6 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-04-12T09:23:44.676348"
-    },
-    {
-      "id": 953,
-      "categoria": "infraestructura",
-      "tipo_alerta": "score_alto",
-      "score": 71.58,
-      "color": "verde",
-      "mensaje": "ALERTA: Infraestructura con score 71.6 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-04-12T06:19:21.427389"
     }
   ],
   "distribucion_categorias": {
-    "economia_hacienda": 188,
-    "igualdad_genero": 150,
-    "relaciones_exteriores": 266,
+    "economia_hacienda": 192,
+    "igualdad_genero": 152,
+    "relaciones_exteriores": 274,
     "medios_comunicacion": 30,
-    "energia": 261,
-    "electoral_politico": 356,
-    "derechos_humanos": 139,
-    "educacion": 171,
-    "salud": 168,
-    "medio_ambiente": 161,
-    "seguridad_justicia": 585,
-    "anticorrupcion": 67,
+    "energia": 283,
+    "electoral_politico": 361,
+    "derechos_humanos": 141,
+    "educacion": 179,
+    "salud": 171,
+    "medio_ambiente": 164,
+    "seguridad_justicia": 594,
+    "anticorrupcion": 70,
     "trabajo": 140,
-    "infraestructura": 364,
+    "infraestructura": 371,
     "politica_social": 147,
     "inteligencia_artificial": 32,
-    "administracion": 45,
-    "turismo": 30,
-    "agro_rural": 100
+    "administracion": 46,
+    "turismo": 31,
+    "agro_rural": 102
   },
   "predicciones": {
     "seguridad_justicia": {
@@ -1497,6 +1497,42 @@
       "articulos_medios": [
         {
           "fuente": "el_universal",
+          "titulo": "Exalcalde de Itunyoso acusa cateo ilegal en el caso de Roxana López; se continúa con la investigación, señala Fiscalía de Oaxaca",
+          "url": "https://www.eluniversal.com.mx/estados/exalcalde-de-itunyoso-acusa-cateo-ilegal-en-caso-roxana-lopez-se-continua-con-la-investigacion-senala-fiscalia-de-oaxaca/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "24_horas",
+          "titulo": "Víctimas impugnan carpetazo de la FGR en caso de La Luz del Mundo",
+          "url": "https://24-horas.mx/mexico/victimas-impugnan-carpetazo-de-la-fgr-en-caso-de-la-luz-del-mundo/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Vicealmirante Manuel Roberto Farías envía otra carta a Sheinbaum; acusa violación al debido proceso por caso de huachicol fiscal",
+          "url": "https://www.eluniversal.com.mx/nacion/vicealmirante-manuel-roberto-farias-envia-otra-carta-a-sheinbaum-acusa-violacion-al-debido-proceso-por-caso-de-huachicol-fiscal/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Katy Perry, investigada en Australia como sospechosa de agresión sexual",
+          "url": "https://www.eluniversal.com.mx/espectaculos/katy-perry-investigada-en-australia-como-sospechosa-de-agresion-sexual/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "24_horas",
+          "titulo": "Suprema Corte condena a las víctimas y reduce indemnizaciones",
+          "url": "https://24-horas.mx/todas/suprema-corte-condena-a-las-victimas-y-reduce-indemnizaciones/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "En tres operativos, caen siete civiles con equipo táctico y vehículos robados en Sinaloa; 4 menores de edad, entre los detenidos",
+          "url": "https://www.eluniversal.com.mx/estados/en-tres-operativos-caen-siete-civiles-con-equipo-tactico-y-vehiculos-robados-en-sinaloa-4-menores-de-edad-entre-los-detenidos/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
           "titulo": "Matan a dos hombres y a una mujer en Purísima del Rincón, Guanajuato; las víctimas se encuentran en calidad de no identificadas",
           "url": "https://www.eluniversal.com.mx/estados/matan-a-dos-hombres-y-a-una-mujer-en-purisima-del-rincon-guanajuato-las-victimas-se-encuentran-en-calidad-de-no-identificadas/",
           "fecha": "2026-04-15"
@@ -1547,42 +1583,6 @@
           "fuente": "la_jornada",
           "titulo": "Indígenas de Sonora irán a la SCJN para exigir respeto a sus derechos",
           "url": "https://www.jornada.com.mx/2026/04/15/estados/029n2est?partner=rss",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Piden a ONU-DH reunirse con víctimas y no sólo con el gobierno",
-          "url": "https://www.jornada.com.mx/2026/04/15/politica/006n2pol?partner=rss",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "La familia michoacana plagió al alcalde de Taxco y su padre",
-          "url": "https://www.jornada.com.mx/2026/04/15/estados/030n3est?partner=rss",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Indemnización por muerte debe calcularse en UMA: SCJN",
-          "url": "https://www.jornada.com.mx/2026/04/15/politica/012n2pol?partner=rss",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Invalida Corte el ciberasedio de Código Penal de Puebla",
-          "url": "https://www.jornada.com.mx/2026/04/15/estados/030n2est?partner=rss",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "FGR creará nuevas fiscalías para indígenas, afromexicanos y delitos políticos del pasado",
-          "url": "https://www.jornada.com.mx/2026/04/15/politica/005n2pol?partner=rss",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Editorial: No olvidar a las víctimas del ICE",
-          "url": "https://www.jornada.com.mx/2026/04/15/opinion/002a1edi?partner=rss",
           "fecha": "2026-04-15"
         }
       ],
@@ -2646,6 +2646,18 @@
     "economia_hacienda": {
       "articulos_medios": [
         {
+          "fuente": "24_horas",
+          "titulo": "FMI eleva pronóstico del PIB de México a 1.6% este 2026",
+          "url": "https://24-horas.mx/negocios/fmi-eleva-pronostico-del-pib-de-mexico-a-1-6-este-2026/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_financiero",
+          "titulo": "Dólar le pone un ‘hasta aquí’ a ganancias del peso: Tipo de cambio HOY 15 de abril",
+          "url": "https://www.elfinanciero.com.mx/mercados/2026/04/15/peso-dolar-precio-hoy-15-de-abril-de-2026/",
+          "fecha": "2026-04-15"
+        },
+        {
           "fuente": "bloomberg_linea",
           "titulo": "Deuda pública global no para de subir: estos son los países de América Latina más endeudados",
           "url": "https://www.bloomberglinea.com/mercados/deuda-publica-global-no-para-de-subir-estos-son-los-paises-de-america-latina-mas-endeudados/",
@@ -2721,18 +2733,6 @@
           "fuente": "talla_diputados",
           "titulo": "La juventud comprometida con su comunidad, fortalece los valores de la sociedad: Moreno Guerra",
           "url": "https://www.tallapolitica.com.mx/la-juventud-comprometida-con-su-comunidad-fortalece-los-valores-de-la-sociedad-moreno-guerra/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "PT presenta reforma para legalizar reventa de boletos de cara al Mundial; busca frenar mercado negro",
-          "url": "https://www.eluniversal.com.mx/nacion/pt-presenta-reforma-para-legalizar-reventa-de-boletos-de-cara-al-mundial-busca-frenar-mercado-negro/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "FGR desecha denuncia contra fiscal anticorrupción de Morelos",
-          "url": "https://24-horas.mx/estados/fgr-desecha-denuncia-contra-fiscal-anticorrupcion-de-morelos/",
           "fecha": "2026-04-15"
         }
       ],
@@ -3316,6 +3316,84 @@
     "energia": {
       "articulos_medios": [
         {
+          "fuente": "cronica",
+          "titulo": "Apagón masivo hoy 15 de abril 2026: colonias y municipios afectados por cortes de luz de la CFE",
+          "url": "https://www.cronica.com.mx/nacional/2026/04/15/apagon-masivo-hoy-15-de-abril-2026-colonias-y-municipios-afectados-por-cortes-de-luz-de-la-cfe/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "la_razon",
+          "titulo": "Regreso de ‘fracking’ no implica entregar recursos a transnacionales, soberanía es prioridad: Sheinbaum",
+          "url": "https://www.razon.com.mx/mexico/2026/04/15/regreso-de-fracking-no-implica-entregar-recursos-a-transnacionales-soberania-es-prioridad-sheinbaum/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_financiero",
+          "titulo": "Sheinbaum aclara por qué cambió de opinión sobre el fracking: ‘Hay que analizar nuevas tecnologías’",
+          "url": "https://www.elfinanciero.com.mx/nacional/2026/04/15/sheinbaum-aclara-por-que-cambio-de-opinion-sobre-el-fracking-hay-que-analizar-nuevas-tecnologias/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "cronica",
+          "titulo": "México presenta a su equipo de que evaluara el uso del fracking en el país",
+          "url": "https://www.cronica.com.mx/nacional/2026/04/15/mexico-presenta-a-su-equipo-de-que-evaluara-el-uso-del-fracking-en-el-pais/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "ovaciones",
+          "titulo": "En este momento no hay fracking en México: Sheinbaum",
+          "url": "https://ovaciones.com/en-este-momento-no-hay-fracking-en-mexico-sheinbaum/?utm_source=rss&utm_medium=rss&utm_campaign=en-este-momento-no-hay-fracking-en-mexico-sheinbaum",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Sheinbaum descarta entrega de petróleo a empresas trasnacionales; \"no somos Calderón, no somos Peña\", arremete",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-descarta-entrega-de-petroleo-a-empresas-trasnacionales-no-somos-calderon-no-somos-pena-arremete/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Fracking en México todavía no es una decisión tomada, dice Rosaura Ruiz; primeras conclusiones se presentarán en dos meses",
+          "url": "https://www.eluniversal.com.mx/nacion/fracking-en-mexico-todavia-no-es-una-decision-tomada-dice-rosaura-ruiz-primeras-conclusiones-se-presentaran-en-dos-meses/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "politico_mx",
+          "titulo": "EUA investiga red de sobornos millonarios en Pemex durante gobierno de AMLO",
+          "url": "https://www.politico.mx/2026/04/15/eua-investiga-red-de-sobornos-millonarios-en-pemex-durante-gobierno-de-amlo/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Ellos conforman el comité de expertos para analizar la explotación de gas no convencional; también lo integran embajadores",
+          "url": "https://www.eluniversal.com.mx/nacion/ellos-conforman-el-comite-de-expertos-para-analizar-la-explotacion-de-gas-no-convencional-tambien-lo-integran-embajadores/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "bloomberg_linea",
+          "titulo": "México compite con más de una decena de países por inversiones petroleras",
+          "url": "https://www.bloomberglinea.com/latinoamerica/mexico/mexico-compite-con-mas-de-una-decena-de-paises-por-inversiones-petroleras/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "ovaciones",
+          "titulo": "Presenta Sheinbaum a grupo de académicos analistas del fracking",
+          "url": "https://ovaciones.com/presenta-sheinbaum-a-grupo-de-academicos-analistas-del-fracking/?utm_source=rss&utm_medium=rss&utm_campaign=presenta-sheinbaum-a-grupo-de-academicos-analistas-del-fracking",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "24_horas",
+          "titulo": "La explotación de gas natural con \"fracking\" inquieta a campesinos en México",
+          "url": "https://24-horas.mx/mexico/la-explotacion-de-gas-natural-con-fracking-inquieta-a-campesinos-en-mexico/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "24_horas",
+          "titulo": "'Es una decisión de soberanía, de nación, de patria, de futuro, de soberanía energética': Sheinbaum sobre uso de fracking",
+          "url": "https://24-horas.mx/mexico/sheinbaum-presenta-comite-cientifico-para-analizar-viabilidad-de-fracking/",
+          "fecha": "2026-04-15"
+        },
+        {
           "fuente": "el_financiero",
           "titulo": "‘Dream team’ del fracking en México: ¿Quiénes son los científicos que asesorarán a Sheinbaum?",
           "url": "https://www.elfinanciero.com.mx/nacional/2026/04/15/claudia-sheinbaum-mananera-temas-hoy-15-de-abril-de-2026-en-vivo/",
@@ -3325,84 +3403,6 @@
           "fuente": "la_jornada",
           "titulo": "Contiene Pemex derrame en Poza Rica; restablecen agua potable",
           "url": "https://www.jornada.com.mx/2026/04/15/estados/028n3est?partner=rss",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Seis tortugas han muerto por petróleo en su organismo",
-          "url": "https://www.jornada.com.mx/2026/04/15/estados/028n2est?partner=rss",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Luis Linares Zapata: Finanzas y energía",
-          "url": "https://www.jornada.com.mx/2026/04/15/politica/014a1pol?partner=rss",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "Jalisco acelera transición energética",
-          "url": "https://www.razon.com.mx/opinion/2026/04/15/jalisco-acelera-transicion-energetica/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "Indígenas de SLP rechazan posible uso de 'fracking'",
-          "url": "https://24-horas.mx/estados/indigenas-de-slp-rechazan-posible-uso-de-fracking/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "bloomberg_linea",
-          "titulo": "Pemex envía equipos técnicos a EE.UU., Canadá y Sudamérica para analizar el fracking",
-          "url": "https://www.bloomberglinea.com/latinoamerica/mexico/pemex-envia-equipos-tecnicos-a-eeuu-canada-y-sudamerica-para-analizar-el-fracking/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "SENER destaca innovación y rectoría del Estado como pilares de la soberanía energética",
-          "url": "https://www.razon.com.mx/negocios/2026/04/14/sener-destaca-innovacion-y-rectoria-del-estado-como-pilares-de-la-soberania-energetica/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "talla_diputados",
-          "titulo": "Ramírez Cuéllar afirma que no habrá “gasolinazo” en México tras impacto de guerra en Medio Oriente en precios de combustibles",
-          "url": "https://www.tallapolitica.com.mx/ramirez-cuellar-afirma-que-no-habra-gasolinazo-en-mexico-tras-impacto-de-guerra-en-medio-oriente-en-precios-de-combustibles/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "el_financiero",
-          "titulo": "Noroña defiende a su hijo por sueldo en la CFE: ‘Es una campaña canalla’",
-          "url": "https://www.elfinanciero.com.mx/nacional/2026/04/14/norona-defiende-a-su-hijo-por-sueldo-en-la-cfe-es-una-campana-canalla/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "talla_diputados",
-          "titulo": "Lixa Abimerhi insiste en comparecencia de Pemex ante crisis por derrame en el Golfo",
-          "url": "https://www.tallapolitica.com.mx/lixa-abimerhi-insiste-en-comparecencia-de-pemex-ante-crisis-por-derrame-en-el-golfo/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "bloomberg_linea",
-          "titulo": "Pemex niega daño comercial por derrame de diésel en refinería Deer Park",
-          "url": "https://www.bloomberglinea.com/latinoamerica/mexico/pemex-niega-dano-comercial-por-derrame-de-diesel-en-refineria-deer-park/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Manolo Jiménez apoya ruta para extracción de gas natural en Coahuila; es una gran oportunidad, asegura",
-          "url": "https://www.eluniversal.com.mx/estados/manolo-jimenez-apoya-ruta-para-extraccion-de-gas-natural-en-coahuila-es-una-gran-oportunidad-asegura/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "Destaca las ventajas de Tamaulipas en energía",
-          "url": "https://www.razon.com.mx/estados/2026/04/14/americo-villarreal-afirma-que-tamaulipas-esta-listo-para-ser-eje-del-desarrollo-energetico-nacional/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "el_pais",
-          "titulo": "‘Fracking’, entre la convicción y la responsabilidad",
-          "url": "https://elpais.com/mexico/opinion/2026-04-15/fracking-entre-la-conviccion-y-la-responsabilidad.html",
           "fecha": "2026-04-15"
         }
       ],
@@ -3692,6 +3692,24 @@
     "salud": {
       "articulos_medios": [
         {
+          "fuente": "el_universal",
+          "titulo": "Anticorrupción inhabilita a empresa por información falsa en compra de medicamentos; impone multa de 707 mil 506 pesos",
+          "url": "https://www.eluniversal.com.mx/nacion/anticorrupcion-inhabilita-a-empresa-por-informacion-falsa-en-compra-de-medicamentos-impone-multa-de-707-mil-506-pesos/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "VIDEO: Tras picadura de araña, actriz de Gossip Girl pasa la noche en hospital de CDMX; muestra efectos del veneno",
+          "url": "https://www.eluniversal.com.mx/tendencias/tras-picadura-de-arana-actriz-de-gossip-girl-pasa-la-noche-en-hospital-de-cdmx-muestra-efectos-del-veneno/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "la_razon",
+          "titulo": "Lululemon, bajo investigación por posibles sustancias tóxicas en su ropa deportiva",
+          "url": "https://www.razon.com.mx/estilos/2026/04/15/lululemon-bajo-investigacion-por-posibles-sustancias-toxicas-en-su-ropa-deportiva/",
+          "fecha": "2026-04-15"
+        },
+        {
           "fuente": "la_jornada",
           "titulo": "Superó la CDMX la meta de vacunación contra el sarampión: Gasman",
           "url": "https://www.jornada.com.mx/2026/04/15/capital/033n3cap?partner=rss",
@@ -3755,24 +3773,6 @@
           "fuente": "proceso",
           "titulo": "PensiĂłn ISSSTE: cuĂˇndo cae el pago de mayo 2026",
           "url": "https://www.proceso.com.mx/nacional/2026/4/15/pension-issste-cuando-cae-el-pago-de-mayo-2026-372154.html",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "sol_de_mexico",
-          "titulo": "“Los medicamentos del sector público son seguros”, responde Salud sobre compras de Keytruda falsificada",
-          "url": "https://www.elsoldemexico.com.mx/elsoldemexico/mexico/los-medicamentos-del-sector-publico-son-seguros-responde-salud-sobre-compras-de-keytruda-falsificada-29495848",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "excelsior",
-          "titulo": "La Marina sofoca incendio en centro de rehabilitación en Baja California",
-          "url": "https://www.excelsior.com.mx/nacional/marina-sofoca-incendio-centro-rehabilitacion-baja-california",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "excelsior",
-          "titulo": "SEP y UNICEF firman convenio para fortalecer salud escolar en México",
-          "url": "https://www.excelsior.com.mx/nacional/sep-y-unicef-firman-convenio-para-fortalecer-salud-escolar-mexico",
           "fecha": "2026-04-15"
         }
       ],
@@ -4176,6 +4176,36 @@
     "educacion": {
       "articulos_medios": [
         {
+          "fuente": "el_financiero",
+          "titulo": "Sheinbaum aclara por qué cambió de opinión sobre el fracking: ‘Hay que analizar nuevas tecnologías’",
+          "url": "https://www.elfinanciero.com.mx/nacional/2026/04/15/sheinbaum-aclara-por-que-cambio-de-opinion-sobre-el-fracking-hay-que-analizar-nuevas-tecnologias/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Fracking en México todavía no es una decisión tomada, dice Rosaura Ruiz; primeras conclusiones se presentarán en dos meses",
+          "url": "https://www.eluniversal.com.mx/nacion/fracking-en-mexico-todavia-no-es-una-decision-tomada-dice-rosaura-ruiz-primeras-conclusiones-se-presentaran-en-dos-meses/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Ellos conforman el comité de expertos para analizar la explotación de gas no convencional; también lo integran embajadores",
+          "url": "https://www.eluniversal.com.mx/nacion/ellos-conforman-el-comite-de-expertos-para-analizar-la-explotacion-de-gas-no-convencional-tambien-lo-integran-embajadores/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "la_razon",
+          "titulo": "Gobierno de México integra equipo para analizar plan de fracking; apoyan UNAM, UAM, IPN...",
+          "url": "https://www.razon.com.mx/mexico/2026/04/15/gobierno-de-mexico-integra-equipo-para-analizar-plan-de-fracking-apoyan-unam-uam-ipn/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Sheinbaum presenta comité de científicos para analizar viabilidad de explotar gas no convencional; participan UNAM, IPN y UAM",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-presenta-comite-de-cientificos-para-analizar-viabilidad-de-explotar-gas-no-convencional-participan-unam-ipn-y-uam/",
+          "fecha": "2026-04-15"
+        },
+        {
           "fuente": "ovaciones",
           "titulo": "Cuando la cultura se convierte en poder",
           "url": "https://ovaciones.com/cuando-la-cultura-se-convierte-en-poder/?utm_source=rss&utm_medium=rss&utm_campaign=cuando-la-cultura-se-convierte-en-poder",
@@ -4233,36 +4263,6 @@
           "fuente": "talla_diputados",
           "titulo": "Diputadas y diputados del Partido Verde Ecologista de México impulsan iniciativa contra la violencia sexual infantil en las escuelas",
           "url": "https://www.tallapolitica.com.mx/diputadas-y-diputados-del-partido-verde-ecologista-de-mexico-impulsan-iniciativa-contra-la-violencia-sexual-infantil-en-las-escuelas/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "talla_diputados",
-          "titulo": "Comisión de Juventud aprueba iniciativa para garantizar los derechos de las juventudes indígenas y afromexicanas",
-          "url": "https://www.tallapolitica.com.mx/comision-de-juventud-aprueba-iniciativa-para-garantizar-los-derechos-de-las-juventudes-indigenas-y-afromexicanas/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "talla_diputados",
-          "titulo": "Comisión de Medio Ambiente lleva a cabo foro sobre ecosistemas estratégicos, seguridad hídrica y patrimonio biocultural",
-          "url": "https://www.tallapolitica.com.mx/comision-de-medio-ambiente-lleva-a-cabo-foro-sobre-ecosistemas-estrategicos-seguridad-hidrica-y-patrimonio-biocultural/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Alcaldía Magdalena Contreras instala Grupo Municipal para prevenir embarazo adolescente; programa contempla educación sexual integral",
-          "url": "https://www.eluniversal.com.mx/metropoli/alcaldia-magdalena-contreras-instala-grupo-municipal-para-prevenir-embarazo-adolescente-programa-contempla-educacion-sexual-integral/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Marchan sindicatos de la Universidad de Sonora; exigen solución a revisiones laboral y salarial",
-          "url": "https://www.eluniversal.com.mx/estados/marchan-sindicatos-de-la-universidad-de-sonora-exigen-solucion-a-revisiones-laboral-y-salarial/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Diputados reciben a miembros del Centro Europeo de Investigación Nuclear; intercambian experiencias para fortelecer sector",
-          "url": "https://www.eluniversal.com.mx/nacion/diputados-reciben-a-miembros-del-centro-europeo-de-investigacion-nuclear-intercambian-experiencias-para-fortelecer-sector/",
           "fecha": "2026-04-15"
         }
       ],
@@ -5600,6 +5600,18 @@
     "electoral_politico": {
       "articulos_medios": [
         {
+          "fuente": "el_universal",
+          "titulo": "Sheinbaum volará en avión comercial para su viaje a España; acudirá a la Cumbre en defensa de la democracia en Barcelona",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-volara-en-avion-comercial-para-su-viaje-a-espana-acudira-a-la-cumbre-en-defensa-de-la-democracia/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Acusan a exalcaldesa de Técamac de ordenar sacrificio de miles de animales durante su gestión; senadora lo reconoce",
+          "url": "https://www.eluniversal.com.mx/metropoli/acusan-a-exalcaldesa-de-tecamac-de-ordenar-sacrificio-de-miles-de-animales-durante-su-gestion-senadora-lo-reconoce/",
+          "fecha": "2026-04-15"
+        },
+        {
           "fuente": "ovaciones",
           "titulo": "¿Alcalde al gabinete presidencial?",
           "url": "https://ovaciones.com/alcalde-al-gabinete-presidencial/?utm_source=rss&utm_medium=rss&utm_campaign=alcalde-al-gabinete-presidencial",
@@ -5675,18 +5687,6 @@
           "fuente": "talla_senadores",
           "titulo": "Mier Velazco reconoce a Heberto Castillo como “constructor de la democracia” y “arquitecto de la política” en México",
           "url": "https://www.tallapolitica.com.mx/mier-velazco-reconoce-a-heberto-castillo-como-constructor-de-la-democracia-y-arquitecto-de-la-politica-en-mexico/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "talla_diputados",
-          "titulo": "Diputadas y diputados presentan en segunda ronda 21 iniciativas para reformar la Constitución Política, leyes y códigos federales",
-          "url": "https://www.tallapolitica.com.mx/diputadas-y-diputados-presentan-en-segunda-ronda-21-iniciativas-para-reformar-la-constitucion-politica-leyes-y-codigos-federales/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "ovaciones",
-          "titulo": "Comienzan las entrevistas a aspirantes a consejeros electorales del INE",
-          "url": "https://ovaciones.com/comienzan-las-entrevistas-a-aspirantes-a-consejeros-electorales-del-ine/?utm_source=rss&utm_medium=rss&utm_campaign=comienzan-las-entrevistas-a-aspirantes-a-consejeros-electorales-del-ine",
           "fecha": "2026-04-15"
         }
       ],
@@ -9284,6 +9284,12 @@
     "derechos_humanos": {
       "articulos_medios": [
         {
+          "fuente": "24_horas",
+          "titulo": "¿Será?/ Ministra ¿del pueblo?",
+          "url": "https://24-horas.mx/columnas/sera-ministra-del-pueblo/",
+          "fecha": "2026-04-15"
+        },
+        {
           "fuente": "el_financiero",
           "titulo": "Derecho universal",
           "url": "https://www.elfinanciero.com.mx/cartones/antonio-garci/2026/04/15/derecho-universal/",
@@ -9365,12 +9371,6 @@
           "fuente": "el_universal",
           "titulo": "Laura Ballesteros va contra discriminación por gordofobia; busca reformar artículo primero de la Constitución",
           "url": "https://www.eluniversal.com.mx/nacion/laura-ballesteros-va-contra-discriminacion-por-gordofobia-busca-reformar-articulo-primero-de-la-constitucion/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "el_pais",
-          "titulo": "EE UU apunta ahora con sus sanciones a un activista mexicano que ha denunciado malas prácticas del Ejército",
-          "url": "https://elpais.com/mexico/2026-04-15/estados-unidos-pone-en-el-radar-con-sus-sanciones-a-un-polemico-defensor-de-tamaulipas.html",
           "fecha": "2026-04-15"
         }
       ],
@@ -9979,6 +9979,42 @@
     "infraestructura": {
       "articulos_medios": [
         {
+          "fuente": "cronica",
+          "titulo": "Chema Martínez rechaza concesión de espacio público a otra empresa en Colonia del Fresno",
+          "url": "https://www.cronica.com.mx/jalisco/2026/04/15/chema-martinez-rechaza-concesion-de-espacio-publico-a-otra-empresa-en-colonia-del-fresno/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Anticorrupción inhabilita a empresa por información falsa en compra de medicamentos; impone multa de 707 mil 506 pesos",
+          "url": "https://www.eluniversal.com.mx/nacion/anticorrupcion-inhabilita-a-empresa-por-informacion-falsa-en-compra-de-medicamentos-impone-multa-de-707-mil-506-pesos/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "24_horas",
+          "titulo": "Legislador en EU pide a la FIFA pagar el transporte público durante el Mundial",
+          "url": "https://24-horas.mx/dxt/legislador-en-eu-pide-a-la-fifa-pagar-el-transporte-publico-durante-el-mundial/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Sheinbaum descarta entrega de petróleo a empresas trasnacionales; \"no somos Calderón, no somos Peña\", arremete",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-descarta-entrega-de-petroleo-a-empresas-trasnacionales-no-somos-calderon-no-somos-pena-arremete/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_financiero",
+          "titulo": "Crisis financiera de Magnicharters fue detecta por la AFAC... desde enero: ¿Por qué siguió volando?",
+          "url": "https://www.elfinanciero.com.mx/empresas/2026/04/15/problemas-financieros-de-magnicharters-detectados-por-gobierno-desde-enero/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "la_razon",
+          "titulo": "Metro CDMX HOY 15 de abril: Estas son las líneas con marcha lenta",
+          "url": "https://www.razon.com.mx/ciudad/2026/04/15/metro-cdmx-hoy-15-de-abril-estas-son-las-lineas-con-marcha-lenta/",
+          "fecha": "2026-04-15"
+        },
+        {
           "fuente": "ovaciones",
           "titulo": "De las quimios de agua a las medicinas falsas",
           "url": "https://ovaciones.com/de-las-quimios-de-agua-a-las-medicinas-falsas/?utm_source=rss&utm_medium=rss&utm_campaign=de-las-quimios-de-agua-a-las-medicinas-falsas",
@@ -10024,36 +10060,6 @@
           "fuente": "el_universal",
           "titulo": "Se retrasa conclusión de tres estaciones en el Trolebús a Chalco",
           "url": "https://www.eluniversal.com.mx/metropoli/se-retrasa-conclusion-de-tres-estaciones-en-el-trolebus-a-chalco/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "Fortalecer denuncias y seguridad en carreteras: Guardia Nacional sobre peticiones de transportistas",
-          "url": "https://24-horas.mx/estados/fortalecer-denuncias-y-seguridad-en-carreteras-guardia-nacional-sobre-peticiones-de-transportistas/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "talla_diputados",
-          "titulo": "Comisión de Comunicaciones y Transportes aprueba dictamen sobre desaparición forzada de personas en servicios de autotransporte terrestre de pasajeros",
-          "url": "https://www.tallapolitica.com.mx/comision-de-comunicaciones-y-transportes-aprueba-dictamen-sobre-desaparicion-forzada-de-personas-en-servicios-de-autotransporte-terrestre-de-pasajeros/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "politico_mx",
-          "titulo": "¡Golpe al bolsillo! CAPUFE sube tarifas de casetas; estos son los nuevos precios",
-          "url": "https://www.politico.mx/2026/04/15/golpe-al-bolsillo-capufe-sube-tarifas-de-casetas-estos-son-los-nuevos-precios/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Magnicharters en riesgo de perder concesión por falta de solvencia; AFAC advierte revocación si no acredita capacidad financiera",
-          "url": "https://www.eluniversal.com.mx/cartera/magnicharters-en-riesgo-de-perder-concesion-por-falta-de-solvencia-afac-advierte-revocacion-si-no-acredita-capacidad-financiera/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "Anuncian inversión por más de 13 mil mdp en 2026 para la conectividad y desarrollo de Oaxaca",
-          "url": "https://www.razon.com.mx/estados/2026/04/14/anuncian-inversion-por-mas-de-13-mil-mdp-en-2026-para-la-conectividad-y-desarrollo-de-oaxaca/",
           "fecha": "2026-04-15"
         }
       ],
@@ -10842,6 +10848,12 @@
     "agro_rural": {
       "articulos_medios": [
         {
+          "fuente": "24_horas",
+          "titulo": "La explotación de gas natural con \"fracking\" inquieta a campesinos en México",
+          "url": "https://24-horas.mx/mexico/la-explotacion-de-gas-natural-con-fracking-inquieta-a-campesinos-en-mexico/",
+          "fecha": "2026-04-15"
+        },
+        {
           "fuente": "el_universal",
           "titulo": "Sheinbaum descarta alza en el precio de la tortilla",
           "url": "https://www.eluniversal.com.mx/cartera/sheinbaum-descarta-alza-en-el-precio-de-la-tortilla/",
@@ -10908,6 +10920,12 @@
           "fecha": "2026-04-15"
         },
         {
+          "fuente": "el_universal",
+          "titulo": "¡Buenas noticias! Desmienten aumento a la tortilla: \"El maíz está más barato que nunca\"",
+          "url": "https://www.eluniversaledomex.com.mx/economia-e-industria/buenas-noticias-desmienten-aumento-a-la-tortilla-el-maiz-esta-mas-barato-que-nunca/",
+          "fecha": "2026-04-15"
+        },
+        {
           "fuente": "el_heraldo",
           "titulo": "\"No hay justificación”: Antonio de la Torre niega aumento en precio de la tortilla",
           "url": "https://heraldodemexico.com.mx/nacional/2026/4/14/no-hay-justificacion-antonio-de-la-torre-niega-aumento-en-precio-de-la-tortilla-796145.html",
@@ -10918,18 +10936,6 @@
           "titulo": "Guerrero garantiza abasto de maíz y estabilidad en precio de la tortilla",
           "url": "https://heraldodemexico.com.mx/nacional/2026/4/14/guerrero-garantiza-abasto-de-maiz-estabilidad-en-precio-de-la-tortilla-796150.html",
           "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "excelsior",
-          "titulo": "Descartan industriales incremento en el precio de la tortilla",
-          "url": "https://www.excelsior.com.mx/nacional/descartan-industriales-incremento-precio-tortilla",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "Sader y Profeco descartan alza al kilo de tortilla, sector insiste en ajustar el precio",
-          "url": "https://24-horas.mx/negocios/sader-y-profeco-descartan-alza-al-kilo-de-tortilla-sector-insiste-en-ajustar-el-precio/",
-          "fecha": "2026-04-14"
         }
       ],
       "documentos_gaceta": [
@@ -11209,6 +11215,30 @@
       "articulos_medios": [
         {
           "fuente": "el_universal",
+          "titulo": "ONU expresa preocupación por artista detenido en China por su crítica al gobierno",
+          "url": "https://www.eluniversal.com.mx/cultura/onu-expresa-preocupacion-por-artista-detenido-en-china-por-su-critica-al-gobierno/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Sheinbaum volará en avión comercial para su viaje a España; acudirá a la Cumbre en defensa de la democracia en Barcelona",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-volara-en-avion-comercial-para-su-viaje-a-espana-acudira-a-la-cumbre-en-defensa-de-la-democracia/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Sheinbaum descarta entrega de petróleo a empresas trasnacionales; \"no somos Calderón, no somos Peña\", arremete",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-descarta-entrega-de-petroleo-a-empresas-trasnacionales-no-somos-calderon-no-somos-pena-arremete/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Ellos conforman el comité de expertos para analizar la explotación de gas no convencional; también lo integran embajadores",
+          "url": "https://www.eluniversal.com.mx/nacion/ellos-conforman-el-comite-de-expertos-para-analizar-la-explotacion-de-gas-no-convencional-tambien-lo-integran-embajadores/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
           "titulo": "Nissan lanza alerta por aranceles",
           "url": "https://www.eluniversal.com.mx/cartera/nissan-lanza-alerta-por-aranceles/",
           "fecha": "2026-04-15"
@@ -11259,42 +11289,6 @@
           "fuente": "la_razon",
           "titulo": "Señala EU en lista pública a más de 14 mil mexicanos detenidos por ICE como “escoria”",
           "url": "https://www.razon.com.mx/mexico/2026/04/15/senala-eu-en-lista-publica-a-mas-de-14-mil-mexicanos-detenidos-por-ice-como-escoria/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "México escala respuesta por muerte de paisanos",
-          "url": "https://www.razon.com.mx/mexico/2026/04/15/mexico-escala-respuesta-por-muerte-de-paisanos/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "Peligro para el Tratado de Libre Comercio con Estados Unidos",
-          "url": "https://www.razon.com.mx/opinion/2026/04/15/peligro-para-el-tratado-de-libre-comercio-con-estados-unidos/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "ovaciones",
-          "titulo": "Disposiciones internas y la revisión del T-MEC propiciarán incertidumbre para México en la segunda mitad del año: IMEF",
-          "url": "https://ovaciones.com/disposiciones-internas-y-la-revision-del-t-mec-propiciaran-incertidumbre-para-mexico-en-la-segunda-mitad-del-ano-imef/?utm_source=rss&utm_medium=rss&utm_campaign=disposiciones-internas-y-la-revision-del-t-mec-propiciaran-incertidumbre-para-mexico-en-la-segunda-mitad-del-ano-imef",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Segob revisa identificación humana con Fondo de Población de la ONU; coordinan esfuerzos",
-          "url": "https://www.eluniversal.com.mx/nacion/segob-revisa-identificacion-humana-con-fondo-de-poblacion-de-la-onu-coordinan-esfuerzos/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "el_financiero",
-          "titulo": "¿Verano de aranceles de Trump? Scott Bessent asegura que las tarifas volverán a aplicar en julio",
-          "url": "https://www.elfinanciero.com.mx/mundo/2026/04/14/aranceles-de-donald-trump-scott-bessent-dice-que-seran-restablecidos-en-julio/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "el_financiero",
-          "titulo": "¿Y si se enoja EU?: ‘Alito’ Moreno pide a Sheinbaum no ir a cumbre progresista en Barcelona",
-          "url": "https://www.elfinanciero.com.mx/nacional/2026/04/14/y-si-se-enoja-eu-alito-moreno-pide-a-sheinbaum-no-ir-a-cumbre-progresista-en-barcelona/",
           "fecha": "2026-04-15"
         }
       ],
@@ -11962,6 +11956,24 @@
     "anticorrupcion": {
       "articulos_medios": [
         {
+          "fuente": "el_universal",
+          "titulo": "Anticorrupción inhabilita a empresa por información falsa en compra de medicamentos; impone multa de 707 mil 506 pesos",
+          "url": "https://www.eluniversal.com.mx/nacion/anticorrupcion-inhabilita-a-empresa-por-informacion-falsa-en-compra-de-medicamentos-impone-multa-de-707-mil-506-pesos/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "politico_mx",
+          "titulo": "La ‘casa de cero pesos’: Denuncian a diputada de Morena por enriquecimiento inexplicable",
+          "url": "https://www.politico.mx/2026/04/15/la-casa-de-cero-pesos-denuncian-a-diputada-de-morena-por-enriquecimiento-inexplicable/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "politico_mx",
+          "titulo": "EUA investiga red de sobornos millonarios en Pemex durante gobierno de AMLO",
+          "url": "https://www.politico.mx/2026/04/15/eua-investiga-red-de-sobornos-millonarios-en-pemex-durante-gobierno-de-amlo/",
+          "fecha": "2026-04-15"
+        },
+        {
           "fuente": "la_jornada",
           "titulo": "Han bajado feminicidios 14.9% y la meta es cero impunidad: Sheinbaum",
           "url": "https://www.jornada.com.mx/2026/04/15/politica/004n1pol?partner=rss",
@@ -12032,24 +12044,6 @@
           "titulo": "FGR desecha denuncia contra fiscal anticorrupción de Morelos",
           "url": "https://24-horas.mx/estados/fgr-desecha-denuncia-contra-fiscal-anticorrupcion-de-morelos/",
           "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "el_pais",
-          "titulo": "‘Fracking’, entre la convicción y la responsabilidad",
-          "url": "https://elpais.com/mexico/opinion/2026-04-15/fracking-entre-la-conviccion-y-la-responsabilidad.html",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "sol_de_mexico",
-          "titulo": "Anticorrupción abre investigación contra Miguel Elorza, de Infodemia, y Jenaro Villamil, del SRP",
-          "url": "https://www.elsoldemexico.com.mx/elsoldemexico/mexico/anticorrupcion-abre-investigacion-contra-miguel-elorza-de-infodemia-y-jenaro-villamil-del-srp-29496655",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "talla_senadores",
-          "titulo": "Ante el feminicidio, México enfrenta el grave problema de la impunidad: Esquivel Torres",
-          "url": "https://www.tallapolitica.com.mx/ante-el-feminicidio-mexico-enfrenta-el-grave-problema-de-la-impunidad-esquivel-torres/",
-          "fecha": "2026-04-14"
         }
       ],
       "documentos_gaceta": [
@@ -12356,6 +12350,18 @@
     "medio_ambiente": {
       "articulos_medios": [
         {
+          "fuente": "cronica",
+          "titulo": "Efectividad de las Áreas Naturales Protegidas",
+          "url": "https://www.cronica.com.mx/academia/2026/04/15/efectividad-de-las-areas-naturales-protegidas/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "la_razon",
+          "titulo": "Gobierno de México integra equipo para analizar plan de fracking; apoyan UNAM, UAM, IPN...",
+          "url": "https://www.razon.com.mx/mexico/2026/04/15/gobierno-de-mexico-integra-equipo-para-analizar-plan-de-fracking-apoyan-unam-uam-ipn/",
+          "fecha": "2026-04-15"
+        },
+        {
           "fuente": "la_jornada",
           "titulo": "Contiene Pemex derrame en Poza Rica; restablecen agua potable",
           "url": "https://www.jornada.com.mx/2026/04/15/estados/028n3est?partner=rss",
@@ -12422,27 +12428,15 @@
           "fecha": "2026-04-15"
         },
         {
+          "fuente": "proceso",
+          "titulo": "Sheinbaum presenta a asesores para aplicar el fracking no tradicional sin daĂ±ar el ecosistema",
+          "url": "https://www.proceso.com.mx/nacional/2026/4/15/sheinbaum-presenta-asesores-para-aplicar-el-fracking-no-tradicional-sin-danar-el-ecosistema-372245.html",
+          "fecha": "2026-04-15"
+        },
+        {
           "fuente": "excelsior",
           "titulo": "El ecosistema tecnológico global de Chery cobra impulso: el amanecer del efecto \"derrame tecnológico\"",
           "url": "https://www.excelsior.com.mx/nacional/ecosistema-tecnologico-global-chery-cobra-impulso-amanecer-efecto-derrame-tecnologico",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "excelsior",
-          "titulo": "La Marina sofoca incendio en centro de rehabilitación en Baja California",
-          "url": "https://www.excelsior.com.mx/nacional/marina-sofoca-incendio-centro-rehabilitacion-baja-california",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "excelsior",
-          "titulo": "Nuevo derrame de hidrocarburo pone en riesgo fuentes de abasto de agua en Veracruz",
-          "url": "https://www.excelsior.com.mx/nacional/nuevo-derrame-hidrocarburo-pone-riesgo-fuentes-abasto-agua-veracruz",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "excelsior",
-          "titulo": "Fuerte incendio en Gómez Palacio moviliza a cuerpos de emergencia",
-          "url": "https://www.excelsior.com.mx/nacional/fuerte-incendio-gomez-palacio-moviliza-cuerpos-emergencia",
           "fecha": "2026-04-15"
         }
       ],
@@ -13641,6 +13635,12 @@
     "turismo": {
       "articulos_medios": [
         {
+          "fuente": "el_universal",
+          "titulo": "Este es el nuevo mirador del pueblo mágico de Zimapán",
+          "url": "https://www.eluniversal.com.mx/destinos/este-es-el-nuevo-mirador-del-pueblo-magico-de-zimapan/",
+          "fecha": "2026-04-15"
+        },
+        {
           "fuente": "24_horas",
           "titulo": "Consejo Hotelero y Senado analizan retos en turismo para Quintana Roo",
           "url": "https://24-horas.mx/negocios/consejo-hotelero-y-senado-analizan-retos-en-turismo-para-quintana-roo/",
@@ -13717,12 +13717,6 @@
           "titulo": "Hoteles y restaurantes anuncian bloqueo comercial a participantes del Acamoto 2026 tras disturbios en ediciones pasadas",
           "url": "https://heraldodemexico.com.mx/nacional/2026/4/11/hoteles-restaurantes-anuncian-bloqueo-comercial-participantes-del-acamoto-2026-tras-disturbios-en-ediciones-pasadas-794638.html",
           "fecha": "2026-04-12"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Yucatán se alista para despegue del turismo con ampliación del Puerto de Altura de Progreso; obras terminarán en septiembre",
-          "url": "https://www.eluniversal.com.mx/estados/yucatan-se-alista-para-despegue-del-turismo-con-ampliacion-del-puerto-de-altura-de-progreso-obras-terminaran-en-septiembre/",
-          "fecha": "2026-04-11"
         }
       ],
       "documentos_gaceta": [
@@ -13836,6 +13830,12 @@
       "articulos_medios": [
         {
           "fuente": "el_universal",
+          "titulo": "Movilizan servicios  de emergencia por presunta caída de dos mujeres en Periférico e Insurgentes; no hallan a supuestas víctimas",
+          "url": "https://www.eluniversal.com.mx/metropoli/movilizan-servicios-de-emergencia-por-presunta-caida-de-dos-mujeres-en-periferico-e-insurgentes-no-hallan-a-supuestas-victimas/",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "el_universal",
           "titulo": "Matan a dos hombres y a una mujer en Purísima del Rincón, Guanajuato; las víctimas se encuentran en calidad de no identificadas",
           "url": "https://www.eluniversal.com.mx/estados/matan-a-dos-hombres-y-a-una-mujer-en-purisima-del-rincon-guanajuato-las-victimas-se-encuentran-en-calidad-de-no-identificadas/",
           "fecha": "2026-04-15"
@@ -13916,12 +13916,6 @@
           "fuente": "cronica",
           "titulo": "Mujeres deben usar armas no letales en defensa personal, propone diputada de Morena",
           "url": "https://www.cronica.com.mx/nacional/2026/04/14/mujeres-deben-usar-armas-no-letales-en-defensa-personal-propone-diputada-de-morena/",
-          "fecha": "2026-04-15"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "\"Ya no aguanto más\"; familia de Febe Rojas exige justicia y se investigue como feminicidio la muerte de la joven",
-          "url": "https://www.eluniversal.com.mx/nacion/ya-no-aguanto-mas-familia-de-febe-rojas-exige-justicia-y-se-investigue-como-feminicidio-la-muerte-de-la-joven/",
           "fecha": "2026-04-15"
         }
       ],
@@ -14148,6 +14142,12 @@
       "articulos_medios": [
         {
           "fuente": "ovaciones",
+          "titulo": "¿Habrá apagones en CDMX y otros estados? Gobierno aclara rumores y desmiente información falsa",
+          "url": "https://ovaciones.com/habra-apagones-en-cdmx-y-otros-estados-gobierno-aclara-rumores-y-desmiente-informacion-falsa/?utm_source=rss&utm_medium=rss&utm_campaign=habra-apagones-en-cdmx-y-otros-estados-gobierno-aclara-rumores-y-desmiente-informacion-falsa",
+          "fecha": "2026-04-15"
+        },
+        {
+          "fuente": "ovaciones",
           "titulo": "¿Alcalde al gabinete presidencial?",
           "url": "https://ovaciones.com/alcalde-al-gabinete-presidencial/?utm_source=rss&utm_medium=rss&utm_campaign=alcalde-al-gabinete-presidencial",
           "fecha": "2026-04-15"
@@ -14228,12 +14228,6 @@
           "fuente": "cronica",
           "titulo": "Preparativos para la elección de Estado en 2027",
           "url": "https://www.cronica.com.mx/jalisco/columnistas-jalisco/2026/04/14/preparativos-para-la-eleccion-de-estado-en-2027/",
-          "fecha": "2026-04-14"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "Identifican ambulancias en estado de deterioro en Hidalgo",
-          "url": "https://www.cronica.com.mx/estados/2026/04/13/identifican-ambulancias-en-estado-de-deterioro-en-hidalgo/",
           "fecha": "2026-04-14"
         }
       ],
@@ -14879,7 +14873,7 @@
           53.9,
           55.4,
           56.5,
-          55.6
+          55.7
         ],
         "colores": [
           "rojo",
@@ -15978,7 +15972,7 @@
           44.4,
           48.0,
           47.4,
-          48.1
+          48.5
         ],
         "colores": [
           "rojo",
@@ -16292,7 +16286,7 @@
           47.7,
           49.4,
           59.5,
-          53.7
+          54.0
         ],
         "colores": [
           "rojo",
@@ -16449,7 +16443,7 @@
           59.9,
           63.2,
           63.4,
-          63.0
+          67.2
         ],
         "colores": [
           "rojo",
@@ -17234,7 +17228,7 @@
           32.0,
           35.6,
           42.8,
-          44.9
+          45.0
         ],
         "colores": [
           "rojo",
@@ -57373,7 +57367,7 @@
       },
       {
         "fecha": "2025-06-25",
-        "count": 0
+        "count": 1
       },
       {
         "fecha": "2025-06-26",
@@ -66467,7 +66461,7 @@
     "PAN": {
       "nombre": "PAN",
       "color": "#003B7A",
-      "total": 2254,
+      "total": 2255,
       "por_categoria": {
         "seguridad_justicia": {
           "nombre": "Seguridad y Justicia",
@@ -66613,6 +66607,10 @@
           "nombre": "Medios de Comunicación",
           "count": 3
         },
+        "administracion": {
+          "nombre": "Administración",
+          "count": 3
+        },
         "turismo:2.4954,derechos_humanos:0.6198": {
           "nombre": "turismo:2.4954,derechos_humanos:0.6198",
           "count": 2
@@ -66679,10 +66677,6 @@
         },
         "economia_hacienda:0.75,inteligencia_artificial:0.6117": {
           "nombre": "economia_hacienda:0.75,inteligencia_artificial:0.6117",
-          "count": 2
-        },
-        "administracion": {
-          "nombre": "Administración",
           "count": 2
         },
         "turismo:3.8036": {
@@ -71647,7 +71641,7 @@
         }
       },
       "por_tipo": {
-        "Iniciativa": 1296,
+        "Iniciativa": 1297,
         "Proposición con punto de acuerdo": 821,
         "Asunto": 43,
         "Otro:comunicación": 38,
@@ -71683,7 +71677,7 @@
         "2025-W22": 7,
         "2025-W23": 95,
         "2025-W24": 11,
-        "2025-W25": 23,
+        "2025-W25": 24,
         "2025-W26": 12,
         "2025-W27": 24,
         "2025-W28": 6,
@@ -86253,7 +86247,7 @@
         "partido": "PAN",
         "camara": "Cámara de Diputados",
         "estado": "Guanajuato",
-        "score": 48.64,
+        "score": 48.49,
         "docs_categoria": 5,
         "comisiones_afines": [
           "Medio Ambiente",
@@ -86261,7 +86255,7 @@
         ],
         "desglose": {
           "correlacion_reactiva": 17.6,
-          "especializacion_tematica": 17.9,
+          "especializacion_tematica": 17.2,
           "comision_agenda": 100,
           "patron_instrumento": 80.0,
           "penalizacion_inactividad": 100
@@ -87254,6 +87248,31 @@
     ],
     "administracion": [
       {
+        "nombre": "Diana Estefanía Gutiérrez Valtierra",
+        "partido": "PAN",
+        "camara": "Cámara de Diputados",
+        "estado": "Guanajuato",
+        "score": 23.79,
+        "docs_categoria": 1,
+        "comisiones_afines": [],
+        "desglose": {
+          "correlacion_reactiva": 10,
+          "especializacion_tematica": 1.1,
+          "comision_agenda": 0,
+          "patron_instrumento": 100.0,
+          "penalizacion_inactividad": 100
+        },
+        "instrumentos": [
+          {
+            "titulo": "Que adiciona un tercer párrafo al artículo 80 de la Ley General de Mejora Regulatoria.",
+            "tipo": "Iniciativa",
+            "fecha": "2025-06-25",
+            "estatus": "RetiradaRetirada25/08/2025",
+            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=4911508&Asunto=4907717"
+          }
+        ]
+      },
+      {
         "nombre": "Alma Anahí González Hernández",
         "partido": "MORENA",
         "camara": "Senado",
@@ -87328,30 +87347,13 @@
           "penalizacion_inactividad": 100
         },
         "instrumentos": []
-      },
-      {
-        "nombre": "Carol Antonio Altamirano",
-        "partido": "MORENA",
-        "camara": "Cámara de Diputados",
-        "estado": "Oaxaca",
-        "score": 10.0,
-        "docs_categoria": 0,
-        "comisiones_afines": [],
-        "desglose": {
-          "correlacion_reactiva": 0,
-          "especializacion_tematica": 0,
-          "comision_agenda": 0,
-          "patron_instrumento": 0,
-          "penalizacion_inactividad": 100
-        },
-        "instrumentos": []
       }
     ]
   },
   "autoria_stats": {
     "total_legisladores": 628,
     "con_actividad": 579,
-    "total_actividad": 11560,
+    "total_actividad": 11561,
     "reacciones_historicas": 40147,
     "picos_por_categoria": {
       "seguridad_justicia": 63,
@@ -87380,7 +87382,7 @@
       },
       {
         "partido": "PAN",
-        "total": 2118
+        "total": 2119
       },
       {
         "partido": "PRI",
@@ -87578,7 +87580,7 @@
     "baja_california_sur": {
       "nombre": "Baja California Sur",
       "abreviatura": "BCS",
-      "total_articulos": 39,
+      "total_articulos": 41,
       "categorias": [
         "derechos_humanos:0.5346",
         "electoral_politico:0.5132",
@@ -87597,6 +87599,12 @@
         "seguridad_justicia:1.0385"
       ],
       "articulos": [
+        {
+          "titulo": "Taxco: alcalde Juan Andrés Vega reaparece tras secuestro y promete trabajar por la paz del municipio",
+          "fecha": "2026-04-15 15:46:51",
+          "url": "https://www.eluniversal.com.mx/estados/taxco-alcalde-juan-andres-vega-reaparece-tras-secuestro-y-promete-trabajar-por-la-paz-del-municipio/",
+          "categorias": ""
+        },
         {
           "titulo": "Israel y Líbano se muestran “unidos” contra Hezbolá",
           "fecha": "2026-04-15 09:39:33",
@@ -87649,12 +87657,6 @@
           "titulo": "Israel y Líbano acuerdan iniciar negociaciones directas",
           "fecha": "2026-04-15 00:41:34",
           "url": "https://24-horas.mx/mundo/israel-y-libano-acuerdan-iniciar-negociaciones-directas/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Hombre ataca a su pareja con machete en Chiapas; heridas provocan amputación de algunas partes de sus brazos",
-          "fecha": "2026-04-15 00:39:58",
-          "url": "https://www.eluniversal.com.mx/estados/hombre-ataca-a-su-pareja-con-machete-en-chiapas-heridas-provocan-amputacion-de-algunas-partes-de-sus-brazos/",
           "categorias": ""
         }
       ]
@@ -87846,8 +87848,9 @@
     "ciudad_de_mexico": {
       "nombre": "Ciudad de Mexico",
       "abreviatura": "CMX",
-      "total_articulos": 241,
+      "total_articulos": 253,
       "categorias": [
+        "administracion:0.4707",
         "administracion:0.8509",
         "agro_rural:0.7924",
         "anticorrupcion:0.4163",
@@ -87942,6 +87945,7 @@
         "politica_social:0.8593",
         "salud:0.4381",
         "salud:0.4928",
+        "salud:0.5101",
         "salud:0.5128",
         "salud:0.5178",
         "salud:0.6918",
@@ -87952,6 +87956,7 @@
         "salud:1.1517",
         "seguridad_justicia:0.4218",
         "seguridad_justicia:0.4396",
+        "seguridad_justicia:0.4445",
         "seguridad_justicia:0.4479",
         "seguridad_justicia:0.4519",
         "seguridad_justicia:0.4731",
@@ -88002,63 +88007,63 @@
       ],
       "articulos": [
         {
-          "titulo": "Marchas en CDMX hoy 15 de abril de 2026: rutas, horarios y puntos de concentración",
-          "fecha": "2026-04-15 13:41:11",
-          "url": "https://ovaciones.com/marchas-en-cdmx-hoy-15-de-abril-de-2026-rutas-horarios-y-puntos-de-concentracion/?utm_source=rss&utm_medium=rss&utm_campaign=marchas-en-cdmx-hoy-15-de-abril-de-2026-rutas-horarios-y-puntos-de-concentracion",
+          "titulo": "Partido Verde ‘rompe’ con Morena: También irá solo en CDMX rumbo a 2027 porque ‘no hay relación’",
+          "fecha": "2026-04-15 16:41:40",
+          "url": "https://www.elfinanciero.com.mx/cdmx/2026/04/15/partido-verde-rompe-con-morena-pvem-ira-solo-en-cdmx-rumbo-a-2027-porque-no-hay-relacion/",
           "categorias": ""
         },
         {
-          "titulo": "¿Qué haría Jero? Precio de rentas de oficinas en México aumentará 8.4% durante 2026",
-          "fecha": "2026-04-15 13:12:57",
-          "url": "https://www.elfinanciero.com.mx/empresas/2026/04/15/anticipan-que-el-precio-de-las-oficinas-aumentara-84-durante-este-ano/",
+          "titulo": "¿Habrá apagones en CDMX y otros estados? Gobierno aclara rumores y desmiente información falsa",
+          "fecha": "2026-04-15 16:36:18",
+          "url": "https://ovaciones.com/habra-apagones-en-cdmx-y-otros-estados-gobierno-aclara-rumores-y-desmiente-informacion-falsa/?utm_source=rss&utm_medium=rss&utm_campaign=habra-apagones-en-cdmx-y-otros-estados-gobierno-aclara-rumores-y-desmiente-informacion-falsa",
+          "categorias": "administracion:0.4707"
+        },
+        {
+          "titulo": "Detienen a tres personas por robo de equipo de luces en Venustiano Carranza; está valuado en 40 mil pesos",
+          "fecha": "2026-04-15 16:34:13",
+          "url": "https://www.eluniversal.com.mx/metropoli/detienen-a-tres-personas-por-robo-de-equipo-de-luces-en-venustiano-carranza-esta-valuado-en-40-mil-pesos/",
           "categorias": ""
         },
         {
-          "titulo": "Hoy No Circula miércoles 15 de abril: restricciones vehiculares CDMX Y EDOMEX",
-          "fecha": "2026-04-15 12:59:40",
-          "url": "https://www.cronica.com.mx/metropoli/2026/04/15/hoy-no-circula-miercoles-15-de-abril-restricciones-vehiculares-cdmx-y-edomex/",
+          "titulo": "Marchas y bloqueos en CDMX hoy 15 de abril; estas son las protestas y concentraciones previstas",
+          "fecha": "2026-04-15 16:15:49",
+          "url": "https://www.eluniversal.com.mx/metropoli/cdmx-marchas-y-bloqueos-hoy-15-de-abril-estas-son-las-protestas-y-concentraciones-previstas/",
           "categorias": ""
         },
         {
-          "titulo": "¿Alcalde al gabinete presidencial?",
-          "fecha": "2026-04-15 12:55:00",
-          "url": "https://ovaciones.com/alcalde-al-gabinete-presidencial/?utm_source=rss&utm_medium=rss&utm_campaign=alcalde-al-gabinete-presidencial",
-          "categorias": "administracion:0.8509,electoral_politico:0.7644"
-        },
-        {
-          "titulo": "Marchas y bloqueos en CDMX HOY 15 de abril: ¿Qué manifestaciones hay y qué calles están cerradas?",
-          "fecha": "2026-04-15 12:49:48",
-          "url": "https://www.razon.com.mx/ciudad/2026/04/15/marchas-y-bloqueos-en-cdmx-hoy-15-de-abril-que-manifestaciones-hay-y-que-calles-estan-cerradas/",
+          "titulo": "Clima en CDMX y Edomex: Se espera cielo nublado para el jueves 16 de abril",
+          "fecha": "2026-04-15 16:10:13",
+          "url": "https://www.elfinanciero.com.mx/cdmx/2026/04/15/clima-en-cdmx-y-edomex-se-espera-cielo-nublado-para-el-jueves-16-de-abril/",
           "categorias": ""
         },
         {
-          "titulo": "“No es moda, es estrategia”: Elena Alti revela en el Women Economic Forum 2026 cómo la equidad está cambiando los resultados en Banco Azteca",
-          "fecha": "2026-04-15 09:47:01",
-          "url": "https://www.eluniversal.com.mx/tendencias/no-es-moda-es-estrategia-elena-alti-revela-en-el-women-economic-forum-2026-como-la-equidad-esta-cambiando-los-resultados-en-banco-azteca/",
+          "titulo": "Así era ir a ver y escuchar a Pedro Infante, el ídolo que siguió llenando cines un año después de morir",
+          "fecha": "2026-04-15 15:27:46",
+          "url": "https://www.eluniversal.com.mx/espectaculos/asi-era-ir-a-ver-y-escuchar-a-pedro-infante-el-idolo-que-siguio-llenando-cines-un-ano-despues-de-morir/",
           "categorias": ""
         },
         {
-          "titulo": "Reconocen diputados el valor social y económico de los cuidados",
-          "fecha": "2026-04-15 09:35:57",
-          "url": "https://www.jornada.com.mx/2026/04/15/capital/032n2cap?partner=rss",
-          "categorias": "politica_social:0.7906,economia_hacienda:0.5406"
+          "titulo": "VIDEO: Tras picadura de araña, actriz de Gossip Girl pasa la noche en hospital de CDMX; muestra efectos del veneno",
+          "fecha": "2026-04-15 15:14:18",
+          "url": "https://www.eluniversal.com.mx/tendencias/tras-picadura-de-arana-actriz-de-gossip-girl-pasa-la-noche-en-hospital-de-cdmx-muestra-efectos-del-veneno/",
+          "categorias": "salud:0.5101"
         },
         {
-          "titulo": "Con casi 60 años de trayectoria, la herencia progresiva de Rush prevalece",
-          "fecha": "2026-04-15 09:35:57",
-          "url": "https://www.jornada.com.mx/2026/04/15/espectaculos/a07n1esp?partner=rss",
+          "titulo": "GAM destina 300 mdp para reencarpetado que revertirá años de rezago vial",
+          "fecha": "2026-04-15 14:58:00",
+          "url": "https://www.cronica.com.mx/metropoli/2026/04/15/gam-destina-300-mdp-para-reencarpetado-que-revertira-anos-de-rezago-vial/",
           "categorias": ""
         },
         {
-          "titulo": "Superó la CDMX la meta de vacunación contra el sarampión: Gasman",
-          "fecha": "2026-04-15 09:35:57",
-          "url": "https://www.jornada.com.mx/2026/04/15/capital/033n3cap?partner=rss",
-          "categorias": "salud:0.5128"
+          "titulo": "Metro CDMX HOY 15 de abril: Estas son las líneas con marcha lenta",
+          "fecha": "2026-04-15 14:07:39",
+          "url": "https://www.razon.com.mx/ciudad/2026/04/15/metro-cdmx-hoy-15-de-abril-estas-son-las-lineas-con-marcha-lenta/",
+          "categorias": "infraestructura:0.423"
         },
         {
-          "titulo": "Atrae Copred el caso de la árbitra Katia Itzel; condena la misoginia",
-          "fecha": "2026-04-15 09:35:57",
-          "url": "https://www.jornada.com.mx/2026/04/15/deportes/a12n2dep?partner=rss",
+          "titulo": "Concentraciones y rodadas ciclistas hoy 15 de abril: zonas, horarios y posibles afectaciones",
+          "fecha": "2026-04-15 14:07:08",
+          "url": "https://24-horas.mx/cdmx/concentraciones-y-rodadas-ciclistas-hoy-15-de-abril-zonas-horarios-y-posibles-afectaciones/",
           "categorias": ""
         }
       ]
@@ -88225,7 +88230,7 @@
     "estado_de_mexico": {
       "nombre": "Estado de Mexico",
       "abreviatura": "MEX",
-      "total_articulos": 83,
+      "total_articulos": 85,
       "categorias": [
         "administracion:0.5986",
         "agro_rural:0.7924",
@@ -88236,6 +88241,7 @@
         "electoral_politico:0.4886",
         "electoral_politico:0.5064",
         "electoral_politico:0.5132",
+        "electoral_politico:0.6088",
         "energia:0.6172",
         "igualdad_genero:0.4087",
         "infraestructura:0.4786",
@@ -88265,6 +88271,18 @@
         "turismo:0.9216"
       ],
       "articulos": [
+        {
+          "titulo": "Clima en CDMX y Edomex: Se espera cielo nublado para el jueves 16 de abril",
+          "fecha": "2026-04-15 16:10:13",
+          "url": "https://www.elfinanciero.com.mx/cdmx/2026/04/15/clima-en-cdmx-y-edomex-se-espera-cielo-nublado-para-el-jueves-16-de-abril/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Acusan a exalcaldesa de Técamac de ordenar sacrificio de miles de animales durante su gestión; senadora lo reconoce",
+          "fecha": "2026-04-15 16:02:01",
+          "url": "https://www.eluniversal.com.mx/metropoli/acusan-a-exalcaldesa-de-tecamac-de-ordenar-sacrificio-de-miles-de-animales-durante-su-gestion-senadora-lo-reconoce/",
+          "categorias": "electoral_politico:0.6088"
+        },
         {
           "titulo": "Hoy No Circula miércoles 15 de abril: restricciones vehiculares CDMX Y EDOMEX",
           "fecha": "2026-04-15 12:59:40",
@@ -88312,26 +88330,15 @@
           "fecha": "2026-04-15 08:00:00",
           "url": "https://www.eluniversal.com.mx/metropoli/se-retrasa-conclusion-de-tres-estaciones-en-el-trolebus-a-chalco/",
           "categorias": "infraestructura:0.6038"
-        },
-        {
-          "titulo": "Abandonan a un bebé en escuela y muere",
-          "fecha": "2026-04-15 08:00:00",
-          "url": "https://www.eluniversal.com.mx/metropoli/abandonan-a-un-bebe-en-escuela-y-muere/",
-          "categorias": "educacion:0.6081"
-        },
-        {
-          "titulo": "En 12 horas asesinan a tres hombres con arma de fuego",
-          "fecha": "2026-04-15 08:00:00",
-          "url": "https://www.eluniversal.com.mx/metropoli/en-12-horas-asesinan-a-tres-hombres-con-arma-de-fuego/",
-          "categorias": "seguridad_justicia:0.4396"
         }
       ]
     },
     "guanajuato": {
       "nombre": "Guanajuato",
       "abreviatura": "GUA",
-      "total_articulos": 9,
+      "total_articulos": 10,
       "categorias": [
+        "educacion:0.6",
         "igualdad_genero:0.5012",
         "igualdad_genero:0.7655",
         "igualdad_genero:0.9287",
@@ -88365,6 +88372,12 @@
           "fecha": "2026-04-15 00:09:05",
           "url": "https://www.elfinanciero.com.mx/estados/2026/04/14/encuentran-cinco-cuerpos-en-un-pozo-en-guanajuato-son-dos-mujeres-y-tres-hombres/",
           "categorias": "igualdad_genero:0.9356"
+        },
+        {
+          "titulo": "Pago doble en abril para beneficiarios de becas Benito Juárez: quiénes lo reciben en Guanajuato",
+          "fecha": "2026-04-15",
+          "url": "https://heraldodemexico.com.mx/nacional/2026/4/15/pago-doble-en-abril-para-beneficiarios-de-becas-benito-juarez-quienes-lo-reciben-en-guanajuato-796489.html",
+          "categorias": "educacion:0.6"
         },
         {
           "titulo": "Durante el primer bimestre del 2026 en Guanajuato se registró una reducción significativa en la violencia letal",
@@ -88401,7 +88414,7 @@
     "guerrero": {
       "nombre": "Guerrero",
       "abreviatura": "GRO",
-      "total_articulos": 79,
+      "total_articulos": 80,
       "categorias": [
         "administracion:0.4059",
         "administracion:0.5986",
@@ -88443,6 +88456,12 @@
         "turismo:0.5453"
       ],
       "articulos": [
+        {
+          "titulo": "Taxco: alcalde Juan Andrés Vega reaparece tras secuestro y promete trabajar por la paz del municipio",
+          "fecha": "2026-04-15 15:46:51",
+          "url": "https://www.eluniversal.com.mx/estados/taxco-alcalde-juan-andres-vega-reaparece-tras-secuestro-y-promete-trabajar-por-la-paz-del-municipio/",
+          "categorias": ""
+        },
         {
           "titulo": "La familia michoacana plagió al alcalde de Taxco y su padre",
           "fecha": "2026-04-15 09:35:57",
@@ -88495,12 +88514,6 @@
           "titulo": "Taxco permanece en la zozobra pese a la liberaciĂłn del alcalde y su padre",
           "fecha": "2026-04-15",
           "url": "https://www.proceso.com.mx/nacional/estados/2026/4/14/taxco-permanece-en-la-zozobra-pese-la-liberacion-del-alcalde-su-padre-372237.html",
-          "categorias": ""
-        },
-        {
-          "titulo": "Reaparece alcalde de Taxco tras su secuestro",
-          "fecha": "2026-04-15",
-          "url": "https://www.excelsior.com.mx/nacional/reaparece-alcalde-taxco-tras-secuestro",
           "categorias": ""
         }
       ]
@@ -88600,7 +88613,7 @@
     "jalisco": {
       "nombre": "Jalisco",
       "abreviatura": "JAL",
-      "total_articulos": 43,
+      "total_articulos": 48,
       "categorias": [
         "anticorrupcion:0.5551",
         "anticorrupcion:0.5744",
@@ -88610,6 +88623,7 @@
         "infraestructura:0.4989",
         "infraestructura:0.7217",
         "infraestructura:0.8248",
+        "infraestructura:1.3257",
         "inteligencia_artificial:0.4429",
         "medios_comunicacion:0.5426",
         "politica_social:0.6337",
@@ -88626,6 +88640,30 @@
         "turismo:0.9427"
       ],
       "articulos": [
+        {
+          "titulo": "Chivas despide a Alan Pulido: esta es la razón por la que el delantero se va del Guadalajara",
+          "fecha": "2026-04-15 16:49:29",
+          "url": "https://www.cronica.com.mx/deportes/2026/04/15/chivas-despide-a-alan-pulido-esta-es-la-razon-por-la-que-el-delantero-se-va-del-guadalajara/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Chema Martínez rechaza concesión de espacio público a otra empresa en Colonia del Fresno",
+          "fecha": "2026-04-15 16:45:41",
+          "url": "https://www.cronica.com.mx/jalisco/2026/04/15/chema-martinez-rechaza-concesion-de-espacio-publico-a-otra-empresa-en-colonia-del-fresno/",
+          "categorias": "infraestructura:1.3257"
+        },
+        {
+          "titulo": "Clima en Guadalajara: Cielo nublado y temperaturas de hasta 34°C",
+          "fecha": "2026-04-15 16:34:54",
+          "url": "https://www.elfinanciero.com.mx/estados/2026/04/15/clima-en-guadalajara-cielo-nublado-y-temperaturas-de-hasta-34c/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Jalisco brilla a nivel internacional con Volvo Fashion Week 2026",
+          "fecha": "2026-04-15 16:19:37",
+          "url": "https://www.cronica.com.mx/jalisco/cronomicon/2026/04/15/jalisco-brilla-a-nivel-internacional-con-volvo-fashion-week-2026/",
+          "categorias": ""
+        },
         {
           "titulo": "Guadalajara recibirá a miles de visitantes por el Mundial con agua contaminada",
           "fecha": "2026-04-15 09:35:57",
@@ -88661,37 +88699,13 @@
           "fecha": "2026-04-15 00:12:03",
           "url": "https://www.cronica.com.mx/jalisco/guadalajara/2026/04/14/tlaquepaque-registra-alta-afluencia-turistica-en-semana-santa-y-pascua/",
           "categorias": ""
-        },
-        {
-          "titulo": "Jalisco registra reducción del 50% en homicidios dolosos",
-          "fecha": "2026-04-15",
-          "url": "https://www.lapoliticaonline.com/mexico/en-foco-mx/jalisco-reduccion-de-un-50-en-homicidios-dolosos-8759/",
-          "categorias": "seguridad_justicia:0.5"
-        },
-        {
-          "titulo": "Filtran ÚLTIMOS mensajes de Arturo Castillo, joven que desapareció al salir rumbo a su trabajo en Jalisco",
-          "fecha": "2026-04-15",
-          "url": "https://heraldodemexico.com.mx/nacional/2026/4/14/filtran-ultimos-mensajes-de-arturo-castillo-joven-que-desaparecio-al-salir-rumbo-su-trabajo-en-jalisco-796131.html",
-          "categorias": ""
-        },
-        {
-          "titulo": "Gobernador de Nayarit denuncia amenazas de muerte tras recuperación de terrenos; mantendrá procesos legales en curso",
-          "fecha": "2026-04-14 23:33:58",
-          "url": "https://www.eluniversal.com.mx/estados/gobernador-de-nayarit-denuncia-amenazas-de-muerte-tras-recuperacion-de-terrenos-mantendra-procesos-legales-en-curso/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Piden apoyo para pequeña de 5 años baleada  por motociclistas en el oriente de Guadalajara",
-          "fecha": "2026-04-14 20:31:50",
-          "url": "https://www.cronica.com.mx/jalisco/guadalajara/2026/04/14/piden-apoyo-para-pequena-de-5-anos-baleada-por-motociclistas-en-el-oriente-de-guadalajara/",
-          "categorias": ""
         }
       ]
     },
     "michoacan": {
       "nombre": "Michoacan",
       "abreviatura": "MIC",
-      "total_articulos": 25,
+      "total_articulos": 26,
       "categorias": [
         "derechos_humanos:0.5121",
         "derechos_humanos:0.5463",
@@ -88720,6 +88734,12 @@
         "seguridad_justicia:1.576"
       ],
       "articulos": [
+        {
+          "titulo": "Hallan a cuatro adolescentes desaparecidas en Zamora, Michoacán",
+          "fecha": "2026-04-15 16:56:35",
+          "url": "https://www.razon.com.mx/estados/2026/04/15/hallan-a-cuatro-adolescentes-desaparecidas-en-zamora-michoacan/",
+          "categorias": ""
+        },
         {
           "titulo": "IMSS amplía cobertura en Michoacán con 407 nuevos especialistas",
           "fecha": "2026-04-15",
@@ -88773,19 +88793,13 @@
           "fecha": "2026-04-14 08:41:32",
           "url": "https://www.jornada.com.mx/2026/04/14/estados/025n2est?partner=rss",
           "categorias": "medio_ambiente:0.8254,derechos_humanos:0.5463"
-        },
-        {
-          "titulo": "Sicarios del CJNG atacan a personal de la Fiscalía de Michoacán; muere perito y policía resulta lesionado",
-          "fecha": "2026-04-14 05:56:33",
-          "url": "https://www.eluniversal.com.mx/estados/sicarios-del-cjng-atacan-a-personal-de-la-fiscalia-de-michoacan-muere-perito-y-policia-resulta-lesionado/",
-          "categorias": "seguridad_justicia:1.576"
         }
       ]
     },
     "morelos": {
       "nombre": "Morelos",
       "abreviatura": "MOR",
-      "total_articulos": 22,
+      "total_articulos": 23,
       "categorias": [
         "anticorrupcion:0.4939",
         "economia_hacienda:0.419",
@@ -88827,6 +88841,12 @@
           "categorias": "anticorrupcion:0.4939,economia_hacienda:0.419"
         },
         {
+          "titulo": "Caen 5 custodios en Morelos; introducían celulares, droga y hasta cuchillos tácticos",
+          "fecha": "2026-04-15",
+          "url": "https://www.excelsior.com.mx/nacional/caen-custodios-morelos-introducian-celulares-droga-y-hasta-cuchillos-tacticos",
+          "categorias": ""
+        },
+        {
           "titulo": "Vinculan a proceso a 10 por extorsión en Edomex; se les decomisaron armas, vehículos y 46 mil pesos en efectivo",
           "fecha": "2026-04-14 23:19:23",
           "url": "https://www.eluniversal.com.mx/nacion/vinculan-a-proceso-a-10-por-extorsion-y-portacion-de-armas-en-edomex-se-les-decomisaron-armas-y-46-mil-pesos-en-efectivo/",
@@ -88854,12 +88874,6 @@
           "titulo": "Angélica Rivera reina en Las Estrellas",
           "fecha": "2026-04-14 07:00:00",
           "url": "https://www.eluniversal.com.mx/espectaculos/angelica-rivera-reina-en-las-estrellas/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Recibe Reyes Fuchs nuevo premio para Morelos en FITUR de Madrid",
-          "fecha": "2026-04-14 03:36:46",
-          "url": "https://www.elfinanciero.com.mx/nacional/gasta-reyes-fuchs-en-vino-cerveza-y-ropa-durante-viaje-a-espana/",
           "categorias": ""
         }
       ]
@@ -88934,8 +88948,9 @@
     "nuevo_leon": {
       "nombre": "Nuevo Leon",
       "abreviatura": "NLE",
-      "total_articulos": 22,
+      "total_articulos": 23,
       "categorias": [
+        "educacion:1.432",
         "electoral_politico:0.5367",
         "electoral_politico:0.7382",
         "electoral_politico:0.7458",
@@ -88950,6 +88965,12 @@
         "trabajo:0.7372"
       ],
       "articulos": [
+        {
+          "titulo": "Sheinbaum presenta comité de científicos para analizar viabilidad de explotar gas no convencional; participan UNAM, IPN y UAM",
+          "fecha": "2026-04-15 14:08:48",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-presenta-comite-de-cientificos-para-analizar-viabilidad-de-explotar-gas-no-convencional-participan-unam-ipn-y-uam/",
+          "categorias": "educacion:1.432"
+        },
         {
           "titulo": "Un muerto y afectaciones viales dejan las lluvias en Toluca",
           "fecha": "2026-04-15 08:00:00",
@@ -89003,19 +89024,13 @@
           "fecha": "2026-04-14 13:30:14",
           "url": "https://24-horas.mx/mexico/clima-hoy-14-de-abril-frente-frio-44-provocara-lluvias-granizo-y-posibles-torbellinos-al-norte-de-mexico/",
           "categorias": ""
-        },
-        {
-          "titulo": "Aspirantes a consejeros del INE inician fase de entrevista",
-          "fecha": "2026-04-14 08:41:32",
-          "url": "https://www.jornada.com.mx/2026/04/14/politica/005n1pol?partner=rss",
-          "categorias": "electoral_politico:0.9741"
         }
       ]
     },
     "oaxaca": {
       "nombre": "Oaxaca",
       "abreviatura": "OAX",
-      "total_articulos": 23,
+      "total_articulos": 25,
       "categorias": [
         "derechos_humanos:1.4252",
         "educacion:0.713",
@@ -89032,6 +89047,7 @@
         "salud:0.9385",
         "seguridad_justicia:0.4419",
         "seguridad_justicia:0.4508",
+        "seguridad_justicia:0.4607",
         "seguridad_justicia:0.5479",
         "seguridad_justicia:0.6406",
         "seguridad_justicia:0.7836",
@@ -89040,6 +89056,12 @@
         "turismo:0.8155"
       ],
       "articulos": [
+        {
+          "titulo": "Exalcalde de Itunyoso acusa cateo ilegal en el caso de Roxana López; se continúa con la investigación, señala Fiscalía de Oaxaca",
+          "fecha": "2026-04-15 16:55:44",
+          "url": "https://www.eluniversal.com.mx/estados/exalcalde-de-itunyoso-acusa-cateo-ilegal-en-caso-roxana-lopez-se-continua-con-la-investigacion-senala-fiscalia-de-oaxaca/",
+          "categorias": "seguridad_justicia:0.4607"
+        },
         {
           "titulo": "Muere adulto mayor en Oaxaca con miasis por gusano barrenador; infección se originó en las muelas",
           "fecha": "2026-04-15 04:01:20",
@@ -89077,6 +89099,12 @@
           "categorias": "infraestructura:1.0659,educacion:0.8"
         },
         {
+          "titulo": "Al menos 7 grupos de la delincuencia operan el robo a transportistas en límites de Oaxaca y Puebla",
+          "fecha": "2026-04-15",
+          "url": "https://oaxaca.eluniversal.com.mx/sociedad/al-menos-7-grupos-de-la-delincuencia-organizada-operan-el-robo-a-transportistas-en-los-limites-entre-oaxaca-y-puebla/",
+          "categorias": ""
+        },
+        {
           "titulo": "Trabajadores de vectores del sector Salud suspenden labores en Oaxaca; exigen pago de viáticos pendientes",
           "fecha": "2026-04-14 20:48:07",
           "url": "https://www.eluniversal.com.mx/estados/trabajadores-de-vectores-del-sector-salud-suspenden-labores-en-oaxaca-exigen-pago-de-viaticos-pendientes/",
@@ -89087,25 +89115,13 @@
           "fecha": "2026-04-14 19:31:56",
           "url": "https://www.eluniversal.com.mx/estados/robo-a-transportistas-entre-la-mixteca-oaxaca-y-puebla-71-de-ataques-se-concentra-en-dos-municipios/",
           "categorias": ""
-        },
-        {
-          "titulo": "San Lázaro declara constitucionalidad del Plan B electoral; reforma fue avalada por 19 congresos locales",
-          "fecha": "2026-04-14 18:42:05",
-          "url": "https://www.eluniversal.com.mx/nacion/san-lazaro-declara-constitucionalidad-del-plan-b-electoral-reforma-fue-avalada-por-19-congresos-locales/",
-          "categorias": "electoral_politico:1.1881,seguridad_justicia:0.6406"
-        },
-        {
-          "titulo": "Profepa y Conanp realizan operativo conjunto en 41 áreas naturales protegidas; reportan 17 clausuras y 2 vehículos asegurados",
-          "fecha": "2026-04-14 17:03:30",
-          "url": "https://www.eluniversal.com.mx/nacion/profepa-y-conanp-realizan-operativo-conjunto-en-41-areas-naturales-protegidas-reportan-17-clausuras-y-2-vehiculos-asegurados/",
-          "categorias": "medio_ambiente:1.6368,seguridad_justicia:0.4419"
         }
       ]
     },
     "puebla": {
       "nombre": "Puebla",
       "abreviatura": "PUE",
-      "total_articulos": 36,
+      "total_articulos": 37,
       "categorias": [
         "educacion:0.8608",
         "electoral_politico:1.1881",
@@ -89274,7 +89290,7 @@
     "quintana_roo": {
       "nombre": "Quintana Roo",
       "abreviatura": "ROO",
-      "total_articulos": 10,
+      "total_articulos": 11,
       "categorias": [
         "administracion:0.4714",
         "electoral_politico:0.6986",
@@ -89286,6 +89302,12 @@
         "turismo:1.8534"
       ],
       "articulos": [
+        {
+          "titulo": "Clima Península de Yucatán: Calor intenso en Cancún, Tulum y Mérida para este jueves 16 de abril",
+          "fecha": "2026-04-15 17:05:22",
+          "url": "https://www.elfinanciero.com.mx/estados/2026/04/15/clima-peninsula-de-yucatan-calor-intenso-en-cancun-tulum-y-merida-para-este-jueves-16-de-abril/",
+          "categorias": ""
+        },
         {
           "titulo": "Consejo Hotelero y Senado analizan retos en turismo para Quintana Roo",
           "fecha": "2026-04-15 04:28:51",
@@ -89339,19 +89361,13 @@
           "fecha": "2026-04-13 17:18:16",
           "url": "https://www.eluniversal.com.mx/nacion/magnicharters-decidio-dejar-de-volar-de-un-dia-para-otro-acusa-sheinbaum-profeco-pide-que-empresa-responda/",
           "categorias": "infraestructura:0.5422"
-        },
-        {
-          "titulo": "Gobierno de Quintana Roo gestiona vuelos para afectados por cancelaciones de aerolínea Magnicharters; serán reubicados",
-          "fecha": "2026-04-13 04:06:12",
-          "url": "https://www.eluniversal.com.mx/estados/gobierno-de-quintana-roo-gestiona-vuelos-para-afectados-por-cancelaciones-de-aerolinea-magnicharters-seran-reubicados/",
-          "categorias": "relaciones_exteriores:0.4649"
         }
       ]
     },
     "san_luis_potosi": {
       "nombre": "San Luis Potosi",
       "abreviatura": "SLP",
-      "total_articulos": 27,
+      "total_articulos": 28,
       "categorias": [
         "administracion:0.4714",
         "administracion:0.5238",
@@ -89373,6 +89389,12 @@
         "seguridad_justicia:0.6406"
       ],
       "articulos": [
+        {
+          "titulo": "Partido Verde ‘rompe’ con Morena: También irá solo en CDMX rumbo a 2027 porque ‘no hay relación’",
+          "fecha": "2026-04-15 16:41:40",
+          "url": "https://www.elfinanciero.com.mx/cdmx/2026/04/15/partido-verde-rompe-con-morena-pvem-ira-solo-en-cdmx-rumbo-a-2027-porque-no-hay-relacion/",
+          "categorias": ""
+        },
         {
           "titulo": "¿Qué es Norteamérica?, un podcast de Ana Paula Ordorica",
           "fecha": "2026-04-15 09:44:32",
@@ -89426,20 +89448,15 @@
           "fecha": "2026-04-15",
           "url": "https://elpais.com/mexico/2026-04-14/el-partido-verde-lanza-un-desafio-a-morena-desde-san-luis-potosi-estamos-listos-para-ganar.html",
           "categorias": ""
-        },
-        {
-          "titulo": "No me voy de Morena, salvo que lo pida la presidenta Sheinbaum: Luisa Alcalde; agradece respaldo",
-          "fecha": "2026-04-14 23:49:42",
-          "url": "https://www.eluniversal.com.mx/nacion/no-me-voy-salvo-que-lo-pida-la-presidenta-sheinbaum-luisa-alcalde-agradece-respaldo/",
-          "categorias": "electoral_politico:0.484"
         }
       ]
     },
     "sinaloa": {
       "nombre": "Sinaloa",
       "abreviatura": "SIN",
-      "total_articulos": 27,
+      "total_articulos": 30,
       "categorias": [
+        "administracion:0.4707",
         "agro_rural:0.5901",
         "agro_rural:1.5344",
         "electoral_politico:0.5219",
@@ -89451,6 +89468,7 @@
         "medio_ambiente:0.4553",
         "relaciones_exteriores:0.4649",
         "relaciones_exteriores:0.6963",
+        "seguridad_justicia:0.4788",
         "seguridad_justicia:0.5437",
         "seguridad_justicia:0.5903",
         "seguridad_justicia:0.6111",
@@ -89459,6 +89477,24 @@
         "seguridad_justicia:0.9565"
       ],
       "articulos": [
+        {
+          "titulo": "¿Habrá apagones en CDMX y otros estados? Gobierno aclara rumores y desmiente información falsa",
+          "fecha": "2026-04-15 16:36:18",
+          "url": "https://ovaciones.com/habra-apagones-en-cdmx-y-otros-estados-gobierno-aclara-rumores-y-desmiente-informacion-falsa/?utm_source=rss&utm_medium=rss&utm_campaign=habra-apagones-en-cdmx-y-otros-estados-gobierno-aclara-rumores-y-desmiente-informacion-falsa",
+          "categorias": "administracion:0.4707"
+        },
+        {
+          "titulo": "Así era ir a ver y escuchar a Pedro Infante, el ídolo que siguió llenando cines un año después de morir",
+          "fecha": "2026-04-15 15:27:46",
+          "url": "https://www.eluniversal.com.mx/espectaculos/asi-era-ir-a-ver-y-escuchar-a-pedro-infante-el-idolo-que-siguio-llenando-cines-un-ano-despues-de-morir/",
+          "categorias": ""
+        },
+        {
+          "titulo": "En tres operativos, caen siete civiles con equipo táctico y vehículos robados en Sinaloa; 4 menores de edad, entre los detenidos",
+          "fecha": "2026-04-15 14:36:39",
+          "url": "https://www.eluniversal.com.mx/estados/en-tres-operativos-caen-siete-civiles-con-equipo-tactico-y-vehiculos-robados-en-sinaloa-4-menores-de-edad-entre-los-detenidos/",
+          "categorias": "seguridad_justicia:0.4788"
+        },
         {
           "titulo": "Vigente en EU, recompensa de 10 mdd por Iván Archivaldo Guzmán, hijo de El Chapo",
           "fecha": "2026-04-15 09:35:57",
@@ -89500,24 +89536,6 @@
           "fecha": "2026-04-14 23:58:32",
           "url": "https://www.tallapolitica.com.mx/zamora-gastelum-exige-frenar-el-aumento-arbitrario-a-las-casetas-en-sinaloa/",
           "categorias": ""
-        },
-        {
-          "titulo": "Detienen a presunto feminicida de adulta mayor en Navolato, Sinaloa; le dan prisión preventiva",
-          "fecha": "2026-04-14 20:34:13",
-          "url": "https://www.eluniversal.com.mx/estados/detienen-a-presunto-feminicida-de-adulta-mayor-en-navolato-sinaloa-le-dan-prision-preventiva/",
-          "categorias": "seguridad_justicia:0.7844"
-        },
-        {
-          "titulo": "EU mantiene recompensa de 10 mdd por Iván Archivaldo, líder de ‘Los Chapitos’",
-          "fecha": "2026-04-14 19:53:23",
-          "url": "https://www.cronica.com.mx/mundo/2026/04/14/eu-mantiene-recompensa-de-10-mdd-por-ivan-archivaldo-lider-de-los-chapitos/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Gabinete de Seguridad del Gobierno de México informa acciones relevantes del 13 de abril de 2026",
-          "fecha": "2026-04-14 18:04:53",
-          "url": "https://www.tallapolitica.com.mx/gabinete-de-seguridad-del-gobierno-de-mexico-informa-acciones-relevantes-del-13-de-abril-de-2026/",
-          "categorias": "seguridad_justicia:0.5437"
         }
       ]
     },
@@ -89868,8 +89886,9 @@
     "veracruz": {
       "nombre": "Veracruz",
       "abreviatura": "VER",
-      "total_articulos": 34,
+      "total_articulos": 35,
       "categorias": [
+        "administracion:0.4707",
         "anticorrupcion:0.5922",
         "anticorrupcion:0.6708",
         "educacion:0.6645",
@@ -89906,6 +89925,12 @@
         "trabajo:1.6175"
       ],
       "articulos": [
+        {
+          "titulo": "¿Habrá apagones en CDMX y otros estados? Gobierno aclara rumores y desmiente información falsa",
+          "fecha": "2026-04-15 16:36:18",
+          "url": "https://ovaciones.com/habra-apagones-en-cdmx-y-otros-estados-gobierno-aclara-rumores-y-desmiente-informacion-falsa/?utm_source=rss&utm_medium=rss&utm_campaign=habra-apagones-en-cdmx-y-otros-estados-gobierno-aclara-rumores-y-desmiente-informacion-falsa",
+          "categorias": "administracion:0.4707"
+        },
         {
           "titulo": "Seis tortugas han muerto por petróleo en su organismo",
           "fecha": "2026-04-15 09:35:57",
@@ -89959,19 +89984,13 @@
           "fecha": "2026-04-15",
           "url": "https://www.excelsior.com.mx/nacional/detienen-integrantes-gente-nueva-armas-explosivos-autos-veracruz",
           "categorias": ""
-        },
-        {
-          "titulo": "Cafetaleros de Veracruz alertan crisis por roya y entrada de café robusta barato",
-          "fecha": "2026-04-15",
-          "url": "https://www.excelsior.com.mx/nacional/caficultura-sombra-mexico-crisis",
-          "categorias": ""
         }
       ]
     },
     "yucatan": {
       "nombre": "Yucatan",
       "abreviatura": "YUC",
-      "total_articulos": 7,
+      "total_articulos": 9,
       "categorias": [
         "anticorrupcion:0.6708",
         "electoral_politico:1.1881",
@@ -89983,6 +90002,18 @@
         "trabajo:0.5594"
       ],
       "articulos": [
+        {
+          "titulo": "Clima Península de Yucatán: Calor intenso en Cancún, Tulum y Mérida para este jueves 16 de abril",
+          "fecha": "2026-04-15 17:05:22",
+          "url": "https://www.elfinanciero.com.mx/estados/2026/04/15/clima-peninsula-de-yucatan-calor-intenso-en-cancun-tulum-y-merida-para-este-jueves-16-de-abril/",
+          "categorias": ""
+        },
+        {
+          "titulo": "4 mil millones de personas sufren escasez de agua por malas políticas y débil regulación: Banco Mundial; líquido, clave para la economía",
+          "fecha": "2026-04-15 16:02:34",
+          "url": "https://www.eluniversal.com.mx/cartera/4-mil-millones-de-personas-sufren-escasez-de-agua-por-malas-politicas-y-debil-regulacion-banco-mundial-liquido-clave-para-la-economia/",
+          "categorias": ""
+        },
         {
           "titulo": "Gala Porras-Kim, en kurimanzutto",
           "fecha": "2026-04-15 08:15:00",
