@@ -109,10 +109,40 @@ def paso_snapshot_legisladores(db_ro: sqlite3.Connection) -> dict:
                COALESCE(estado, '')   AS estado,
                COALESCE(distrito, '') AS distrito,
                COALESCE(foto_url, '') AS foto_url,
-               COALESCE(legislatura, 'LXVI') AS legislatura
+               COALESCE(legislatura, 'LXVI') AS legislatura,
+               COALESCE(comisiones_cargo, '') AS comisiones_cargo
         FROM legisladores
         """
     ).fetchall()
+
+    # Limpieza de comisiones_cargo: el scraper de Diputados todavía mete
+    # entries espurias ("A LAS QUE PERTENECE", centros, institutos, etc.).
+    # Senado ya está limpio (backfill_comisiones_senado.py). Este filtro
+    # actúa como safety net para ambas cámaras.
+    def _limpia_comisiones(raw: str) -> str:
+        if not raw:
+            return ''
+        partes = raw.split('|')
+        ruido = (
+            'centro de', 'instituto', 'contralor', 'unidad t',
+            'informaci', 'consultor', 'asistencias', 'calendario',
+            'memoria de labores', 'histórico de la lxiv', 'historico de la lxiv',
+            'órganos t', 'organos t', 'capacitaci', 'ordinarias:',
+            'especiales:', 'a las que pertenece',
+        )
+        buenas = []
+        for p in partes:
+            p_low = p.lower().strip()
+            if not p_low or any(ruido_k in p_low for ruido_k in ruido):
+                continue
+            buenas.append(p.strip())
+        resultado = '|'.join(buenas)
+        return resultado[:800]
+
+    rows = [
+        {**dict(r), 'comisiones_cargo': _limpia_comisiones(r['comisiones_cargo'])}
+        for r in rows
+    ]
 
     logger.info(f"Snapshot de {len(rows)} legisladores → D1")
 
@@ -123,7 +153,7 @@ def paso_snapshot_legisladores(db_ro: sqlite3.Connection) -> dict:
         sqls.append(
             "INSERT OR REPLACE INTO legisladores "
             "(id, nombre, nombre_normalizado, camara, partido, estado, "
-            "distrito, foto_url, legislatura) VALUES ("
+            "distrito, foto_url, legislatura, comisiones_cargo) VALUES ("
             f"{r['id']}, "
             f"{_sql_escape(r['nombre'])}, "
             f"{_sql_escape(r['nombre_normalizado'])}, "
@@ -132,13 +162,17 @@ def paso_snapshot_legisladores(db_ro: sqlite3.Connection) -> dict:
             f"{_sql_escape(r['estado'])}, "
             f"{_sql_escape(r['distrito'])}, "
             f"{_sql_escape(r['foto_url'])}, "
-            f"{_sql_escape(r['legislatura'])}"
+            f"{_sql_escape(r['legislatura'])}, "
+            f"{_sql_escape(r['comisiones_cargo'])}"
             ");"
         )
 
-    # D1 aguanta SQL files grandes; 700 INSERTs son triviales
-    ejecutar_sql_d1("\n".join(sqls))
-    logger.info(f"Snapshot empujado: {len(rows)} filas")
+    # Batching: con comisiones_cargo incluido (puede ser 1-2KB por fila),
+    # D1 rechaza payloads grandes con SQLITE_TOOBIG. Chunk pequeño.
+    BATCH = 25
+    for i in range(0, len(sqls), BATCH):
+        ejecutar_sql_d1("\n".join(sqls[i:i + BATCH]))
+    logger.info(f"Snapshot empujado: {len(rows)} filas (en {(len(sqls) + BATCH - 1) // BATCH} batches)")
     return {"snapshot_size": len(rows)}
 
 
@@ -592,26 +626,50 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
     """
     logger.info("Cálculo de hit rate por legislador (recalibrado)…")
 
-    # 1) Categoría dominante por legislador (≥3 actos desde inicio LXVI)
+    # 1) Categoría dominante por legislador.
+    #    Mínimo 3 actos en la categoría, ponderado por tipo de instrumento:
+    #    iniciativa = 2x, resto = 1x. Las iniciativas reflejan el área de
+    #    trabajo sustantivo mejor que las proposiciones, que suelen ser
+    #    exhortos genéricos (ej. Chedraui: 5 iniciativas de medio ambiente
+    #    vs 8 proposiciones mal clasificadas como electoral_politico).
+    #    Tie-break determinístico: score ponderado → count real → nombre asc.
     cats_por_leg: dict[int, str] = {}
+    raw_counts: dict[int, dict[str, dict[str, float]]] = {}
     for row in db_ro.execute(
         """
-        SELECT legislador_id, categoria, COUNT(*) as n
+        SELECT legislador_id, categoria, tipo_instrumento, COUNT(*) as n
         FROM actividad_legislador
         WHERE legislador_id IS NOT NULL
           AND categoria IS NOT NULL AND categoria <> ''
           AND fecha_presentacion >= ?
-        GROUP BY legislador_id, categoria
-        HAVING n >= 3
-        ORDER BY legislador_id, n DESC
+        GROUP BY legislador_id, categoria, tipo_instrumento
         """,
         (FECHA_INICIO_LXVI,),
     ):
         leg_id = row["legislador_id"]
-        if leg_id not in cats_por_leg:
-            cats_por_leg[leg_id] = row["categoria"]
+        cat = row["categoria"]
+        tipo_norm = (row["tipo_instrumento"] or "").lower()
+        peso = 2.0 if "iniciativa" in tipo_norm else 1.0
+        n = int(row["n"] or 0)
+        leg_bucket = raw_counts.setdefault(leg_id, {})
+        cat_bucket = leg_bucket.setdefault(cat, {"count": 0.0, "score": 0.0})
+        cat_bucket["count"] += n
+        cat_bucket["score"] += n * peso
 
-    logger.info(f"  Legisladores con categoría dominante (≥3 actos): {len(cats_por_leg)}")
+    for leg_id, cats in raw_counts.items():
+        candidates = {c: v for c, v in cats.items() if v["count"] >= 3}
+        if not candidates:
+            continue
+        best_cat = sorted(
+            candidates.items(),
+            key=lambda kv: (-kv[1]["score"], -kv[1]["count"], kv[0]),
+        )[0][0]
+        cats_por_leg[leg_id] = best_cat
+
+    logger.info(
+        f"  Legisladores con categoría dominante (≥3 actos, iniciativa 2x): "
+        f"{len(cats_por_leg)}"
+    )
 
     # 2) Picos por categoría desde `scores` (fuente de verdad, sin sesgo).
     #    Ventana amplia para tener historia suficiente, luego cada legislador
@@ -883,9 +941,14 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
     """
     logger.info("Cálculo de proyecciones forward 15d…")
 
-    # Tipos canónicos en actividad_legislador.tipo_instrumento
-    TIPOS_INICIATIVA = ("iniciativa", "Iniciativa")
-    TIPOS_PROPOSICION = ("proposicion", "Proposicion", "proposición", "Proposición")
+    # Patrones LIKE (case-insensitive) para tipo_instrumento.
+    # Usamos LIKE en vez de IN porque el SIL devuelve strings completos
+    # como "Proposición con punto de acuerdo", no solo "proposicion".
+    # Chedraui tiene 16 proposiciones en SIL que el tuple anterior
+    # ("proposicion", "Proposicion", "proposición", "Proposición") nunca
+    # matcheaba. Con LIKE '%proposici%' sí.
+    TIPOS_INICIATIVA = ("%iniciativ%",)
+    TIPOS_PROPOSICION = ("%proposici%",)
 
     # Días transcurridos desde inicio LXVI (baseline real de la legislatura)
     fila = db_ro.execute(
@@ -897,12 +960,12 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
 
     def _tasa_lxvi(leg_id: int, tipos: tuple) -> float:
         """Actividad del tipo desde inicio LXVI / días_lxvi."""
-        placeholders = ",".join(["?"] * len(tipos))
+        like_clause = " OR ".join(["LOWER(tipo_instrumento) LIKE ?"] * len(tipos))
         row = db_ro.execute(
             f"""
             SELECT COUNT(*) as n FROM actividad_legislador
             WHERE legislador_id = ?
-              AND tipo_instrumento IN ({placeholders})
+              AND ({like_clause})
               AND fecha_presentacion >= ?
             """,
             (leg_id, *tipos, FECHA_INICIO_LXVI),
@@ -910,12 +973,12 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
         return (row["n"] or 0) / DIAS_LXVI
 
     def _tasa_reciente(leg_id: int, tipos: tuple, dias: int) -> float:
-        placeholders = ",".join(["?"] * len(tipos))
+        like_clause = " OR ".join(["LOWER(tipo_instrumento) LIKE ?"] * len(tipos))
         row = db_ro.execute(
             f"""
             SELECT COUNT(*) as n FROM actividad_legislador
             WHERE legislador_id = ?
-              AND tipo_instrumento IN ({placeholders})
+              AND ({like_clause})
               AND fecha_presentacion >= date('now', '-{dias} days')
             """,
             (leg_id, *tipos),

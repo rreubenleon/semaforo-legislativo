@@ -288,7 +288,7 @@ def _scrape_detalle_diputado(sitl_id):
             cargo_match = re.search(r'\(([^)]+)\)', line)
             comision_nombre = re.sub(r'\s*\([^)]*\)\s*', '', line).strip()
 
-            if comision_nombre and comision_nombre not in ("ORDINARIA", "ESPECIAL"):
+            if comision_nombre and comision_nombre not in ("ORDINARIA", "ESPECIAL", "A LAS QUE PERTENECE"):
                 cargo = cargo_match.group(1) if cargo_match else "Integrante"
                 detalle["comisiones"].append(comision_nombre)
                 detalle["comisiones_cargo"].append(f"{comision_nombre}:{cargo}")

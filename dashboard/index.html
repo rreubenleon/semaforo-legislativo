@@ -44,23 +44,46 @@
         @keyframes pulse-amarillo { 0%,100% { box-shadow: 0 1px 3px rgba(0,0,0,0.06); } 50% { box-shadow: 0 0 0 3px rgba(198,151,43,0.15); } }
         .pulse-verde { animation: pulse-verde 2.5s infinite; }
         .pulse-amarillo { animation: pulse-amarillo 2.5s infinite; }
-        /* Mapa: anillos concéntricos estilo arethingsok / intel */
-        @keyframes radar-fade {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 0.25; }
+        /* Mapa: radar CIA-style — anillos que se expanden desde el centro + sweep rotatorio */
+        @keyframes radar-ping {
+            0%   { transform: translate(-50%, -50%) scale(0.35); opacity: 0.95; border-width: 2px; }
+            70%  { opacity: 0.20; }
+            100% { transform: translate(-50%, -50%) scale(1.00); opacity: 0; border-width: 1px; }
+        }
+        @keyframes radar-sweep {
+            0%   { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
         }
         .map-ring {
             position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            border-radius: 50%; border-style: solid;
+            transform: translate(-50%, -50%) scale(0.35);
+            border-radius: 50%; border-style: solid; border-width: 2px;
             pointer-events: none;
-            animation: radar-fade 3s ease-in-out infinite;
+            will-change: transform, opacity;
+            animation: radar-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        .map-sweep {
+            position: absolute; top: 50%; left: 50%;
+            border-radius: 50%;
+            pointer-events: none;
+            /* Conic gradient: fan-shaped wedge that rotates like a real radar sweep. */
+            background: conic-gradient(from 0deg, transparent 0deg, transparent 300deg, currentColor 360deg);
+            opacity: 0.35;
+            mask: radial-gradient(circle, black 0%, black 70%, transparent 100%);
+            -webkit-mask: radial-gradient(circle, black 0%, black 70%, transparent 100%);
+            will-change: transform;
+            animation: radar-sweep 2.5s linear infinite;
         }
         .map-dot-core {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             border-radius: 50%;
-            box-shadow: 0 0 8px 2px currentColor;
+            box-shadow: 0 0 10px 3px currentColor, 0 0 20px 6px currentColor;
+            animation: pulse-dot 1.2s ease-in-out infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { box-shadow: 0 0 10px 3px currentColor, 0 0 20px 6px currentColor; }
+            50%      { box-shadow: 0 0 14px 5px currentColor, 0 0 26px 9px currentColor; }
         }
         .fuentes-panel::-webkit-scrollbar { width: 4px; }
         .fuentes-panel::-webkit-scrollbar-track { background: transparent; }
@@ -411,6 +434,201 @@
             'PVEM': '#00813E', 'PT': '#CC0000', 'MC': '#FF6600', 'PRD': '#FFD700',
         };
 
+        // Logos oficiales de partidos (SVG local en assets/partidos/).
+        // Definidos acá (nivel alto) para que widgets en toda la app puedan usarlos.
+        const PARTIDO_LOGOS = {
+            MORENA: 'assets/partidos/morena.svg',
+            PAN:    'assets/partidos/pan.svg',
+            PRI:    'assets/partidos/pri.svg',
+            PVEM:   'assets/partidos/pvem.svg',
+            PT:     'assets/partidos/pt.svg',
+            MC:     'assets/partidos/mc.svg',
+            PRD:    'assets/partidos/prd.svg',
+        };
+
+        function PartidoBadge({ partido, size = 'sm' }) {
+            const [errored, setErrored] = React.useState(false);
+            const color = PARTIDO_COLORS[partido] || '#6B7280';
+            const url = PARTIDO_LOGOS[partido];
+            if (!partido) return null;
+            const dim = size === 'xl' ? 'w-8 h-8' : size === 'lg' ? 'w-6 h-6' : 'w-5 h-5';
+            const pillPad = size === 'xl' ? 'px-2 py-0.5 text-xs' : size === 'lg' ? 'px-2 py-0.5 text-[11px]' : 'px-1.5 py-px text-[9px]';
+            if (url && !errored) {
+                return (
+                    <img src={url} alt={partido} title={partido}
+                        onError={() => setErrored(true)}
+                        className={`${dim} object-contain flex-shrink-0`}
+                        style={{ imageRendering: 'auto' }} />
+                );
+            }
+            return (
+                <span className={`${pillPad} font-bold rounded text-white tracking-wide`} style={{ backgroundColor: color }}>{partido}</span>
+            );
+        }
+
+        /* ================================================================
+           WIDGET: Partidos Políticos (ranking pro con logos, breakdown, tri-bars)
+           ================================================================ */
+        // hex (#rrggbb) → rgba(r,g,b,alpha). Tolera null/undefined.
+        function hexToRgba(hex, alpha = 1) {
+            if (!hex || typeof hex !== 'string') return `rgba(107,114,128,${alpha})`;
+            const h = hex.replace('#', '');
+            const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
+            if (full.length !== 6) return `rgba(107,114,128,${alpha})`;
+            const r = parseInt(full.substr(0, 2), 16);
+            const g = parseInt(full.substr(2, 2), 16);
+            const b = parseInt(full.substr(4, 2), 16);
+            return `rgba(${r},${g},${b},${alpha})`;
+        }
+
+        function PartidosPoliticosPanel({ partidos }) {
+            const [expanded, setExpanded] = React.useState(null); // partido key abierto
+            const partidosArr = Object.entries(partidos)
+                .filter(([key]) => ['MORENA','PAN','PRI','MC','PVEM','PT','NA','PRD','SIN PARTIDO'].includes(key))
+                .sort(([,a],[,b]) => b.total - a.total);
+            if (partidosArr.length === 0) return null;
+            const maxTotal = partidosArr[0][1].total;
+            const grandTotal = partidosArr.reduce((s, [, p]) => s + p.total, 0);
+
+            return (
+                <div className="glass border border-borde rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-gray-700 text-sm tracking-tight">Partidos políticos</h3>
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 tracking-wider">LXVI</span>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-[10px] text-gray-400 uppercase tracking-wider">Total</div>
+                            <div className="text-sm font-bold text-gray-800 leading-tight">{grandTotal.toLocaleString()}</div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        {partidosArr.map(([key, p], idx) => {
+                            const pct = (p.total / maxTotal) * 100;
+                            const shareTotal = grandTotal > 0 ? (p.total / grandTotal) * 100 : 0;
+                            const topCats = p.por_categoria ? Object.entries(p.por_categoria).sort(([,a],[,b]) => b.count - a.count).slice(0, 5) : [];
+                            const isOpen = expanded === key;
+                            const color = p.color || PARTIDO_COLORS[key] || '#6B7280';
+                            return (
+                                <div key={key}
+                                    className={`rounded-lg border transition-all ${isOpen ? 'border-gray-300 bg-gray-50' : 'border-transparent hover:border-gray-200 hover:bg-gray-50/60'}`}>
+                                    <button onClick={() => setExpanded(isOpen ? null : key)}
+                                        className="w-full flex items-center gap-2.5 px-2 py-1.5 text-left">
+                                        {/* Rank */}
+                                        <div className="w-5 text-[10px] font-bold text-gray-400 flex-shrink-0 text-center">{idx + 1}</div>
+                                        {/* Logo */}
+                                        <div className="w-7 h-7 flex items-center justify-center flex-shrink-0">
+                                            <PartidoBadge partido={key} size="lg" />
+                                        </div>
+                                        {/* Nombre + barra */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs font-semibold text-gray-800 truncate">{p.nombre || key}</span>
+                                                <span className="text-[9px] text-gray-400 font-medium">{shareTotal.toFixed(1)}%</span>
+                                            </div>
+                                            <div className="mt-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                                {/* Mismo estilo que las barras .bar-verde/amarillo/rojo en Actividad: fade transparente→sólido */}
+                                                <div className="h-full rounded-full transition-all duration-700"
+                                                    style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${hexToRgba(color, 0.4)}, ${color})` }}></div>
+                                            </div>
+                                        </div>
+                                        {/* Total + chevron */}
+                                        <div className="text-right flex-shrink-0">
+                                            <div className="text-sm font-bold text-gray-800 leading-tight tabular-nums">{p.total.toLocaleString()}</div>
+                                            <div className="text-[9px] text-gray-400 leading-tight">instr.</div>
+                                        </div>
+                                        <svg className={`w-3 h-3 text-gray-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                    </button>
+                                    {isOpen && topCats.length > 0 && (
+                                        <div className="px-3 pb-2.5 pt-0.5 space-y-1.5 border-t border-gray-200/80">
+                                            <div className="text-[9px] uppercase tracking-wider text-gray-400 font-bold mt-1.5">Top categorías</div>
+                                            {topCats.map(([catKey, catData]) => {
+                                                const catPct = (catData.count / p.total) * 100;
+                                                return (
+                                                    <div key={catKey} className="flex items-center gap-2 text-[11px]">
+                                                        <span className="w-24 truncate text-gray-700 font-medium">{catData.nombre || catKey}</span>
+                                                        <div className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
+                                                            <div className="h-full rounded-full" style={{ width: `${catPct}%`, background: `linear-gradient(90deg, ${hexToRgba(color, 0.4)}, ${color})` }}></div>
+                                                        </div>
+                                                        <span className="text-gray-600 tabular-nums w-8 text-right font-semibold">{catData.count}</span>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="text-[10px] text-gray-400 mt-3 pt-2 border-t border-gray-100">
+                        Instrumentos legislativos · SIL · desde septiembre 2024
+                    </div>
+                </div>
+            );
+        }
+
+        /* ================================================================
+           WIDGET: Próximas Sesiones (reusable — Inicio y Comisiones)
+           ================================================================ */
+        function ProximasSesionesPanel({ convocatorias, defaultTab = null }) {
+            const [convTab, setConvTab] = React.useState(defaultTab);
+            const [convExpanded, setConvExpanded] = React.useState(false);
+            const has = (convocatorias?.Diputados?.length || 0) + (convocatorias?.Senado?.length || 0);
+            if (!has) return null;
+            const limpia = (texto) => {
+                const raw = (texto || '').replace(/^COMISI[ÓO]N\s*(DE\s*)?/i, '').replace(/Convocatoria.*$/i, '').replace(/^PARA\s*/i, '').trim();
+                const titleCase = raw.length > 0 ? raw.split(/\s+/).map(w => {
+                    const low = w.toLowerCase();
+                    return ['de', 'del', 'la', 'las', 'los', 'el', 'y', 'e', 'en', 'a', 'al', 'para', 'con', 'por'].includes(low) ? low : low.charAt(0).toUpperCase() + low.slice(1);
+                }).join(' ') : 'Comisión';
+                return titleCase.charAt(0).toUpperCase() + titleCase.slice(1);
+            };
+            return (
+                <div className="glass border border-borde rounded-xl p-4">
+                    <h3 className="font-semibold text-gray-700 mb-3 text-sm">Próximas sesiones</h3>
+                    <div className="space-y-1">
+                        {[['Diputados', 'Cámara de Diputados'], ['Senado', 'Senado de la República']].map(([key, label]) => {
+                            const items = convocatorias[key] || [];
+                            const abierto = convTab === key;
+                            return (
+                                <div key={key}>
+                                    <button onClick={() => setConvTab(abierto ? null : key)}
+                                        className="w-full flex items-center justify-between py-2 px-1 hover:bg-gray-50 rounded-lg transition-colors">
+                                        <span className="text-xs font-semibold text-gray-700">{label}</span>
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="text-[10px] text-gray-400">{items.length}</span>
+                                            <svg className={`w-3 h-3 text-gray-400 transition-transform ${abierto ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                        </div>
+                                    </button>
+                                    {abierto && items.length > 0 && (
+                                        <div className="space-y-0.5 pl-1 pb-2">
+                                            {items.slice(0, convExpanded ? 30 : 5).map((c, i) => (
+                                                <a key={i} href={c.url || '#'} target="_blank" rel="noopener noreferrer"
+                                                    className="block py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors group">
+                                                    <div className="text-[11px] text-gray-500 leading-tight group-hover:text-acento transition-colors">{limpia(c.comision)}</div>
+                                                    <div className="text-[10px] text-gray-400 mt-0.5">{c.fecha}</div>
+                                                </a>
+                                            ))}
+                                            {items.length > 5 && (
+                                                <button onClick={() => setConvExpanded(!convExpanded)}
+                                                    className="text-[10px] text-acento hover:underline mt-1 w-full text-center">
+                                                    {convExpanded ? 'Ver menos' : `Ver todas (${items.length})`}
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
+                                    {abierto && items.length === 0 && (
+                                        <div className="text-[10px] text-gray-400 pl-3 pb-2">Sin convocatorias recientes</div>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        }
+
         function SemaforoCard({ data, onClick }) {
             const colorClasses = {
                 verde: 'border-semaforo-verde/40 hover:border-semaforo-verde',
@@ -673,34 +891,22 @@
                     }
                 };
 
-                /* Plugin: animación de dibujo progresivo (izq → der) solo al cargar */
-                const progressiveRevealPlugin = {
-                    id: 'progressiveReveal',
-                    beforeDatasetsDraw(chart) {
-                        if (chart._revealDone) return;
-                        const { ctx, chartArea } = chart;
-                        if (!chartArea) return;
-                        const progress = chart._revealProgress || 0;
-                        const w = (chartArea.right - chartArea.left) * progress + 2;
-                        ctx.save();
-                        ctx.beginPath();
-                        ctx.rect(chartArea.left - 1, chartArea.top - 10, w, chartArea.bottom - chartArea.top + 20);
-                        ctx.clip();
-                    },
-                    afterDatasetsDraw(chart) {
-                        if (chart._revealDone) return;
-                        chart.ctx.restore();
-                    }
-                };
+                /* Usamos la animación nativa de Chart.js (estable y sin estado custom)
+                   en vez de un plugin custom con requestAnimationFrame — ese enfoque
+                   causaba que el canvas se quedara pasmado al cambiar de tab. */
+                const isFirstRender = !window._fiatChartRevealed;
+                window._fiatChartRevealed = true;
 
                 chartInstance.current = new Chart(chartRef.current, {
                     type: 'line',
-                    plugins: [thresholdPlugin, progressiveRevealPlugin],
+                    plugins: [thresholdPlugin],
                     data: { labels, datasets },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        animation: { duration: 0 },
+                        animation: isFirstRender
+                            ? { duration: 1800, easing: 'easeOutCubic', x: { from: 0 }, y: { from: (ctx) => ctx.chart.scales.y.getPixelForValue(0) } }
+                            : { duration: 400, easing: 'easeOutQuad' },
                         interaction: { mode: 'index', intersect: false },
                         plugins: {
                             legend: { display: false },
@@ -758,35 +964,12 @@
                     }
                 });
 
-                /* Animación de reveal: 1.8s ease-out, solo la primera vez */
-                const chart = chartInstance.current;
-                if (!window._fiatChartRevealed) {
-                    window._fiatChartRevealed = true;
-                    chart._revealProgress = 0;
-                    chart._revealDone = false;
-                    const duration = 1800;
-                    let start = null;
-                    const easeOut = t => 1 - Math.pow(1 - t, 3); /* cubic ease-out */
-                    const step = (ts) => {
-                        if (!start) start = ts;
-                        const elapsed = ts - start;
-                        const raw = Math.min(elapsed / duration, 1);
-                        chart._revealProgress = easeOut(raw);
-                        chart.draw();
-                        if (raw < 1) {
-                            requestAnimationFrame(step);
-                        } else {
-                            chart._revealDone = true;
-                            chart.options.animation.duration = 300;
-                            chart.draw();
-                        }
-                    };
-                    requestAnimationFrame(step);
-                } else {
-                    chart._revealDone = true;
-                }
-
-                return () => { if (chartInstance.current) chartInstance.current.destroy(); };
+                return () => {
+                    if (chartInstance.current) {
+                        try { chartInstance.current.destroy(); } catch (e) {}
+                        chartInstance.current = null;
+                    }
+                };
             }, [historial, visibleCats, hoveredCat]);
 
             return (
@@ -1092,8 +1275,6 @@
             const fuentes = data.fuentes || {};
             const partidos = data.partidos || {};
             const convocatorias = data.convocatorias || { Diputados: [], Senado: [] };
-            const [convTab, setConvTab] = useState(null);
-            const [convExpanded, setConvExpanded] = useState(false);
             const [popoverLeg, setPopoverLeg] = useState(null);
             const popoverTimer = useRef(null);
             const showPopover = (leg, e) => { clearTimeout(popoverTimer.current); const rect = e.currentTarget.getBoundingClientRect(); const left = rect.right + 8 + 320 > window.innerWidth ? Math.max(16, rect.left - 328) : rect.right + 8; setPopoverLeg({ ...leg, _pos: { top: rect.top, left } }); };
@@ -1270,92 +1451,12 @@
                                         </div>
                                     </div>
                                 )}
-                                {Object.keys(partidos).length > 0 && (() => {
-                                    const partidosArr = Object.entries(partidos)
-                                        .filter(([key]) => ['MORENA','PAN','PRI','MC','PVEM','PT','NA','PRD','SIN PARTIDO'].includes(key))
-                                        .sort(([,a],[,b]) => b.total - a.total);
-                                    const maxTotal = partidosArr.length > 0 ? partidosArr[0][1].total : 1;
-                                    return (
-                                    <div className="glass border border-borde rounded-xl p-4">
-                                        <h3 className="font-semibold text-gray-700 mb-3 text-sm flex items-center gap-2">
-                                            Partidos Politicos
-                                            <span className="text-[10px] font-normal text-gray-400 ml-auto">Desde sep 2024</span>
-                                        </h3>
-                                        <div className="space-y-2.5">{partidosArr.map(([key, p]) => {
-                                            const pct = Math.round((p.total / maxTotal) * 100);
-                                            const topCats = p.por_categoria ? Object.entries(p.por_categoria).sort(([,a],[,b]) => b.count - a.count).slice(0, 3) : [];
-                                            return (
-                                            <div key={key} className="group">
-                                                <div className="flex items-center gap-2 text-xs">
-                                                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{backgroundColor: p.color}}></div>
-                                                    <div className="font-semibold text-gray-700 w-16 flex-shrink-0">{p.nombre}</div>
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
-                                                            <div className="h-full rounded-full transition-all duration-500" style={{width: `${pct}%`, backgroundColor: p.color, opacity: 0.8}}></div>
-                                                        </div>
-                                                    </div>
-                                                    <div className="font-bold text-gray-700 w-8 text-right flex-shrink-0">{p.total}</div>
-                                                </div>
-                                                {topCats.length > 0 && (
-                                                    <div className="ml-5 mt-0.5 flex flex-wrap gap-1 max-h-0 group-hover:max-h-12 overflow-hidden transition-all duration-300">
-                                                        {topCats.map(([catKey, catData]) => (
-                                                            <span key={catKey} className="text-[9px] px-1.5 py-0.5 bg-gray-50 text-gray-500 rounded border border-gray-100">{catData.nombre} ({catData.count})</span>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>);
-                                        })}</div>
-                                        <div className="text-[10px] text-gray-400 mt-2 pt-2 border-t border-gray-100 flex justify-between">
-                                            <span>Instrumentos legislativos (SIL, desde sep 2024)</span>
-                                            <span>{partidosArr.reduce((s,[,p]) => s + p.total, 0)} total</span>
-                                        </div>
-                                    </div>);
-                                })()}
-                                {/* Widget Próximas Sesiones */}
-                                {(convocatorias.Diputados.length > 0 || convocatorias.Senado.length > 0) && (
-                                    <div className="glass border border-borde rounded-xl p-4">
-                                        <h3 className="font-semibold text-gray-700 mb-3 text-sm">Próximas sesiones</h3>
-                                        <div className="space-y-1">
-                                            {[['Diputados', 'Cámara de Diputados'], ['Senado', 'Senado de la República']].map(([key, label]) => (
-                                                <div key={key}>
-                                                    <button onClick={() => setConvTab(convTab === key ? null : key)}
-                                                        className="w-full flex items-center justify-between py-2 px-1 hover:bg-gray-50 rounded-lg transition-colors">
-                                                        <span className="text-xs font-semibold text-gray-700">{label}</span>
-                                                        <svg className={`w-3 h-3 text-gray-400 transition-transform ${convTab === key ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-                                                    </button>
-                                                    {convTab === key && (convocatorias[key] || []).length > 0 && (
-                                                        <div className="space-y-0.5 pl-1 pb-2">
-                                                            {(convocatorias[key] || []).slice(0, convExpanded ? 30 : 5).map((c, i) => {
-                                                                const raw = (c.comision || '').replace(/^COMISI[ÓO]N\s*(DE\s*)?/i, '').replace(/Convocatoria.*$/i, '').replace(/^PARA\s*/i, '').trim();
-                                                                const titleCase = raw.length > 0 ? raw.split(/\s+/).map(w => {
-                                                                    const low = w.toLowerCase();
-                                                                    return ['de', 'del', 'la', 'las', 'los', 'el', 'y', 'e', 'en', 'a', 'al', 'para', 'con', 'por'].includes(low) ? low : low.charAt(0).toUpperCase() + low.slice(1);
-                                                                }).join(' ') : 'Comisión';
-                                                                const display = titleCase.charAt(0).toUpperCase() + titleCase.slice(1);
-                                                                return (
-                                                                    <a key={i} href={c.url || '#'} target="_blank" rel="noopener noreferrer"
-                                                                        className="block py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors group">
-                                                                        <div className="text-[11px] text-gray-500 leading-tight group-hover:text-acento transition-colors">{display}</div>
-                                                                        <div className="text-[10px] text-gray-400 mt-0.5">{c.fecha}</div>
-                                                                    </a>
-                                                                );
-                                                            })}
-                                                            {(convocatorias[key]?.length || 0) > 5 && (
-                                                                <button onClick={() => setConvExpanded(!convExpanded)}
-                                                                    className="text-[10px] text-acento hover:underline mt-1 w-full text-center">
-                                                                    {convExpanded ? 'Ver menos' : `Ver todas (${convocatorias[key].length})`}
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                    {convTab === key && (convocatorias[key] || []).length === 0 && (
-                                                        <div className="text-[10px] text-gray-400 pl-3 pb-2">Sin convocatorias recientes</div>
-                                                    )}
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
+                                {Object.keys(partidos).length > 0 && (
+                                    <PartidosPoliticosPanel partidos={partidos} />
                                 )}
+                                {/* Widget Próximas Sesiones (reusable) */}
+                                <ProximasSesionesPanel convocatorias={convocatorias} />
+
                             </div>
                         </div>
                     )}
@@ -1380,6 +1481,43 @@
         };
         const _catLabel = (c) => CATEGORIA_LABEL[c] || (c || '—');
 
+        // PARTIDO_LOGOS y PartidoBadge están definidos arriba (nivel alto) para que
+        // widgets de toda la app los usen, no solo el Radar.
+
+        // Flip "Apellido1 Apellido2 Nombre(s)" → "Nombre(s) Apellido1 Apellido2"
+        // Solo para Cámara de Diputados (Senado ya viene correcto).
+        // Maneja partículas como "de", "la", "del" en apellidos compuestos.
+        const _PARTICULAS = new Set(['de','del','la','las','los','van','von','da','di','du','y']);
+        function flipNombreDiputado(nombre) {
+            if (!nombre) return nombre;
+            const tokens = nombre.trim().split(/\s+/);
+            if (tokens.length < 3) return nombre;
+            let cutIdx = 2;
+            let sawParticle = false;
+            while (cutIdx < tokens.length) {
+                const cur = tokens[cutIdx].toLowerCase().replace(/\./g, '');
+                if (_PARTICULAS.has(cur)) {
+                    cutIdx++;
+                    sawParticle = true;
+                } else if (sawParticle) {
+                    cutIdx++;
+                    sawParticle = false;
+                    if (cutIdx >= tokens.length || !_PARTICULAS.has(tokens[cutIdx].toLowerCase().replace(/\./g, ''))) break;
+                } else {
+                    break;
+                }
+            }
+            if (cutIdx >= tokens.length) return nombre;
+            const apellidos = tokens.slice(0, cutIdx).join(' ');
+            const nombres = tokens.slice(cutIdx).join(' ');
+            return `${nombres} ${apellidos}`;
+        }
+        function formatNombreLegislador(leg) {
+            if (!leg) return '';
+            if (leg.camara === 'Cámara de Diputados') return flipNombreDiputado(leg.nombre);
+            return leg.nombre;
+        }
+
         function PageRadarLegisladores({ data }) {
             const [legisladores, setLegisladores] = useState([]);
             const [meta, setMeta] = useState({ camaras: [], partidos: [], categorias: [] });
@@ -1390,6 +1528,7 @@
             const [error, setError] = useState(null);
             const [legSeleccionado, setLegSeleccionado] = useState(null);
 
+            const [glosarioAbierto, setGlosarioAbierto] = useState(false);
             const [fCamara, setFCamara] = useState('');
             const [fPartido, setFPartido] = useState('');
             const [fCategoria, setFCategoria] = useState('');
@@ -1456,14 +1595,29 @@
                             </div>
                             <p className="text-xs text-gray-500">Player props legislativos · LXVI completa · hit rate, proyecciones 15d y matchup vs comisión dictaminadora</p>
                         </div>
-                        <div className="text-[11px] text-gray-500">
+                        <div className="flex items-center gap-3 text-[11px] text-gray-500">
                             {cargando ? (
                                 <span className="inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-acento animate-pulse"></span>Cargando…</span>
                             ) : (
                                 <span><span className="font-semibold text-gray-800">{total.toLocaleString()}</span> legisladores{hayFiltros ? ' · filtrado' : ''}</span>
                             )}
+                            <button onClick={() => setGlosarioAbierto(g => !g)}
+                                className="text-[11px] font-medium text-indigo-600 hover:text-indigo-800 underline decoration-dotted cursor-pointer transition-colors">
+                                {glosarioAbierto ? 'Cerrar glosario' : 'Glosario'}
+                            </button>
                         </div>
                     </div>
+
+                    {glosarioAbierto && (
+                        <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 text-xs text-gray-700 space-y-2">
+                            <div className="font-semibold text-indigo-800 mb-1">Glosario de stats</div>
+                            <div><span className="font-semibold">Hit Rate</span> — % de los 20 picos mediáticos más recientes en la categoría dominante del legislador donde presentó un instrumento dentro de 7 días. Verde ≥70%, ámbar ≥40%, rojo &lt;40%.</div>
+                            <div><span className="font-semibold">INI 15D</span> — Iniciativas de ley proyectadas en los próximos 15 días, calculadas sobre el ritmo legislativo del periodo LXVI.</div>
+                            <div><span className="font-semibold">PROP 15D</span> — Proposiciones con punto de acuerdo proyectadas en los próximos 15 días, misma metodología que INI 15D.</div>
+                            <div><span className="font-semibold">L3P Total</span> — Total de instrumentos legislativos (iniciativas + proposiciones) presentados durante toda la legislatura LXVI.</div>
+                            <div><span className="font-semibold">Matchup</span> — Calificación (A–F) que mide la probabilidad de que la comisión dictaminadora apruebe los instrumentos del legislador, basada en tasa histórica de dictamen.</div>
+                        </div>
+                    )}
 
                     {/* Filter bar: search + selects */}
                     <div className="bg-white border border-gray-200 rounded-xl p-2.5 space-y-2">
@@ -1540,22 +1694,40 @@
                         </div>
                     )}
 
-                    {/* Player-props table */}
+                    {/* Player-props table (sin wrapper — estilo PFF abierto) */}
                     {legisladores.length > 0 && (
-                        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                        <div>
                             {/* Header row (desktop) */}
-                            <div className="hidden md:grid grid-cols-[minmax(0,2.3fr)_0.9fr_0.85fr_0.85fr_0.85fr_0.9fr_0.8fr] gap-2 px-3 py-2 bg-gray-50 border-b border-gray-200 text-[10px] uppercase tracking-wider text-gray-500 font-semibold">
+                            <div className="hidden md:grid grid-cols-[minmax(0,2.3fr)_0.9fr_0.95fr_0.95fr_0.95fr_0.9fr_0.8fr] gap-2 px-3 py-2 border-b-2 border-gray-300 text-[10px] uppercase tracking-wider text-gray-500 font-bold">
                                 <div>Legislador</div>
-                                <div className="text-center">Categoría</div>
-                                <div className="text-center">Hit rate</div>
-                                <div className="text-center">Ini 15d</div>
-                                <div className="text-center">Prop 15d</div>
-                                <div className="text-center">L3P total</div>
-                                <div className="text-center">Matchup</div>
+                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2"
+                                    title="Categoría dominante del legislador (medio_ambiente, educación, etc.). Se calcula con ≥3 actos legislativos desde inicio LXVI, ponderando iniciativas 2x sobre proposiciones.">
+                                    Categoría
+                                </div>
+                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2"
+                                    title="Hit rate — % de los últimos 20 picos mediáticos en su categoría dominante donde el legislador presentó un instrumento dentro de los 7 días posteriores. Verde ≥70%, ámbar ≥40%, rojo <40%.">
+                                    Hit rate
+                                </div>
+                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2"
+                                    title="Iniciativas proyectadas en los próximos 15 días, basadas en la tasa LXVI ajustada por actividad reciente (30d).">
+                                    Ini 15d
+                                </div>
+                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2"
+                                    title="Proposiciones con punto de acuerdo proyectadas en los próximos 15 días. Misma fórmula que Ini 15d.">
+                                    Prop 15d
+                                </div>
+                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2"
+                                    title="Total de instrumentos (iniciativas + proposiciones) presentados durante la LXVI Legislatura (sep 2024 – hoy).">
+                                    L3P total
+                                </div>
+                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2"
+                                    title="Matchup grade vs. la comisión dictaminadora de su tema dominante. A = alta tasa de dictamen favorable; F = hostil. Estilo PFF.">
+                                    Matchup
+                                </div>
                             </div>
 
                             {/* Rows */}
-                            <div className="divide-y divide-gray-100">
+                            <div className="divide-y divide-gray-200">
                                 {legisladores.map(leg => (
                                     <RadarRow key={leg.id} leg={leg} onClick={() => setLegSeleccionado(leg)} />
                                 ))}
@@ -1583,8 +1755,8 @@
         }
 
         function RadarRow({ leg, onClick }) {
-            const partidoColor = PARTIDO_COLORS[leg.partido] || '#6B7280';
-            const foto = leg.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(leg.nombre || '?')}&background=e5e7eb&color=374151&size=96`;
+            const nombreFmt = formatNombreLegislador(leg);
+            const foto = leg.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreFmt || '?')}&background=e5e7eb&color=374151&size=96`;
             const hitPct = leg.hit_rate != null ? Math.round(leg.hit_rate * 100) : null;
             const hitColor = hitPct == null ? 'text-gray-400' : hitPct >= 50 ? 'text-emerald-600' : hitPct >= 25 ? 'text-amber-600' : 'text-gray-500';
             const iniProy = leg.iniciativas_proy_15d != null ? Number(leg.iniciativas_proy_15d).toFixed(1) : '—';
@@ -1595,18 +1767,16 @@
 
             return (
                 <div onClick={onClick}
-                    className="grid grid-cols-[minmax(0,1fr)] md:grid-cols-[minmax(0,2.3fr)_0.9fr_0.85fr_0.85fr_0.85fr_0.9fr_0.8fr] gap-2 px-3 py-2.5 hover:bg-acento/5 cursor-pointer transition-colors items-center">
+                    className="grid grid-cols-[minmax(0,1fr)] md:grid-cols-[minmax(0,2.3fr)_0.9fr_0.95fr_0.95fr_0.95fr_0.9fr_0.8fr] gap-2 px-3 py-3 hover:bg-acento/5 cursor-pointer transition-colors items-center">
                     {/* Player */}
                     <div className="flex items-center gap-2.5 min-w-0">
-                        <img src={foto} alt={leg.nombre}
-                            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(leg.nombre || '?')}&background=e5e7eb&color=374151&size=96`; }}
-                            className="w-9 h-9 rounded-full object-cover bg-gray-100 flex-shrink-0 border border-gray-200" />
+                        <img src={foto} alt={nombreFmt}
+                            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreFmt || '?')}&background=e5e7eb&color=374151&size=96`; }}
+                            className="w-10 h-10 rounded-full object-cover bg-gray-100 flex-shrink-0 border border-gray-200" />
                         <div className="min-w-0 flex-1">
-                            <div className="text-sm font-semibold text-gray-800 truncate" title={leg.nombre}>{leg.nombre}</div>
+                            <div className="text-sm font-semibold text-gray-800 truncate" title={nombreFmt}>{nombreFmt}</div>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                {leg.partido && (
-                                    <span className="px-1.5 py-px text-[9px] font-bold rounded text-white tracking-wide" style={{ backgroundColor: partidoColor }}>{leg.partido}</span>
-                                )}
+                                <PartidoBadge partido={leg.partido} size="sm" />
                                 <span className="text-[10px] text-gray-500 truncate">
                                     {(leg.camara || '').replace('Cámara de ', '')}
                                     {leg.estado ? ` · ${leg.estado}` : ''}
@@ -1626,32 +1796,94 @@
                     {/* Desktop columns */}
                     <div className="hidden md:block text-center">
                         {leg.categoria_dominante ? (
-                            <span className="inline-block px-1.5 py-0.5 text-[10px] rounded bg-acento/10 text-acento font-medium truncate max-w-full" title={leg.categoria_dominante}>
+                            <span className="text-xs text-gray-700 truncate block" title={leg.categoria_dominante}>
                                 {_catLabel(leg.categoria_dominante)}
                             </span>
-                        ) : <span className="text-[10px] text-gray-400">—</span>}
+                        ) : <span className="text-xs text-gray-400">—</span>}
                     </div>
                     <div className="hidden md:block text-center">
-                        <div className={`text-base font-bold leading-tight ${hitColor}`}>{hitPct != null ? `${hitPct}%` : '—'}</div>
-                        <div className="text-[9px] text-gray-400">{leg.hit_respondio ?? 0}/{leg.hit_total ?? 0}</div>
+                        <HitRateGaugeMini value={leg.hit_rate} />
                     </div>
                     <div className="hidden md:block text-center">
                         <div className="text-base font-bold text-gray-800 leading-tight">{iniProy}</div>
-                        <div className="text-[9px] text-gray-400">L3P {leg.l3p_iniciativas ?? 0}</div>
                     </div>
                     <div className="hidden md:block text-center">
                         <div className="text-base font-bold text-gray-800 leading-tight">{propProy}</div>
-                        <div className="text-[9px] text-gray-400">L3P {leg.l3p_proposiciones ?? 0}</div>
                     </div>
                     <div className="hidden md:block text-center">
                         <div className="text-base font-bold text-gray-800 leading-tight">{l3pTotal}</div>
-                        <div className="text-[9px] text-gray-400">instrumentos</div>
                     </div>
-                    <div className="hidden md:flex items-center justify-center">
-                        <div className={`inline-flex items-center justify-center w-8 h-8 text-sm font-bold rounded-lg ${gradeStyle}`}
+                    <div className="hidden md:flex flex-col items-center justify-center gap-0.5">
+                        <div className={`inline-flex items-center justify-center w-9 h-9 text-sm font-bold rounded-lg ${gradeStyle}`}
                             title={grade ? `Matchup vs ${leg.matchup_comision || 'comisión'}${leg.matchup_tasa != null ? ` · ${Math.round(leg.matchup_tasa*100)}%` : ''}` : 'Sin suficientes dictámenes'}>
                             {grade || '—'}
                         </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function ComisionesLegislador({ raw, dark = false }) {
+            // Parsea el string "Cambio Climático y Sostenibilidad:Presidente|Radio y Televisión:Integrante|Turismo:Integrante"
+            // y lo pinta con iconografía diferenciada por cargo.
+            // Orden: Presidencias primero, luego Secretarías, luego Integrante. Máx 6.
+            if (!raw || typeof raw !== 'string') return null;
+            const partes = raw.split('|').map(p => {
+                const [comision, cargoRaw] = p.split(':').map(x => (x || '').trim());
+                if (!comision) return null;
+                const cargo = (cargoRaw || 'Integrante').toLowerCase();
+                let tier = 2; // integrante
+                if (cargo.includes('presid')) tier = 0;
+                else if (cargo.includes('secretar')) tier = 1;
+                return { comision, cargo: cargoRaw || 'Integrante', tier };
+            }).filter(Boolean);
+            if (!partes.length) return null;
+            partes.sort((a, b) => a.tier - b.tier);
+            const visible = partes.slice(0, 6);
+            const extra = partes.length - visible.length;
+
+            const cargoIcon = {
+                0: '★', // Presidente
+                1: '◆', // Secretario
+                2: '·', // Integrante
+            };
+            const cargoLabel = {
+                0: 'Preside',
+                1: 'Secretaría',
+                2: 'Integrante',
+            };
+            // Colores: dark = sobre fondo oscuro del header modal; light = sobre fondo claro.
+            const baseClass = dark
+                ? 'bg-white/10 text-white/90 border-white/10'
+                : 'bg-gray-100 text-gray-800 border-gray-200';
+            const presideClass = dark
+                ? 'bg-amber-400/20 text-amber-200 border-amber-400/30'
+                : 'bg-amber-100 text-amber-800 border-amber-200';
+            const secretariaClass = dark
+                ? 'bg-sky-400/20 text-sky-200 border-sky-400/30'
+                : 'bg-sky-100 text-sky-800 border-sky-200';
+            const labelClass = dark ? 'text-white/50' : 'text-gray-500';
+
+            return (
+                <div className="mt-2">
+                    <div className={`text-[9px] uppercase tracking-wider font-bold ${labelClass} mb-1`}>Comisiones</div>
+                    <div className="flex flex-wrap gap-1">
+                        {visible.map((c, i) => {
+                            const cls = c.tier === 0 ? presideClass : c.tier === 1 ? secretariaClass : baseClass;
+                            return (
+                                <span key={i}
+                                    className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded border ${cls}`}
+                                    title={`${cargoLabel[c.tier]} — ${c.comision}`}>
+                                    <span className="font-bold">{cargoIcon[c.tier]}</span>
+                                    <span className="truncate max-w-[200px]">{c.comision}</span>
+                                </span>
+                            );
+                        })}
+                        {extra > 0 && (
+                            <span className={`inline-flex items-center px-1.5 py-0.5 text-[10px] rounded ${baseClass}`}>
+                                +{extra}
+                            </span>
+                        )}
                     </div>
                 </div>
             );
@@ -1693,15 +1925,13 @@
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
                             <div className="flex items-start gap-4">
-                                <img src={foto} alt={leg.nombre}
-                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(leg.nombre || '?')}&background=374151&color=ffffff&size=256`; }}
+                                <img src={foto} alt={formatNombreLegislador(leg)}
+                                    onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(formatNombreLegislador(leg) || '?')}&background=374151&color=ffffff&size=256`; }}
                                     className="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover bg-gray-700 border-2 border-white/20 flex-shrink-0" />
                                 <div className="flex-1 min-w-0 pr-8">
-                                    <div className="text-xl md:text-2xl font-bold leading-tight truncate" title={leg.nombre}>{leg.nombre}</div>
+                                    <div className="text-xl md:text-2xl font-bold leading-tight truncate" title={formatNombreLegislador(leg)}>{formatNombreLegislador(leg)}</div>
                                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                                        {leg.partido && (
-                                            <span className="px-2 py-0.5 text-[11px] font-bold rounded tracking-wide" style={{ backgroundColor: partidoColor }}>{leg.partido}</span>
-                                        )}
+                                        <PartidoBadge partido={leg.partido} size="lg" />
                                         <span className="text-xs text-white/80">{(leg.camara || '').replace('Cámara de ', '')}</span>
                                         {leg.estado && <span className="text-xs text-white/60">· {leg.estado}</span>}
                                         {leg.distrito && <span className="text-xs text-white/60">· {leg.distrito}</span>}
@@ -1711,6 +1941,7 @@
                                             Tema dominante: {_catLabel(leg.categoria_dominante)}
                                         </div>
                                     )}
+                                    <ComisionesLegislador raw={leg.comisiones_cargo} dark />
                                 </div>
                                 {grade && (
                                     <div className={`bg-gradient-to-br ${gradeGlow} rounded-xl w-16 h-16 flex flex-col items-center justify-center flex-shrink-0 shadow-lg`}>
@@ -1855,12 +2086,138 @@
             );
         }
 
+        // Umbrales oficiales del semáforo legislativo: verde ≥70, ámbar ≥40, rojo <40.
+        // El arco entero se pinta del color correspondiente (en degradado claro→oscuro del MISMO tono).
+        // Colores alineados a CATEGORY_COLORS[semaforo]: verde #66bb6a→#2e7d32, ámbar #e0a82b→#c6972b, rojo #ef5350→#c62828.
+        const SEMAFORO_COLOR_HEX = { verde: '#2e7d32', amarillo: '#c6972b', rojo: '#c62828' };
+        const SEMAFORO_GRADIENT = {
+            verde:     { light: '#66bb6a', dark: '#2e7d32' },
+            amarillo:  { light: '#e0a82b', dark: '#c6972b' },
+            rojo:      { light: '#ef5350', dark: '#c62828' },
+        };
+        const semaforoNivelForPct = (pct) => pct >= 0.70 ? 'verde' : pct >= 0.40 ? 'amarillo' : 'rojo';
+        const semaforoColorForPct = (pct) => SEMAFORO_COLOR_HEX[semaforoNivelForPct(pct)];
+        const semaforoLabelForPct = (pct) => pct >= 0.70 ? 'ALTA' : pct >= 0.40 ? 'MEDIA' : 'BAJA';
+
+        function HitRateGaugeMini({ value }) {
+            // Gauge de tabla: % grande arriba + arco limpio debajo (estilo card).
+            // Arco con UN solo color según umbral del semáforo (degradado claro→oscuro del mismo tono).
+            const pct = value == null ? 0 : Math.max(0, Math.min(1, value));
+            const R = 34;
+            const STROKE = 8;
+            const angleFor = (t) => Math.PI - Math.PI * t;
+            const point = (t) => {
+                const a = angleFor(t);
+                return [Math.cos(a) * R, -Math.sin(a) * R];
+            };
+            const [x1, y1] = point(0);
+            const [x2, y2] = point(1);
+            const trackD = `M ${x1} ${y1} A ${R} ${R} 0 0 1 ${x2} ${y2}`;
+            const gradId = `hrMini-${Math.random().toString(36).slice(2, 8)}`;
+            const displayPct = value == null ? '—' : (Math.round(pct * 1000) / 10).toFixed(1) + '%';
+            const nivel = value != null ? semaforoNivelForPct(pct) : 'rojo';
+            const grad = SEMAFORO_GRADIENT[nivel];
+            return (
+                <div className="flex flex-col items-center gap-0.5">
+                    <div className="text-base font-bold leading-none tabular-nums" style={{ color: value != null ? '#1F2937' : '#9CA3AF' }}>
+                        {displayPct}
+                    </div>
+                    <svg viewBox="-40 -38 80 42" className="w-16 h-8 block">
+                        <defs>
+                            <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="0">
+                                <stop offset="0%" stopColor={grad.light} />
+                                <stop offset="100%" stopColor={grad.dark} />
+                            </linearGradient>
+                        </defs>
+                        <path d={trackD} fill="none" stroke="#E5E7EB" strokeWidth={STROKE} strokeLinecap="round" />
+                        {value != null && (
+                            <path d={trackD} fill="none" stroke={`url(#${gradId})`} strokeWidth={STROKE} strokeLinecap="round"
+                                style={{ strokeDasharray: Math.PI * R, strokeDashoffset: Math.PI * R * (1 - pct) }} />
+                        )}
+                    </svg>
+                </div>
+            );
+        }
+
+        function HitRateGauge({ value }) {
+            // value is 0..1 (or null). Semicircular speedometer with red→amber→emerald gradient.
+            // Geometry: arc from (-R,0) to (R,0), center at origin. We render inside a viewBox that
+            // spans the upper half plus a small margin for the needle base.
+            const pct = value == null ? 0 : Math.max(0, Math.min(1, value));
+            const R = 90;
+            const STROKE = 18;
+            // Arc from angle 180° (-R,0) to 0° (R,0) going over the top (y negative in SVG).
+            // We'll parametrize with t in [0,1] where t=0 → left, t=1 → right.
+            const angleFor = (t) => Math.PI - Math.PI * t; // radians: pi → 0
+            const pointOnArc = (t) => {
+                const a = angleFor(t);
+                return [Math.cos(a) * R, -Math.sin(a) * R];
+            };
+            // Track path (full semicircle)
+            const [x1, y1] = pointOnArc(0);
+            const [x2, y2] = pointOnArc(1);
+            const trackD = `M ${x1} ${y1} A ${R} ${R} 0 0 1 ${x2} ${y2}`;
+            // Needle tip
+            const [nx, ny] = pointOnArc(pct);
+            // Todo el arco de UN solo color según umbral del semáforo (verde ≥70, ámbar ≥40, rojo <40),
+            // con degradado monocromo claro→oscuro dentro del mismo tono.
+            const displayPct = value == null ? '—' : Math.round(pct * 100) + '%';
+            const nivel = value != null ? semaforoNivelForPct(pct) : 'rojo';
+            const grad = SEMAFORO_GRADIENT[nivel];
+
+            return (
+                <svg viewBox="-110 -110 220 130" className="w-full max-w-[260px]">
+                    <defs>
+                        <linearGradient id="hrGauge" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor={grad.light} />
+                            <stop offset="100%" stopColor={grad.dark} />
+                        </linearGradient>
+                    </defs>
+                    {/* Background track */}
+                    <path d={trackD} fill="none" stroke="#E5E7EB" strokeWidth={STROKE} strokeLinecap="round" />
+                    {/* Active gradient track */}
+                    {value != null && (
+                        <path d={trackD} fill="none" stroke="url(#hrGauge)" strokeWidth={STROKE} strokeLinecap="round"
+                            style={{
+                                strokeDasharray: Math.PI * R,
+                                strokeDashoffset: Math.PI * R * (1 - pct),
+                                transition: 'stroke-dashoffset 700ms ease-out',
+                            }}/>
+                    )}
+                    {/* Tick marks en los umbrales del semáforo (40% y 70%) */}
+                    {[0.40, 0.70].map((t, i) => {
+                        const [tx, ty] = pointOnArc(t);
+                        const [tx2, ty2] = [tx * 1.14, ty * 1.14];
+                        return <line key={i} x1={tx} y1={ty} x2={tx2} y2={ty2} stroke="#374151" strokeWidth="1.5" />;
+                    })}
+                    {/* Tick labels: 0 / 40 / 70 / 100 */}
+                    <text x={-R} y={16} textAnchor="middle" fontSize="9" fill="#9CA3AF" fontWeight="600">0%</text>
+                    {(() => { const [px, py] = pointOnArc(0.40); return <text x={px * 1.28} y={py * 1.28 + 3} textAnchor="middle" fontSize="9" fill={SEMAFORO_COLOR_HEX.amarillo} fontWeight="700">40</text>; })()}
+                    {(() => { const [px, py] = pointOnArc(0.70); return <text x={px * 1.28} y={py * 1.28 + 3} textAnchor="middle" fontSize="9" fill={SEMAFORO_COLOR_HEX.verde} fontWeight="700">70</text>; })()}
+                    <text x={R} y={16} textAnchor="middle" fontSize="9" fill="#9CA3AF" fontWeight="600">100%</text>
+                    {/* Needle */}
+                    {value != null && (
+                        <>
+                            <line x1="0" y1="0" x2={nx} y2={ny} stroke="#111827" strokeWidth="3" strokeLinecap="round" />
+                            <circle cx="0" cy="0" r="6" fill="#111827" />
+                            <circle cx="0" cy="0" r="2.5" fill="#F9FAFB" />
+                        </>
+                    )}
+                    {/* Big number */}
+                    <text x="0" y="-30" textAnchor="middle" fontSize="28" fontWeight="800" fill="#111827">{displayPct}</text>
+                    <text x="0" y="-14" textAnchor="middle" fontSize="9" fontWeight="700" fill={value != null ? semaforoColorForPct(pct) : '#9CA3AF'} letterSpacing="1.5">
+                        {value != null ? semaforoLabelForPct(pct) : 'SIN DATOS'}
+                    </text>
+                </svg>
+            );
+        }
+
         function TabHitRate({ leg }) {
             const hitPct = leg.hit_rate != null ? Math.round(leg.hit_rate * 100) : null;
             const respondio = leg.hit_respondio ?? 0;
             const total = leg.hit_total ?? 0;
 
-            // Mini barchart visualization
+            // Mini barchart visualization (picos individuales)
             const bars = [];
             for (let i = 0; i < total; i++) {
                 bars.push(i < respondio ? 'hit' : 'miss');
@@ -1869,25 +2226,45 @@
             return (
                 <div className="space-y-4">
                     <div className="bg-gray-50 rounded-xl p-4">
-                        <div className="flex items-end justify-between mb-3">
-                            <div>
-                                <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Probabilidad de reacción a pico</div>
-                                <div className="text-4xl font-bold text-gray-800 mt-1">{hitPct != null ? `${hitPct}%` : '—'}</div>
-                                <div className="text-xs text-gray-500 mt-0.5">
-                                    Categoría: <span className="font-semibold text-gray-700">{_catLabel(leg.categoria_dominante)}</span>
-                                </div>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                            {/* Gauge */}
+                            <div className="flex-shrink-0 flex justify-center sm:justify-start">
+                                <HitRateGauge value={leg.hit_rate} />
                             </div>
-                            <div className="text-right text-xs text-gray-500">
-                                <div>{respondio}/{total} picos</div>
-                                <div className="text-[10px] text-gray-400">ventana ±7d</div>
+                            {/* Stats right side */}
+                            <div className="flex-1 min-w-0 space-y-2.5">
+                                <div>
+                                    <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Reacción a pico mediático</div>
+                                    <div className="text-sm text-gray-700 mt-0.5">
+                                        <span className="font-bold text-gray-900">{respondio}</span>
+                                        <span className="text-gray-500"> de </span>
+                                        <span className="font-bold text-gray-900">{total}</span>
+                                        <span className="text-gray-500"> picos respondidos</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Categoría dominante</div>
+                                    <div className="text-sm font-semibold text-gray-800 mt-0.5">{_catLabel(leg.categoria_dominante) || '—'}</div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Ventana de detección</div>
+                                    <div className="text-sm text-gray-700 mt-0.5">±7 días alrededor del pico</div>
+                                </div>
+                                <div>
+                                    <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">Universo</div>
+                                    <div className="text-sm text-gray-700 mt-0.5">Últimos 20 picos · desde 01-sep-2024</div>
+                                </div>
                             </div>
                         </div>
 
                         {total > 0 && (
-                            <div className="flex gap-0.5 h-8">
-                                {bars.map((b, i) => (
-                                    <div key={i} className={`flex-1 rounded-sm ${b === 'hit' ? 'bg-emerald-500' : 'bg-gray-200'}`} title={b === 'hit' ? 'Respondió' : 'No respondió'}></div>
-                                ))}
+                            <div className="mt-4">
+                                <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Secuencia de picos (izq → der, más reciente a la derecha)</div>
+                                <div className="flex gap-0.5 h-6">
+                                    {bars.map((b, i) => (
+                                        <div key={i} className={`flex-1 rounded-sm ${b === 'hit' ? 'bg-emerald-500' : 'bg-gray-300'}`} title={b === 'hit' ? 'Respondió' : 'No respondió'}></div>
+                                    ))}
+                                </div>
                             </div>
                         )}
                     </div>
@@ -1895,7 +2272,7 @@
                     <div className="text-xs text-gray-500 leading-relaxed">
                         Un <strong>pico mediático</strong> es un día con score_media ≥ 55 en la categoría dominante del legislador.
                         Contamos como "respondió" si presentó algún instrumento (iniciativa, proposición, etc.) de la misma categoría
-                        dentro de una ventana de ±7 días alrededor del pico. Muestra: últimos 20 picos desde el inicio de la LXVI.
+                        dentro de una ventana de ±7 días alrededor del pico.
                     </div>
                 </div>
             );
@@ -2023,6 +2400,7 @@
             const [comExpanded, setComExpanded] = useState(false);
             const semaforo = data.semaforo || [];
             const comisiones = data.comisiones_actividad || [];
+            const convocatorias = data.convocatorias || { Diputados: [], Senado: [] };
 
             /* Filtrar comisiones */
             const comisionesFiltradas = comisiones.filter(c => {
@@ -2066,6 +2444,9 @@
                         </div>
                     </div>
 
+                    {/* Layout de dos columnas: tabla principal + side panel con próximas sesiones */}
+                    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-5">
+                    <div>
                     {/* Tabla estilo PFF */}
                     {comisionesFiltradas.length > 0 ? (
                     <div className="glass border border-borde rounded-xl overflow-hidden">
@@ -2134,6 +2515,12 @@
                             <div>No se encontraron comisiones con los filtros seleccionados</div>
                         </div>
                     )}
+                    </div>
+                    {/* Side panel: próximas sesiones — mismo widget que en Inicio */}
+                    <div className="space-y-4">
+                        <ProximasSesionesPanel convocatorias={convocatorias} defaultTab="Diputados" />
+                    </div>
+                    </div>
                 </div>
             );
         }
@@ -2205,21 +2592,29 @@
                     const { fill, border } = getMarkerColor(info.total_articulos);
                     const isSelected = estadoSeleccionado === key;
                     const intensity = info.total_articulos / Math.max(maxArts, 1);
-                    const coreSize = Math.max(6, Math.min(14, 6 + intensity * 10));
-                    /* Número de anillos según intensidad (1-3) */
-                    const numRings = intensity > 0.5 ? 3 : intensity > 0.2 ? 2 : 1;
-                    const boxSize = coreSize + numRings * 12 + 4;
+                    const coreSize = Math.max(7, Math.min(16, 7 + intensity * 11));
+                    /* Anillos expansivos (ping-style CIA): más anillos = más intensidad */
+                    const numRings = intensity > 0.5 ? 4 : intensity > 0.2 ? 3 : 2;
+                    /* Tamaño máximo que alcanza el ring al expandirse (scale=1) */
+                    const ringMax = coreSize + 24 + intensity * 18;
+                    const boxSize = ringMax + 6;
 
-                    /* Anillos concéntricos estilo radar/intel */
+                    /* Anillos que se expanden desde el centro (efecto sonar). Se escalonan con delay. */
                     let ringsHtml = '';
-                    for (let r = 1; r <= numRings; r++) {
-                        const ringSize = coreSize + r * 12;
-                        const opacity = 0.45 - (r * 0.12);
-                        const delay = r * 0.4;
-                        ringsHtml += `<div class="map-ring" style="width:${ringSize}px;height:${ringSize}px;border-color:${fill};border-width:1.5px;opacity:${opacity};animation-delay:${delay}s;"></div>`;
+                    for (let r = 0; r < numRings; r++) {
+                        const delay = (r * 2) / numRings; // reparte en el ciclo de 2s
+                        ringsHtml += `<div class="map-ring" style="width:${ringMax}px;height:${ringMax}px;border-color:${fill};animation-delay:${delay.toFixed(2)}s;"></div>`;
+                    }
+
+                    /* Sweep rotatorio sólo en estados con intensidad alta (evita saturar el mapa) */
+                    let sweepHtml = '';
+                    if (intensity > 0.35) {
+                        const sweepSize = ringMax + 2;
+                        sweepHtml = `<div class="map-sweep" style="width:${sweepSize}px;height:${sweepSize}px;color:${fill};margin-left:-${sweepSize/2}px;margin-top:-${sweepSize/2}px;"></div>`;
                     }
 
                     const dotHtml = `<div style="position:relative;width:${boxSize}px;height:${boxSize}px">` +
+                        sweepHtml +
                         ringsHtml +
                         `<div class="map-dot-core" style="width:${coreSize}px;height:${coreSize}px;background:${fill};color:${fill};` +
                         `border:${isSelected ? '2px solid #1a365d' : '1px solid ' + border};"></div></div>`;

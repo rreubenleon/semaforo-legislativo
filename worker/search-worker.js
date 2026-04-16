@@ -286,7 +286,7 @@ async function handleRadar(request, env) {
       .prepare(`
         SELECT
           l.id, l.nombre, l.camara, l.partido, l.estado,
-          l.distrito, l.foto_url,
+          l.distrito, l.foto_url, l.comisiones_cargo,
           p.biografia, p.anio_nacimiento, p.profesion, p.estudios,
           p.foto_hd_url, p.fuente_scraping,
           s.categoria_dominante, s.prob_reaccion_dominante,
@@ -336,6 +336,7 @@ async function handleRadar(request, env) {
       matchup_grade: r.matchup_grade,
       matchup_comision: r.matchup_comision_target,
       matchup_tasa: r.matchup_tasa_dictamen,
+      comisiones_cargo: r.comisiones_cargo || '',
     }));
 
     // Meta agregada (útil para poblar filtros en el cliente)
