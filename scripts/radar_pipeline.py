@@ -803,96 +803,115 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
 
 
 # ────────────────────────────────────────────
-# Paso 3: Matchup grade (stub, Fase 2 posterior)
+# Paso 3: Matchup grade (tasa de dictamen de comisión, percentil relativo)
 # ────────────────────────────────────────────
-MATCHUP_MIN_DECIDIDOS = 5  # mínimo de dictámenes para asignar grade
+MATCHUP_MIN_DOCS_COM = 10   # mínimo de docs en comisión para calcular tasa
+MATCHUP_MIN_DOCS_LEG = 2    # mínimo de docs del legislador en su comisión dominante
 
 
 def paso_matchup_grade(db_ro: sqlite3.Connection) -> dict:
     """
-    Matchup grade A–F por legislador frente a su comisión dictaminadora
-    más frecuente. Cruza `actividad_legislador` con `sil_documentos` para
-    calcular la tasa de aprobación personal en esa comisión.
+    Matchup grade A–F: qué tan favorable es la comisión dictaminadora
+    principal del legislador. Mide TASA DE DICTAMEN de la comisión,
+    no tasa de aprobación — porque en la LXVI la mayoría de documentos
+    están en "Pendiente". Lo relevante es si la comisión resuelve.
 
-    Fórmula:
-      tasa_aprobacion = aprobados / (aprobados + desechados + retiradas)
-      grade = A/B/C/D/F según percentiles absolutos:
-        A: ≥ 85%
-        B: 70–85%
-        C: 55–70%
-        D: 40–55%
-        F: < 40%
-      Pendientes se excluyen del denominador.
-      Mínimo 5 decididos, si no → NULL.
+    tasa_dictamen = (aprobados + desechados + retiradas) / total
+      → % de documentos que la comisión ha resuelto (en cualquier sentido)
 
-    Escribe matchup_grade / matchup_comision_target / matchup_tasa_dictamen
-    en legisladores_stats.
+    Grading por percentiles entre las 63 comisiones activas:
+      A: top 20%     — comisión que dictamina rápido
+      B: 20–40%      — ritmo bueno
+      C: 40–60%      — ritmo promedio
+      D: 60–80%      — lenta
+      F: bottom 20%  — no dictamina
     """
     logger.info("Cálculo de matchup grade por legislador…")
 
-    # Por cada legislador, encontrar comisión de turno dominante y
-    # tasa de aprobación ahí. Hacemos esto en SQL con JOIN para no
-    # iterar N veces.
-    rows = db_ro.execute(
+    # ─── 1. Tasa de dictamen a nivel comisión ───
+    com_rows = db_ro.execute(
         """
-        SELECT al.legislador_id,
-               al.comision_turno,
+        SELECT al.comision_turno,
                SUM(CASE WHEN sd.estatus LIKE '%Aprobado%' THEN 1 ELSE 0 END) AS aprobados,
                SUM(CASE WHEN sd.estatus LIKE 'Desechado%' OR sd.estatus LIKE 'Retirada%' THEN 1 ELSE 0 END) AS rechazados,
                COUNT(*) AS total
         FROM actividad_legislador al
         JOIN sil_documentos sd ON al.sil_documento_id = sd.id
-        WHERE al.legislador_id IS NOT NULL
-          AND al.comision_turno IS NOT NULL
-          AND al.comision_turno <> ''
+        WHERE al.comision_turno IS NOT NULL AND al.comision_turno <> ''
           AND al.fecha_presentacion >= ?
-        GROUP BY al.legislador_id, al.comision_turno
-        HAVING total >= 3
+        GROUP BY al.comision_turno
+        HAVING total >= ?
         """,
-        (FECHA_INICIO_LXVI,),
+        (FECHA_INICIO_LXVI, MATCHUP_MIN_DOCS_COM),
     ).fetchall()
 
-    # Para cada legislador, tomar la comisión con más documentos
-    por_leg: dict[int, dict] = {}
-    for r in rows:
-        leg_id = r["legislador_id"]
-        tot = r["total"]
-        prev = por_leg.get(leg_id)
-        if prev is None or tot > prev["total"]:
-            por_leg[leg_id] = dict(r)
+    com_tasas: dict[str, float] = {}
+    for r in com_rows:
+        decididos = (r["aprobados"] or 0) + (r["rechazados"] or 0)
+        total = r["total"]
+        tasa = decididos / total if total > 0 else 0
+        com_tasas[r["comision_turno"]] = tasa
 
-    logger.info(f"  Legisladores con comisión dominante (≥3 docs): {len(por_leg)}")
+    logger.info(f"  Comisiones con ≥{MATCHUP_MIN_DOCS_COM} docs: {len(com_tasas)}")
+
+    # ─── 2. Percentiles para grading relativo ───
+    if com_tasas:
+        tasas_sorted = sorted(com_tasas.values())
+        n = len(tasas_sorted)
+        p20 = tasas_sorted[int(n * 0.20)]
+        p40 = tasas_sorted[int(n * 0.40)]
+        p60 = tasas_sorted[int(n * 0.60)]
+        p80 = tasas_sorted[int(n * 0.80)]
+    else:
+        p20 = p40 = p60 = p80 = 0
 
     def _grade(tasa: float) -> str:
-        if tasa >= 0.85: return "A"
-        if tasa >= 0.70: return "B"
-        if tasa >= 0.55: return "C"
-        if tasa >= 0.40: return "D"
+        if tasa >= p80: return "A"
+        if tasa >= p60: return "B"
+        if tasa >= p40: return "C"
+        if tasa >= p20: return "D"
         return "F"
 
+    # ─── 3. Comisión dominante por legislador ───
+    leg_rows = db_ro.execute(
+        """
+        SELECT al.legislador_id, al.comision_turno, COUNT(*) AS total
+        FROM actividad_legislador al
+        JOIN sil_documentos sd ON al.sil_documento_id = sd.id
+        WHERE al.legislador_id IS NOT NULL
+          AND al.comision_turno IS NOT NULL AND al.comision_turno <> ''
+          AND al.fecha_presentacion >= ?
+        GROUP BY al.legislador_id, al.comision_turno
+        HAVING total >= ?
+        """,
+        (FECHA_INICIO_LXVI, MATCHUP_MIN_DOCS_LEG),
+    ).fetchall()
+
+    por_leg: dict[int, dict] = {}
+    for r in leg_rows:
+        lid = r["legislador_id"]
+        prev = por_leg.get(lid)
+        if prev is None or r["total"] > prev["total"]:
+            por_leg[lid] = dict(r)
+
+    # ─── 4. Asignar grades ───
     ahora = datetime.utcnow().isoformat()
     stats_sqls: list[str] = []
     distro = {"A": 0, "B": 0, "C": 0, "D": 0, "F": 0, "NULL": 0}
     calculados = 0
 
     for leg_id, r in por_leg.items():
-        aprobados = r["aprobados"] or 0
-        rechazados = r["rechazados"] or 0
-        decididos = aprobados + rechazados
         comision = r["comision_turno"]
-
-        if decididos >= MATCHUP_MIN_DECIDIDOS:
-            tasa = aprobados / decididos
-            grade = _grade(tasa)
-            tasa_val = f"{tasa:.4f}"
-        else:
-            tasa = None
+        if comision not in com_tasas:
+            distro["NULL"] += 1
             grade = None
             tasa_val = "NULL"
+        else:
+            tasa = com_tasas[comision]
+            grade = _grade(tasa)
+            tasa_val = f"{tasa:.4f}"
+            distro[grade] += 1
 
-        distro[grade if grade else "NULL"] += 1
-
-        # Upsert parcial — no pisamos categoria_dominante / prob / proy si ya están.
         stats_sqls.append(
             "INSERT INTO legisladores_stats "
             "(legislador_id, fecha_calculo, matchup_grade, "

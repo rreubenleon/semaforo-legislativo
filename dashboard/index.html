@@ -1615,7 +1615,7 @@
                             <div><span className="font-semibold">INI 15D</span> — Iniciativas de ley proyectadas en los próximos 15 días, calculadas sobre el ritmo legislativo del periodo LXVI.</div>
                             <div><span className="font-semibold">PROP 15D</span> — Proposiciones con punto de acuerdo proyectadas en los próximos 15 días, misma metodología que INI 15D.</div>
                             <div><span className="font-semibold">L3P Total</span> — Total de instrumentos legislativos (iniciativas + proposiciones) presentados durante toda la legislatura LXVI.</div>
-                            <div><span className="font-semibold">Matchup</span> — Calificación (A–F) que mide la probabilidad de que la comisión dictaminadora apruebe los instrumentos del legislador, basada en tasa histórica de dictamen.</div>
+                            <div><span className="font-semibold">Matchup</span> — Calificación (A–F) que mide qué tan activamente dictamina la comisión principal del legislador. A = la comisión resuelve rápido, F = la mayoría de asuntos se quedan en pendiente. Basada en tasa de dictamen relativa entre comisiones.</div>
                         </div>
                     )}
 
@@ -1721,7 +1721,7 @@
                                     L3P total
                                 </div>
                                 <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2"
-                                    title="Matchup grade vs. la comisión dictaminadora de su tema dominante. A = alta tasa de dictamen favorable; F = hostil. Estilo PFF.">
+                                    title="Matchup grade vs. la comisión a la que más turnan sus instrumentos. A = comisión que dictamina rápido; F = comisión donde los asuntos se quedan en pendiente. Grading relativo entre comisiones.">
                                     Matchup
                                 </div>
                             </div>
@@ -1815,7 +1815,7 @@
                     </div>
                     <div className="hidden md:flex flex-col items-center justify-center gap-0.5">
                         <div className={`inline-flex items-center justify-center w-9 h-9 text-sm font-bold rounded-lg ${gradeStyle}`}
-                            title={grade ? `Matchup vs ${leg.matchup_comision || 'comisión'}${leg.matchup_tasa != null ? ` · ${Math.round(leg.matchup_tasa*100)}%` : ''}` : 'Sin suficientes dictámenes'}>
+                            title={grade ? `Matchup vs ${leg.matchup_comision || 'comisión'}${leg.matchup_tasa != null ? ` · tasa de dictamen ${Math.round(leg.matchup_tasa*100)}%` : ''}` : 'Sin suficientes asuntos turnados'}>
                             {grade || '—'}
                         </div>
                     </div>
@@ -2012,9 +2012,9 @@
                 insights.push(`Proyección agresiva de iniciativas: ${Number(iniProy).toFixed(1)} en los próximos 15 días (acelerando vs baseline LXVI).`);
             }
             if (leg.matchup_grade === 'A' || leg.matchup_grade === 'B') {
-                insights.push(`Tiene buena relación con ${leg.matchup_comision || 'su comisión'}: tasa de aprobación ${Math.round((leg.matchup_tasa || 0) * 100)}%.`);
+                insights.push(`Su comisión ${leg.matchup_comision || 'dominante'} dictamina activamente: ${Math.round((leg.matchup_tasa || 0) * 100)}% de los asuntos salen con decisión formal.`);
             } else if (leg.matchup_grade === 'F') {
-                insights.push(`Matchup difícil: solo ${Math.round((leg.matchup_tasa || 0) * 100)}% de aprobación en ${leg.matchup_comision || 'su comisión dominante'}.`);
+                insights.push(`Matchup difícil: en ${leg.matchup_comision || 'su comisión dominante'} solo ${Math.round((leg.matchup_tasa || 0) * 100)}% de los asuntos se dictaminan — la mayoría se queda en pendiente.`);
             }
             if (l3pTotal === 0) {
                 insights.push('Sin actividad legislativa registrada en la LXVI. Posible legislador suplente, reciente, o nombre no enlazado todavía.');
@@ -2054,7 +2054,7 @@
 
         function TabMatchup({ leg }) {
             if (!leg.matchup_comision) {
-                return <div className="text-xs text-gray-500 italic">Sin comisión dictaminadora dominante todavía. Necesita más instrumentos resueltos (≥5 decididos).</div>;
+                return <div className="text-xs text-gray-500 italic">Sin comisión dictaminadora dominante todavía. Necesita más instrumentos turnados a una comisión con volumen mínimo.</div>;
             }
             const tasa = leg.matchup_tasa != null ? Math.round(leg.matchup_tasa * 100) : null;
             const grade = leg.matchup_grade;
@@ -2067,7 +2067,7 @@
                         <div className="font-semibold text-base">{leg.matchup_comision}</div>
                         <div className="mt-3 flex items-end justify-between">
                             <div>
-                                <div className="text-[10px] uppercase text-white/60 font-semibold">Tasa de aprobación</div>
+                                <div className="text-[10px] uppercase text-white/60 font-semibold">Tasa de dictamen</div>
                                 <div className="text-3xl font-bold mt-0.5">{tasa != null ? `${tasa}%` : '—'}</div>
                             </div>
                             <div className="text-right">
@@ -2079,8 +2079,8 @@
                     </div>
 
                     <div className="text-xs text-gray-500 leading-relaxed">
-                        El grade califica qué tan favorable es la comisión a los instrumentos presentados por este legislador durante la LXVI.
-                        A/B indica alta aprobación; F indica que la mayoría son desechados o retirados. Se excluyen pendientes del denominador.
+                        El grade mide qué tan activamente dictamina la comisión principal del legislador durante la LXVI.
+                        A/B indica que la comisión procesa rápido sus asuntos; F indica que la mayoría de los turnos se quedan en pendiente sin resolución.
                     </div>
                 </div>
             );
