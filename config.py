@@ -771,13 +771,17 @@ CATEGORIAS = {
             "Desarrollo Municipal",
             "Desarrollo Regional",
         ],
-        "trends_keywords": ["Tren Maya", "AIFA", "agua potable", "vivienda", "carreteras México"],
+        "trends_keywords": ["Tren Maya", "AIFA", "agua potable", "vivienda social", "carreteras México"],
         "subcategorias": {
             "transporte_movilidad": {
                 "nombre": "Transporte y movilidad",
+                # Endurecido v3 (abr 2026): se quitó "movilidad" suelta y "cuota"
+                # suelta porque generan FPs (movilidad social/laboral, cuota de
+                # género/sindical). Se agregaron compuestas específicas.
                 "keywords": ["sistema de transporte", "red de transporte", "Tren Maya", "tren interurbano", "tren suburbano", "carretera", "aeropuerto", "AIFA",
-                             "seguridad vial", "movilidad", "proyectos carreteros", "carretero", "red carretera",
-                             "transporte público", "Metro", "Metrobús", "Línea 12", "autopista", "cuota", "peaje",
+                             "seguridad vial", "movilidad urbana", "movilidad vial", "movilidad sostenible",
+                             "proyectos carreteros", "carretero", "red carretera",
+                             "transporte público", "Metro", "Metrobús", "Línea 12", "autopista", "peaje",
                              "Capufe", "bache", "socavón",
                              "aviación", "aviación civil", "Ley de Aviación", "autotransporte", "autotransporte federal",
                              "caminos y puentes", "Ley de Caminos", "transporte federal", "transporte terrestre",
@@ -806,9 +810,16 @@ CATEGORIAS = {
             },
             "vivienda_urbano": {
                 "nombre": "Vivienda y desarrollo urbano",
-                "keywords": ["vivienda", "vivienda social", "Infonavit", "desarrollo urbano", "ordenamiento territorial",
+                # Endurecido v3 (abr 2026): se quitó "vivienda" suelta porque
+                # matchea nombres oficiales genéricos como "censo de población
+                # y vivienda" (INEGI) que NO son propuestas de política de
+                # vivienda. Caso testigo: propuesta de Damaris Silva (abr 2026)
+                # sobre inclusión LGBT+ en censo 2030 caía aquí falsamente.
+                # Se mantienen TODAS las compuestas porque son específicas.
+                "keywords": ["vivienda social", "Infonavit", "desarrollo urbano", "ordenamiento territorial",
                              "Conavi", "crédito de vivienda", "hipoteca", "Ley de Vivienda",
                              "vivienda digna", "vivienda adecuada", "vivienda popular",
+                             "política de vivienda", "déficit habitacional",
                              "Fovissste", "subsidio de vivienda", "rezago habitacional",
                              # Leyes federales
                              "Ley General de Asentamientos Humanos", "Ley del Infonavit"],
@@ -1263,6 +1274,26 @@ CATEGORIAS = {
                     "INMUJERES", "instituto de las mujeres",
                     "política de género", "perspectiva de género",
                     "igualdad institucional",
+                ],
+            },
+            # Agregada v3 (abr 2026): el clasificador solo tenía "diversidad sexual"
+            # bajo derechos_humanos.genero_diversidad, lo que dejaba fuera a
+            # igualdad_genero en propuestas LGBT+. En MX INMUJERES y Conavim
+            # también intervienen en diversidad, así que debe aparecer en ambas.
+            # Caso testigo: propuesta INEGI/censo 2030 de Damaris Silva (abr 2026).
+            "diversidad_sexual_genero": {
+                "nombre": "Diversidad sexual y de género",
+                "keywords": [
+                    "diversidad sexual y de género", "diversidad sexual",
+                    "diversidad de género", "identidad de género",
+                    "orientación sexual", "expresión de género",
+                    "matrimonio igualitario", "adopción homoparental",
+                    "población de la diversidad sexual",
+                    "personas LGBT", "personas LGBTI", "comunidad LGBT",
+                    "LGBT", "LGBTI", "LGBTI+", "LGBTTTI", "LGBTTTIQ", "LGBTTTIQ+",
+                    "homofobia", "transfobia", "lesbofobia", "bifobia",
+                    "transgénero", "transexual", "personas trans",
+                    "infancias trans", "adolescencias trans",
                 ],
             },
         },
