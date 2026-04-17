@@ -293,6 +293,7 @@ async function handleRadar(request, env) {
           s.iniciativas_proy_15d, s.proposiciones_proy_15d,
           s.promedio_l3p_iniciativas, s.promedio_l3p_proposiciones,
           s.matchup_grade, s.matchup_comision_target, s.matchup_tasa_dictamen,
+          s.narrativa,
           hr.respondio, hr.total_oportunidades
         FROM legisladores l
         LEFT JOIN legisladores_perfil p ON p.legislador_id = l.id
@@ -337,6 +338,7 @@ async function handleRadar(request, env) {
       matchup_comision: r.matchup_comision_target,
       matchup_tasa: r.matchup_tasa_dictamen,
       comisiones_cargo: r.comisiones_cargo || '',
+      narrativa: r.narrativa || '',
     }));
 
     // Meta agregada (útil para poblar filtros en el cliente)
