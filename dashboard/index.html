@@ -1683,6 +1683,31 @@
                         )}
                     </div>
 
+                    {/* Top predictor panel — visible when category filter is active */}
+                    {fCategoria && data.autoria?.[fCategoria]?.length > 0 && (
+                        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-200/60 rounded-xl p-4">
+                            <div className="flex items-center gap-2 mb-3">
+                                <span className="text-[10px] font-bold text-indigo-800 uppercase tracking-wider">🎯 Top 5 más probables de presentar en {_catLabel(fCategoria)}</span>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                                {data.autoria[fCategoria].slice(0, 5).map((pleg, i) => (
+                                    <div key={i} className="bg-white rounded-lg p-3 border border-indigo-100 hover:shadow-sm transition-shadow">
+                                        <div className="flex items-center gap-2 mb-1.5">
+                                            <div className="w-5 h-5 rounded-full bg-indigo-100 flex items-center justify-center text-[10px] font-bold text-indigo-600 flex-shrink-0">{i + 1}</div>
+                                            <PartidoBadge partido={pleg.partido} size="sm" />
+                                        </div>
+                                        <div className="text-[11px] font-semibold text-gray-800 truncate leading-tight" title={pleg.nombre}>{formatNombreLegislador({ nombre: pleg.nombre })}</div>
+                                        <div className="flex items-center gap-1.5 mt-1.5">
+                                            <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden"><div className="h-full rounded-full bg-indigo-500 transition-all" style={{ width: `${Math.min(pleg.score, 100)}%` }} /></div>
+                                            <span className="text-[11px] font-bold text-indigo-600">{pleg.score.toFixed(0)}%</span>
+                                        </div>
+                                        <div className="text-[9px] text-gray-400 mt-1">{pleg.docs_categoria || 0} docs previos · {(pleg.camara || '').replace('Cámara de ', '')}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     {error && (
                         <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
                             Error cargando el radar: {error}
@@ -1748,7 +1773,7 @@
 
                     {/* Player modal */}
                     {legSeleccionado && (
-                        <RadarPlayerModal leg={legSeleccionado} onClose={() => setLegSeleccionado(null)} />
+                        <RadarPlayerModal leg={legSeleccionado} autoria={data.autoria || {}} onClose={() => setLegSeleccionado(null)} />
                     )}
                 </div>
             );
@@ -1889,7 +1914,7 @@
             );
         }
 
-        function RadarPlayerModal({ leg, onClose }) {
+        function RadarPlayerModal({ leg, autoria, onClose }) {
             const [tab, setTab] = useState('overview');
             const partidoColor = PARTIDO_COLORS[leg.partido] || '#6B7280';
             const foto = leg.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(leg.nombre || '?')}&background=e5e7eb&color=374151&size=256`;
@@ -1909,10 +1934,26 @@
                 return () => window.removeEventListener('keydown', h);
             }, [onClose]);
 
+            // Build predictor data: in which categories does this legislator appear?
+            const legPredictor = useMemo(() => {
+                if (!autoria) return [];
+                const nombreLeg = (leg.nombre || '').toLowerCase().trim();
+                const hits = [];
+                for (const [cat, legs] of Object.entries(autoria)) {
+                    const found = legs.find(l => (l.nombre || '').toLowerCase().trim() === nombreLeg);
+                    if (found) {
+                        hits.push({ categoria: cat, score: found.score, docs: found.docs_categoria, comisiones_afines: found.comisiones_afines, desglose: found.desglose });
+                    }
+                }
+                hits.sort((a, b) => b.score - a.score);
+                return hits;
+            }, [leg.nombre, autoria]);
+
             const tabs = [
                 { k: 'overview', label: 'Overview' },
                 { k: 'matchup', label: 'Matchup' },
                 { k: 'hit_rate', label: 'Hit Rate' },
+                { k: 'predictor', label: 'Predictor' },
                 { k: 'perfil', label: 'Perfil' },
             ];
 
@@ -1986,6 +2027,7 @@
                             {tab === 'overview' && <TabOverview leg={leg} />}
                             {tab === 'matchup' && <TabMatchup leg={leg} />}
                             {tab === 'hit_rate' && <TabHitRate leg={leg} />}
+                            {tab === 'predictor' && <TabPredictor leg={leg} predictor={legPredictor} />}
                             {tab === 'perfil' && <TabPerfil leg={leg} />}
                         </div>
                     </div>
@@ -2047,6 +2089,47 @@
                                 <div className="text-xl font-bold text-gray-800">{l3pProp}</div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function TabPredictor({ leg, predictor }) {
+            if (!predictor || predictor.length === 0) {
+                return <div className="text-xs text-gray-500 italic">Este legislador no aparece en el modelo de predicción de autoría. Requiere al menos 3 actos legislativos en una categoría y actividad reciente.</div>;
+            }
+            return (
+                <div className="space-y-4">
+                    <div>
+                        <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1">Categorías con mayor probabilidad de autoría</div>
+                        <p className="text-xs text-gray-500 mb-3">Probabilidad de que este legislador presente instrumentos en cada categoría, basada en historial temático, comisión y actividad reciente.</p>
+                    </div>
+                    <div className="space-y-3">
+                        {predictor.slice(0, 5).map((p, i) => {
+                            const barColor = i === 0 ? 'bg-indigo-500' : i === 1 ? 'bg-purple-400' : 'bg-gray-400';
+                            return (
+                                <div key={p.categoria} className="bg-gray-50 rounded-xl p-3.5">
+                                    <div className="flex items-center justify-between mb-1.5">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${i === 0 ? 'bg-indigo-500' : i === 1 ? 'bg-purple-400' : 'bg-gray-400'}`}>{i + 1}</div>
+                                            <span className="text-sm font-semibold text-gray-800">{_catLabel(p.categoria)}</span>
+                                        </div>
+                                        <span className="text-lg font-bold text-gray-800">{p.score.toFixed(0)}%</span>
+                                    </div>
+                                    <div className="w-full bg-gray-200 rounded-full h-2 mb-2 overflow-hidden">
+                                        <div className={`h-full rounded-full ${barColor} transition-all`} style={{ width: `${Math.min(p.score, 100)}%` }} />
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2 text-[10px] text-gray-500">
+                                        <div className="text-center"><div className="font-bold text-gray-700">{p.desglose?.especializacion_tematica?.toFixed(0) || '—'}</div>Historial</div>
+                                        <div className="text-center"><div className="font-bold text-gray-700">{p.desglose?.comision_agenda?.toFixed(0) || '—'}</div>Comisión</div>
+                                        <div className="text-center"><div className="font-bold text-gray-700">{p.docs || 0}</div>Docs previos</div>
+                                    </div>
+                                    {p.comisiones_afines?.length > 0 && (
+                                        <div className="text-[10px] text-gray-400 mt-1.5">Comisiones afines: {p.comisiones_afines.join(', ')}</div>
+                                    )}
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             );
@@ -3451,7 +3534,7 @@
                             <div className="hidden md:block w-px h-5 bg-gray-200 mx-1"></div>
                             {/* Nav tabs */}
                             <div className="nav-tabs-scroll flex items-center gap-0.5 flex-shrink-0 order-3 md:order-none w-full md:w-auto justify-center md:justify-start">
-                                {[['actividad', 'Actividad'], ['legisladores', 'Legisladores'], ['radar', 'Radar'], ['mapa', 'Mapa'], ['comisiones', 'Comisiones'], ['resoluciones', 'Resoluciones']].map(([key, label]) => (
+                                {[['actividad', 'Actividad'], ['radar', 'Radar'], ['mapa', 'Mapa'], ['comisiones', 'Comisiones'], ['resoluciones', 'Resoluciones']].map(([key, label]) => (
                                     <button key={key} onClick={() => setPagina(key)}
                                         className={`nav-pill-tab ${pagina === key ? 'nav-pill-tab-active' : ''}`}>{label}</button>
                                 ))}
