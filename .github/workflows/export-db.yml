@@ -1,0 +1,34 @@
+name: Exportar DB como artifact
+
+on:
+  workflow_dispatch:
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restaurar DB del cache
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-dummy
+          restore-keys: semaforo-db-
+
+      - name: Verificar DB
+        run: |
+          if [ -f semaforo.db ]; then
+            echo "DB encontrada: $(du -h semaforo.db | cut -f1)"
+            sqlite3 semaforo.db "SELECT 'gaceta', COUNT(*), MAX(fecha) FROM gaceta; SELECT 'sil', COUNT(*), MAX(fecha_presentacion) FROM sil_documentos; SELECT 'scores', COUNT(*), MAX(fecha) FROM scores; SELECT 'actividad', COUNT(*), MAX(fecha_presentacion) FROM actividad_legislador;"
+          else
+            echo "ERROR: No se encontró la DB en cache"
+            exit 1
+          fi
+
+      - name: Upload DB como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: semaforo-db-export
+          path: semaforo.db
+          retention-days: 1
