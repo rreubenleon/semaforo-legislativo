@@ -1082,14 +1082,15 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     sync_db()  # Sincronizar datos de scraping con Turso
 
     # SerpAPI free tier: 100 búsquedas/mes. 20 categorías/run = 5 runs/mes.
-    # Solo correr Trends 1 vez al día (run de las 12:00 UTC) para no agotar cuota.
+    # Solo correr Trends 1 vez al día (run de las 12:00-13:00 UTC) para no agotar cuota.
+    # Ventana amplia porque GitHub Actions tiene ±30 min de delay en cron.
     hora_utc = datetime.utcnow().hour
-    if not skip_trends and hora_utc == 12:
+    if not skip_trends and hora_utc in (12, 13):
         paso_3_scraping_trends()
     elif skip_trends:
         logger.info("PASO 3: Google Trends OMITIDO (--skip-trends)")
     else:
-        logger.info(f"PASO 3: Google Trends OMITIDO (hora UTC={hora_utc}, solo corre a las 12:00 UTC)")
+        logger.info(f"PASO 3: Google Trends OMITIDO (hora UTC={hora_utc}, solo corre a las 12-13 UTC)")
 
     # Paso 3b: SIL (incremental — solo documentos nuevos)
     logger.info("=" * 60)
