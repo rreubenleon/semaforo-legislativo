@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<!-- FIAT v3.1 - Sistema Predictivo Legislativo -->
+<!-- FIAT v3.1 - Inteligencia Legislativa -->
 <html lang="es">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>FIAT - Sistema Predictivo Legislativo</title>
+    <title>Fiat | Inteligencia Legislativa</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png" />
@@ -57,33 +57,19 @@
         .map-ring {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(0.35);
-            border-radius: 50%; border-style: solid; border-width: 2px;
+            border-radius: 50%; border-style: solid; border-width: 1px;
             pointer-events: none;
             will-change: transform, opacity;
-            animation: radar-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+            animation: radar-ping 2.5s cubic-bezier(0, 0, 0.2, 1) infinite;
         }
         .map-sweep {
-            position: absolute; top: 50%; left: 50%;
-            border-radius: 50%;
-            pointer-events: none;
-            /* Conic gradient: fan-shaped wedge that rotates like a real radar sweep. */
-            background: conic-gradient(from 0deg, transparent 0deg, transparent 300deg, currentColor 360deg);
-            opacity: 0.35;
-            mask: radial-gradient(circle, black 0%, black 70%, transparent 100%);
-            -webkit-mask: radial-gradient(circle, black 0%, black 70%, transparent 100%);
-            will-change: transform;
-            animation: radar-sweep 2.5s linear infinite;
+            display: none;
         }
         .map-dot-core {
             position: absolute; top: 50%; left: 50%;
             transform: translate(-50%, -50%);
             border-radius: 50%;
-            box-shadow: 0 0 10px 3px currentColor, 0 0 20px 6px currentColor;
-            animation: pulse-dot 1.2s ease-in-out infinite;
-        }
-        @keyframes pulse-dot {
-            0%, 100% { box-shadow: 0 0 10px 3px currentColor, 0 0 20px 6px currentColor; }
-            50%      { box-shadow: 0 0 14px 5px currentColor, 0 0 26px 9px currentColor; }
+            box-shadow: 0 0 0 2px rgba(255,255,255,0.6);
         }
         .fuentes-panel::-webkit-scrollbar { width: 4px; }
         .fuentes-panel::-webkit-scrollbar-track { background: transparent; }
@@ -1788,7 +1774,7 @@
             const propProy = leg.proposiciones_proy_15d != null ? Number(leg.proposiciones_proy_15d).toFixed(1) : '—';
             const l3pTotal = (leg.l3p_iniciativas ?? 0) + (leg.l3p_proposiciones ?? 0);
             const grade = leg.matchup_grade;
-            const gradeStyle = grade === 'A' ? 'bg-emerald-500 text-white' : grade === 'B' ? 'bg-lime-500 text-white' : grade === 'C' ? 'bg-amber-500 text-white' : grade === 'D' ? 'bg-orange-500 text-white' : grade === 'F' ? 'bg-red-500 text-white' : 'bg-gray-200 text-gray-500';
+            const gradeStyle = grade === 'A' ? 'text-emerald-600' : grade === 'B' ? 'text-lime-600' : grade === 'C' ? 'text-amber-600' : grade === 'D' ? 'text-orange-600' : grade === 'F' ? 'text-red-600' : 'text-gray-400';
 
             return (
                 <div onClick={onClick}
@@ -1815,7 +1801,7 @@
                         <div><div className="text-[8px] uppercase text-gray-400">Hit</div><div className={`text-sm font-bold ${hitColor}`}>{hitPct != null ? `${hitPct}%` : '—'}</div></div>
                         <div><div className="text-[8px] uppercase text-gray-400">Ini</div><div className="text-sm font-bold text-gray-800">{iniProy}</div></div>
                         <div><div className="text-[8px] uppercase text-gray-400">Prop</div><div className="text-sm font-bold text-gray-800">{propProy}</div></div>
-                        <div><div className="text-[8px] uppercase text-gray-400">Match</div><div className={`inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold rounded ${gradeStyle}`}>{grade || '—'}</div></div>
+                        <div><div className="text-[8px] uppercase text-gray-400">Match</div><div className={`text-sm font-black ${gradeStyle}`}>{grade || '—'}</div></div>
                     </div>
 
                     {/* Desktop columns */}
@@ -1839,7 +1825,7 @@
                         <div className="text-base font-bold text-gray-800 leading-tight">{l3pTotal}</div>
                     </div>
                     <div className="hidden md:flex flex-col items-center justify-center gap-0.5">
-                        <div className={`inline-flex items-center justify-center w-9 h-9 text-sm font-bold rounded-lg ${gradeStyle}`}
+                        <div className={`text-lg font-black ${gradeStyle}`}
                             title={grade ? `Matchup vs ${leg.matchup_comision || 'comisión'}${leg.matchup_tasa != null ? ` · tasa de dictamen ${Math.round(leg.matchup_tasa*100)}%` : ''}` : 'Sin suficientes asuntos turnados'}>
                             {grade || '—'}
                         </div>
@@ -1924,8 +1910,8 @@
             const l3pIni = leg.l3p_iniciativas ?? 0;
             const l3pProp = leg.l3p_proposiciones ?? 0;
             const grade = leg.matchup_grade;
-            const gradeGlow = grade === 'A' ? 'from-emerald-500 to-emerald-600' : grade === 'B' ? 'from-lime-500 to-lime-600' : grade === 'C' ? 'from-amber-500 to-amber-600' : grade === 'D' ? 'from-orange-500 to-orange-600' : grade === 'F' ? 'from-red-500 to-red-600' : 'from-gray-400 to-gray-500';
-            const gradeLabel = { A: 'GREAT', B: 'GOOD', C: 'FAIR', D: 'POOR', F: 'TOUGH' }[grade] || '';
+            const gradeColor = grade === 'A' ? 'text-emerald-500' : grade === 'B' ? 'text-lime-600' : grade === 'C' ? 'text-amber-500' : grade === 'D' ? 'text-orange-500' : grade === 'F' ? 'text-red-500' : 'text-gray-400';
+            const gradeLabel = { A: 'EXCELENTE', B: 'BUENO', C: 'REGULAR', D: 'BAJO', F: 'DIFÍCIL' }[grade] || '';
 
             // Close on escape
             useEffect(() => {
@@ -1961,7 +1947,7 @@
                 <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center bg-black/50 backdrop-blur-sm p-0 md:p-4" onClick={onClose}>
                     <div className="bg-white w-full md:max-w-2xl md:rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-screen md:max-h-[90vh]" onClick={e => e.stopPropagation()}>
                         {/* Header */}
-                        <div className="relative bg-gradient-to-br from-gray-900 to-gray-800 text-white p-4 md:p-5">
+                        <div className="relative bg-gradient-to-br from-black to-gray-900 text-white p-4 md:p-5">
                             <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 hover:text-white transition-colors">
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/></svg>
                             </button>
@@ -1985,9 +1971,9 @@
                                     <ComisionesLegislador raw={leg.comisiones_cargo} dark />
                                 </div>
                                 {grade && (
-                                    <div className={`bg-gradient-to-br ${gradeGlow} rounded-xl w-16 h-16 flex flex-col items-center justify-center flex-shrink-0 shadow-lg`}>
-                                        <div className="text-2xl font-black leading-none">{grade}</div>
-                                        <div className="text-[9px] font-bold tracking-wider mt-0.5">{gradeLabel}</div>
+                                    <div className="flex flex-col items-center justify-center flex-shrink-0">
+                                        <div className={`text-3xl font-black leading-none ${gradeColor}`}>{grade}</div>
+                                        <div className={`text-[9px] font-bold tracking-wider mt-0.5 ${gradeColor}`}>{gradeLabel}</div>
                                     </div>
                                 )}
                             </div>
@@ -2067,8 +2053,7 @@
                     {leg.narrativa && (
                         <div className="bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-200/50 rounded-xl p-3.5">
                             <div className="flex items-center gap-1.5 mb-1.5">
-                                <span className="text-xs">✨</span>
-                                <span className="text-[10px] uppercase tracking-wider text-violet-600 font-semibold">Narrativa IA</span>
+                                <span className="text-[10px] uppercase tracking-wider text-violet-600 font-semibold">Descripción IA</span>
                             </div>
                             <p className="text-sm text-gray-700 leading-relaxed">{leg.narrativa}</p>
                         </div>
@@ -2150,7 +2135,8 @@
             }
             const tasa = leg.matchup_tasa != null ? Math.round(leg.matchup_tasa * 100) : null;
             const grade = leg.matchup_grade;
-            const gradeLabel = { A: 'GREAT', B: 'GOOD', C: 'FAIR', D: 'POOR', F: 'TOUGH' }[grade] || '—';
+            const gradeLabel = { A: 'EXCELENTE', B: 'BUENO', C: 'REGULAR', D: 'BAJO', F: 'DIFÍCIL' }[grade] || '—';
+            const gradeColor = grade === 'A' ? 'text-emerald-400' : grade === 'B' ? 'text-lime-400' : grade === 'C' ? 'text-amber-400' : grade === 'D' ? 'text-orange-400' : grade === 'F' ? 'text-red-400' : 'text-gray-400';
 
             return (
                 <div className="space-y-4">
@@ -2163,9 +2149,9 @@
                                 <div className="text-3xl font-bold mt-0.5">{tasa != null ? `${tasa}%` : '—'}</div>
                             </div>
                             <div className="text-right">
-                                <div className="text-[10px] uppercase text-white/60 font-semibold">Grade</div>
-                                <div className="text-2xl font-black">{grade || '—'}</div>
-                                <div className="text-[10px] font-bold tracking-wider text-white/80">{gradeLabel}</div>
+                                <div className="text-[10px] uppercase text-white/60 font-semibold">Calificación</div>
+                                <div className={`text-2xl font-black ${gradeColor}`}>{grade || '—'}</div>
+                                <div className={`text-[10px] font-bold tracking-wider ${gradeColor}`}>{gradeLabel}</div>
                             </div>
                         </div>
                     </div>
@@ -3543,7 +3529,7 @@
                             <div className="hidden md:block w-px h-5 bg-gray-200 mx-1"></div>
                             {/* Nav tabs */}
                             <div className="nav-tabs-scroll flex items-center gap-0.5 flex-shrink-0 order-3 md:order-none w-full md:w-auto justify-center md:justify-start">
-                                {[['actividad', 'Actividad'], ['radar', 'Radar'], ['mapa', 'Mapa'], ['comisiones', 'Comisiones'], ['resoluciones', 'Resoluciones']].map(([key, label]) => (
+                                {[['actividad', 'Actividad'], ['radar', 'Radar de Legisladores'], ['mapa', 'Mapa'], ['comisiones', 'Comisiones'], ['resoluciones', 'Resoluciones']].map(([key, label]) => (
                                     <button key={key} onClick={() => setPagina(key)}
                                         className={`nav-pill-tab ${pagina === key ? 'nav-pill-tab-active' : ''}`}>{label}</button>
                                 ))}
