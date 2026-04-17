@@ -13,6 +13,7 @@ Ejecuta el pipeline completo:
 import json
 import logging
 import argparse
+import os
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -363,10 +364,54 @@ def paso_3_scraping_trends():
 
 
 def paso_4_clasificacion_nlp():
-    """Paso 4: Clasificar artículos sin categoría."""
+    """Paso 4: Clasificar artículos sin categoría.
+
+    Si la variable de entorno FIAT_FORCE_NLP_RESET_DAYS está seteada a un
+    entero N > 0, antes de clasificar se LIMPIAN las categorías de los
+    últimos N días en gaceta + articulos + sil_documentos, forzando una
+    re-clasificación completa con la config vigente. Útil después de
+    cambios al clasificador o a config.CATEGORIAS para que los
+    documentos viejos se recategoricen con las nuevas reglas.
+    """
     logger.info("=" * 60)
     logger.info("PASO 4: Clasificación NLP")
     logger.info("=" * 60)
+
+    reset_days_raw = os.environ.get("FIAT_FORCE_NLP_RESET_DAYS", "0")
+    try:
+        reset_days = int(reset_days_raw)
+    except ValueError:
+        reset_days = 0
+
+    if reset_days > 0:
+        import sqlite3
+        from db import get_connection
+        logger.info(
+            f"FIAT_FORCE_NLP_RESET_DAYS={reset_days} → limpiando "
+            f"categorias de últimos {reset_days} días antes de clasificar"
+        )
+        conn = get_connection()
+        r1 = conn.execute(
+            f"UPDATE gaceta SET categorias = '' "
+            f"WHERE fecha >= date('now', '-{reset_days} days')"
+        )
+        r2 = conn.execute(
+            f"UPDATE articulos SET categorias = '' "
+            f"WHERE fecha >= date('now', '-{reset_days} days')"
+        )
+        try:
+            r3 = conn.execute(
+                f"UPDATE sil_documentos SET categoria = '' "
+                f"WHERE fecha_presentacion >= date('now', '-{reset_days} days')"
+            )
+            sil_n = r3.rowcount
+        except sqlite3.OperationalError:
+            sil_n = 0  # tabla puede no tener columna
+        conn.commit()
+        logger.info(
+            f"Reset NLP: gaceta={r1.rowcount} articulos={r2.rowcount} "
+            f"sil={sil_n}"
+        )
 
     inicio = time.time()
     clasificados = actualizar_categorias_en_db()

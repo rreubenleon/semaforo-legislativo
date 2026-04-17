@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: '0 */4 * * *'  # Cada 4 horas: 00, 04, 08, 12, 16, 20 UTC
   workflow_dispatch:  # Permite ejecutarlo manualmente desde GitHub
+    inputs:
+      force_nlp_reset_days:
+        description: 'Forzar re-clasificación NLP de últimos N días (0 = no resetear)'
+        required: false
+        default: '0'
+        type: string
 
 permissions:
   contents: write
@@ -77,6 +83,9 @@ jobs:
           TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           SEMAFORO_DB_MODE: local
+          # Solo setea reset cuando el workflow_dispatch lo pide; el
+          # cron programado pasa '' y main.py lo interpreta como 0.
+          FIAT_FORCE_NLP_RESET_DAYS: ${{ inputs.force_nlp_reset_days || '0' }}
         continue-on-error: false
 
       # 5a. Health check — advierte si algún scraper no produjo datos en 24h
