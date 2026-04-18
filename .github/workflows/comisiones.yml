@@ -1,0 +1,113 @@
+name: Comisiones - Pipeline D1
+
+# Pipeline SEPARADO del principal (pipeline.yml). Lee semaforo.db en modo
+# read-only y escribe resultados a Cloudflare D1 (tabla comisiones_stats).
+#
+# Cadencia escalonada:
+#   - Lunes  14:00 UTC: SITL batch 1 (IDs 5-29) + Gaceta refresh
+#   - Martes 14:00 UTC: SITL batch 2 (IDs 30-57)
+#
+# No toca el cache de semaforo.db — solo lectura.
+
+on:
+  schedule:
+    - cron: '0 14 * * 1'   # Lunes 14:00 UTC → SITL lunes + gaceta
+    - cron: '0 14 * * 2'   # Martes 14:00 UTC → SITL martes
+  workflow_dispatch:
+    inputs:
+      paso:
+        description: 'Paso a ejecutar'
+        required: true
+        type: choice
+        options:
+          - todo
+          - gaceta
+          - sitl-lunes
+          - sitl-martes
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "comisiones-pipeline"
+  cancel-in-progress: false
+
+jobs:
+  comisiones:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Obtener semaforo.db (read-only)
+        id: cache-db
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-readonly
+          restore-keys: |
+            semaforo-db-
+
+      - name: Fallback a release si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            echo "No se encontró DB en cache, descargando seed..."
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          else
+            echo "DB restaurada del cache ($(du -h semaforo.db | cut -f1))"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Forzar DB en modo solo lectura
+        run: chmod 0444 semaforo.db
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+          npm install -g wrangler@3
+
+      - name: Decidir paso
+        id: paso
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            PASO="${{ github.event.inputs.paso }}"
+          elif [ "${{ github.event.schedule }}" = "0 14 * * 1" ]; then
+            PASO="lunes"
+          else
+            PASO="martes"
+          fi
+          echo "paso=$PASO" >> $GITHUB_OUTPUT
+          echo "Paso resuelto: $PASO"
+
+      # Lunes: primero gaceta, luego SITL batch 1
+      - name: Paso Gaceta (datos SQLite → D1)
+        if: steps.paso.outputs.paso == 'lunes' || steps.paso.outputs.paso == 'gaceta' || steps.paso.outputs.paso == 'todo'
+        run: python scripts/refresh_comisiones_sitl.py --paso gaceta
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Paso SITL batch lunes (IDs 5-29)
+        if: steps.paso.outputs.paso == 'lunes' || steps.paso.outputs.paso == 'sitl-lunes' || steps.paso.outputs.paso == 'todo'
+        run: python scripts/refresh_comisiones_sitl.py --paso sitl --batch lunes
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      - name: Paso SITL batch martes (IDs 30-57)
+        if: steps.paso.outputs.paso == 'martes' || steps.paso.outputs.paso == 'sitl-martes' || steps.paso.outputs.paso == 'todo'
+        run: python scripts/refresh_comisiones_sitl.py --paso sitl --batch martes
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

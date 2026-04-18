@@ -29,7 +29,7 @@ export default {
 
     if (url.pathname === '/') {
       return corsResponse(
-        { status: 'ok', endpoints: ['/buscar', '/registro', '/radar'] },
+        { status: 'ok', endpoints: ['/buscar', '/registro', '/radar', '/comisiones'] },
         200,
         request
       );
@@ -43,6 +43,11 @@ export default {
     // ── Radar de Legisladores ──
     if (url.pathname === '/radar') {
       return handleRadar(request, env);
+    }
+
+    // ── Stats de Comisiones (SITL) ──
+    if (url.pathname === '/comisiones') {
+      return handleComisiones(request, env);
     }
 
     if (url.pathname !== '/buscar') {
@@ -376,6 +381,112 @@ async function handleRadar(request, env) {
       500,
       request
     );
+  }
+}
+
+
+/**
+ * Maneja GET /comisiones — sirve stats de comisiones SITL desde D1
+ * Query params:
+ *   camara=Diputados (default, solo Diputados por ahora)
+ */
+async function handleComisiones(request, env) {
+  if (request.method !== 'GET') {
+    return corsResponse({ error: 'Solo GET' }, 405, request);
+  }
+
+  const db = env.DB;
+  const url = new URL(request.url);
+  const camara = url.searchParams.get('camara') || '';
+
+  try {
+    let query = `
+      SELECT nombre, camara, categoria, categoria_nombre, comt_id,
+             docs_dictamen, docs_iniciativa, docs_proposicion,
+             docs_comunicacion, docs_otro, total_docs,
+             score_actividad, ultima_actividad,
+             sitl_turnadas, sitl_aprobadas, sitl_desechadas,
+             sitl_pendientes, sitl_retiradas,
+             sitl_tasa_aprobacion, sitl_tasa_resolucion,
+             sitl_ini_turnadas, sitl_ini_aprobadas, sitl_ini_pendientes,
+             sitl_prop_turnadas, sitl_prop_aprobadas, sitl_prop_pendientes,
+             ultimo_dictamen, dias_sin_dictamen,
+             composicion, total_integrantes,
+             historico_mensual,
+             actualizado_gaceta, actualizado_sitl
+      FROM comisiones_stats
+    `;
+    const params = [];
+    if (camara === 'Senado' || camara === 'Diputados') {
+      query += ` WHERE camara = ?`;
+      params.push(camara);
+    }
+    query += ` ORDER BY score_actividad DESC`;
+
+    const rows = await db.prepare(query).bind(...params).all();
+
+    const comisiones = (rows.results || []).map(r => {
+      // Parsear JSON de composición e histórico
+      let composicion = [];
+      try { composicion = r.composicion ? JSON.parse(r.composicion) : []; } catch {}
+      let historico_mensual = [];
+      try { historico_mensual = r.historico_mensual ? JSON.parse(r.historico_mensual) : []; } catch {}
+
+      // Construir objeto compatible con dashboard
+      const obj = {
+        nombre: r.nombre,
+        camara: r.camara,
+        categoria: r.categoria,
+        categoria_nombre: r.categoria_nombre,
+        tipos: {
+          dictamen: r.docs_dictamen || 0,
+          iniciativa: r.docs_iniciativa || 0,
+          proposicion: r.docs_proposicion || 0,
+          comunicacion: r.docs_comunicacion || 0,
+          otro: r.docs_otro || 0,
+        },
+        total_docs: r.total_docs || 0,
+        score_actividad: r.score_actividad || 0,
+        ultima_actividad: r.ultima_actividad,
+        ultimo_dictamen: r.ultimo_dictamen,
+        dias_sin_dictamen: r.dias_sin_dictamen,
+        composicion,
+        total_integrantes: r.total_integrantes || 0,
+        historico_mensual,
+      };
+
+      // SITL solo para Diputados con datos
+      if (r.sitl_turnadas != null) {
+        obj.sitl = {
+          turnadas: r.sitl_turnadas,
+          aprobadas: r.sitl_aprobadas,
+          desechadas: r.sitl_desechadas,
+          pendientes: r.sitl_pendientes,
+          retiradas: r.sitl_retiradas,
+          tasa_aprobacion: r.sitl_tasa_aprobacion,
+          tasa_resolucion: r.sitl_tasa_resolucion,
+          iniciativas: {
+            turnadas: r.sitl_ini_turnadas,
+            aprobadas: r.sitl_ini_aprobadas,
+            pendientes: r.sitl_ini_pendientes,
+          },
+          proposiciones: {
+            turnadas: r.sitl_prop_turnadas,
+            aprobadas: r.sitl_prop_aprobadas,
+            pendientes: r.sitl_prop_pendientes,
+          },
+        };
+      }
+
+      return obj;
+    });
+
+    return corsResponse({
+      total: comisiones.length,
+      comisiones,
+    }, 200, request);
+  } catch (err) {
+    return corsResponse({ error: 'Error consultando D1', detalle: err.message }, 500, request);
   }
 }
 
