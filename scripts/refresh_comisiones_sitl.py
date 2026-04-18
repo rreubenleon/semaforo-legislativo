@@ -243,7 +243,10 @@ def paso_gaceta(dry_run=False):
             if camara == "Diputados":
                 keys_to_add.append(f"Comisión de {com_name}|{camara}")
 
-            miembro = {"nombre": _invertir_nombre(r["nombre"]), "cargo": cargo, "partido": r["partido"] or "?"}
+            # Solo Diputados tiene nombres invertidos ("Apellido Apellido Nombre")
+            # Senado ya guarda en orden natural ("Nombre Apellido Apellido")
+            nombre_mostrar = _invertir_nombre(r["nombre"]) if camara == "Diputados" else r["nombre"]
+            miembro = {"nombre": nombre_mostrar, "cargo": cargo, "partido": r["partido"] or "?"}
             for k in keys_to_add:
                 composicion_map.setdefault(k, []).append(miembro)
 

@@ -2746,14 +2746,22 @@
                                         {c.camara === 'Senado' ? 'Sen.' : 'Dip.'}
                                     </span>
                                 </div>
-                                {/* Dict */}
-                                <div className="text-center text-sm font-semibold text-gray-700 hidden md:block">{c.tipos?.dictamen || <span className="text-gray-300">-</span>}</div>
-                                {/* Inic */}
-                                <div className="text-center text-sm font-semibold text-gray-700 hidden md:block">{c.tipos?.iniciativa || <span className="text-gray-300">-</span>}</div>
-                                {/* Prop */}
-                                <div className="text-center text-sm font-semibold text-gray-700 hidden md:block">{c.tipos?.proposicion || <span className="text-gray-300">-</span>}</div>
-                                {/* Total */}
-                                <div className="text-center text-sm font-bold text-gray-800 hidden md:block">{c.total_docs}</div>
+                                {/* Dict / Inic / Prop / Total: SITL para Diputados, Gaceta para Senado */}
+                                {(() => {
+                                    const useSitl = c.camara === 'Diputados' && c.sitl;
+                                    const dict = useSitl ? (c.sitl.aprobadas || 0) : (c.tipos?.dictamen || 0);
+                                    const inic = useSitl ? (c.sitl.iniciativas?.turnadas || 0) : (c.tipos?.iniciativa || 0);
+                                    const prop = useSitl ? (c.sitl.proposiciones?.turnadas || 0) : (c.tipos?.proposicion || 0);
+                                    const total = useSitl ? (c.sitl.turnadas || 0) : (c.total_docs || 0);
+                                    return (
+                                        <>
+                                            <div className="text-center text-sm font-semibold text-gray-700 hidden md:block font-mono">{dict || <span className="text-gray-300">-</span>}</div>
+                                            <div className="text-center text-sm font-semibold text-gray-700 hidden md:block font-mono">{inic || <span className="text-gray-300">-</span>}</div>
+                                            <div className="text-center text-sm font-semibold text-gray-700 hidden md:block font-mono">{prop || <span className="text-gray-300">-</span>}</div>
+                                            <div className="text-center text-sm font-bold text-gray-800 hidden md:block font-mono">{total}</div>
+                                        </>
+                                    );
+                                })()}
                                 {/* Score pill */}
                                 <div className="text-center">
                                     <span className={`inline-block w-10 py-0.5 rounded-md text-xs font-bold ${scoreBg}`}
