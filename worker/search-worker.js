@@ -409,7 +409,7 @@ async function handleComisiones(request, env) {
              sitl_pendientes, sitl_retiradas,
              sitl_tasa_aprobacion, sitl_tasa_resolucion,
              sitl_ini_turnadas, sitl_ini_aprobadas, sitl_ini_pendientes,
-             sitl_prop_turnadas, sitl_prop_aprobadas, sitl_prop_pendientes,
+             sitl_prop_turnadas, sitl_prop_aprobadas, sitl_prop_pendientes, sitl_desglose,
              ultimo_dictamen, dias_sin_dictamen,
              composicion, total_integrantes,
              historico_mensual,
@@ -457,6 +457,9 @@ async function handleComisiones(request, env) {
 
       // SITL solo para Diputados con datos
       if (r.sitl_turnadas != null) {
+        let desglose = {};
+        try { desglose = r.sitl_desglose ? JSON.parse(r.sitl_desglose) : {}; } catch {}
+
         obj.sitl = {
           turnadas: r.sitl_turnadas,
           aprobadas: r.sitl_aprobadas,
@@ -475,6 +478,7 @@ async function handleComisiones(request, env) {
             aprobadas: r.sitl_prop_aprobadas,
             pendientes: r.sitl_prop_pendientes,
           },
+          desglose,
         };
       }
 

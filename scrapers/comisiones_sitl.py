@@ -44,10 +44,83 @@ def _parse_int(text: str) -> int:
     return int(digits) if digits else 0
 
 
+def _parse_sections(soup) -> dict:
+    """
+    Parsea la página SITL separando por tipo de turno:
+    - unica: Comisión Única (dictamen directo)
+    - unidas: Comisiones Unidas (dictamen compartido)
+    - opinion: Opinión
+    Devuelve dict {seccion: {doc_estatus: count, ...}}.
+    """
+    EDOT_MAP = {"T": "turnadas", "A": "aprobadas", "D": "desechadas",
+                "B": "retiradas", "P": "pendientes"}
+
+    # Recorrer todos los <td> y <a> en orden de aparición
+    # Los headers de sección (class=linkTitulo1) delimitan las secciones
+    current_section = "unica"  # default si no hay header explícito
+    sections = {}
+
+    for el in soup.find_all(["td", "a"]):
+        if el.name == "td" and "linkTitulo1" in (el.get("class") or []):
+            text = el.get_text(strip=True).upper()
+            if "COMISIÓN ÚNICA" in text:
+                current_section = "unica"
+            elif "COMISIONES UNIDAS" in text:
+                current_section = "unidas"
+            elif "OPINIÓN" in text:
+                current_section = "opinion"
+        elif el.name == "a" and "estilolinks" in (el.get("class") or []):
+            href = el.get("href", "")
+            count = _parse_int(el.get_text())
+            if count == 0:
+                continue
+            # Tipo de documento
+            if "iniciativas" in href:
+                doc = "iniciativas"
+            elif "proposiciones" in href:
+                doc = "proposiciones"
+            elif "minutas" in href:
+                doc = "minutas"
+            else:
+                continue
+            # Estatus
+            edot_match = re.search(r"edot=(\w)", href)
+            if not edot_match:
+                continue
+            estatus = EDOT_MAP.get(edot_match.group(1))
+            if not estatus:
+                continue
+            # Acumular
+            if current_section not in sections:
+                sections[current_section] = {}
+            key = f"{doc}_{estatus}"
+            sections[current_section][key] = sections[current_section].get(key, 0) + count
+
+    return sections
+
+
+def _aggregate_section(data: dict) -> dict:
+    """Agrega conteos de una sección en totales."""
+    result = {"turnadas": 0, "aprobadas": 0, "desechadas": 0,
+              "retiradas": 0, "pendientes": 0,
+              "iniciativas_turnadas": 0, "iniciativas_aprobadas": 0, "iniciativas_pendientes": 0,
+              "proposiciones_turnadas": 0, "proposiciones_aprobadas": 0, "proposiciones_pendientes": 0}
+    for key, count in data.items():
+        doc, estatus = key.rsplit("_", 1)
+        if estatus in result:
+            result[estatus] += count
+        specific = f"{doc}_{estatus}"
+        if specific in result:
+            result[specific] += count
+    t = result["turnadas"]
+    result["tasa_aprobacion"] = round(result["aprobadas"] / t * 100, 1) if t > 0 else 0.0
+    return result
+
+
 def _scrape_comision(comt_id: int) -> Optional[dict]:
     """
     Scrapea la página de resumen de una comisión.
-    Devuelve dict con nombre y conteos agregados, o None si falla.
+    Devuelve dict con nombre, conteos totales, y desglose única/unidas/opinión.
     """
     try:
         resp = requests.get(
@@ -74,57 +147,35 @@ def _scrape_comision(comt_id: int) -> Optional[dict]:
         return None
     nombre = nombre_match.group(1).strip()
 
-    # Parsear todas las filas de datos
-    # Columnas: Documento | Turnadas | Aprobadas | Desechadas | Atendidas | Retiradas | Pendientes
-    totales = {
-        "turnadas": 0, "aprobadas": 0, "desechadas": 0,
-        "atendidas": 0, "retiradas": 0, "pendientes": 0,
-        "iniciativas_turnadas": 0, "iniciativas_aprobadas": 0, "iniciativas_pendientes": 0,
-        "proposiciones_turnadas": 0, "proposiciones_aprobadas": 0, "proposiciones_pendientes": 0,
-        "minutas_turnadas": 0, "minutas_aprobadas": 0, "minutas_pendientes": 0,
-    }
+    # Parsear por sección (única / unidas / opinión)
+    sections = _parse_sections(soup)
 
-    # Buscar links con conteos (son los <a> con href a iniciativaslxvi.php o proposicioneslxvi.php)
-    links = soup.find_all("a", class_="estilolinks")
-    for link in links:
-        href = link.get("href", "")
-        count = _parse_int(link.get_text())
-        if count == 0:
-            continue
+    # Totales agregados (todas las secciones)
+    totales = {"turnadas": 0, "aprobadas": 0, "desechadas": 0,
+               "atendidas": 0, "retiradas": 0, "pendientes": 0,
+               "iniciativas_turnadas": 0, "iniciativas_aprobadas": 0, "iniciativas_pendientes": 0,
+               "proposiciones_turnadas": 0, "proposiciones_aprobadas": 0, "proposiciones_pendientes": 0,
+               "minutas_turnadas": 0, "minutas_aprobadas": 0, "minutas_pendientes": 0}
 
-        # Determinar tipo de documento
-        if "iniciativas" in href:
-            doc_type = "iniciativas"
-        elif "proposiciones" in href:
-            doc_type = "proposiciones"
-        elif "minutas" in href:
-            doc_type = "minutas"
-        else:
-            continue
+    for sec_data in sections.values():
+        for key, count in sec_data.items():
+            doc, estatus = key.rsplit("_", 1)
+            if estatus in totales:
+                totales[estatus] += count
+            specific = f"{doc}_{estatus}"
+            if specific in totales:
+                totales[specific] += count
 
-        # Determinar estatus
-        edot_match = re.search(r"edot=(\w)", href)
-        if not edot_match:
-            continue
-        edot = edot_match.group(1)
-        estatus_map = {"T": "turnadas", "A": "aprobadas", "D": "desechadas",
-                       "B": "retiradas", "P": "pendientes"}
-        estatus = estatus_map.get(edot)
-        if not estatus:
-            continue
-
-        # Acumular en totales generales
-        totales[estatus] += count
-        # Acumular por tipo de documento
-        key = f"{doc_type}_{estatus}"
-        if key in totales:
-            totales[key] += count
-
-    # Calcular tasa de resolución
     total_turnadas = totales["turnadas"]
     total_resueltas = totales["aprobadas"] + totales["desechadas"] + totales["atendidas"]
     tasa_resolucion = round(total_resueltas / total_turnadas * 100, 1) if total_turnadas > 0 else 0.0
     tasa_aprobacion = round(totales["aprobadas"] / total_turnadas * 100, 1) if total_turnadas > 0 else 0.0
+
+    # Desglose por tipo de turno
+    desglose = {}
+    for sec_name in ["unica", "unidas", "opinion"]:
+        if sec_name in sections:
+            desglose[sec_name] = _aggregate_section(sections[sec_name])
 
     return {
         "comt_id": comt_id,
@@ -132,6 +183,7 @@ def _scrape_comision(comt_id: int) -> Optional[dict]:
         **totales,
         "tasa_resolucion": tasa_resolucion,
         "tasa_aprobacion": tasa_aprobacion,
+        "desglose_turno": desglose,
     }
 
 

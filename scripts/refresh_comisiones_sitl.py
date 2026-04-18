@@ -102,6 +102,37 @@ def ejecutar_sql_d1(sql, remote=True):
 # ────────────────────────────────────────────
 # Paso GACETA: Lee SQLite local → D1
 # ────────────────────────────────────────────
+def _invertir_nombre(nombre):
+    """
+    Invierte un nombre de formato "Apellido1 Apellido2 Nombre(s)" (SITL)
+    al formato natural "Nombre(s) Apellido1 Apellido2".
+
+    Heurística para nombres mexicanos almacenados como apellidos-primero:
+      - 1-2 palabras: no se puede invertir con certeza, se deja igual.
+      - 3 palabras:  último es nombre → "Nombre Ap1 Ap2"
+      - 4+ palabras: últimos 2 son nombre(s) → "Nombre1 Nombre2 Ap1 Ap2"
+
+    Ejemplos:
+      "Chedraui Peralta Alejandra"         → "Alejandra Chedraui Peralta"
+      "González Hernández Juan Antonio"    → "Juan Antonio González Hernández"
+      "Lixa Abimerhi José Elías"           → "José Elías Lixa Abimerhi"
+      "García López María de los Ángeles"  → "María de los Ángeles García López"
+        (4+ partes → últimas 2 no es perfecto aquí, pero aceptable)
+    """
+    if not nombre:
+        return nombre
+    partes = nombre.strip().split()
+    if len(partes) <= 2:
+        return nombre  # No se puede invertir con certeza
+    if len(partes) == 3:
+        # Último es nombre: "Ap1 Ap2 Nombre"
+        return f"{partes[2]} {partes[0]} {partes[1]}"
+    # 4+ partes: últimos 2 son nombre(s): "Ap1 Ap2 Nombre1 Nombre2"
+    apellidos = " ".join(partes[:2])
+    nombres = " ".join(partes[2:])
+    return f"{nombres} {apellidos}"
+
+
 def _normalizar_cargo(cargo_raw):
     import unicodedata
     cargo = unicodedata.normalize("NFKD", cargo_raw).strip()
@@ -212,7 +243,7 @@ def paso_gaceta(dry_run=False):
             if camara == "Diputados":
                 keys_to_add.append(f"Comisión de {com_name}|{camara}")
 
-            miembro = {"nombre": r["nombre"], "cargo": cargo, "partido": r["partido"] or "?"}
+            miembro = {"nombre": _invertir_nombre(r["nombre"]), "cargo": cargo, "partido": r["partido"] or "?"}
             for k in keys_to_add:
                 composicion_map.setdefault(k, []).append(miembro)
 
@@ -390,6 +421,7 @@ def paso_sitl(batch_ids, dry_run=False, delay=1.5):
         "sitl_prop_turnadas={prop_turnadas}, "
         "sitl_prop_aprobadas={prop_aprobadas}, "
         "sitl_prop_pendientes={prop_pendientes}, "
+        "sitl_desglose={desglose}, "
         "comt_id={comt_id}, actualizado_sitl={ahora}"
     )
     sqls = []
@@ -407,6 +439,7 @@ def paso_sitl(batch_ids, dry_run=False, delay=1.5):
             "prop_aprobadas": d.get('proposiciones_aprobadas', 0),
             "prop_pendientes": d.get('proposiciones_pendientes', 0),
             "comt_id": d['comt_id'], "ahora": _sql_escape(ahora),
+            "desglose": _sql_escape(json.dumps(d.get('desglose_turno', {}), ensure_ascii=False)),
         }
         set_clause = sitl_set_clause.format(**vals)
         nombre_corto = d['nombre']
@@ -414,7 +447,8 @@ def paso_sitl(batch_ids, dry_run=False, delay=1.5):
 
         # UPSERT con nombre Gaceta ("Comisión de X") — INSERT crea la fila
         # si no existe, ON CONFLICT actualiza si ya la creó paso_gaceta
-        sitl_cols = "sitl_turnadas, sitl_aprobadas, sitl_desechadas, sitl_pendientes, sitl_retiradas, sitl_tasa_aprobacion, sitl_tasa_resolucion, sitl_ini_turnadas, sitl_ini_aprobadas, sitl_ini_pendientes, sitl_prop_turnadas, sitl_prop_aprobadas, sitl_prop_pendientes"
+        desglose_json = _sql_escape(json.dumps(d.get('desglose_turno', {}), ensure_ascii=False))
+        sitl_cols = "sitl_turnadas, sitl_aprobadas, sitl_desechadas, sitl_pendientes, sitl_retiradas, sitl_tasa_aprobacion, sitl_tasa_resolucion, sitl_ini_turnadas, sitl_ini_aprobadas, sitl_ini_pendientes, sitl_prop_turnadas, sitl_prop_aprobadas, sitl_prop_pendientes, sitl_desglose"
         sqls.append(
             f"INSERT INTO comisiones_stats (nombre, camara, comt_id, {sitl_cols}, actualizado_sitl) "
             f"VALUES ({_sql_escape(nombre_largo)}, 'Diputados', {d['comt_id']}, "
@@ -422,6 +456,7 @@ def paso_sitl(batch_ids, dry_run=False, delay=1.5):
             f"{d['tasa_aprobacion']}, {d['tasa_resolucion']}, "
             f"{d['iniciativas_turnadas']}, {d['iniciativas_aprobadas']}, {d.get('iniciativas_pendientes', 0)}, "
             f"{d['proposiciones_turnadas']}, {d.get('proposiciones_aprobadas', 0)}, {d.get('proposiciones_pendientes', 0)}, "
+            f"{desglose_json}, "
             f"{_sql_escape(ahora)}) "
             f"ON CONFLICT(nombre, camara) DO UPDATE SET {set_clause};"
         )
