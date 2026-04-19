@@ -1461,7 +1461,7 @@
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-center gap-1.5">
                                                             <span className="font-semibold text-xs text-gray-800 truncate">{leg.nombre}</span>
-                                                            <span className="text-white text-[8px] px-1 py-px rounded font-medium flex-shrink-0" style={{backgroundColor: PARTIDO_COLORS[leg.partido] || '#999'}}>{leg.partido}</span>
+                                                            <PartidoBadge partido={leg.partido} size="sm" />
                                                         </div>
                                                         <div className="text-[10px] text-gray-400 font-mono">{leg.camara === 'Senado' ? 'Sen.' : 'Dip.'}{leg.estado ? ` - ${leg.estado}` : ''} &middot; <span className="text-acento">{leg.categoria}</span></div>
                                                     </div>
