@@ -1377,8 +1377,14 @@
                         const colorBg = { verde: 'from-emerald-600 to-emerald-800', amarillo: 'from-amber-600 to-amber-800', rojo: 'from-red-700 to-red-900' };
                         const colorBadge = { verde: 'bg-emerald-400', amarillo: 'bg-amber-400', rojo: 'bg-red-400' };
                         return (
-                            <div className={`lg:col-span-3 bg-gradient-to-r ${colorBg[top.color]} rounded-2xl p-6 text-white cursor-pointer shadow-lg hover:shadow-xl transition-shadow`} onClick={() => setSelected(top)}>
-                                <div className="flex items-start justify-between">
+                            <div className={`lg:col-span-3 relative overflow-hidden bg-gradient-to-r ${colorBg[top.color]} rounded-2xl p-6 text-white cursor-pointer shadow-lg hover:shadow-xl transition-shadow`} onClick={() => setSelected(top)}>
+                                {/* Radar rings decorativos en el fondo derecho */}
+                                <svg className="absolute pointer-events-none" style={{right: '-60px', top: '50%', transform: 'translateY(-50%)', width: '360px', height: '360px', opacity: 0.12}} viewBox="0 0 360 360">
+                                    <circle cx="180" cy="180" r="70" stroke="white" strokeWidth="1.2" fill="none"/>
+                                    <circle cx="180" cy="180" r="115" stroke="white" strokeWidth="1" fill="none"/>
+                                    <circle cx="180" cy="180" r="160" stroke="white" strokeWidth="0.8" fill="none"/>
+                                </svg>
+                                <div className="relative flex items-start justify-between">
                                     <div className="flex-1 min-w-0">
                                         <div className="text-xs font-semibold uppercase tracking-widest text-white/70 mb-1">Mayor probabilidad de actividad legislativa</div>
                                         <h2 className="text-2xl md:text-3xl font-bold mb-2">{top.nombre}</h2>
