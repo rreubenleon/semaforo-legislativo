@@ -548,7 +548,7 @@
                             );
                         })}
                     </div>
-                    <div className="text-[10px] text-gray-400 mt-3 pt-2 border-t border-gray-100">
+                    <div className="text-[10px] text-gray-400 mt-3 pt-2 border-t border-gray-100 font-mono">
                         Instrumentos legislativos · SIL · desde septiembre 2024
                     </div>
                 </div>
@@ -639,7 +639,7 @@
                                 {momentum.etiqueta && (
                                     <div className="flex items-center gap-1">
                                         {trendArrow && <span className={`text-[10px] font-bold ${trendColor}`}>{trendArrow}</span>}
-                                        <span className="text-[10px] text-gray-400">{momentum.etiqueta}</span>
+                                        <span className="text-[10px] text-gray-400 font-mono">{momentum.etiqueta}</span>
                                     </div>
                                 )}
                             </div>
@@ -649,7 +649,7 @@
                     {topSubs.length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-2">
                             {topSubs.map(s => (
-                                <span key={s.clave} className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] bg-gray-100 text-gray-600 border border-gray-200">
+                                <span key={s.clave} className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] bg-gray-100 text-gray-600 border border-gray-200 font-mono">
                                     {s.nombre}
                                 </span>
                             ))}
@@ -1096,8 +1096,8 @@
                     const labels = serieFiltrada.map(s => { const d = new Date(s.fecha + 'T12:00:00'); return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }); });
                     const valores = serieFiltrada.map(s => s.count);
                     const lineColor = '#2e7d32';
-                    const fillColor = 'rgba(46, 125, 50, 0.12)';
-                    const peakColor = '#8b5cf6';
+                    const fillColor = 'rgba(46, 125, 50, 0.22)';
+                    const peakColor = '#111827';
 
                     /* Detectar picos locales: top 5 maximos locales con valor > 0 */
                     const localMaxIdx = [];
@@ -1117,7 +1117,7 @@
                             const yAxis = chart.scales.y;
                             const xAxis = chart.scales.x;
                             ctx.save();
-                            ctx.strokeStyle = 'rgba(139, 92, 246, 0.45)';
+                            ctx.strokeStyle = 'rgba(17, 24, 39, 0.35)';
                             ctx.lineWidth = 1;
                             ctx.setLineDash([3, 4]);
                             topPeaksIdx.forEach(idx => {
@@ -1199,7 +1199,7 @@
                                 <div className="space-y-1.5">
                                     {data.subcategorias_activas.map(sub => (
                                         <div key={sub.clave} className="flex items-center gap-2">
-                                            <span className="text-xs text-gray-700 w-40 truncate flex-shrink-0">{sub.nombre}</span>
+                                            <span className="text-xs text-gray-700 w-40 truncate flex-shrink-0 font-mono">{sub.nombre}</span>
                                             <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
                                                 <div className="h-full rounded-full transition-all" style={{width: `${Math.max(sub.peso * 100, 4)}%`, backgroundColor: colors[data.color]}} />
                                             </div>
@@ -1452,7 +1452,7 @@
                                 {top5Legisladores.length > 0 && (
                                     <div className="glass border border-borde rounded-xl p-4">
                                         <h3 className="font-semibold text-gray-700 mb-1 text-sm">Legisladores mas probables</h3>
-                                        <p className="text-[10px] text-gray-400 mb-3">Mayor probabilidad de presentar instrumentos legislativos en las categorias activas.</p>
+                                        <p className="text-[10px] text-gray-400 mb-3 font-mono">Mayor probabilidad de presentar instrumentos legislativos en las categorias activas.</p>
                                         <div className="space-y-2">
                                             {top5Legisladores.map((leg, i) => (
                                                 <div key={i} className="flex items-center gap-2.5 py-1.5 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 rounded transition-colors"
@@ -2990,11 +2990,11 @@
 
             const getHeatColor = (count) => {
                 const intensity = Math.min(count / maxArts, 1);
-                if (intensity > 0.6) return '#22c55e';
-                if (intensity > 0.3) return '#4ade80';
-                if (intensity > 0.15) return '#86efac';
-                if (intensity > 0) return '#bbf7d0';
-                return '#f0fdf4';
+                if (intensity > 0.6) return '#2e7d32';
+                if (intensity > 0.3) return '#66bb6a';
+                if (intensity > 0.15) return '#a5d6a7';
+                if (intensity > 0) return '#c8e6c9';
+                return '#e8f5e9';
             };
 
             /* Top 5 summary stats */
@@ -3040,7 +3040,7 @@
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2 text-[10px] text-gray-500">
                                         <span>Menos</span>
-                                        <div className="flex gap-0.5">{['#f0fdf4','#bbf7d0','#86efac','#4ade80','#22c55e'].map((c, i) => <div key={i} className="w-5 h-2.5 rounded-sm" style={{backgroundColor: c}}></div>)}</div>
+                                        <div className="flex gap-0.5">{['#e8f5e9','#c8e6c9','#a5d6a7','#66bb6a','#2e7d32'].map((c, i) => <div key={i} className="w-5 h-2.5 rounded-sm" style={{backgroundColor: c}}></div>)}</div>
                                         <span>Mas cobertura</span>
                                     </div>
                                     {filtroCategoria && <span className="text-[10px] text-acento font-medium">Filtro: {catNombres[filtroCategoria] || filtroCategoria}</span>}
