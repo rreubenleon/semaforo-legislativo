@@ -244,10 +244,10 @@
                     </div>
                     {r.score_momento != null && (
                         <div className="text-right flex-shrink-0 ml-2">
-                            <div className={`text-sm font-semibold ${scoreColor[r.color_momento] || 'text-gray-500'}`}>
+                            <div className={`text-sm font-semibold font-mono ${scoreColor[r.color_momento] || 'text-gray-500'}`}>
                                 {r.score_momento}%
                             </div>
-                            <div className="text-[10px] text-gray-400">{scoreLabel[r.color_momento] || ''}</div>
+                            <div className="text-[10px] text-gray-400 font-mono">{scoreLabel[r.color_momento] || ''}</div>
                         </div>
                     )}
                 </Wrapper>
@@ -512,7 +512,7 @@
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
                                                 <span className="text-xs font-semibold text-gray-800 truncate">{p.nombre || key}</span>
-                                                <span className="text-[9px] text-gray-400 font-medium">{shareTotal.toFixed(1)}%</span>
+                                                <span className="text-[9px] text-gray-400 font-medium font-mono">{shareTotal.toFixed(1)}%</span>
                                             </div>
                                             <div className="mt-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                                                 {/* Mismo estilo que las barras .bar-verde/amarillo/rojo en Actividad: fade transparente→sólido */}
@@ -522,7 +522,7 @@
                                         </div>
                                         {/* Total + chevron */}
                                         <div className="text-right flex-shrink-0">
-                                            <div className="text-sm font-bold text-gray-800 leading-tight tabular-nums">{p.total.toLocaleString()}</div>
+                                            <div className="text-sm font-bold text-gray-800 leading-tight tabular-nums font-mono">{p.total.toLocaleString()}</div>
                                             <div className="text-[9px] text-gray-400 leading-tight">instr.</div>
                                         </div>
                                         <svg className={`w-3 h-3 text-gray-400 transition-transform flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
@@ -538,7 +538,7 @@
                                                         <div className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
                                                             <div className="h-full rounded-full" style={{ width: `${catPct}%`, background: `linear-gradient(90deg, ${hexToRgba(color, 0.4)}, ${color})` }}></div>
                                                         </div>
-                                                        <span className="text-gray-600 tabular-nums w-8 text-right font-semibold">{catData.count}</span>
+                                                        <span className="text-gray-600 tabular-nums w-8 text-right font-semibold font-mono">{catData.count}</span>
                                                     </div>
                                                 );
                                             })}
@@ -594,7 +594,7 @@
                                                 <a key={i} href={c.url || '#'} target="_blank" rel="noopener noreferrer"
                                                     className="block py-1.5 px-2 rounded-lg hover:bg-gray-50 transition-colors group">
                                                     <div className="text-[11px] text-gray-500 leading-tight group-hover:text-acento transition-colors">{limpia(c.comision)}</div>
-                                                    <div className="text-[10px] text-gray-400 mt-0.5">{c.fecha}</div>
+                                                    <div className="text-[10px] text-gray-400 mt-0.5 font-mono">{c.fecha}</div>
                                                 </a>
                                             ))}
                                             {items.length > 5 && (
@@ -656,11 +656,11 @@
                         </div>
                     )}
                     <div className="grid grid-cols-5 gap-1 text-xs text-gray-500">
-                        <div className="text-center"><div className="text-gray-700 font-medium">{data.score_media.toFixed(0)}%</div><div>Media</div></div>
-                        <div className="text-center"><div className="text-gray-700 font-medium">{data.score_trends.toFixed(0)}%</div><div>Trends</div></div>
-                        <div className="text-center"><div className="text-gray-700 font-medium">{data.score_congreso.toFixed(0)}%</div><div>Congreso</div></div>
-                        <div className="text-center"><div className="text-rose-600 font-medium">{(data.score_mananera || 0).toFixed(0)}%</div><div>CSP</div></div>
-                        <div className="text-center"><div className="text-gray-700 font-medium">{data.score_urgencia.toFixed(0)}%</div><div>Urgencia</div></div>
+                        <div className="text-center"><div className="text-gray-700 font-medium font-mono">{data.score_media.toFixed(0)}%</div><div>Media</div></div>
+                        <div className="text-center"><div className="text-gray-700 font-medium font-mono">{data.score_trends.toFixed(0)}%</div><div>Trends</div></div>
+                        <div className="text-center"><div className="text-gray-700 font-medium font-mono">{data.score_congreso.toFixed(0)}%</div><div>Congreso</div></div>
+                        <div className="text-center"><div className="text-rose-600 font-medium font-mono">{(data.score_mananera || 0).toFixed(0)}%</div><div>CSP</div></div>
+                        <div className="text-center"><div className="text-gray-700 font-medium font-mono">{data.score_urgencia.toFixed(0)}%</div><div>Urgencia</div></div>
                     </div>
                 </div>
             );
@@ -674,8 +674,8 @@
                         <div key={i} className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
                             <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-700 hover:text-blue-900 hover:underline leading-tight block">{a.titulo}</a>
                             <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
-                                <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600">{a.fuente}</span>
-                                <span>{a.fecha}</span>
+                                <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 font-mono">{a.fuente}</span>
+                                <span className="font-mono">{a.fecha}</span>
                             </div>
                         </div>
                     ))}
@@ -691,14 +691,14 @@
                     {documentos.map((d, i) => (
                         <div key={i} className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
                             <div className="flex items-start gap-2">
-                                {d.numero_doc && <span className="flex-shrink-0 bg-acento text-white text-xs font-bold px-2 py-0.5 rounded mt-0.5">#{d.numero_doc}</span>}
+                                {d.numero_doc && <span className="flex-shrink-0 bg-acento text-white text-xs font-bold px-2 py-0.5 rounded mt-0.5 font-mono">#{d.numero_doc}</span>}
                                 <a href={d.url_pdf || d.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-700 hover:text-blue-900 hover:underline leading-tight">{d.titulo.replace(/\n\t/g, ' ').slice(0, 150)}</a>
                             </div>
                             <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400 flex-wrap">
-                                <span className={`px-1.5 py-0.5 rounded text-xs ${tipoColor[d.tipo] || 'bg-gray-100 text-gray-600'}`}>{d.tipo}</span>
-                                <span className={`px-1.5 py-0.5 rounded text-xs font-medium ${d.camara === 'Senado' ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-700'}`}>{d.camara || 'Diputados'}</span>
+                                <span className={`px-1.5 py-0.5 rounded text-xs font-mono ${tipoColor[d.tipo] || 'bg-gray-100 text-gray-600'}`}>{d.tipo}</span>
+                                <span className={`px-1.5 py-0.5 rounded text-xs font-medium font-mono ${d.camara === 'Senado' ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-700'}`}>{d.camara || 'Diputados'}</span>
                                 {d.autor && d.autor !== 'No identificado' && <span className="text-gray-500">{d.autor}</span>}
-                                <span>{d.fecha}</span>
+                                <span className="font-mono">{d.fecha}</span>
                             </div>
                         </div>
                     ))}
@@ -717,7 +717,7 @@
                             <div className="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
                                 <div className="h-full rounded-full bg-acento/70 transition-all" style={{width: `${Math.max((t.interes_promedio / maxVal) * 100, 2)}%`}} />
                             </div>
-                            <span className="text-xs text-gray-500 w-10 text-right">{(t.interes_promedio || 0).toFixed(0)}</span>
+                            <span className="text-xs text-gray-500 w-10 text-right font-mono">{(t.interes_promedio || 0).toFixed(0)}</span>
                         </div>
                     ))}
                 </div>
@@ -732,7 +732,7 @@
                         <div key={i} className="bg-rose-50 rounded-lg p-3 border border-rose-200">
                             <div className="flex items-center gap-2 mb-1.5">
                                 <span className="bg-rose-600 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded">Conferencia CSP</span>
-                                <span className="text-xs text-gray-400">{m.fecha}</span>
+                                <span className="text-xs text-gray-400 font-mono">{m.fecha}</span>
                             </div>
                             <div className="text-sm text-gray-700 leading-relaxed italic">&laquo;{m.fragmento}&raquo;</div>
                             <a href={m.url} target="_blank" rel="noopener noreferrer" className="text-xs text-rose-600 hover:text-rose-800 hover:underline mt-1.5 inline-block">Ver conferencia completa &rarr;</a>
@@ -753,7 +753,7 @@
                     <div className="flex-1 min-w-0">
                         <div className="text-sm text-gray-800 font-medium">{catNombre}</div>
                         <div className="text-xs text-gray-500">{colorLabel[alerta.color] || 'Sin datos'}</div>
-                        <div className="text-xs text-gray-400 mt-0.5">{fecha}</div>
+                        <div className="text-xs text-gray-400 mt-0.5 font-mono">{fecha}</div>
                     </div>
                     <div className={`text-xs px-2 py-0.5 rounded-full font-medium ${alerta.color === 'verde' ? 'bg-green-50 text-green-800 border border-green-200' : alerta.color === 'amarillo' ? 'bg-yellow-50 text-yellow-800 border border-yellow-200' : 'bg-red-50 text-red-800 border border-red-200'}`}>{alerta.color}</div>
                 </div>
@@ -987,7 +987,7 @@
                                     className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium transition-all border ${isVisible ? 'border-gray-300 bg-white shadow-sm' : 'border-transparent bg-gray-100 text-gray-400'}`}>
                                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: isVisible ? color : '#d1d5db'}}></div>
                                     <span className={isVisible ? 'text-gray-700' : ''}>{catInfo.nombre.length > 15 ? catInfo.nombre.substring(0, 13) + '..' : catInfo.nombre}</span>
-                                    {lastScore !== undefined && isVisible && <span className="text-gray-400 ml-0.5">{lastScore.toFixed(0)}%</span>}
+                                    {lastScore !== undefined && isVisible && <span className="text-gray-400 ml-0.5 font-mono">{lastScore.toFixed(0)}%</span>}
                                 </button>
                             );
                         })}
@@ -1055,8 +1055,8 @@
                                                     : <div className="text-xs text-gray-800 leading-snug line-clamp-2">{inst.titulo}</div>
                                                 }
                                                 <div className="flex items-center gap-2 mt-1">
-                                                    {inst.fecha && <span className="text-[10px] text-gray-400">{inst.fecha}</span>}
-                                                    {ei && <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${ei.cls}`}>{ei.lbl}</span>}
+                                                    {inst.fecha && <span className="text-[10px] text-gray-400 font-mono">{inst.fecha}</span>}
+                                                    {ei && <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium font-mono ${ei.cls}`}>{ei.lbl}</span>}
                                                 </div>
                                             </div>
                                         </div>
@@ -1146,7 +1146,7 @@
                             <div>
                                 <div className="text-3xl font-bold" style={{color: colors[data.color]}}>{data.score_total.toFixed(1)}</div>
                                 <div className="text-gray-500 text-sm uppercase tracking-wider">{data.color}</div>
-                                <div className="text-xs text-gray-400 mt-1">{formatearActualizacion(generado)}</div>
+                                <div className="text-xs text-gray-400 mt-1 font-mono">{formatearActualizacion(generado)}</div>
                             </div>
                         </div>
                         <div className="bg-gray-50/50 border border-gray-100 rounded-lg p-3">
@@ -1154,11 +1154,11 @@
                             <div style={{height: '180px'}}><canvas ref={chartRef}></canvas></div>
                         </div>
                         <div className="grid grid-cols-5 gap-2 text-xs">
-                            <div className="bg-acento/5 border border-acento/10 rounded-lg p-2 text-center"><div className="font-bold text-acento">{data.score_media.toFixed(0)}%</div><div className="text-gray-500">Media</div></div>
-                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 text-center"><div className="font-bold text-gray-700">{data.score_trends.toFixed(0)}%</div><div className="text-gray-500">Trends</div></div>
-                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-center"><div className="font-bold text-amber-800">{data.score_congreso.toFixed(0)}%</div><div className="text-gray-500">Congreso</div></div>
-                            <div className="bg-rose-50 border border-rose-200 rounded-lg p-2 text-center"><div className="font-bold text-rose-600">{(data.score_mananera || 0).toFixed(0)}%</div><div className="text-gray-500">CSP</div></div>
-                            <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 text-center"><div className="font-bold text-purple-800">{data.score_urgencia.toFixed(0)}%</div><div className="text-gray-500">Urgencia</div></div>
+                            <div className="bg-acento/5 border border-acento/10 rounded-lg p-2 text-center"><div className="font-bold text-acento font-mono">{data.score_media.toFixed(0)}%</div><div className="text-gray-500">Media</div></div>
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 text-center"><div className="font-bold text-gray-700 font-mono">{data.score_trends.toFixed(0)}%</div><div className="text-gray-500">Trends</div></div>
+                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-center"><div className="font-bold text-amber-800 font-mono">{data.score_congreso.toFixed(0)}%</div><div className="text-gray-500">Congreso</div></div>
+                            <div className="bg-rose-50 border border-rose-200 rounded-lg p-2 text-center"><div className="font-bold text-rose-600 font-mono">{(data.score_mananera || 0).toFixed(0)}%</div><div className="text-gray-500">CSP</div></div>
+                            <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 text-center"><div className="font-bold text-purple-800 font-mono">{data.score_urgencia.toFixed(0)}%</div><div className="text-gray-500">Urgencia</div></div>
                         </div>
                         {data.subcategorias_activas?.length > 0 && (
                             <div className="bg-gray-50/50 border border-gray-100 rounded-lg p-3">
@@ -1170,7 +1170,7 @@
                                             <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
                                                 <div className="h-full rounded-full transition-all" style={{width: `${Math.max(sub.peso * 100, 4)}%`, backgroundColor: colors[data.color]}} />
                                             </div>
-                                            <span className="text-[10px] text-gray-400 w-8 text-right">{(sub.peso * 100).toFixed(0)}%</span>
+                                            <span className="text-[10px] text-gray-400 w-8 text-right font-mono">{(sub.peso * 100).toFixed(0)}%</span>
                                         </div>
                                     ))}
                                 </div>
@@ -1361,7 +1361,7 @@
                                             <div className="flex items-center gap-1.5 mb-1">
                                                 <span className="text-xs font-bold text-gray-900">FIAT</span>
                                                 <span className="text-[10px] text-gray-400">@Fiat_MX</span>
-                                                {tw.created_at && <span className="text-[10px] text-gray-400 ml-auto">{(() => {
+                                                {tw.created_at && <span className="text-[10px] text-gray-400 ml-auto font-mono">{(() => {
                                                     const d = new Date(tw.created_at);
                                                     const now = new Date();
                                                     const diffH = Math.floor((now - d) / 3600000);
@@ -1429,9 +1429,9 @@
                                                             <span className="font-semibold text-xs text-gray-800 truncate">{leg.nombre}</span>
                                                             <span className="text-white text-[8px] px-1 py-px rounded font-medium flex-shrink-0" style={{backgroundColor: PARTIDO_COLORS[leg.partido] || '#999'}}>{leg.partido}</span>
                                                         </div>
-                                                        <div className="text-[10px] text-gray-400">{leg.camara === 'Senado' ? 'Sen.' : 'Dip.'}{leg.estado ? ` - ${leg.estado}` : ''} &middot; <span className="text-acento">{leg.categoria}</span></div>
+                                                        <div className="text-[10px] text-gray-400 font-mono">{leg.camara === 'Senado' ? 'Sen.' : 'Dip.'}{leg.estado ? ` - ${leg.estado}` : ''} &middot; <span className="text-acento">{leg.categoria}</span></div>
                                                     </div>
-                                                    <div className="text-xs text-acento font-bold flex-shrink-0">{leg.score.toFixed(0)}%</div>
+                                                    <div className="text-xs text-acento font-bold flex-shrink-0 font-mono">{leg.score.toFixed(0)}%</div>
                                                 </div>
                                             ))}
                                             {popoverLeg && <PopoverInstrumentos leg={popoverLeg} pos={popoverLeg._pos} onClose={hidePopover} onKeep={() => clearTimeout(popoverTimer.current)} />}
@@ -1716,23 +1716,23 @@
                                     title="Categoría dominante del legislador (medio_ambiente, educación, etc.). Se calcula con ≥3 actos legislativos desde inicio LXVI, ponderando iniciativas 2x sobre proposiciones.">
                                     Categoría
                                 </div>
-                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2"
+                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2 font-mono"
                                     title="Hit rate — % de los últimos 20 picos mediáticos en su categoría dominante donde el legislador presentó un instrumento dentro de los 7 días posteriores. Verde ≥70%, ámbar ≥40%, rojo <40%.">
                                     Hit rate
                                 </div>
-                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2"
+                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2 font-mono"
                                     title="Iniciativas proyectadas en los próximos 15 días, basadas en la tasa LXVI ajustada por actividad reciente (30d).">
                                     Ini 15d
                                 </div>
-                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2"
+                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2 font-mono"
                                     title="Proposiciones con punto de acuerdo proyectadas en los próximos 15 días. Misma fórmula que Ini 15d.">
                                     Prop 15d
                                 </div>
-                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2"
+                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2 font-mono"
                                     title="Total de instrumentos (iniciativas + proposiciones) presentados durante la LXVI Legislatura (sep 2024 – hoy).">
                                     L3P total
                                 </div>
-                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2"
+                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2 font-mono"
                                     title="Matchup grade vs. la comisión a la que más turnan sus instrumentos. A = comisión que dictamina rápido; F = comisión donde los asuntos se quedan en pendiente. Grading relativo entre comisiones.">
                                     Matchup
                                 </div>
@@ -1789,7 +1789,7 @@
                             <div className="text-sm font-semibold text-gray-800 truncate" title={nombreFmt}>{nombreFmt}</div>
                             <div className="flex items-center gap-1.5 mt-0.5">
                                 <PartidoBadge partido={leg.partido} size="sm" />
-                                <span className="text-[10px] text-gray-500 truncate">
+                                <span className="text-[10px] text-gray-500 truncate font-mono">
                                     {(leg.camara || '').replace('Cámara de ', '')}
                                     {leg.estado ? ` · ${leg.estado}` : ''}
                                 </span>
@@ -1799,10 +1799,10 @@
 
                     {/* Mobile: stats row under player */}
                     <div className="md:hidden grid grid-cols-4 gap-1 mt-1 text-center">
-                        <div><div className="text-[8px] uppercase text-gray-400">Hit</div><div className={`text-sm font-bold ${hitColor}`}>{hitPct != null ? `${hitPct}%` : '—'}</div></div>
-                        <div><div className="text-[8px] uppercase text-gray-400">Ini</div><div className="text-sm font-bold text-gray-800">{iniProy}</div></div>
-                        <div><div className="text-[8px] uppercase text-gray-400">Prop</div><div className="text-sm font-bold text-gray-800">{propProy}</div></div>
-                        <div><div className="text-[8px] uppercase text-gray-400">Match</div><div className={`text-sm font-black ${gradeStyle}`}>{grade || '—'}</div></div>
+                        <div><div className="text-[8px] uppercase text-gray-400">Hit</div><div className={`text-sm font-bold font-mono ${hitColor}`}>{hitPct != null ? `${hitPct}%` : '—'}</div></div>
+                        <div><div className="text-[8px] uppercase text-gray-400">Ini</div><div className="text-sm font-bold text-gray-800 font-mono">{iniProy}</div></div>
+                        <div><div className="text-[8px] uppercase text-gray-400">Prop</div><div className="text-sm font-bold text-gray-800 font-mono">{propProy}</div></div>
+                        <div><div className="text-[8px] uppercase text-gray-400">Match</div><div className={`text-sm font-black font-mono ${gradeStyle}`}>{grade || '—'}</div></div>
                     </div>
 
                     {/* Desktop columns */}
@@ -1817,16 +1817,16 @@
                         <HitRateGaugeMini value={leg.hit_rate} />
                     </div>
                     <div className="hidden md:block text-center">
-                        <div className="text-base font-bold text-gray-800 leading-tight">{iniProy}</div>
+                        <div className="text-base font-bold text-gray-800 leading-tight font-mono">{iniProy}</div>
                     </div>
                     <div className="hidden md:block text-center">
-                        <div className="text-base font-bold text-gray-800 leading-tight">{propProy}</div>
+                        <div className="text-base font-bold text-gray-800 leading-tight font-mono">{propProy}</div>
                     </div>
                     <div className="hidden md:block text-center">
-                        <div className="text-base font-bold text-gray-800 leading-tight">{l3pTotal}</div>
+                        <div className="text-base font-bold text-gray-800 leading-tight font-mono">{l3pTotal}</div>
                     </div>
                     <div className="hidden md:flex flex-col items-center justify-center gap-0.5">
-                        <div className={`text-lg font-black ${gradeStyle}`}
+                        <div className={`text-lg font-black font-mono ${gradeStyle}`}
                             title={grade ? `Matchup vs ${leg.matchup_comision || 'comisión'}${leg.matchup_tasa != null ? ` · tasa de dictamen ${Math.round(leg.matchup_tasa*100)}%` : ''}` : 'Sin suficientes asuntos turnados'}>
                             {grade || '—'}
                         </div>
@@ -1983,18 +1983,18 @@
                             <div className="grid grid-cols-3 gap-2 mt-4">
                                 <div className="bg-white/10 rounded-lg p-2.5 text-center">
                                     <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Hit rate</div>
-                                    <div className="text-xl font-bold mt-0.5">{hitPct != null ? `${hitPct}%` : '—'}</div>
-                                    <div className="text-[10px] text-white/60">{leg.hit_respondio ?? 0}/{leg.hit_total ?? 0} picos</div>
+                                    <div className="text-xl font-bold mt-0.5 font-mono">{hitPct != null ? `${hitPct}%` : '—'}</div>
+                                    <div className="text-[10px] text-white/60 font-mono">{leg.hit_respondio ?? 0}/{leg.hit_total ?? 0} picos</div>
                                 </div>
                                 <div className="bg-white/10 rounded-lg p-2.5 text-center">
                                     <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Ini 15d</div>
-                                    <div className="text-xl font-bold mt-0.5">{iniProy}</div>
-                                    <div className="text-[10px] text-white/60">L3P · {l3pIni}</div>
+                                    <div className="text-xl font-bold mt-0.5 font-mono">{iniProy}</div>
+                                    <div className="text-[10px] text-white/60 font-mono">L3P · {l3pIni}</div>
                                 </div>
                                 <div className="bg-white/10 rounded-lg p-2.5 text-center">
                                     <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Prop 15d</div>
-                                    <div className="text-xl font-bold mt-0.5">{propProy}</div>
-                                    <div className="text-[10px] text-white/60">L3P · {l3pProp}</div>
+                                    <div className="text-xl font-bold mt-0.5 font-mono">{propProy}</div>
+                                    <div className="text-[10px] text-white/60 font-mono">L3P · {l3pProp}</div>
                                 </div>
                             </div>
                         </div>
@@ -2077,11 +2077,11 @@
                         <div className="grid grid-cols-2 gap-2">
                             <div className="bg-gray-50 rounded-lg p-3">
                                 <div className="text-[10px] text-gray-500">Iniciativas presentadas</div>
-                                <div className="text-xl font-bold text-gray-800">{l3pIni}</div>
+                                <div className="text-xl font-bold text-gray-800 font-mono">{l3pIni}</div>
                             </div>
                             <div className="bg-gray-50 rounded-lg p-3">
                                 <div className="text-[10px] text-gray-500">Proposiciones presentadas</div>
-                                <div className="text-xl font-bold text-gray-800">{l3pProp}</div>
+                                <div className="text-xl font-bold text-gray-800 font-mono">{l3pProp}</div>
                             </div>
                         </div>
                     </div>
@@ -2109,15 +2109,15 @@
                                             <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white ${i === 0 ? 'bg-indigo-500' : i === 1 ? 'bg-purple-400' : 'bg-gray-400'}`}>{i + 1}</div>
                                             <span className="text-sm font-semibold text-gray-800">{_catLabel(p.categoria)}</span>
                                         </div>
-                                        <span className="text-lg font-bold text-gray-800">{p.score.toFixed(0)}%</span>
+                                        <span className="text-lg font-bold text-gray-800 font-mono">{p.score.toFixed(0)}%</span>
                                     </div>
                                     <div className="w-full bg-gray-200 rounded-full h-2 mb-2 overflow-hidden">
                                         <div className={`h-full rounded-full ${barColor} transition-all`} style={{ width: `${Math.min(p.score, 100)}%` }} />
                                     </div>
                                     <div className="grid grid-cols-3 gap-2 text-[10px] text-gray-500">
-                                        <div className="text-center"><div className="font-bold text-gray-700">{p.desglose?.especializacion_tematica?.toFixed(0) || '—'}</div>Historial</div>
-                                        <div className="text-center"><div className="font-bold text-gray-700">{p.desglose?.comision_agenda?.toFixed(0) || '—'}</div>Comisión</div>
-                                        <div className="text-center"><div className="font-bold text-gray-700">{p.docs || 0}</div>Docs previos</div>
+                                        <div className="text-center"><div className="font-bold text-gray-700 font-mono">{p.desglose?.especializacion_tematica?.toFixed(0) || '—'}</div>Historial</div>
+                                        <div className="text-center"><div className="font-bold text-gray-700 font-mono">{p.desglose?.comision_agenda?.toFixed(0) || '—'}</div>Comisión</div>
+                                        <div className="text-center"><div className="font-bold text-gray-700 font-mono">{p.docs || 0}</div>Docs previos</div>
                                     </div>
                                     {p.comisiones_afines?.length > 0 && (
                                         <div className="text-[10px] text-gray-400 mt-1.5">Comisiones afines: {p.comisiones_afines.join(', ')}</div>
@@ -2147,7 +2147,7 @@
                         <div className="mt-3 flex items-end justify-between">
                             <div>
                                 <div className="text-[10px] uppercase text-white/60 font-semibold">Tasa de dictamen</div>
-                                <div className="text-3xl font-bold mt-0.5">{tasa != null ? `${tasa}%` : '—'}</div>
+                                <div className="text-3xl font-bold mt-0.5 font-mono">{tasa != null ? `${tasa}%` : '—'}</div>
                             </div>
                             <div className="text-right">
                                 <div className="text-[10px] uppercase text-white/60 font-semibold">Calificación</div>
@@ -2198,7 +2198,7 @@
             const grad = SEMAFORO_GRADIENT[nivel];
             return (
                 <div className="flex flex-col items-center gap-0.5">
-                    <div className="text-base font-bold leading-none tabular-nums" style={{ color: value != null ? '#1F2937' : '#9CA3AF' }}>
+                    <div className="text-base font-bold leading-none tabular-nums font-mono" style={{ color: value != null ? '#1F2937' : '#9CA3AF' }}>
                         {displayPct}
                     </div>
                     <svg viewBox="-40 -38 80 42" className="w-16 h-8 block">
