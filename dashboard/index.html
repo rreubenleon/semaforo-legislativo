@@ -658,12 +658,24 @@
                             ))}
                         </div>
                     )}
-                    <div className="grid grid-cols-5 gap-1 text-xs text-gray-500">
-                        <div className="text-center"><div className="text-gray-700 font-medium font-mono">{data.score_media.toFixed(0)}%</div><div>Media</div></div>
-                        <div className="text-center"><div className="text-gray-700 font-medium font-mono">{data.score_trends.toFixed(0)}%</div><div>Trends</div></div>
-                        <div className="text-center"><div className="text-gray-700 font-medium font-mono">{data.score_congreso.toFixed(0)}%</div><div>Congreso</div></div>
-                        <div className="text-center"><div className="text-rose-600 font-medium font-mono">{(data.score_mananera || 0).toFixed(0)}%</div><div>CSP</div></div>
-                        <div className="text-center"><div className="text-gray-700 font-medium font-mono">{data.score_urgencia.toFixed(0)}%</div><div>Urgencia</div></div>
+                    <div className="grid grid-cols-5 gap-2 text-xs text-gray-500">
+                        {[
+                            { label: 'Media', value: data.score_media, danger: false },
+                            { label: 'Trends', value: data.score_trends, danger: false },
+                            { label: 'Congreso', value: data.score_congreso, danger: false },
+                            { label: 'CSP', value: data.score_mananera || 0, danger: true },
+                            { label: 'Urgencia', value: data.score_urgencia, danger: false },
+                        ].map(m => (
+                            <div key={m.label}>
+                                <div className="flex items-center gap-1.5 mb-0.5">
+                                    <div className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(Math.max(m.value, 0), 100)}%`, backgroundColor: m.danger ? '#c62828' : '#2e7d32' }} />
+                                    </div>
+                                    <span className={`text-[10px] font-mono font-medium ${m.danger ? 'text-rose-600' : 'text-gray-700'}`}>{m.value.toFixed(0)}%</span>
+                                </div>
+                                <div className="text-[9px] uppercase tracking-wider text-gray-400">{m.label}</div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             );
