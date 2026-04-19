@@ -1095,17 +1095,50 @@
                     const serieFiltrada = primerFecha ? serie.filter(s => s.fecha >= primerFecha) : serie.slice(-30);
                     const labels = serieFiltrada.map(s => { const d = new Date(s.fecha + 'T12:00:00'); return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' }); });
                     const valores = serieFiltrada.map(s => s.count);
-                    const ma7 = valores.map((_, i) => { const start = Math.max(0, i - 6); const slice = valores.slice(start, i + 1); return slice.reduce((a, b) => a + b, 0) / slice.length; });
-                    const lineColor = colors[data.color];
-                    const crosshairPlugin = { id: 'crosshair', afterDraw(chart) { if (chart.tooltip?._active?.length) { const x = chart.tooltip._active[0].element.x; const yAxis = chart.scales.y; const ctx = chart.ctx; ctx.save(); ctx.beginPath(); ctx.moveTo(x, yAxis.top); ctx.lineTo(x, yAxis.bottom); ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.restore(); } } };
+                    const lineColor = '#2e7d32';
+                    const fillColor = 'rgba(46, 125, 50, 0.12)';
+                    const peakColor = '#8b5cf6';
+
+                    /* Detectar picos locales: top 5 maximos locales con valor > 0 */
+                    const localMaxIdx = [];
+                    valores.forEach((v, i) => {
+                        if (v <= 0) return;
+                        const left = i > 0 ? valores[i - 1] : -Infinity;
+                        const right = i < valores.length - 1 ? valores[i + 1] : -Infinity;
+                        if (v >= left && v >= right) localMaxIdx.push({ i, v });
+                    });
+                    const topPeaksIdx = new Set(localMaxIdx.sort((a, b) => b.v - a.v).slice(0, 5).map(p => p.i));
+                    const peakData = valores.map((v, i) => topPeaksIdx.has(i) ? v : null);
+
+                    const peakLinesPlugin = {
+                        id: 'peakLines',
+                        beforeDatasetsDraw(chart) {
+                            const ctx = chart.ctx;
+                            const yAxis = chart.scales.y;
+                            const xAxis = chart.scales.x;
+                            ctx.save();
+                            ctx.strokeStyle = 'rgba(139, 92, 246, 0.45)';
+                            ctx.lineWidth = 1;
+                            ctx.setLineDash([3, 4]);
+                            topPeaksIdx.forEach(idx => {
+                                const x = xAxis.getPixelForValue(idx);
+                                ctx.beginPath();
+                                ctx.moveTo(x, yAxis.top);
+                                ctx.lineTo(x, yAxis.bottom);
+                                ctx.stroke();
+                            });
+                            ctx.restore();
+                        }
+                    };
+
                     chartInstance.current = new Chart(chartRef.current, {
-                        type: 'line', plugins: [crosshairPlugin],
+                        type: 'line', plugins: [peakLinesPlugin],
                         data: { labels, datasets: [
-                            { label: 'Actividad diaria', data: valores, borderColor: lineColor, backgroundColor: 'transparent', borderWidth: 2.5, fill: false, tension: 0.4, pointRadius: valores.map((_, i) => i === valores.length - 1 ? 5 : 0), pointHitRadius: 10, pointHoverRadius: 6, pointBackgroundColor: lineColor, pointBorderColor: '#fff', pointBorderWidth: 2 },
-                            { label: 'Media movil 7d', data: ma7, borderColor: lineColor + '50', borderWidth: 1.2, borderDash: [4, 6], fill: false, tension: 0.4, pointRadius: 0, pointHitRadius: 0 }
+                            { label: 'Actividad diaria', data: valores, borderColor: lineColor, backgroundColor: fillColor, borderWidth: 2, fill: true, tension: 0.35, pointRadius: 0, pointHitRadius: 10, pointHoverRadius: 5, pointBackgroundColor: lineColor, pointBorderColor: '#fff', pointBorderWidth: 2 },
+                            { label: 'Picos', data: peakData, borderColor: 'transparent', backgroundColor: peakColor, pointRadius: 4.5, pointBackgroundColor: peakColor, pointBorderColor: '#fff', pointBorderWidth: 2, pointHoverRadius: 6.5, fill: false, showLine: false, spanGaps: false }
                         ]},
                         options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
-                            plugins: { legend: { display: true, position: 'top', align: 'end', labels: { boxWidth: 12, boxHeight: 2, padding: 8, font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' }, color: '#b0b8c4' } }, tooltip: { backgroundColor: 'rgba(15,23,42,0.92)', titleColor: '#f1f5f9', bodyColor: '#cbd5e1', borderColor: 'rgba(255,255,255,0.08)', borderWidth: 1, cornerRadius: 10, padding: { top: 8, bottom: 8, left: 12, right: 12 }, displayColors: true, boxWidth: 8, boxHeight: 8, boxPadding: 6, titleFont: { size: 11, weight: '600' }, bodyFont: { size: 11 }, callbacks: { title: (items) => items[0]?.label || '', label: (item) => item.datasetIndex === 0 ? ` ${item.raw} instrumentos` : ` MA(7): ${item.raw.toFixed(1)}` } } },
+                            plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(15,23,42,0.92)', titleColor: '#f1f5f9', bodyColor: '#cbd5e1', borderColor: 'rgba(255,255,255,0.08)', borderWidth: 1, cornerRadius: 10, padding: { top: 8, bottom: 8, left: 12, right: 12 }, displayColors: false, titleFont: { size: 11, weight: '600' }, bodyFont: { size: 11 }, filter: (item) => item.datasetIndex === 0, callbacks: { title: (items) => items[0]?.label || '', label: (item) => ` ${item.raw} instrumentos${topPeaksIdx.has(item.dataIndex) ? ' (pico)' : ''}` } } },
                             scales: { y: { position: 'right', beginAtZero: true, ticks: { color: '#b0b8c4', font: { size: 10 }, stepSize: 1, padding: 12 }, grid: { color: 'rgba(0,0,0,0.04)', lineWidth: 0.5, drawBorder: false, drawTicks: false }, border: { display: false } }, x: { ticks: { color: '#b0b8c4', font: { size: 10 }, maxRotation: 0, maxTicksLimit: 8, padding: 8 }, grid: { display: false }, border: { display: false } } }
                         }
                     });
@@ -2957,11 +2990,11 @@
 
             const getHeatColor = (count) => {
                 const intensity = Math.min(count / maxArts, 1);
-                if (intensity > 0.6) return '#1a365d';
-                if (intensity > 0.3) return '#2c5282';
-                if (intensity > 0.15) return '#4a7ab5';
-                if (intensity > 0) return '#90b4d6';
-                return '#e2e8f0';
+                if (intensity > 0.6) return '#22c55e';
+                if (intensity > 0.3) return '#4ade80';
+                if (intensity > 0.15) return '#86efac';
+                if (intensity > 0) return '#bbf7d0';
+                return '#f0fdf4';
             };
 
             /* Top 5 summary stats */
@@ -3007,7 +3040,7 @@
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2 text-[10px] text-gray-500">
                                         <span>Menos</span>
-                                        <div className="flex gap-0.5">{['#e2e8f0','#90b4d6','#4a7ab5','#2c5282','#1a365d'].map((c, i) => <div key={i} className="w-5 h-2.5 rounded-sm" style={{backgroundColor: c}}></div>)}</div>
+                                        <div className="flex gap-0.5">{['#f0fdf4','#bbf7d0','#86efac','#4ade80','#22c55e'].map((c, i) => <div key={i} className="w-5 h-2.5 rounded-sm" style={{backgroundColor: c}}></div>)}</div>
                                         <span>Mas cobertura</span>
                                     </div>
                                     {filtroCategoria && <span className="text-[10px] text-acento font-medium">Filtro: {catNombres[filtroCategoria] || filtroCategoria}</span>}
@@ -3020,8 +3053,8 @@
                                                 className={`estado-hover rounded-lg p-1.5 text-center transition-all ${isSelected ? 'ring-2 ring-acento ring-offset-1' : ''}`}
                                                 style={{backgroundColor: getHeatColor(info.total_articulos)}}
                                                 title={`${info.nombre}: ${info.total_articulos} noticias`}>
-                                                <div className={`text-[10px] font-bold ${info.total_articulos > maxArts * 0.3 ? 'text-white' : 'text-gray-700'}`}>{info.abreviatura}</div>
-                                                <div className={`text-[8px] ${info.total_articulos > maxArts * 0.3 ? 'text-white/70' : 'text-gray-500'}`}>{info.total_articulos}</div>
+                                                <div className={`text-[10px] font-bold ${info.total_articulos > maxArts * 0.6 ? 'text-white' : 'text-gray-700'}`}>{info.abreviatura}</div>
+                                                <div className={`text-[8px] ${info.total_articulos > maxArts * 0.6 ? 'text-white/70' : 'text-gray-500'}`}>{info.total_articulos}</div>
                                             </button>
                                         );
                                     })}
