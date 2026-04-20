@@ -1028,7 +1028,7 @@ CATEGORIAS = {
                 "keywords": ["contaminación ambiental", "residuos peligrosos", "contingencia ambiental", "calidad del aire",
                              "economía circular", "ley ambiental", "norma ambiental", "impacto ambiental", "política ambiental",
                              "gestión de residuos", "residuos sólidos", "Gestión Integral de los Residuos",
-                             "agua contaminada", "río contaminado", "derrame", "basura", "relleno sanitario",
+                             "agua contaminada", "río contaminado", "derrame petrolero", "derrame químico", "derrame industrial", "derrame de hidrocarburos", "basura", "relleno sanitario",
                              "tiradero", "smog", "mala calidad del aire", "contingencia",
                              # Leyes federales
                              "Ley General para la Prevención y Gestión de Residuos",
