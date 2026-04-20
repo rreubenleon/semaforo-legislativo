@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generado": "2026-04-20T10:22:40.571128+00:00",
+    "generado": "2026-04-20T14:28:14.521137+00:00",
     "version": "3.2",
     "formula": "SCORE = (0.20*Media) + (0.15*Trends) + (0.25*Congreso) + (0.10*Mañanera) + (0.15*Urgencia) + (0.15*Dominancia)",
     "umbrales": {
@@ -8,7 +8,7 @@
       "amarillo": 40,
       "rojo": 0
     },
-    "sil_docs": 16133
+    "sil_docs": 16137
   },
   "semaforo": [
     {
@@ -35,29 +35,29 @@
           "peso": 1.0
         },
         {
-          "clave": "agua_saneamiento",
-          "nombre": "Agua y saneamiento",
-          "peso": 0.72
-        },
-        {
           "clave": "vivienda_urbano",
           "nombre": "Vivienda y desarrollo urbano",
-          "peso": 0.68
+          "peso": 0.85
         },
         {
-          "clave": "megaproyectos",
-          "nombre": "Megaproyectos federales",
-          "peso": 0.25
+          "clave": "agua_saneamiento",
+          "nombre": "Agua y saneamiento",
+          "peso": 0.67
         },
         {
           "clave": "proteccion_civil",
           "nombre": "Protección civil y desastres",
-          "peso": 0.21
+          "peso": 0.37
+        },
+        {
+          "clave": "megaproyectos",
+          "nombre": "Megaproyectos federales",
+          "peso": 0.31
         },
         {
           "clave": "obra_publica",
           "nombre": "Obra pública",
-          "peso": 0.19
+          "peso": 0.18
         },
         {
           "clave": "telecomunicaciones",
@@ -92,27 +92,27 @@
         {
           "clave": "violencia_victimas",
           "nombre": "Violencia y víctimas",
-          "peso": 0.87
+          "peso": 0.81
         },
         {
           "clave": "seguridad_publica",
           "nombre": "Seguridad pública y policía",
-          "peso": 0.68
+          "peso": 0.63
         },
         {
           "clave": "crimen_organizado",
           "nombre": "Crimen organizado",
-          "peso": 0.32
-        },
-        {
-          "clave": "justicia_constitucional",
-          "nombre": "Justicia constitucional",
-          "peso": 0.23
+          "peso": 0.35
         },
         {
           "clave": "fuerzas_armadas",
           "nombre": "Fuerzas armadas y defensa",
           "peso": 0.23
+        },
+        {
+          "clave": "justicia_constitucional",
+          "nombre": "Justicia constitucional",
+          "peso": 0.18
         },
         {
           "clave": "sistema_penitenciario",
@@ -147,17 +147,17 @@
         {
           "clave": "educacion_superior",
           "nombre": "Educación superior e investigación",
-          "peso": 0.78
-        },
-        {
-          "clave": "ciencia_tecnologia",
-          "nombre": "Ciencia y tecnología",
-          "peso": 0.38
+          "peso": 0.9
         },
         {
           "clave": "educacion_basica",
           "nombre": "Educación básica",
-          "peso": 0.36
+          "peso": 0.37
+        },
+        {
+          "clave": "ciencia_tecnologia",
+          "nombre": "Ciencia y tecnología",
+          "peso": 0.24
         }
       ]
     },
@@ -187,12 +187,17 @@
         {
           "clave": "diplomacia_organismos",
           "nombre": "Diplomacia y organismos",
-          "peso": 0.66
+          "peso": 0.78
         },
         {
           "clave": "soberania_fronteras",
           "nombre": "Soberanía y fronteras",
           "peso": 0.09
+        },
+        {
+          "clave": "america_latina",
+          "nombre": "América Latina",
+          "peso": 0.01
         }
       ]
     },
@@ -222,17 +227,17 @@
         {
           "clave": "participacion_ciudadana",
           "nombre": "Participación ciudadana",
-          "peso": 0.92
+          "peso": 0.86
         },
         {
           "clave": "gobernabilidad",
           "nombre": "Gobernabilidad",
-          "peso": 0.22
+          "peso": 0.2
         },
         {
           "clave": "partidos_coaliciones",
           "nombre": "Partidos y coaliciones",
-          "peso": 0.18
+          "peso": 0.17
         }
       ]
     },
@@ -262,21 +267,21 @@
         {
           "clave": "fomento_economico",
           "nombre": "Fomento económico",
-          "peso": 0.76
+          "peso": 0.79
         },
         {
           "clave": "comercio_exterior",
           "nombre": "Comercio exterior e inversión",
-          "peso": 0.63
-        },
-        {
-          "clave": "presupuesto_gasto",
-          "nombre": "Presupuesto y gasto público",
-          "peso": 0.33
+          "peso": 0.67
         },
         {
           "clave": "politica_monetaria",
           "nombre": "Política monetaria y macroeconomía",
+          "peso": 0.32
+        },
+        {
+          "clave": "presupuesto_gasto",
+          "nombre": "Presupuesto y gasto público",
           "peso": 0.27
         },
         {
@@ -287,59 +292,14 @@
       ]
     },
     {
-      "categoria": "derechos_humanos",
-      "nombre": "Derechos Humanos",
-      "score_total": 63.75,
-      "score_media": 88.77,
-      "score_trends": 16.54,
-      "score_congreso": 100.0,
-      "score_mananera": 13.84,
-      "score_urgencia": 14.19,
-      "color": "amarillo",
-      "fecha": "2026-04-20",
-      "momentum": {
-        "dias_consecutivos": 28,
-        "semanas_en_agenda": 4,
-        "tendencia": "stable",
-        "etiqueta": "Semana 4 en agenda"
-      },
-      "subcategorias_activas": [
-        {
-          "clave": "derechos_fundamentales",
-          "nombre": "Derechos fundamentales",
-          "peso": 1.0
-        },
-        {
-          "clave": "genero_diversidad",
-          "nombre": "Género y diversidad",
-          "peso": 1.0
-        },
-        {
-          "clave": "migracion_refugio",
-          "nombre": "Migración y refugio",
-          "peso": 0.65
-        },
-        {
-          "clave": "pueblos_indigenas",
-          "nombre": "Pueblos indígenas",
-          "peso": 0.57
-        },
-        {
-          "clave": "derechos_ninez",
-          "nombre": "Derechos de la niñez",
-          "peso": 0.28
-        }
-      ]
-    },
-    {
       "categoria": "anticorrupcion",
       "nombre": "Anticorrupción",
-      "score_total": 60.71,
-      "score_media": 88.4,
+      "score_total": 63.76,
+      "score_media": 88.5,
       "score_trends": 13.34,
-      "score_congreso": 86.06,
+      "score_congreso": 96.91,
       "score_mananera": 8.72,
-      "score_urgencia": 38.61,
+      "score_urgencia": 40.07,
       "color": "amarillo",
       "fecha": "2026-04-20",
       "momentum": {
@@ -357,7 +317,7 @@
         {
           "clave": "etica_publica",
           "nombre": "Ética pública",
-          "peso": 0.21
+          "peso": 0.22
         },
         {
           "clave": "transparencia_acceso",
@@ -367,19 +327,64 @@
         {
           "clave": "delitos_financieros",
           "nombre": "Delitos financieros",
-          "peso": 0.1
+          "peso": 0.11
+        }
+      ]
+    },
+    {
+      "categoria": "derechos_humanos",
+      "nombre": "Derechos Humanos",
+      "score_total": 63.74,
+      "score_media": 88.72,
+      "score_trends": 16.54,
+      "score_congreso": 100.0,
+      "score_mananera": 13.84,
+      "score_urgencia": 14.18,
+      "color": "amarillo",
+      "fecha": "2026-04-20",
+      "momentum": {
+        "dias_consecutivos": 28,
+        "semanas_en_agenda": 4,
+        "tendencia": "stable",
+        "etiqueta": "Semana 4 en agenda"
+      },
+      "subcategorias_activas": [
+        {
+          "clave": "genero_diversidad",
+          "nombre": "Género y diversidad",
+          "peso": 1.0
+        },
+        {
+          "clave": "derechos_fundamentales",
+          "nombre": "Derechos fundamentales",
+          "peso": 0.95
+        },
+        {
+          "clave": "migracion_refugio",
+          "nombre": "Migración y refugio",
+          "peso": 0.61
+        },
+        {
+          "clave": "pueblos_indigenas",
+          "nombre": "Pueblos indígenas",
+          "peso": 0.54
+        },
+        {
+          "clave": "derechos_ninez",
+          "nombre": "Derechos de la niñez",
+          "peso": 0.2
         }
       ]
     },
     {
       "categoria": "medio_ambiente",
       "nombre": "Medio Ambiente y Cambio Climático",
-      "score_total": 59.2,
-      "score_media": 89.42,
+      "score_total": 61.77,
+      "score_media": 89.35,
       "score_trends": 13.54,
-      "score_congreso": 83.99000000000001,
+      "score_congreso": 93.74000000000001,
       "score_mananera": 8.43,
-      "score_urgencia": 16.32,
+      "score_urgencia": 17.3,
       "color": "amarillo",
       "fecha": "2026-04-20",
       "momentum": {
@@ -397,12 +402,12 @@
         {
           "clave": "recursos_forestales",
           "nombre": "Recursos forestales",
-          "peso": 0.53
+          "peso": 0.5
         },
         {
           "clave": "conservacion_biodiversidad",
           "nombre": "Conservación y biodiversidad",
-          "peso": 0.19
+          "peso": 0.18
         },
         {
           "clave": "cambio_climatico",
@@ -419,12 +424,12 @@
     {
       "categoria": "trabajo",
       "nombre": "Trabajo",
-      "score_total": 55.15,
-      "score_media": 75.23,
+      "score_total": 56.93,
+      "score_media": 75.14,
       "score_trends": 19.31,
-      "score_congreso": 69.88,
+      "score_congreso": 76.14,
       "score_mananera": 7.27,
-      "score_urgencia": 26.76,
+      "score_urgencia": 28.27,
       "color": "amarillo",
       "fecha": "2026-04-20",
       "momentum": {
@@ -442,29 +447,29 @@
         {
           "clave": "seguridad_social_pensiones",
           "nombre": "Seguridad social y pensiones",
-          "peso": 0.63
+          "peso": 0.67
         },
         {
           "clave": "derechos_laborales",
           "nombre": "Derechos laborales",
-          "peso": 0.49
+          "peso": 0.52
         },
         {
           "clave": "relaciones_laborales",
           "nombre": "Relaciones laborales",
-          "peso": 0.32
+          "peso": 0.35
         }
       ]
     },
     {
       "categoria": "salud",
       "nombre": "Salud",
-      "score_total": 52.5,
-      "score_media": 86.36,
+      "score_total": 55.62,
+      "score_media": 86.35000000000001,
       "score_trends": 13.83,
-      "score_congreso": 51.99,
+      "score_congreso": 65.22999999999999,
       "score_mananera": 14.41,
-      "score_urgencia": 24.74,
+      "score_urgencia": 23.48,
       "color": "amarillo",
       "fecha": "2026-04-20",
       "momentum": {
@@ -482,12 +487,12 @@
         {
           "clave": "salud_mental_adicciones",
           "nombre": "Salud mental y adicciones",
-          "peso": 0.3
+          "peso": 0.31
         },
         {
           "clave": "epidemiologia",
           "nombre": "Epidemiología",
-          "peso": 0.15
+          "peso": 0.14
         },
         {
           "clave": "medicamentos_abasto",
@@ -497,14 +502,64 @@
       ]
     },
     {
+      "categoria": "igualdad_genero",
+      "nombre": "Igualdad de género",
+      "score_total": 53.44,
+      "score_media": 70.14999999999999,
+      "score_trends": 11.4,
+      "score_congreso": 74.41,
+      "score_mananera": 0.0,
+      "score_urgencia": 27.34,
+      "color": "amarillo",
+      "fecha": "2026-04-20",
+      "momentum": {
+        "dias_consecutivos": 7,
+        "semanas_en_agenda": 1,
+        "tendencia": "stable",
+        "etiqueta": "7 dias activo"
+      },
+      "subcategorias_activas": [
+        {
+          "clave": "igualdad_sustantiva",
+          "nombre": "Igualdad sustantiva",
+          "peso": 1.0
+        },
+        {
+          "clave": "violencia_genero",
+          "nombre": "Violencia de género",
+          "peso": 0.93
+        },
+        {
+          "clave": "instituciones_genero",
+          "nombre": "Instituciones de género",
+          "peso": 0.31
+        },
+        {
+          "clave": "participacion_politica_mujeres",
+          "nombre": "Participación política de mujeres",
+          "peso": 0.3
+        },
+        {
+          "clave": "diversidad_sexual_genero",
+          "nombre": "Diversidad sexual y de género",
+          "peso": 0.1
+        },
+        {
+          "clave": "derechos_reproductivos",
+          "nombre": "Derechos reproductivos",
+          "peso": 0.07
+        }
+      ]
+    },
+    {
       "categoria": "agro_rural",
       "nombre": "Agro y Desarrollo Rural",
-      "score_total": 52.23,
-      "score_media": 73.12,
+      "score_total": 52.21,
+      "score_media": 73.02,
       "score_trends": 16.29,
       "score_congreso": 69.54,
       "score_mananera": 11.88,
-      "score_urgencia": 28.18,
+      "score_urgencia": 28.17,
       "color": "amarillo",
       "fecha": "2026-04-20",
       "momentum": {
@@ -537,62 +592,12 @@
       ]
     },
     {
-      "categoria": "igualdad_genero",
-      "nombre": "Igualdad de género",
-      "score_total": 49.36,
-      "score_media": 69.97999999999999,
-      "score_trends": 11.4,
-      "score_congreso": 59.410000000000004,
-      "score_mananera": 0.0,
-      "score_urgencia": 25.32,
-      "color": "amarillo",
-      "fecha": "2026-04-20",
-      "momentum": {
-        "dias_consecutivos": 7,
-        "semanas_en_agenda": 1,
-        "tendencia": "stable",
-        "etiqueta": "7 dias activo"
-      },
-      "subcategorias_activas": [
-        {
-          "clave": "igualdad_sustantiva",
-          "nombre": "Igualdad sustantiva",
-          "peso": 1.0
-        },
-        {
-          "clave": "violencia_genero",
-          "nombre": "Violencia de género",
-          "peso": 0.98
-        },
-        {
-          "clave": "participacion_politica_mujeres",
-          "nombre": "Participación política de mujeres",
-          "peso": 0.3
-        },
-        {
-          "clave": "instituciones_genero",
-          "nombre": "Instituciones de género",
-          "peso": 0.3
-        },
-        {
-          "clave": "diversidad_sexual_genero",
-          "nombre": "Diversidad sexual y de género",
-          "peso": 0.07
-        },
-        {
-          "clave": "derechos_reproductivos",
-          "nombre": "Derechos reproductivos",
-          "peso": 0.06
-        }
-      ]
-    },
-    {
       "categoria": "energia",
       "nombre": "Energía",
-      "score_total": 48.85,
-      "score_media": 93.66,
+      "score_total": 52.11,
+      "score_media": 93.69,
       "score_trends": 14.46,
-      "score_congreso": 35.26,
+      "score_congreso": 48.31,
       "score_mananera": 26.94,
       "score_urgencia": 30.24,
       "color": "amarillo",
@@ -600,7 +605,7 @@
       "momentum": {
         "dias_consecutivos": 12,
         "semanas_en_agenda": 1,
-        "tendencia": "down",
+        "tendencia": "stable",
         "etiqueta": "12 dias activo"
       },
       "subcategorias_activas": [
@@ -612,30 +617,30 @@
         {
           "clave": "cfe_electricidad",
           "nombre": "CFE y electricidad",
-          "peso": 0.11
+          "peso": 0.1
         },
         {
           "clave": "energias_renovables",
           "nombre": "Energías renovables",
-          "peso": 0.03
+          "peso": 0.04
         },
         {
           "clave": "mineria_recursos",
           "nombre": "Minería y recursos",
-          "peso": 0.01
+          "peso": 0.03
         }
       ]
     },
     {
       "categoria": "medios_comunicacion",
       "nombre": "Medios de Comunicación",
-      "score_total": 39.47,
-      "score_media": 74.26,
+      "score_total": 40.5,
+      "score_media": 74.19,
       "score_trends": 11.94,
       "score_congreso": 41.35,
       "score_mananera": 0.0,
-      "score_urgencia": 34.8,
-      "color": "rojo",
+      "score_urgencia": 41.72,
+      "color": "amarillo",
       "fecha": "2026-04-20",
       "momentum": {
         "dias_consecutivos": 11,
@@ -669,12 +674,12 @@
     {
       "categoria": "inteligencia_artificial",
       "nombre": "Inteligencia Artificial",
-      "score_total": 38.69,
-      "score_media": 59.17,
+      "score_total": 39.6,
+      "score_media": 62.910000000000004,
       "score_trends": 13.03,
       "score_congreso": 55.66,
       "score_mananera": 0.0,
-      "score_urgencia": 24.79,
+      "score_urgencia": 25.25,
       "color": "rojo",
       "fecha": "2026-04-20",
       "momentum": {
@@ -692,20 +697,20 @@
         {
           "clave": "ciberseguridad_datos",
           "nombre": "Ciberseguridad y datos",
-          "peso": 0.56
+          "peso": 0.52
         },
         {
           "clave": "gobernanza_digital",
           "nombre": "Gobernanza digital",
-          "peso": 0.33
+          "peso": 0.32
         }
       ]
     },
     {
       "categoria": "politica_social",
       "nombre": "Política Social",
-      "score_total": 35.24,
-      "score_media": 67.16,
+      "score_total": 35.28,
+      "score_media": 67.17,
       "score_trends": 10.46,
       "score_congreso": 24.25,
       "score_mananera": 5.22,
@@ -727,29 +732,29 @@
         {
           "clave": "bienestar_desarrollo",
           "nombre": "Bienestar y desarrollo social",
-          "peso": 0.95
+          "peso": 0.94
         },
         {
           "clave": "grupos_vulnerables",
           "nombre": "Grupos vulnerables",
-          "peso": 0.62
+          "peso": 0.54
         },
         {
           "clave": "pobreza_desigualdad",
           "nombre": "Pobreza y desigualdad",
-          "peso": 0.49
+          "peso": 0.47
         }
       ]
     },
     {
       "categoria": "administracion",
       "nombre": "Administración",
-      "score_total": 28.33,
-      "score_media": 28.89,
+      "score_total": 28.14,
+      "score_media": 28.88,
       "score_trends": 3.8,
       "score_congreso": 34.32,
       "score_mananera": 0.0,
-      "score_urgencia": 18.46,
+      "score_urgencia": 16.32,
       "color": "rojo",
       "fecha": "2026-04-20",
       "momentum": {
@@ -770,14 +775,14 @@
           "peso": 0.7
         },
         {
-          "clave": "procedimiento_administrativo",
-          "nombre": "Procedimiento administrativo y trámites",
-          "peso": 0.1
-        },
-        {
           "clave": "servicio_civil",
           "nombre": "Servicio civil de carrera",
-          "peso": 0.1
+          "peso": 0.09
+        },
+        {
+          "clave": "procedimiento_administrativo",
+          "nombre": "Procedimiento administrativo y trámites",
+          "peso": 0.07
         },
         {
           "clave": "planeacion_federalismo",
@@ -789,8 +794,8 @@
     {
       "categoria": "turismo",
       "nombre": "Turismo",
-      "score_total": 24.58,
-      "score_media": 60.5,
+      "score_total": 24.63,
+      "score_media": 60.510000000000005,
       "score_trends": 10.29,
       "score_congreso": 13.92,
       "score_mananera": 1.72,
@@ -812,22 +817,58 @@
         {
           "clave": "destinos_programas",
           "nombre": "Destinos y programas",
-          "peso": 0.46
+          "peso": 0.45
         },
         {
           "clave": "infraestructura_turistica",
           "nombre": "Infraestructura turística",
-          "peso": 0.43
+          "peso": 0.4
         },
         {
           "clave": "economia_turistica",
           "nombre": "Economía turística",
-          "peso": 0.36
+          "peso": 0.33
         }
       ]
     }
   ],
   "alertas": [
+    {
+      "id": 1115,
+      "categoria": "relaciones_exteriores",
+      "tipo_alerta": "score_alto",
+      "score": 70.87,
+      "color": "verde",
+      "mensaje": "ALERTA: Relaciones Exteriores con score 70.9 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-04-20T14:28:07.972565"
+    },
+    {
+      "id": 1114,
+      "categoria": "infraestructura",
+      "tipo_alerta": "score_alto",
+      "score": 75.48,
+      "color": "verde",
+      "mensaje": "ALERTA: Infraestructura con score 75.5 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-04-20T14:28:06.969755"
+    },
+    {
+      "id": 1113,
+      "categoria": "educacion",
+      "tipo_alerta": "score_alto",
+      "score": 71.05,
+      "color": "verde",
+      "mensaje": "ALERTA: Educación con score 71.0 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-04-20T14:28:04.431794"
+    },
+    {
+      "id": 1112,
+      "categoria": "seguridad_justicia",
+      "tipo_alerta": "score_alto",
+      "score": 72.16,
+      "color": "verde",
+      "mensaje": "ALERTA: Seguridad y Justicia con score 72.2 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-04-20T14:28:01.772875"
+    },
     {
       "id": 1111,
       "categoria": "relaciones_exteriores",
@@ -1241,63 +1282,27 @@
       "color": "verde",
       "mensaje": "ALERTA: Seguridad y Justicia con score 71.8 - Alta probabilidad de actividad legislativa",
       "fecha": "2026-04-18T21:23:42.841984"
-    },
-    {
-      "id": 1065,
-      "categoria": "relaciones_exteriores",
-      "tipo_alerta": "score_alto",
-      "score": 70.69,
-      "color": "verde",
-      "mensaje": "ALERTA: Relaciones Exteriores con score 70.7 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-04-18T17:08:11.262026"
-    },
-    {
-      "id": 1064,
-      "categoria": "infraestructura",
-      "tipo_alerta": "score_alto",
-      "score": 74.79,
-      "color": "verde",
-      "mensaje": "ALERTA: Infraestructura con score 74.8 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-04-18T17:08:10.411217"
-    },
-    {
-      "id": 1063,
-      "categoria": "educacion",
-      "tipo_alerta": "score_alto",
-      "score": 71.67,
-      "color": "verde",
-      "mensaje": "ALERTA: Educación con score 71.7 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-04-18T17:08:08.264902"
-    },
-    {
-      "id": 1062,
-      "categoria": "economia_hacienda",
-      "tipo_alerta": "score_alto",
-      "score": 75.14,
-      "color": "verde",
-      "mensaje": "ALERTA: Economía y Hacienda con score 75.1 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-04-18T17:08:06.985995"
     }
   ],
   "distribucion_categorias": {
-    "electoral_politico": 402,
-    "politica_social": 101,
-    "administracion": 64,
-    "energia": 297,
-    "seguridad_justicia": 645,
-    "derechos_humanos": 151,
-    "trabajo": 122,
-    "educacion": 245,
-    "infraestructura": 330,
-    "medio_ambiente": 180,
-    "salud": 153,
+    "electoral_politico": 406,
+    "politica_social": 102,
+    "administracion": 67,
+    "energia": 304,
+    "seguridad_justicia": 658,
+    "derechos_humanos": 152,
+    "trabajo": 125,
+    "educacion": 248,
+    "infraestructura": 336,
+    "medio_ambiente": 183,
+    "salud": 155,
     "agro_rural": 84,
-    "economia_hacienda": 172,
-    "relaciones_exteriores": 364,
-    "igualdad_genero": 225,
-    "anticorrupcion": 116,
-    "inteligencia_artificial": 45,
-    "turismo": 34,
+    "economia_hacienda": 174,
+    "relaciones_exteriores": 372,
+    "igualdad_genero": 229,
+    "anticorrupcion": 118,
+    "inteligencia_artificial": 47,
+    "turismo": 35,
     "medios_comunicacion": 69
   },
   "predicciones": {
@@ -1496,6 +1501,12 @@
     "seguridad_justicia": {
       "articulos_medios": [
         {
+          "fuente": "cronica",
+          "titulo": "El atlas del cuerpo humano",
+          "url": "https://www.cronica.com.mx/opinion/2026/04/20/el-atlas-del-cuerpo-humano/",
+          "fecha": "2026-04-20"
+        },
+        {
           "fuente": "el_universal",
           "titulo": "Vieja Corte dio licencias doradas a trabajadores; 49 altos funcionarios tuvieron privilegios",
           "url": "https://www.eluniversal.com.mx/nacion/vieja-corte-dio-licencias-doradas-a-trabajadores-49-altos-funcionarios-tuvieron-privilegios/",
@@ -1520,69 +1531,63 @@
           "fecha": "2026-04-20"
         },
         {
-          "fuente": "la_razon",
-          "titulo": "Fiscalía defiende captura en caso Edith Guadalupe; indaga si hay más delitos",
-          "url": "https://www.razon.com.mx/ciudad/2026/04/20/fiscalia-defiende-captura-en-caso-edith-guadalupe-indaga-si-hay-mas-delitos/",
+          "fuente": "la_jornada",
+          "titulo": "Buscan legisladores de Morena postergar la elección de jueces de 2027 a 2028",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/006n1pol?partner=rss",
           "fecha": "2026-04-20"
         },
         {
-          "fuente": "la_razon",
-          "titulo": "Disminuir Pensiones, un riesgo de  seguridad nacional",
-          "url": "https://www.razon.com.mx/opinion/2026/04/20/disminuir-pensiones-un-riesgo-de-seguridad-nacional/",
+          "fuente": "la_jornada",
+          "titulo": "Perfila la Corte evitar que juicios penales se repitan en automático por exceder plazos",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/007n2pol?partner=rss",
           "fecha": "2026-04-20"
         },
         {
-          "fuente": "el_financiero",
-          "titulo": "De la denuncia pública a la acción penal: médico y sus abogados llevan a tribunales presunta red de extorsión y difamación",
-          "url": "https://www.elfinanciero.com.mx/opinion/lourdes-mendoza/2026/04/20/de-la-denuncia-publica-a-la-accion-penal-medico-y-sus-abogados-llevan-a-tribunales-presunta-red-de-extorsion-y-difamacion/",
+          "fuente": "la_jornada",
+          "titulo": "“La impunidad persiste”, afirman colectivos ante funcionario de la ONU",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/004n1pol?partner=rss",
           "fecha": "2026-04-20"
         },
         {
-          "fuente": "24_horas",
-          "titulo": "Poderes fácticos",
-          "url": "https://24-horas.mx/columnas/agenda-de-seguridad-y-defensa/poderes-facticos/",
+          "fuente": "la_jornada",
+          "titulo": "Mueren dos oficiales de EU y dos mexicanos tras acción antinarco",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/005n1pol?partner=rss",
           "fecha": "2026-04-20"
         },
         {
-          "fuente": "el_universal",
-          "titulo": "Destruye FGR más de tres toneladas de narcóticos y dos mil litros de metanfetamina en Michoacán; refuerzan combate al crimen",
-          "url": "https://www.eluniversal.com.mx/nacion/destruye-fgr-mas-de-tres-toneladas-de-narcoticos-y-dos-mil-litros-de-metanfetamina-en-michoacan-refuerzan-combate-al-crimen/",
+          "fuente": "la_jornada",
+          "titulo": "Atacan con drones a fuerzas policiales en el noroeste de Jalisco",
+          "url": "https://www.jornada.com.mx/2026/04/20/estados/029n2est?partner=rss",
           "fecha": "2026-04-20"
         },
         {
-          "fuente": "el_universal",
-          "titulo": "Alto Comisionado de la ONU llega a México; pone foco en desapariciones y crisis de derechos humanos",
-          "url": "https://www.eluniversal.com.mx/nacion/alto-comisionado-de-la-onu-llega-a-mexico-pone-foco-en-desapariciones-y-crisis-de-derechos-humanos/",
+          "fuente": "la_jornada",
+          "titulo": "Reforma al Código Penal llena un vacío legal en delito de extorsión",
+          "url": "https://www.jornada.com.mx/2026/04/20/capital/032n3cap?partner=rss",
           "fecha": "2026-04-20"
         },
         {
-          "fuente": "el_universal",
-          "titulo": "Aseguran más de cinco kilos de metanfetamina en Jalisco; fueron hallados en una empresa de paquetería",
-          "url": "https://www.eluniversal.com.mx/nacion/aseguran-mas-de-cinco-kilos-de-metanfetamina-en-jalisco-fueron-hallados-en-una-empresa-de-paqueteria/",
+          "fuente": "la_jornada",
+          "titulo": "Tras asesinar a 8 niños en Luisiana, un sujeto  es abatido por la policía",
+          "url": "https://www.jornada.com.mx/2026/04/20/mundo/025n2mun?partner=rss",
           "fecha": "2026-04-20"
         },
         {
-          "fuente": "el_universal",
-          "titulo": "Así fue el operativo contra narcolaboratorios en el que murieron los elementos de la embajada de EU; fiscal destaca magnitud del hallazgo",
-          "url": "https://www.eluniversal.com.mx/nacion/asi-fue-el-operativo-contra-narcolaboratorios-en-el-que-murieron-los-elementos-de-la-embajada-de-eu-fiscal-destaca-magnitud-del-hallazgo/",
+          "fuente": "la_jornada",
+          "titulo": "Diversificación da la seguridad energética, coinciden analistas",
+          "url": "https://www.jornada.com.mx/2026/04/20/economia/021n1eco?partner=rss",
           "fecha": "2026-04-20"
         },
         {
-          "fuente": "la_razon",
-          "titulo": "Capturan en Tepalcatepec a familiar de ‘El Abuelo Farías’ con armas de alto poder y efectivo",
-          "url": "https://www.razon.com.mx/mexico/2026/04/19/capturan-en-tepalcatepec-a-familiar-de-el-abuelo-farias-con-armas-de-alto-poder-y-efectivo/",
+          "fuente": "la_jornada",
+          "titulo": "Desechó el PJF cientos de amparos contra grandes obras y reformas en 7 años",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/007n1pol?partner=rss",
           "fecha": "2026-04-20"
         },
         {
-          "fuente": "la_razon",
-          "titulo": "Juez ordena atención médica inmediata para ‘El Güero’ Palma en penal de El Altiplano",
-          "url": "https://www.razon.com.mx/mexico/2026/04/19/juez-ordena-atencion-medica-inmediata-para-el-guero-palma-en-penal-de-el-altiplano/",
-          "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "ovaciones",
-          "titulo": "Volker Türk escucha primero a víctimas y colectivos antes de reunirse con Claudia Sheinbaum",
-          "url": "https://ovaciones.com/volker-turk-escucha-primero-a-victimas-y-colectivos-antes-de-reunirse-con-claudia-sheinbaum/?utm_source=rss&utm_medium=rss&utm_campaign=volker-turk-escucha-primero-a-victimas-y-colectivos-antes-de-reunirse-con-claudia-sheinbaum",
+          "fuente": "la_jornada",
+          "titulo": "Alertan de “impunidad institucional” en feminicidios",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/005n2pol?partner=rss",
           "fecha": "2026-04-20"
         }
       ],
@@ -2582,6 +2587,12 @@
       ],
       "tweets": [
         {
+          "usuario": "letroblesrosa",
+          "nombre": "Leti Robles Rosa",
+          "texto": "‼️EXTRA‼️ Desde el @senadomexicano , México va por la primera ley que regulará la Inteligencia Artificial.\n\nEl ciudadano podrá “defenderse” de ella y habrá hasta cárcel por incurrir en prácticas prohibidas, como el  deepfakes.\n\nDetalles en @Excelsior \n\nhttps://t.co/G14HaABAnO htt",
+          "fecha": "2026-04-20"
+        },
+        {
           "usuario": "MLopezSanMartin",
           "nombre": "Manuel López San Martín",
           "texto": "Mueren dos agentes estatales y dos funcionarios de la Embajada de EU \n\nRegresaban de un operativo contra un narcolaboratorio\n\nAutoridades descartan atentado; todo apunta a un accidente en la sierra https://t.co/s5P6CRAVVB",
@@ -2634,21 +2645,27 @@
           "nombre": "Manuel Añorve Baños",
           "texto": "La ONU acaba de exponer que México ha fallado en proteger a su gente, desmantelando la narrativa de \"abrazos no balazos\". \n\nLa justicia no puede seguir siendo una promesa institucional mientras las fosas clandestinas siguen aumentando.\n\nLos invito a leer mi columna en https://t.c",
           "fecha": "2026-04-18"
-        },
-        {
-          "usuario": "PollsMX_",
-          "nombre": "Polls MX",
-          "texto": "🪖Marina y Ejército son las dos instituciones en las que más confían los mexicanos\n\n👉 https://t.co/hUGoEIS6l2 \n\nLas Fuerzas Armadas que incluyen Ejército, Marina y Fuerza Aérea concentran el mayor nivel de confianza con 75.9%, posicionándola como la institución más confiable https",
-          "fecha": "2026-04-18"
         }
       ]
     },
     "economia_hacienda": {
       "articulos_medios": [
         {
+          "fuente": "el_financiero",
+          "titulo": "La nueva ley de infraestructura estratégica: implicaciones para la inversión y el financiamiento en México",
+          "url": "https://www.elfinanciero.com.mx/opinion/entre-lineas-finanzas-y-leyes/2026/04/20/la-nueva-ley-de-infraestructura-estrategica-implicaciones-para-la-inversion-y-el-financiamiento-en-mexico/",
+          "fecha": "2026-04-20"
+        },
+        {
           "fuente": "bloomberg_linea",
           "titulo": "Cepeda, Valencia y De la Espriella: tres visiones de los impuestos en Colombia para 2026 – 2030",
           "url": "https://www.bloomberglinea.com/latinoamerica/colombia/cepeda-valencia-y-de-la-espriella-tres-visiones-de-los-impuestos-en-colombia-para-2026-2030/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "León Bendesky: Tecnología y sociedad",
+          "url": "https://www.jornada.com.mx/2026/04/20/economia/019a1eco?partner=rss",
           "fecha": "2026-04-20"
         },
         {
@@ -2721,18 +2738,6 @@
           "fuente": "el_universal",
           "titulo": "Comisión de Cultura del Senado destaca ley del derecho de autor; México a la vanguardia en protección de artistas e interpretes, dice",
           "url": "https://www.eluniversal.com.mx/nacion/comision-de-cultura-del-senado-destaca-ley-del-derecho-de-autor-mexico-a-la-vanguardia-en-proteccion-de-artistas-e-interpretes-dice/",
-          "fecha": "2026-04-18"
-        },
-        {
-          "fuente": "ovaciones",
-          "titulo": "Tipo de cambio hoy 18 de abril 2026: ¿Cómo amaneció la compra y venta del dólar en México?",
-          "url": "https://ovaciones.com/tipo-de-cambio-hoy-18-de-abril-2026-como-amanecio-la-compra-y-venta-del-dolar-en-mexico/?utm_source=rss&utm_medium=rss&utm_campaign=tipo-de-cambio-hoy-18-de-abril-2026-como-amanecio-la-compra-y-venta-del-dolar-en-mexico",
-          "fecha": "2026-04-18"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Crudo nacional baja a 84.25 dólares y es el menor precio en 5 semanas",
-          "url": "https://www.eluniversal.com.mx/cartera/crudo-nacional-baja-a-8425-dolares-y-es-el-menor-precio-en-5-semanas/",
           "fecha": "2026-04-18"
         }
       ],
@@ -3317,8 +3322,44 @@
       "articulos_medios": [
         {
           "fuente": "el_financiero",
+          "titulo": "Las diferencias en los precios de los hidrocarburos alcanzan récords",
+          "url": "https://www.elfinanciero.com.mx/opinion/ernesto-o-farrill-santoscoy/2026/04/20/las-diferencias-en-los-precios-de-los-hidrocarburos-alcanzan-records/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "el_financiero",
           "titulo": "Pemex se diluye en las manos de la 4T",
           "url": "https://www.elfinanciero.com.mx/opinion/alejo-sanchez-cano/2026/04/21/pemex-se-diluye-en-las-manos-de-la-4t/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Iván Restrepo: El derrame, la mentira y sus consecuencias",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/016a1pol?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Barril de petróleo vuelve a subir hasta 6%",
+          "url": "https://www.jornada.com.mx/2026/04/20/mundo/024n2mun?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Manuel Pérez Rocha L.*: El fracking y el riesgo de más demandas",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/016a2pol?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Advierte diputado sobre los riesgos del fracking",
+          "url": "https://www.jornada.com.mx/2026/04/20/economia/021n2eco?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Diversificación da la seguridad energética, coinciden analistas",
+          "url": "https://www.jornada.com.mx/2026/04/20/economia/021n1eco?partner=rss",
           "fecha": "2026-04-20"
         },
         {
@@ -3346,6 +3387,12 @@
           "fecha": "2026-04-20"
         },
         {
+          "fuente": "milenio",
+          "titulo": "Cese de funcionarios de Pemex no repara daños por derrame de hidrocarburos: PAN",
+          "url": "https://www.milenio.com/politica/pan-cese-pemex-repara-danos-derrame-golfo-mexico",
+          "fecha": "2026-04-20"
+        },
+        {
           "fuente": "bloomberg_linea",
           "titulo": "Asia recurre al petróleo de EE.UU. ante la crisis en Ormuz y dispara el tráfico en Panamá",
           "url": "https://www.bloomberglinea.com/mundo/estados-unidos/asia-recurre-al-petroleo-de-eeuu-ante-la-crisis-en-ormuz-y-dispara-el-trafico-en-panama/",
@@ -3362,48 +3409,6 @@
           "titulo": "El aumento de los precios de la gasolina ha afectado más a estas ciudades de EE.UU.",
           "url": "https://www.bloomberglinea.com/mundo/estados-unidos/el-aumento-de-los-precios-de-la-gasolina-ha-afectado-mas-a-estas-ciudades-de-eeuu/",
           "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "bloomberg_linea",
-          "titulo": "Los futuros de EE.UU. caen y el petróleo sube al empeorar las tensiones con Irán",
-          "url": "https://www.bloomberglinea.com/mercados/los-futuros-de-eeuu-caen-y-el-petroleo-sube-al-empeorar-las-tensiones-con-iran/",
-          "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "bloomberg_linea",
-          "titulo": "Petróleo y gas se disparan tras la incautación por parte de Estados Unidos de un buque iraní",
-          "url": "https://www.bloomberglinea.com/mercados/petroleo-y-gas-se-disparan-tras-la-incautacion-por-parte-de-estados-unidos-de-un-buque-irani/",
-          "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "Conagua descarta presencia de hidrocarburos tras muerte masiva de peces en Tamaulipas y Veracruz",
-          "url": "https://www.razon.com.mx/mexico/2026/04/19/conagua-descarta-presencia-de-hidrocarburos-tras-muerte-masiva-de-peces-en-tamaulipas-y-veracruz/",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "CFE invita a realizar la actualización de datos de tu servicio",
-          "url": "https://www.cronica.com.mx/nacional/2026/04/19/cfe-invita-a-realizar-la-actualizacion-de-datos-de-tu-servicio/",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "CFE fortalece infraestructura de transmisión en la Península de Yucatán",
-          "url": "https://www.cronica.com.mx/nacional/2026/04/19/cfe-fortalece-infraestructura-de-transmision-en-la-peninsula-de-yucatan/",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "Conagua: Mezcla de aguas mata peces en Veracruz y Tamaulipas; descarta hidrocarburos",
-          "url": "https://24-horas.mx/estados/conagua-mezcla-de-aguas-mata-peces-en-veracruz-y-tamaulipas-descarta-hidrocarburos/",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "Derrame de hidrocarburos expone fallas graves en operación de Pemex: PAN; “riesgos crecientes”",
-          "url": "https://www.cronica.com.mx/nacional/2026/04/19/derrame-de-hidrocarburos-expone-fallas-graves-en-operacion-de-pemex-pan-riesgos-crecientes/",
-          "fecha": "2026-04-19"
         }
       ],
       "documentos_gaceta": [
@@ -3692,6 +3697,18 @@
     "salud": {
       "articulos_medios": [
         {
+          "fuente": "la_jornada",
+          "titulo": "Prevención en salud, práctica fundamental en centros de trabajo",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/010n3pol?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Incorpora el IMSS nuevas opciones de tratamiento para pacientes con VIH",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/010n2pol?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
           "fuente": "la_razon",
           "titulo": "Juez ordena atención médica inmediata para ‘El Güero’ Palma en penal de El Altiplano",
           "url": "https://www.razon.com.mx/mexico/2026/04/19/juez-ordena-atencion-medica-inmediata-para-el-guero-palma-en-penal-de-el-altiplano/",
@@ -3767,18 +3784,6 @@
           "fuente": "la_jornada",
           "titulo": "Alejandro Svarch*: Cuando la salud deja de ser archipiélago: el nacimiento del Servicio Universal de Salud",
           "url": "https://www.jornada.com.mx/2026/04/19/politica/013a2pol?partner=rss",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Cae sujeto con 700 mil pastillas de fentanilo en Baja California; es vinculado a proceso",
-          "url": "https://www.eluniversal.com.mx/nacion/cae-sujeto-con-700-mil-pastillas-de-fentanilo-en-baja-california-es-vinculado-a-proceso/",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "el_financiero",
-          "titulo": "‘Estoy muy grave’: Juez ordena atención médica urgente para ‘El Güero Palma’ en el Altiplano",
-          "url": "https://www.elfinanciero.com.mx/nacional/2026/04/18/el-guero-palma-muy-grave-ordenan-atencion-medica-urgente-para-el-narcotraficante-en-el-altiplano/",
           "fecha": "2026-04-19"
         }
       ],
@@ -4182,9 +4187,21 @@
     "educacion": {
       "articulos_medios": [
         {
+          "fuente": "cronica",
+          "titulo": "La FILGAM clausura con Rigoberta Menchú: la cultura como derecho del pueblo",
+          "url": "https://www.cronica.com.mx/metropoli/2026/04/20/la-filgam-clausura-con-rigoberta-menchu-la-cultura-como-derecho-del-pueblo/",
+          "fecha": "2026-04-20"
+        },
+        {
           "fuente": "el_financiero",
           "titulo": "Disparos, gritos y muertos durante una protesta de trabajadores de la Universidad Autónoma de Guerrero",
           "url": "https://www.elfinanciero.com.mx/estados/2026/04/20/disparos-gritos-y-muertos-durante-una-protesta-de-trabajadores-de-la-universidad-autonoma-de-guerrero/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Con malestar mental, mitad de alumnos de nuevo ingreso de la UNAM",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/013n2pol?partner=rss",
           "fecha": "2026-04-20"
         },
         {
@@ -4197,6 +4214,12 @@
           "fuente": "la_razon",
           "titulo": "Longines Global Champions Tour México 2026: Equipo Sabino se impone en concurso por el Trofeo Maestro Dobel",
           "url": "https://www.razon.com.mx/deportes/2026/04/19/longines-global-champions-tour-mexico-2026-equipo-sabino-se-impone-en-concurso-por-el-trofeo-maestro-dobel/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "el_heraldo",
+          "titulo": "Muere una mujer durante ataque contra manifestantes en la Universidad Autónoma de Guerrero",
+          "url": "https://heraldodemexico.com.mx/nacional/2026/4/19/muere-una-mujer-durante-ataque-contra-manifestantes-en-la-universidad-autonoma-de-guerrero-798937.html",
           "fecha": "2026-04-20"
         },
         {
@@ -4251,24 +4274,6 @@
           "fuente": "la_razon",
           "titulo": "IPN se deslinda por freno de becas en Reino Unido",
           "url": "https://www.razon.com.mx/mexico/2026/04/19/ipn-aclara-que-no-tiene-relacion-con-la-fundacion-politecnico-ante-suspension-de-becas-a-estudiantes-en-reino-unido/",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "IPN aclara que no tiene relación con la Fundación Politécnico ante suspensión de becas a estudiantes en Reino Unido",
-          "url": "https://www.razon.com.mx/mexico/2026/04/19/ipn-aclara-que-no-tiene-relacion-con-la-fundacion-politecnico-ante-suspension-de-becas-a-estudiantes-en-reino-unido/",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "Lotería Nacional y Fundación UNAM develan billete por Día del Deporte",
-          "url": "https://www.cronica.com.mx/nacional/2026/04/19/loteria-nacional-y-fundacion-unam-develan-billete-por-dia-del-deporte/",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "Lotería Nacional y UNAM celebran el Día del Deporte con sorteo especial",
-          "url": "https://www.razon.com.mx/negocios/2026/04/19/loteria-nacional-y-unam-celebran-el-dia-del-deporte-con-sorteo-especial/",
           "fecha": "2026-04-19"
         }
       ],
@@ -5167,6 +5172,24 @@
     "trabajo": {
       "articulos_medios": [
         {
+          "fuente": "la_jornada",
+          "titulo": "Acreditan y sancionan acoso y hostigamiento laboral contra residente médica en el INER",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/008n2pol?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Prevención en salud, práctica fundamental en centros de trabajo",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/010n3pol?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "En marzo se dispararon 37% los retiros por desempleo en las Afore",
+          "url": "https://www.jornada.com.mx/2026/04/20/economia/019n1eco?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
           "fuente": "proceso",
           "titulo": "Disparan contra trabajadores en huelga de la UAG en Acapulco; matan a una mujer",
           "url": "https://www.proceso.com.mx/nacional/estados/2026/4/20/disparan-contra-trabajadores-en-huelga-de-la-uag-en-acapulco-matan-una-mujer-372519.html",
@@ -5237,24 +5260,6 @@
           "titulo": "Gobierno de Hidalgo confirma retiro de inmueble a Fundaciû°n Arturo Herrera CabaûÝas",
           "url": "https://www.proceso.com.mx/nacional/estados/2026/4/18/gobierno-de-hidalgo-confirma-retiro-de-inmueble-fundacion-arturo-herrera-cabanas-372445.html",
           "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Coyoacán inaugura su quinta Feria del Empleo de la Diversidad y la Inclusión; participan 50 empresa con 2 mil vacantes",
-          "url": "https://www.eluniversal.com.mx/metropoli/coyoacan-inaugura-su-quinta-feria-del-empleo-de-la-diversidad-y-la-inclusion-participan-50-empresa-con-2-mil-vacantes/",
-          "fecha": "2026-04-18"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Acuerdan aumento de 15% a trabajadores del Poder Judicial de CDMX; aplicará a salario y prestaciones",
-          "url": "https://www.eluniversal.com.mx/nacion/acuerdan-aumento-de-15-a-trabajadores-del-poder-judicial-de-cdmx-aplicara-a-salario-y-prestaciones/",
-          "fecha": "2026-04-18"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "Acuerdan incremento salarial para los trabajadores del PJCDMX",
-          "url": "https://24-horas.mx/cdmx/acuerdan-incremento-salarial-para-los-trabajadores-del-pjcdmx/",
-          "fecha": "2026-04-18"
         }
       ],
       "documentos_gaceta": [
@@ -5606,6 +5611,12 @@
     "electoral_politico": {
       "articulos_medios": [
         {
+          "fuente": "el_financiero",
+          "titulo": "Entregan quintetas de candidatos idóneos al INE; ‘se hicieron en lo oscuro’, afirma oposición",
+          "url": "https://www.elfinanciero.com.mx/nacional/2026/04/20/hoy-entregan-quintetas-de-idoneos-al-ine-se-hicieron-en-lo-oscuro-asegura-la-oposicion/",
+          "fecha": "2026-04-20"
+        },
+        {
           "fuente": "el_universal",
           "titulo": "Diputados arrastran rezago de casi 89% en iniciativas federales",
           "url": "https://www.eluniversal.com.mx/nacion/diputados-arrastran-rezago-de-casi-89-en-iniciativas-federales/",
@@ -5621,6 +5632,18 @@
           "fuente": "el_financiero",
           "titulo": "‘Por soberbia de Luisa María Alcalde no hubo acuerdos con Morena’, asegura Partido Verde",
           "url": "https://www.elfinanciero.com.mx/nacional/2026/04/20/por-soberbia-de-luisa-maria-alcalde-no-hubo-acuerdos-con-morena-asegura-partido-verde/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Buscan legisladores de Morena postergar la elección de jueces de 2027 a 2028",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/006n1pol?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "La llegada de Citlalli Hernández “es positiva” para la alianza: PT",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/013n1pol?partner=rss",
           "fecha": "2026-04-20"
         },
         {
@@ -5660,6 +5683,12 @@
           "fecha": "2026-04-20"
         },
         {
+          "fuente": "milenio",
+          "titulo": "Comité Técnico entregará quintetas para INE este lunes",
+          "url": "https://www.milenio.com/politica/comite-tecnico-entregara-quintetas-ine-recurren-austeridad",
+          "fecha": "2026-04-20"
+        },
+        {
           "fuente": "proceso",
           "titulo": "Higinio MartûÙnez pide a Morena que se respeten las candidaturas de Mexiquenses de Corazû°n",
           "url": "https://www.proceso.com.mx/nacional/estados/2026/4/20/higinio-martinez-pide-morena-que-se-respeten-las-candidaturas-de-mexiquenses-de-corazon-372517.html",
@@ -5669,30 +5698,6 @@
           "fuente": "milenio",
           "titulo": "Embajador de Cuba reconoce apoyo de Sheinbaum ante crisis política: \"nos despertó con esa dign...",
           "url": "https://www.milenio.com/politica/embajador-cuba-reconoce-apoyo-sheinbaum-crisis-politica",
-          "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "milenio",
-          "titulo": "Aspirante impugna lista de finalistas para consejerías del INE; acusa que se incumplen accione...",
-          "url": "https://www.milenio.com/politica/aspirante-impugna-lista-de-finalistas-para-consejerias-del-ine",
-          "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "el_pais",
-          "titulo": "Morena quiere retrasar la elección judicial a 2028 para poder corregir las fallas del proceso",
-          "url": "https://elpais.com/mexico/2026-04-20/morena-quiere-retrasar-la-eleccion-judicial-a-2028-para-poder-corregir-las-fallas-del-proceso.html",
-          "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "proceso",
-          "titulo": "Higinio MartĂ­nez pide a Morena que se respeten las candidaturas de Mexiquenses de CorazĂłn",
-          "url": "https://www.proceso.com.mx/nacional/estados/2026/4/20/higinio-martinez-pide-morena-que-se-respeten-las-candidaturas-de-mexiquenses-de-corazon-372517.html",
-          "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "proceso",
-          "titulo": "Arremete Luisa Alcalde contra gobernadores de PAN y MC por programas de Bienestar",
-          "url": "https://www.proceso.com.mx/nacional/politica/2026/4/19/arremete-luisa-alcalde-contra-gobernadores-de-pan-mc-por-programas-de-bienestar-372500.html",
           "fecha": "2026-04-20"
         }
       ],
@@ -9259,6 +9264,12 @@
       ],
       "tweets": [
         {
+          "usuario": "RicardoMonrealA",
+          "nombre": "Ricardo Monreal Ávila",
+          "texto": "La Presidenta @Claudiashein viajó a Barcelona para participar en la IV Cumbre en Defensa de la Democracia, junto con líderes y mandatarios progresistas del mundo. Su sola presencia tiene un peso que trasciende el protocolo. #Columna, vía @El_Universal_Mx https://t.co/ZvbpIaf70R",
+          "fecha": "2026-04-20"
+        },
+        {
           "usuario": "PollsMX_",
           "nombre": "Polls MX",
           "texto": "🔴🔵✅📊 Alessandra Rojo de la Vega entre los 10 alcaldes de zonas metropolitanas mejor evaluados\n\n👉🏽 https://t.co/AVZ2Q2muFi\n\nLa alcaldesa de Cuauhtémoc, @AlessandraRdlv (PRI-PAN), se posiciona como una de las figuras más sólidas de la Ciudad de México al ocupar el cuarto lugar http",
@@ -9311,17 +9322,17 @@
           "nombre": "Ricardo Monreal Ávila",
           "texto": "Les deseo buen domingo a todas las familias mexicanas, y bienvenida a casa, Presidenta @Claudiashein. Gracias por actuar con dignidad y decoro republicano, al defender la democracia e insistir en la observancia de los principios de nuestra política exterior. https://t.co/B44542Db",
           "fecha": "2026-04-19"
-        },
-        {
-          "usuario": "Juan_OrtizMX",
-          "nombre": "Juan Ortiz",
-          "texto": "🗳️📌 EL VERDE EXIGE A MORENA 5 DE 17 CANDIDATURAS A GUBERNATURA\n\nEl PVEM ya puso precio a la alianza con Morena rumbo a 2027.\n\nAsí lo reporta La Jornada con versiones de legisladores de Morena.\n\nQuien hace la exigencia es el Niño Verde, Jorge Emilio González.\n\nQuiere 5 de las 17 h",
-          "fecha": "2026-04-19"
         }
       ]
     },
     "derechos_humanos": {
       "articulos_medios": [
+        {
+          "fuente": "la_jornada",
+          "titulo": "México de Colores cumple 15 años de hacer la revolución LGBT+ con arte",
+          "url": "https://www.jornada.com.mx/2026/04/20/cultura/a02n1cul?partner=rss",
+          "fecha": "2026-04-20"
+        },
         {
           "fuente": "24_horas",
           "titulo": "¿Esa es la Corte del pueblo?",
@@ -9404,12 +9415,6 @@
           "fuente": "cronica",
           "titulo": "Jóvenes de Somos México exige renuncia de Rosario Ibarra a la CNDH; “Defiende al gobierno”.",
           "url": "https://www.cronica.com.mx/nacional/2026/04/18/jovenes-de-somos-mexico-exige-renuncia-de-rosario-ibarra-a-la-cndh-defiende-al-gobierno/",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "el_economista",
-          "titulo": "Fracking en México avanza: Reacciones de expertos y activistas",
-          "url": "https://www.eleconomista.com.mx/politica/fracking-mexico-avanza-reacciones-expertos-activistas-20260419-809352.html",
           "fecha": "2026-04-19"
         }
       ],
@@ -10029,6 +10034,36 @@
     "infraestructura": {
       "articulos_medios": [
         {
+          "fuente": "cronica",
+          "titulo": "Terremoto en Japón: retiran alerta de Tsunami tras sismo de 7.7 grados",
+          "url": "https://www.cronica.com.mx/mundo/2026/04/20/terremoto-en-japon-retiran-alerta-de-tsunami-tras-sismo-de-77-grados/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "24_horas",
+          "titulo": "Japón alerta de un posible terremoto tras el sismo ocurrido en el norte",
+          "url": "https://24-horas.mx/mundo/japon-alerta-de-un-posible-terremoto-tras-el-sismo-ocurrido-en-el-norte/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Senadores votarán esta semana la minuta de reforma a Ley de Vivienda",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/015n2pol?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Desechó el PJF cientos de amparos contra grandes obras y reformas en 7 años",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/007n1pol?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Grieta en la colonia Díaz Mirón fractura calles, forma socavón y daña casas y la red de drenaje",
+          "url": "https://www.jornada.com.mx/2026/04/20/capital/031n3cap?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
           "fuente": "el_universal",
           "titulo": "Desalojan bloqueo en carretera de Chiapas; pobladores exigen justicia por muerte de estudiante",
           "url": "https://www.eluniversal.com.mx/estados/desalojan-bloqueo-en-carretera-de-chiapas-pobladores-exigen-justicia-por-muerte-de-estudiante/",
@@ -10044,6 +10079,12 @@
           "fuente": "cronica",
           "titulo": "Funcionarios de la Embajada de EU y de la Fiscalía de Chihuahua mueren en accidente en carretera",
           "url": "https://www.cronica.com.mx/nacional/2026/04/19/funcionarios-de-la-embajada-de-eu-y-de-la-fiscalia-de-chihuahua-mueren-en-accidente-en-carretera/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "milenio",
+          "titulo": "Senado avalará reformas a la Ley de Vivienda y otras reformas",
+          "url": "https://www.milenio.com/politica/agenda-legislativa-senado-avalara-reformas-ley-vivienda",
           "fecha": "2026-04-20"
         },
         {
@@ -10081,42 +10122,6 @@
           "titulo": "​Ricardo Gallardo amplía la red carretera en el Altiplano",
           "url": "https://www.eleconomista.com.mx/politica/ricardo-gallardo-amplia-red-carretera-altiplano-20260419-809387.html",
           "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "milenio",
-          "titulo": "Senado avalará reformas a la Ley de Vivienda, feminicidio y fiscalización esta semana",
-          "url": "https://www.milenio.com/politica/agenda-legislativa-senado-avalara-reformas-ley-vivienda",
-          "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "Jalisco y Guanajuato firman acuerdo para fortalecer la seguridad vial",
-          "url": "https://www.razon.com.mx/estados/2026/04/19/jalisco-y-guanajuato-firman-acuerdo-para-fortalecer-la-seguridad-vial/",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Autopista Siervo de la Nación permanecerá  cerrada; señalan que no existen condiciones para utilizarla",
-          "url": "https://www.eluniversal.com.mx/metropoli/autopista-siervo-de-la-nacion-permanecera-cerrada-senalan-que-no-existen-condiciones-para-utilizarla/",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Detienen a ladrón de cigarros; trató de huir en transporte público",
-          "url": "https://www.eluniversal.com.mx/metropoli/detienen-a-ladron-de-cigarros-trato-de-huir-en-transporte-publico/",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Hallan dos cuerpos calcinados bajo puente en León, Guanajuato; víctimas no han sido identificadas",
-          "url": "https://www.eluniversal.com.mx/estados/hallan-dos-cuerpos-calcinados-bajo-puente-en-leon-guanajuato-victimas-no-han-sido-identificadas/",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Senadora impulsa regulación nacional para plataformas digitales de transporte; pide garantizar condiciones de seguridad y equidad",
-          "url": "https://www.eluniversal.com.mx/nacion/senadora-impulsa-regulacion-nacional-para-plataformas-digitales-de-transporte-pide-garantizar-condiciones-de-seguridad-y-equidad/",
-          "fecha": "2026-04-19"
         }
       ],
       "documentos_gaceta": [
@@ -11258,9 +11263,39 @@
     "relaciones_exteriores": {
       "articulos_medios": [
         {
+          "fuente": "el_universal",
+          "titulo": "Cubanos en CDMX se congregan contra la \"política intervencionista\" de EU; \"no seremos testigos de la rendición\", dice embajador",
+          "url": "https://www.eluniversal.com.mx/nacion/cubanos-en-cdmx-se-congregan-contra-la-politica-intervencionista-de-eu-no-seremos-testigos-de-la-rendicion-dice-embajador/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "el_financiero",
+          "titulo": "63% de mexicanos consideran que T-MEC es importante para México: Encuesta EF",
+          "url": "https://www.elfinanciero.com.mx/economia/2026/04/20/aumenta-percepcion-sobre-la-importancia-del-t-mec-encuesta-ef/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "el_financiero",
+          "titulo": "A cuidar los pasaportes",
+          "url": "https://www.elfinanciero.com.mx/opinion/atzayaelh-torres/2026/04/20/a-cuidar-los-pasaportes/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Inicia el reembolso de los aranceles de Trump",
+          "url": "https://www.eluniversal.com.mx/cartera/inicia-el-reembolso-de-los-aranceles-de-trump/",
+          "fecha": "2026-04-20"
+        },
+        {
           "fuente": "el_financiero",
           "titulo": "Aumenta percepción sobre la importancia del T-MEC: Encuesta EF",
           "url": "https://www.elfinanciero.com.mx/economia/2026/04/20/aumenta-percepcion-sobre-la-importancia-del-t-mec-encuesta-ef/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "24_horas",
+          "titulo": "Gira de Sheinbaum en España se centra en paz y diplomacia",
+          "url": "https://24-horas.mx/mexico/gira-de-sheinbaum-en-espana-se-centra-en-paz-y-diplomacia/",
           "fecha": "2026-04-20"
         },
         {
@@ -11282,6 +11317,24 @@
           "fecha": "2026-04-20"
         },
         {
+          "fuente": "la_jornada",
+          "titulo": "Tras cumbre progresista, Sheinbaum visita Centro de Supercomputación",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/003n1pol?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "“La impunidad persiste”, afirman colectivos ante funcionario de la ONU",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/004n1pol?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Hoy,  la segunda plática del T-MEC entre México y EU",
+          "url": "https://www.jornada.com.mx/2026/04/20/economia/020n1eco?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
           "fuente": "el_financiero",
           "titulo": "Desapariciones en México y la intervención de la ONU",
           "url": "https://www.elfinanciero.com.mx/opinion/javier-coello/2026/04/20/desapariciones-en-mexico-y-la-intervencion-de-la-onu/",
@@ -11297,54 +11350,6 @@
           "fuente": "la_razon",
           "titulo": "Alto Comisionado de la ONU para Derechos Humanos inicia visita en México; prevén reunión con Sheinbaum",
           "url": "https://www.razon.com.mx/mexico/2026/04/19/alto-comisionado-de-la-onu-para-derechos-humanos-inicia-visita-en-mexico-preven-reunion-con-sheinbaum/",
-          "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "Llega a México representante comercial de Estados Unidos para reunión con Sheinbaum",
-          "url": "https://www.razon.com.mx/negocios/2026/04/19/llega-a-mexico-representante-comercial-de-estados-unidos-para-reunion-con-sheinbaum/",
-          "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Representante comercial de EU llega a CDMX para revisión del T-MEC; Jamieson Greer se reunió con Ebrard en el AICM",
-          "url": "https://www.eluniversal.com.mx/cartera/representante-comercial-de-eu-llega-a-cdmx-para-revision-del-t-mec-jamieson-greer-se-reunio-con-ebrard-en-el-aicm/",
-          "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "ovaciones",
-          "titulo": "Ebrard recibe a Jamieson Greer para segunda ronda de revisión del T-MEC en México",
-          "url": "https://ovaciones.com/ebrard-recibe-a-jamieson-greer-para-segunda-ronda-de-revision-del-t-mec-en-mexico/?utm_source=rss&utm_medium=rss&utm_campaign=ebrard-recibe-a-jamieson-greer-para-segunda-ronda-de-revision-del-t-mec-en-mexico",
-          "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "ovaciones",
-          "titulo": "México no cumplirá el Objetivo de la ONU en 2030, que las mujeres tengan acceso al 100% a métodos de planificación: Organon Latam",
-          "url": "https://ovaciones.com/mexico-no-cumplira-el-objetivo-de-la-onu-en-2030-que-las-mujeres-tengan-acceso-al-100-a-metodos-de-planificacion-organon-latam/?utm_source=rss&utm_medium=rss&utm_campaign=mexico-no-cumplira-el-objetivo-de-la-onu-en-2030-que-las-mujeres-tengan-acceso-al-100-a-metodos-de-planificacion-organon-latam",
-          "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Alto Comisionado de la ONU llega a México; pone foco en desapariciones y crisis de derechos humanos",
-          "url": "https://www.eluniversal.com.mx/nacion/alto-comisionado-de-la-onu-llega-a-mexico-pone-foco-en-desapariciones-y-crisis-de-derechos-humanos/",
-          "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Así fue el operativo contra narcolaboratorios en el que murieron los elementos de la embajada de EU; fiscal destaca magnitud del hallazgo",
-          "url": "https://www.eluniversal.com.mx/nacion/asi-fue-el-operativo-contra-narcolaboratorios-en-el-que-murieron-los-elementos-de-la-embajada-de-eu-fiscal-destaca-magnitud-del-hallazgo/",
-          "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "Funcionarios de la Embajada de EU y de la Fiscalía de Chihuahua mueren en accidente en carretera",
-          "url": "https://www.cronica.com.mx/nacional/2026/04/19/funcionarios-de-la-embajada-de-eu-y-de-la-fiscalia-de-chihuahua-mueren-en-accidente-en-carretera/",
-          "fecha": "2026-04-20"
-        },
-        {
-          "fuente": "politico_mx",
-          "titulo": "Mueren mandos de la AEI y agentes de la Embajada de EUA en accidente en Chihuahua",
-          "url": "https://www.politico.mx/2026/04/20/mueren-mandos-de-la-aei-y-agentes-de-la-embajada-de-eua-en-accidente-en-chihuahua/",
           "fecha": "2026-04-20"
         }
       ],
@@ -11970,6 +11975,12 @@
       ],
       "tweets": [
         {
+          "usuario": "RicardoMonrealA",
+          "nombre": "Ricardo Monreal Ávila",
+          "texto": "La Presidenta @Claudiashein viajó a Barcelona para participar en la IV Cumbre en Defensa de la Democracia, junto con líderes y mandatarios progresistas del mundo. Su sola presencia tiene un peso que trasciende el protocolo. #Columna, vía @El_Universal_Mx https://t.co/ZvbpIaf70R",
+          "fecha": "2026-04-20"
+        },
+        {
           "usuario": "MLopezSanMartin",
           "nombre": "Manuel López San Martín",
           "texto": "Mueren dos agentes estatales y dos funcionarios de la Embajada de EU \n\nRegresaban de un operativo contra un narcolaboratorio\n\nAutoridades descartan atentado; todo apunta a un accidente en la sierra https://t.co/s5P6CRAVVB",
@@ -12022,12 +12033,6 @@
           "nombre": "Ruta Electoral MX",
           "texto": "🎸Los ánimos previo a la llegada de la presidenta @Claudiashein a Barcelona, donde participará en la IV Cumbre en Defensa de la Democracia. https://t.co/nwpxOWndbo",
           "fecha": "2026-04-17"
-        },
-        {
-          "usuario": "RutaElectoralmx",
-          "nombre": "Ruta Electoral MX",
-          "texto": "🤝🏽 Rosa Icela Rodríguez confirma que ya se arma la agenda para la visita del Alto Comisionado de la #ONU, Volker Türk, tras el informe sobre desapariciones.\n\nHabrá diálogo con colectivos y autoridades. “Estamos en la disposición de recibirlo”, aseguró. https://t.co/lNEIUNnbCt",
-          "fecha": "2026-04-17"
         }
       ]
     },
@@ -12037,6 +12042,18 @@
           "fuente": "el_financiero",
           "titulo": "Fiscalías son ‘nido de impunidad’ en el país, afirma directora de Amnistía Internacional México",
           "url": "https://www.elfinanciero.com.mx/nacional/2026/04/20/fiscalias-son-nido-de-impunidad-en-el-pais-afirma-directora-de-amnistia-internacional-mexico/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "“La impunidad persiste”, afirman colectivos ante funcionario de la ONU",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/004n1pol?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Alertan de “impunidad institucional” en feminicidios",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/005n2pol?partner=rss",
           "fecha": "2026-04-20"
         },
         {
@@ -12110,18 +12127,6 @@
           "titulo": "Semana de 40 horas, anticorrupción y nombramientos del INE: los pendientes en Cámara de Diputados",
           "url": "https://www.elsoldemexico.com.mx/elsoldemexico/mexico/semana-de-40-horas-anticorrupcion-y-nombramientos-del-ine-los-pendientes-en-camara-de-diputados-29542032",
           "fecha": "2026-04-18"
-        },
-        {
-          "fuente": "milenio",
-          "titulo": "Congreso del Edomex analiza sancionar el nepotismo con falta administrativa",
-          "url": "https://www.milenio.com/politica/congreso-edomex-busca-sancionar-nepotismo-con-falta-administrativa",
-          "fecha": "2026-04-18"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "FGR solicita a EU deportación de Bertha Olga Gómez Fong, esposa de César Duarte; es señalada por peculado",
-          "url": "https://www.eluniversal.com.mx/nacion/fgr-solicita-a-eu-deportacion-de-bertha-olga-gomez-fong-esposa-de-cesar-duarte-es-senalada-por-peculado/",
-          "fecha": "2026-04-17"
         }
       ],
       "documentos_gaceta": [
@@ -12428,6 +12433,18 @@
     "medio_ambiente": {
       "articulos_medios": [
         {
+          "fuente": "el_universal",
+          "titulo": "Amagan con incrementar protestas por derrame",
+          "url": "https://www.eluniversal.com.mx/metropoli/amagan-con-incrementar-protestas-por-derrame/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Iván Restrepo: El derrame, la mentira y sus consecuencias",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/016a1pol?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
           "fuente": "el_financiero",
           "titulo": "Pemex descarta daños en Río Cazones, Veracruz, tras derrame de hidrocarburos",
           "url": "https://www.elfinanciero.com.mx/estados/2026/04/19/pemex-descarta-que-muerte-masiva-de-peces-en-rio-cazones-veracruz-sea-por-derrame-de-hidrocarburos/",
@@ -12437,6 +12454,12 @@
           "fuente": "24_horas",
           "titulo": "Michoacán ha perdido a 2 ambientalistas durante 2026",
           "url": "https://24-horas.mx/estados/michoacan-ha-perdido-a-2-ambientalistas-durante-2026/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "milenio",
+          "titulo": "Cese de funcionarios de Pemex no repara daños por derrame de hidrocarburos: PAN",
+          "url": "https://www.milenio.com/politica/pan-cese-pemex-repara-danos-derrame-golfo-mexico",
           "fecha": "2026-04-20"
         },
         {
@@ -12498,24 +12521,6 @@
           "titulo": "Incendio en recicladora clandestina genera daños en Puente Vehicular de Ecatepec, temen que colapse | VIDEO",
           "url": "https://heraldodemexico.com.mx/nacional/2026/4/18/incendio-en-recicladora-clandestina-genera-danos-en-puente-vehicular-de-ecatepec-temen-que-colapse-video-798168.html",
           "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "el_economista",
-          "titulo": "Sheinbaum propone programa global de reforestación y declaración contra intervención militar en Cuba",
-          "url": "https://www.eleconomista.com.mx/politica/sheinbaum-propone-programa-global-reforestacion-declaracion-intervencion-militar-cuba-20260418-809325.html",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "politico_mx",
-          "titulo": "Asesinan a ambientalista en Michoacán; confirman identidad por ADN",
-          "url": "https://www.politico.mx/2026/04/18/asesinan-a-ambientalista-en-michoacan-confirman-identidad-por-adn/",
-          "fecha": "2026-04-18"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "CDMX registra MALA calidad del aire hoy 18 de abril: ¿se activará la Contingencia Ambiental?",
-          "url": "https://www.razon.com.mx/ciudad/2026/04/18/calidad-del-aire-en-cdmx-hoy-sabado-18-de-abril-de-2026-se-activa-la-contingencia-ambiental/",
-          "fecha": "2026-04-18"
         }
       ],
       "documentos_gaceta": [
@@ -12873,6 +12878,12 @@
         {
           "usuario": "MLopezSanMartin",
           "nombre": "Manuel López San Martín",
+          "texto": "Mentirosos\n\nLa mentira se ha instalado\n\nNo es excepción, sino regla\n\nNo es accidente, sino estrategia\n\nEl ejemplo más acabado es lo sucedido con el derrame en el Golfo de México\n\nMi columna, @heraldodemexico 👇🏼\n\nhttps://t.co/S8BVUkYg6a",
+          "fecha": "2026-04-20"
+        },
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
           "texto": "Cientos de peces muertos en el río Pánuco, en Veracruz \n\nSon las consecuencias del derrame de hidrocarburo en el Golfo de México \n\nEl gobierno federal mintió y negó lo ocurrido, mientras que la gobernadora de Veracruz minimizó el caso \n\nHoy la realidad de nuevo se impone https://",
           "fecha": "2026-04-19"
         },
@@ -12923,17 +12934,23 @@
           "nombre": "Clemente Castañeda Hoeflich",
           "texto": "Hoy asistimos al Foro México Circular 2026, impulsado por la Comisión de Economía Circular que preside el senador @NestorCamarillo, donde dialogamos sobre un gran pendiente del país: qué hacemos con lo que producimos y cómo aprovechamos mejor nuestros recursos.\n\nDesde la https://",
           "fecha": "2026-04-15"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "Despiden a Henrry en Valle de Chalco\n\nTenía 2 años y murió tras el incendio a una tienda por la caída de \"El Mencho\"\n\nLas llamas lo alcanzaron junto a su padre\n\nhttps://t.co/IzQLl3YMhf",
-          "fecha": "2026-04-14"
         }
       ]
     },
     "inteligencia_artificial": {
       "articulos_medios": [
+        {
+          "fuente": "el_financiero",
+          "titulo": "Pix y la lección para México: pagos digitales fallan por falta de decisión",
+          "url": "https://www.elfinanciero.com.mx/opinion/colaborador-invitado/2026/04/20/pix-y-la-leccion-para-mexico-pagos-digitales-fallan-por-falta-de-decision/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Inteligencia artificial impulsa la cuarta revolución industrial china",
+          "url": "https://www.jornada.com.mx/2026/04/20/economia/018n1eco?partner=rss",
+          "fecha": "2026-04-20"
+        },
         {
           "fuente": "la_razon",
           "titulo": "Datos micro (1/3)",
@@ -13011,18 +13028,6 @@
           "titulo": "Cómo usar Waze sin datos",
           "url": "https://www.eluniversal.com.mx/techbit/como-usar-waze-sin-datos/",
           "fecha": "2026-04-18"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "5 formas de usar ChatGPT que no conocías",
-          "url": "https://www.eluniversal.com.mx/techbit/5-formas-de-usar-chatgpt-que-no-conocias/",
-          "fecha": "2026-04-17"
-        },
-        {
-          "fuente": "talla_senadores",
-          "titulo": "Partido del Trabajo en el Senado de la República pide fortalecer estrategia contra delitos digitales",
-          "url": "https://www.tallapolitica.com.mx/partido-del-trabajo-en-el-senado-de-la-republica-pide-fortalecer-estrategia-contra-delitos-digitales/",
-          "fecha": "2026-04-17"
         }
       ],
       "documentos_gaceta": [
@@ -13146,6 +13151,12 @@
       ],
       "tweets": [
         {
+          "usuario": "letroblesrosa",
+          "nombre": "Leti Robles Rosa",
+          "texto": "‼️EXTRA‼️ Desde el @senadomexicano , México va por la primera ley que regulará la Inteligencia Artificial.\n\nEl ciudadano podrá “defenderse” de ella y habrá hasta cárcel por incurrir en prácticas prohibidas, como el  deepfakes.\n\nDetalles en @Excelsior \n\nhttps://t.co/G14HaABAnO htt",
+          "fecha": "2026-04-20"
+        },
+        {
           "usuario": "Juan_OrtizMX",
           "nombre": "Juan Ortiz",
           "texto": "🗳️📌YO NO FUI, FUE LA INTELIGENCIA ARTIFICIAL\n\nLa inteligencia artificial ya entró de lleno a la política mexicana.\n\nSi aparece un video comprometedor.\n\nLa reacción es decir que fue hecho con IA.\n\nOcurrió cuando una funcionaria fue captada asoleándose en una ventana de Palacio htt",
@@ -13173,6 +13184,12 @@
     },
     "politica_social": {
       "articulos_medios": [
+        {
+          "fuente": "la_jornada",
+          "titulo": "Advierten de extorsiones a derechohabientes de los programas Bienestar",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/008n1pol?partner=rss",
+          "fecha": "2026-04-20"
+        },
         {
           "fuente": "el_universal",
           "titulo": "Pensión Bienestar mayo 2026; ¿cómo recibir el calendario de pagos en WhatsApp paso a paso?",
@@ -13255,12 +13272,6 @@
           "fuente": "cronica",
           "titulo": "Becas del Bienestar: ¿qué significa el pago a estudiantes de continuidad?",
           "url": "https://www.cronica.com.mx/nacional/2026/04/17/becas-del-bienestar-que-significa-el-pago-a-estudiantes-de-continuidad/",
-          "fecha": "2026-04-17"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Reportan aumento de fraudes contra adultos mayores en sector inmobiliario; falsificación de firmas y escrituras, lo más común",
-          "url": "https://www.eluniversal.com.mx/cartera/reportan-aumento-de-fraudes-contra-adultos-mayores-en-sector-inmobiliario-falsificacion-de-firmas-y-escrituras-lo-mas-comun/",
           "fecha": "2026-04-17"
         }
       ],
@@ -13738,6 +13749,12 @@
     "turismo": {
       "articulos_medios": [
         {
+          "fuente": "el_heraldo",
+          "titulo": "Estado de México impulsa turismo con estrategia “Destino Futbolero” rumbo a competencia mundial",
+          "url": "https://heraldodemexico.com.mx/nacional/2026/4/19/estado-de-mexico-impulsa-turismo-con-estrategia-destino-futbolero-rumbo-competencia-mundial-798936.html",
+          "fecha": "2026-04-20"
+        },
+        {
           "fuente": "excelsior",
           "titulo": "Guerrero reporta 70.7% de ocupación hotelera previo a Tianguis Turístico",
           "url": "https://www.excelsior.com.mx/nacional/guerrero-ocupacion-hotelera",
@@ -13819,12 +13836,6 @@
           "fuente": "el_universal",
           "titulo": "Reactivan Comisión Especial del Mundial en Congreso de CDMX; Secretaria de Turismo detalla acciones rumbo a la justa futbolera",
           "url": "https://www.eluniversal.com.mx/metropoli/reactivan-comision-especial-del-mundial-en-congreso-de-cdmx-secretaria-de-turismo-detalla-acciones-rumbo-a-la-justa-futbolera/",
-          "fecha": "2026-04-17"
-        },
-        {
-          "fuente": "el_heraldo",
-          "titulo": "Va CDMX por Mundial incluyente y con mayor capacidad turística",
-          "url": "https://heraldodemexico.com.mx/nacional/2026/4/16/va-cdmx-por-mundial-incluyente-con-mayor-capacidad-turistica-797335.html",
           "fecha": "2026-04-17"
         }
       ],
@@ -13944,9 +13955,27 @@
     "igualdad_genero": {
       "articulos_medios": [
         {
+          "fuente": "el_universal",
+          "titulo": "A sus 23, Gabriela Sarahí pilota un helicóptero en unidad de élite de la Fuerza Aérea; busca abrir camino a más mujeres",
+          "url": "https://www.eluniversal.com.mx/nacion/a-sus-23-gabriela-sarahi-pilota-un-helicoptero-en-unidad-de-elite-de-la-fuerza-aerea-busca-abrir-camino-a-mas-mujeres/",
+          "fecha": "2026-04-20"
+        },
+        {
           "fuente": "el_financiero",
           "titulo": "La capital pierde a sus mujeres",
           "url": "https://www.elfinanciero.com.mx/opinion/confidencial/2026/04/20/la-capital-pierde-a-sus-mujeres/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "México de Colores cumple 15 años de hacer la revolución LGBT+ con arte",
+          "url": "https://www.jornada.com.mx/2026/04/20/cultura/a02n1cul?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Alertan de “impunidad institucional” en feminicidios",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/005n2pol?partner=rss",
           "fecha": "2026-04-20"
         },
         {
@@ -13959,6 +13988,12 @@
           "fuente": "ovaciones",
           "titulo": "México no cumplirá el Objetivo de la ONU en 2030, que las mujeres tengan acceso al 100% a métodos de planificación: Organon Latam",
           "url": "https://ovaciones.com/mexico-no-cumplira-el-objetivo-de-la-onu-en-2030-que-las-mujeres-tengan-acceso-al-100-a-metodos-de-planificacion-organon-latam/?utm_source=rss&utm_medium=rss&utm_campaign=mexico-no-cumplira-el-objetivo-de-la-onu-en-2030-que-las-mujeres-tengan-acceso-al-100-a-metodos-de-planificacion-organon-latam",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "el_heraldo",
+          "titulo": "Muere una mujer durante ataque contra manifestantes en la Universidad Autónoma de Guerrero",
+          "url": "https://heraldodemexico.com.mx/nacional/2026/4/19/muere-una-mujer-durante-ataque-contra-manifestantes-en-la-universidad-autonoma-de-guerrero-798937.html",
           "fecha": "2026-04-20"
         },
         {
@@ -14007,30 +14042,6 @@
           "fuente": "el_universal",
           "titulo": "Aborto y eutanasia son “flagelos que atacan a la humanidad”, condena la Iglesia; “no es lícito matar en ningún momento”, dice",
           "url": "https://www.eluniversal.com.mx/nacion/aborto-y-eutanasia-son-flagelos-que-atacan-a-la-humanidad-dice-la-iglesia-no-es-licito-matar-en-ningun-momento-dice/",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Anticorrupción cesa a funcionaria y residente del INER por acoso y hostigamiento; \"mujeres no están solas\", afirma",
-          "url": "https://www.eluniversal.com.mx/nacion/anticorrupcion-cesa-a-funcionaria-y-residente-del-iner-por-acoso-y-hostigamiento-mujeres-no-estan-solas-afirma/",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "En caso Edith Guadalupe, Fiscalía CDMX sostiene acusación por feminicidio contra vigilante; \"no fabricamos culpables\", afirma",
-          "url": "https://www.eluniversal.com.mx/metropoli/en-caso-edith-guadalupe-fiscalia-cdmx-sostiene-acusacion-por-feminicidio-contra-vigilante-no-fabricamos-culpables-afirma/",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "Sheinbaum se reúne con Joan Manuel Serrat, en España; ‘es una mujer a quien admiro’, dice él",
-          "url": "https://www.razon.com.mx/mexico/2026/04/19/sheinbaum-se-reune-con-joan-manuel-serrat-en-espana-es-una-mujer-a-quien-admiro-dice-el/",
-          "fecha": "2026-04-19"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Sheinbaum: soy una mujer de paz y represento a un pueblo que ama la libertad",
-          "url": "https://www.jornada.com.mx/2026/04/19/politica/003n1pol?partner=rss",
           "fecha": "2026-04-19"
         }
       ],
@@ -14360,6 +14371,24 @@
     "administracion": {
       "articulos_medios": [
         {
+          "fuente": "el_financiero",
+          "titulo": "Los ‘suspirantes’ a gobernar 17 estados (I)",
+          "url": "https://www.elfinanciero.com.mx/opinion/jeanette-leyva/2026/04/20/los-suspirantes-a-gobernar-17-estadosi/",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "la_jornada",
+          "titulo": "Morenistas del estado de México apoyan a La Habana",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/009n3pol?partner=rss",
+          "fecha": "2026-04-20"
+        },
+        {
+          "fuente": "el_heraldo",
+          "titulo": "Estado de México impulsa turismo con estrategia “Destino Futbolero” rumbo a competencia mundial",
+          "url": "https://heraldodemexico.com.mx/nacional/2026/4/19/estado-de-mexico-impulsa-turismo-con-estrategia-destino-futbolero-rumbo-competencia-mundial-798936.html",
+          "fecha": "2026-04-20"
+        },
+        {
           "fuente": "la_razon",
           "titulo": "Estos son los estados en los que se registratán altas temperaturas HOY 20 de abril",
           "url": "https://www.razon.com.mx/mexico/2026/04/19/estos-son-los-estados-en-los-que-se-registratan-altas-temperaturas-hoy-20-de-abril/",
@@ -14430,24 +14459,6 @@
           "titulo": "Estrategia contra el embarazo infantil se enfocar├í en estos cinco estados",
           "url": "https://www.proceso.com.mx/nacional/estados/2026/4/17/estrategia-contra-el-embarazo-infantil-se-enfocara-en-estos-cinco-estados-372430.html",
           "fecha": "2026-04-18"
-        },
-        {
-          "fuente": "talla_diputados",
-          "titulo": "Castro Bello impulsa reforma para garantizar recursos permanentes a estados petroleros",
-          "url": "https://www.tallapolitica.com.mx/castro-bello-impulsa-reforma-para-garantizar-recursos-permanentes-a-estados-petroleros/",
-          "fecha": "2026-04-17"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "Sheinbaum se reunirá con jefes de Estado y comunidad mexicana en España",
-          "url": "https://24-horas.mx/mexico/sheinbaum-se-reunira-con-jefes-de-estado-y-comunidad-mexicana-en-espana/",
-          "fecha": "2026-04-17"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "SAT llama a empresas a preparar el dictamen fiscal de sus estados financieros del 2025; el 15 de mayo es la fecha límite",
-          "url": "https://www.eluniversal.com.mx/cartera/sat-llama-a-empresas-a-preparar-el-dictamen-fiscal-de-sus-estados-financieros-del-2025-el-15-de-mayo-es-la-fecha-limite/",
-          "fecha": "2026-04-17"
         }
       ],
       "documentos_gaceta": [
@@ -15236,7 +15247,7 @@
           55.6,
           56.2,
           53.3,
-          48.9
+          52.1
         ],
         "colores": [
           "rojo",
@@ -15401,7 +15412,7 @@
           56.7,
           58.0,
           58.4,
-          52.5
+          55.6
         ],
         "colores": [
           "rojo",
@@ -15731,7 +15742,7 @@
           59.8,
           60.2,
           59.1,
-          55.1
+          56.9
         ],
         "colores": [
           "rojo",
@@ -16061,7 +16072,7 @@
           61.2,
           64.8,
           67.7,
-          63.8
+          63.7
         ],
         "colores": [
           "rojo",
@@ -16721,7 +16732,7 @@
           61.9,
           66.8,
           60.5,
-          60.7
+          63.8
         ],
         "colores": [
           "rojo",
@@ -16886,7 +16897,7 @@
           66.1,
           68.9,
           68.5,
-          59.2
+          61.8
         ],
         "colores": [
           "rojo",
@@ -17051,7 +17062,7 @@
           40.8,
           38.6,
           40.2,
-          38.7
+          39.6
         ],
         "colores": [
           "rojo",
@@ -17216,7 +17227,7 @@
           39.3,
           37.5,
           39.4,
-          35.2
+          35.3
         ],
         "colores": [
           "rojo",
@@ -17381,7 +17392,7 @@
           36.2,
           42.9,
           42.0,
-          39.5
+          40.5
         ],
         "colores": [
           "rojo",
@@ -17462,7 +17473,7 @@
           "rojo",
           "amarillo",
           "amarillo",
-          "rojo"
+          "amarillo"
         ]
       },
       "turismo": {
@@ -17711,7 +17722,7 @@
           52.1,
           53.1,
           54.5,
-          49.4
+          53.4
         ],
         "colores": [
           "rojo",
@@ -17876,7 +17887,7 @@
           28.8,
           29.2,
           27.6,
-          28.3
+          28.1
         ],
         "colores": [
           null,
@@ -80894,13 +80905,13 @@
         "partido": "",
         "camara": "Cámara de Diputados",
         "estado": "San Luis Potosí",
-        "score": 48.55,
+        "score": 48.22,
         "docs_categoria": 2,
         "comisiones_afines": [
           "Energía"
         ],
         "desglose": {
-          "correlacion_reactiva": 32.4,
+          "correlacion_reactiva": 31.4,
           "especializacion_tematica": 8.9,
           "comision_agenda": 100,
           "patron_instrumento": 50.0,
@@ -80928,13 +80939,13 @@
         "partido": "PVEM",
         "camara": "Cámara de Diputados",
         "estado": "Querétaro",
-        "score": 47.62,
+        "score": 47.3,
         "docs_categoria": 1,
         "comisiones_afines": [
           "Energía"
         ],
         "desglose": {
-          "correlacion_reactiva": 32.4,
+          "correlacion_reactiva": 31.4,
           "especializacion_tematica": 1.2,
           "comision_agenda": 100,
           "patron_instrumento": 100.0,
@@ -80951,44 +80962,17 @@
         ]
       },
       {
-        "nombre": "Héctor Alfonso de la Garza Villarreal",
-        "partido": "PVEM",
-        "camara": "Cámara de Diputados",
-        "estado": "Nuevo León",
-        "score": 47.39,
-        "docs_categoria": 1,
-        "comisiones_afines": [
-          "Energía"
-        ],
-        "desglose": {
-          "correlacion_reactiva": 32.4,
-          "especializacion_tematica": 1.9,
-          "comision_agenda": 78.0,
-          "patron_instrumento": 100.0,
-          "penalizacion_inactividad": 100
-        },
-        "instrumentos": [
-          {
-            "titulo": "Que adiciona el artículo 27 de la Constitución Política de los Estados Unidos Mexicanos, en materia de transición energética.",
-            "tipo": "Iniciativa",
-            "fecha": "2026-03-19",
-            "estatus": "Pendiente en comisión(es) de origenPendiente19/03/2026",
-            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=5044574&Asunto=5044434"
-          }
-        ]
-      },
-      {
         "nombre": "Ariana del Rocio Rejón Lara",
         "partido": "PRI",
         "camara": "Cámara de Diputados",
         "estado": "Campeche",
-        "score": 47.35,
+        "score": 47.15,
         "docs_categoria": 4,
         "comisiones_afines": [
           "Energía"
         ],
         "desglose": {
-          "correlacion_reactiva": 20.6,
+          "correlacion_reactiva": 20.0,
           "especializacion_tematica": 18.2,
           "comision_agenda": 78.0,
           "patron_instrumento": 100.0,
@@ -81026,17 +81010,44 @@
         ]
       },
       {
+        "nombre": "Héctor Alfonso de la Garza Villarreal",
+        "partido": "PVEM",
+        "camara": "Cámara de Diputados",
+        "estado": "Nuevo León",
+        "score": 47.06,
+        "docs_categoria": 1,
+        "comisiones_afines": [
+          "Energía"
+        ],
+        "desglose": {
+          "correlacion_reactiva": 31.4,
+          "especializacion_tematica": 1.9,
+          "comision_agenda": 78.0,
+          "patron_instrumento": 100.0,
+          "penalizacion_inactividad": 100
+        },
+        "instrumentos": [
+          {
+            "titulo": "Que adiciona el artículo 27 de la Constitución Política de los Estados Unidos Mexicanos, en materia de transición energética.",
+            "tipo": "Iniciativa",
+            "fecha": "2026-03-19",
+            "estatus": "Pendiente en comisión(es) de origenPendiente19/03/2026",
+            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=5044574&Asunto=5044434"
+          }
+        ]
+      },
+      {
         "nombre": "Fausto Gallardo García",
         "partido": "PVEM",
         "camara": "Cámara de Diputados",
         "estado": "Baja California",
-        "score": 45.01,
+        "score": 44.68,
         "docs_categoria": 2,
         "comisiones_afines": [
           "Energía"
         ],
         "desglose": {
-          "correlacion_reactiva": 32.4,
+          "correlacion_reactiva": 31.4,
           "especializacion_tematica": 8.3,
           "comision_agenda": 78.0,
           "patron_instrumento": 100.0,
@@ -84113,7 +84124,7 @@
         "partido": "MC",
         "camara": "Cámara de Diputados",
         "estado": "Aguascalientes",
-        "score": 53.04,
+        "score": 52.73,
         "docs_categoria": 5,
         "comisiones_afines": [
           "Igualdad de Género",
@@ -84121,7 +84132,7 @@
           "Género"
         ],
         "desglose": {
-          "correlacion_reactiva": 21.7,
+          "correlacion_reactiva": 20.8,
           "especializacion_tematica": 21.7,
           "comision_agenda": 100,
           "patron_instrumento": 100.0,
@@ -84170,7 +84181,7 @@
         "partido": "MORENA",
         "camara": "Cámara de Diputados",
         "estado": "México",
-        "score": 52.3,
+        "score": 51.98,
         "docs_categoria": 3,
         "comisiones_afines": [
           "Igualdad de Género",
@@ -84178,7 +84189,7 @@
           "Género"
         ],
         "desglose": {
-          "correlacion_reactiva": 21.7,
+          "correlacion_reactiva": 20.8,
           "especializacion_tematica": 18.8,
           "comision_agenda": 100,
           "patron_instrumento": 100.0,
@@ -84213,7 +84224,7 @@
         "partido": "MORENA",
         "camara": "Cámara de Diputados",
         "estado": "Ciudad de México",
-        "score": 45.99,
+        "score": 45.67,
         "docs_categoria": 5,
         "comisiones_afines": [
           "Igualdad de Género",
@@ -84221,7 +84232,7 @@
           "Género"
         ],
         "desglose": {
-          "correlacion_reactiva": 21.7,
+          "correlacion_reactiva": 20.8,
           "especializacion_tematica": 11.1,
           "comision_agenda": 78.0,
           "patron_instrumento": 100.0,
@@ -84270,7 +84281,7 @@
         "partido": "MORENA",
         "camara": "Cámara de Diputados",
         "estado": "Puebla",
-        "score": 43.74,
+        "score": 43.61,
         "docs_categoria": 1,
         "comisiones_afines": [
           "Igualdad de Género",
@@ -84278,7 +84289,7 @@
           "Género"
         ],
         "desglose": {
-          "correlacion_reactiva": 8.7,
+          "correlacion_reactiva": 8.3,
           "especializacion_tematica": 2.8,
           "comision_agenda": 100,
           "patron_instrumento": 100.0,
@@ -84299,7 +84310,7 @@
         "partido": "PRI",
         "camara": "Cámara de Diputados",
         "estado": "Puebla",
-        "score": 42.08,
+        "score": 42.01,
         "docs_categoria": 1,
         "comisiones_afines": [
           "Igualdad de Género",
@@ -84307,7 +84318,7 @@
           "Género"
         ],
         "desglose": {
-          "correlacion_reactiva": 4.3,
+          "correlacion_reactiva": 4.2,
           "especializacion_tematica": 2.2,
           "comision_agenda": 100,
           "patron_instrumento": 100.0,
@@ -84436,7 +84447,7 @@
     "picos_por_categoria": {
       "seguridad_justicia": 68,
       "economia_hacienda": 69,
-      "energia": 34,
+      "energia": 35,
       "salud": 61,
       "educacion": 75,
       "trabajo": 59,
@@ -84451,7 +84462,7 @@
       "politica_social": 32,
       "medios_comunicacion": 28,
       "turismo": 19,
-      "igualdad_genero": 23
+      "igualdad_genero": 24
     },
     "por_partido": [
       {
@@ -84505,7 +84516,7 @@
     "baja_california_sur": {
       "nombre": "Baja California Sur",
       "abreviatura": "BCS",
-      "total_articulos": 3,
+      "total_articulos": 4,
       "categorias": [
         "relaciones_exteriores:0.4415"
       ],
@@ -84515,6 +84526,12 @@
           "fecha": "2026-04-20 09:00:00",
           "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-cierra-gira-con-respaldo-a-cuba/",
           "categorias": "relaciones_exteriores:0.4415"
+        },
+        {
+          "titulo": "David Penchyna Grub: Una paz que ya no existe",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/012a1pol?partner=rss",
+          "categorias": ""
         },
         {
           "titulo": "Milena Quiroga: “estamos orgullosos de los logros en La Paz”",
@@ -84533,18 +84550,36 @@
     "campeche": {
       "nombre": "Campeche",
       "abreviatura": "CAM",
-      "total_articulos": 0,
-      "categorias": [],
-      "articulos": []
+      "total_articulos": 1,
+      "categorias": [
+        "energia:0.4526",
+        "medio_ambiente:0.5476"
+      ],
+      "articulos": [
+        {
+          "titulo": "Iván Restrepo: El derrame, la mentira y sus consecuencias",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/016a1pol?partner=rss",
+          "categorias": "medio_ambiente:0.5476,energia:0.4526"
+        }
+      ]
     },
     "chiapas": {
       "nombre": "Chiapas",
       "abreviatura": "CHP",
-      "total_articulos": 3,
+      "total_articulos": 4,
       "categorias": [
-        "infraestructura:0.42"
+        "infraestructura:0.42",
+        "salud:1.2304",
+        "trabajo:0.636"
       ],
       "articulos": [
+        {
+          "titulo": "Prevención en salud, práctica fundamental en centros de trabajo",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/010n3pol?partner=rss",
+          "categorias": "salud:1.2304,trabajo:0.636"
+        },
         {
           "titulo": "“La distancia conspira contra nosotros”",
           "fecha": "2026-04-20 06:43:07",
@@ -84568,7 +84603,7 @@
     "chihuahua": {
       "nombre": "Chihuahua",
       "abreviatura": "CHH",
-      "total_articulos": 8,
+      "total_articulos": 11,
       "categorias": [
         "electoral_politico:0.4878",
         "infraestructura:0.4213",
@@ -84576,9 +84611,28 @@
         "relaciones_exteriores:0.5693",
         "relaciones_exteriores:0.6577",
         "relaciones_exteriores:0.704",
+        "seguridad_justicia:0.5132",
         "seguridad_justicia:0.6697"
       ],
       "articulos": [
+        {
+          "titulo": "Editorial:   Instructores de EU: preguntas ineludibles",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/opinion/002a1edi?partner=rss",
+          "categorias": ""
+        },
+        {
+          "titulo": "Mueren dos oficiales de EU y dos mexicanos tras acción antinarco",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/005n1pol?partner=rss",
+          "categorias": "seguridad_justicia:0.5132"
+        },
+        {
+          "titulo": "2 U.S. Government Workers Among 4 Killed in Car Crash in Mexico",
+          "fecha": "2026-04-20 03:55:16",
+          "url": "https://www.nytimes.com/2026/04/19/world/americas/mexico-investigator-crash.html",
+          "categorias": ""
+        },
         {
           "titulo": "Así fue el accidente donde murió el director del AIE y dos agentes de EU tras cateo de narcolaboratorio",
           "fecha": "2026-04-20 03:00:41",
@@ -84620,27 +84674,59 @@
           "fecha": "2026-04-20 01:06:54",
           "url": "https://ovaciones.com/embajador-de-eu-lamenta-muerte-de-agentes-en-chihuahua/?utm_source=rss&utm_medium=rss&utm_campaign=embajador-de-eu-lamenta-muerte-de-agentes-en-chihuahua",
           "categorias": "relaciones_exteriores:0.704"
-        },
-        {
-          "titulo": "Mexico Car Accident Kills 4 Drug Investigators in Chihuahua.",
-          "fecha": "2026-04-20 00:47:23",
-          "url": "https://www.nytimes.com/2026/04/19/world/americas/mexico-investigator-crash.html",
-          "categorias": ""
         }
       ]
     },
     "ciudad_de_mexico": {
       "nombre": "Ciudad de Mexico",
       "abreviatura": "CMX",
-      "total_articulos": 19,
+      "total_articulos": 34,
       "categorias": [
         "anticorrupcion:0.475",
         "electoral_politico:0.4253",
         "igualdad_genero:2.5241",
+        "medio_ambiente:0.4927",
         "relaciones_exteriores:0.5057",
+        "relaciones_exteriores:0.7844",
         "seguridad_justicia:0.4902"
       ],
       "articulos": [
+        {
+          "titulo": "Cubanos en CDMX se congregan contra la \"política intervencionista\" de EU; \"no seremos testigos de la rendición\", dice embajador",
+          "fecha": "2026-04-20 13:49:34",
+          "url": "https://www.eluniversal.com.mx/nacion/cubanos-en-cdmx-se-congregan-contra-la-politica-intervencionista-de-eu-no-seremos-testigos-de-la-rendicion-dice-embajador/",
+          "categorias": "relaciones_exteriores:0.7844"
+        },
+        {
+          "titulo": "El territorio como actor. Las Representaciones estatales en la CDMX",
+          "fecha": "2026-04-20 13:21:01",
+          "url": "https://www.elfinanciero.com.mx/opinion/victor-jose-lopez-martinez/2026/04/20/el-territorio-como-actor-las-representaciones-estatales-en-la-cdmx/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Juez y parte… electoral",
+          "fecha": "2026-04-20 12:55:00",
+          "url": "https://ovaciones.com/juez-y-parte-electoral/?utm_source=rss&utm_medium=rss&utm_campaign=juez-y-parte-electoral",
+          "categorias": ""
+        },
+        {
+          "titulo": "Hoy No Circula lunes 20 de abril: restricciones vehiculares CDMX y EDOMEX",
+          "fecha": "2026-04-20 12:45:36",
+          "url": "https://www.cronica.com.mx/metropoli/2026/04/20/hoy-no-circula-lunes-20-de-abril-restricciones-vehiculares-cdmx-y-edomex/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Palestina y su peso histórico llegan a la CDMX",
+          "fecha": "2026-04-20 10:28:00",
+          "url": "https://www.eluniversal.com.mx/cultura/palestina-y-su-peso-historico-llegan-a-la-cdmx/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Amagan con incrementar protestas por derrame",
+          "fecha": "2026-04-20 10:09:27",
+          "url": "https://www.eluniversal.com.mx/metropoli/amagan-con-incrementar-protestas-por-derrame/",
+          "categorias": "medio_ambiente:0.4927"
+        },
         {
           "titulo": "Fiscalía de la CDMX defiende indagatoria en caso Edith Guadalupe; ‘hay solidez’ en detención",
           "fecha": "2026-04-20 09:50:41",
@@ -84663,42 +84749,6 @@
           "titulo": "Brugada destaca que la calzada es para todos",
           "fecha": "2026-04-20 09:27:40",
           "url": "https://www.eluniversal.com.mx/metropoli/brugada-destaca-que-la-calzada-es-para-todos/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Estrenan la ciclovía de Tlalpan bicis y motos",
-          "fecha": "2026-04-20 09:23:58",
-          "url": "https://www.eluniversal.com.mx/metropoli/estrenan-la-ciclovia-de-tlalpan-bicis-y-motos/",
-          "categorias": ""
-        },
-        {
-          "titulo": "‘Pese a las adversidades, hay ciclovía en Tlalpan’",
-          "fecha": "2026-04-20 09:00:00",
-          "url": "https://24-horas.mx/cdmx/pese-a-las-adversidades-hay-ciclovia-en-tlalpan/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Conflicto inventado",
-          "fecha": "2026-04-20 07:00:00",
-          "url": "https://www.elfinanciero.com.mx/opinion/raymundo-riva-palacio/2026/04/20/conflicto-inventado/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Masiva apertura de ciclovía en Tlalpan",
-          "fecha": "2026-04-20 06:53:09",
-          "url": "https://www.razon.com.mx/ciudad/2026/04/20/masiva-apertura-de-ciclovia-en-tlalpan/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Se registra inundación en Chalco; vecinos reportan afectaciones en sus viviendas",
-          "fecha": "2026-04-20 04:23:49",
-          "url": "https://www.eluniversal.com.mx/metropoli/se-registra-inundacion-en-chalco-vecinos-reportan-afectaciones-en-sus-viviendas/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Alcalde de Magdalena Contreras lanza programa “Al Agua Cacomixtle 2026”; ofrece clases gratuitas de natación",
-          "fecha": "2026-04-20 03:22:29",
-          "url": "https://www.eluniversal.com.mx/metropoli/alcalde-de-magdalena-contreras-lanza-programa-al-agua-cacomixtle-2026-ofrece-clases-gratuitas-de-natacion/",
           "categorias": ""
         }
       ]
@@ -84727,17 +84777,56 @@
     "estado_de_mexico": {
       "nombre": "Estado de Mexico",
       "abreviatura": "MEX",
-      "total_articulos": 8,
+      "total_articulos": 14,
       "categorias": [
+        "administracion:0.679",
         "educacion:0.6024",
+        "igualdad_genero:0.6213",
+        "medio_ambiente:0.4927",
         "seguridad_justicia:0.51"
       ],
       "articulos": [
+        {
+          "titulo": "Hoy No Circula lunes 20 de abril: restricciones vehiculares CDMX y EDOMEX",
+          "fecha": "2026-04-20 12:45:36",
+          "url": "https://www.cronica.com.mx/metropoli/2026/04/20/hoy-no-circula-lunes-20-de-abril-restricciones-vehiculares-cdmx-y-edomex/",
+          "categorias": ""
+        },
+        {
+          "titulo": "A sus 23, Gabriela Sarahí pilota un helicóptero en unidad de élite de la Fuerza Aérea; busca abrir camino a más mujeres",
+          "fecha": "2026-04-20 10:30:30",
+          "url": "https://www.eluniversal.com.mx/nacion/a-sus-23-gabriela-sarahi-pilota-un-helicoptero-en-unidad-de-elite-de-la-fuerza-aerea-busca-abrir-camino-a-mas-mujeres/",
+          "categorias": "igualdad_genero:0.6213"
+        },
+        {
+          "titulo": "Amagan con incrementar protestas por derrame",
+          "fecha": "2026-04-20 10:09:27",
+          "url": "https://www.eluniversal.com.mx/metropoli/amagan-con-incrementar-protestas-por-derrame/",
+          "categorias": "medio_ambiente:0.4927"
+        },
+        {
+          "titulo": "Edomex trabaja cuatro herramientas para mejorar la movilidad",
+          "fecha": "2026-04-20 10:09:25",
+          "url": "https://www.eluniversal.com.mx/metropoli/edomex-trabaja-cuatro-herramientas-para-mejorar-la-movilidad/",
+          "categorias": ""
+        },
         {
           "titulo": "Vieja Corte dio licencias doradas a trabajadores; 49 altos funcionarios tuvieron privilegios",
           "fecha": "2026-04-20 10:00:00",
           "url": "https://www.eluniversal.com.mx/nacion/vieja-corte-dio-licencias-doradas-a-trabajadores-49-altos-funcionarios-tuvieron-privilegios/",
           "categorias": "seguridad_justicia:0.51"
+        },
+        {
+          "titulo": "Morenistas del estado de México apoyan a La Habana",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/009n3pol?partner=rss",
+          "categorias": "administracion:0.679"
+        },
+        {
+          "titulo": "Higinio Martínez llama a la conciliación en el Congreso  de Mexiquenses de Corazón",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/estados/029n3est?partner=rss",
+          "categorias": ""
         },
         {
           "titulo": "Chivas, Toluca y Cruz Azul se disputarán premio de millón de dólares",
@@ -84756,39 +84845,21 @@
           "fecha": "2026-04-20 01:46:18",
           "url": "https://www.eluniversal.com.mx/metropoli/llama-senador-higinio-martinez-a-la-conciliacion-en-morena-busca-unidad-rumbo-a-2027/",
           "categorias": ""
-        },
-        {
-          "titulo": "‘Estadio de México. Un Destino Futbolero’: vive la pasión de este deporte en los Pueblos Mágicos del Edomex",
-          "fecha": "2026-04-20 01:27:09",
-          "url": "https://www.elfinanciero.com.mx/edomex/2026/04/19/estadio-de-mexico-un-destino-futbolero-vive-la-pasion-de-este-deporte-en-los-pueblos-magicos-del-edomex/",
-          "categorias": "educacion:0.6024"
-        },
-        {
-          "titulo": "¿Descansará el calor? Se prevén lluvias fuertes en CDMX y Edomex durante la semana",
-          "fecha": "2026-04-20 01:08:21",
-          "url": "https://www.elfinanciero.com.mx/nacional/2026/04/19/descansara-el-calor-se-preven-lluvias-fuertes-en-cdmx-y-edomex-durante-la-semana/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Delfina Gómez impulsa Pueblos Mágicos del Edomex con ‘Estadio de México. Destino Futbolero’",
-          "fecha": "2026-04-20 00:40:20",
-          "url": "https://www.razon.com.mx/estados/2026/04/19/delfina-gomez-impulsa-pueblos-magicos-del-edomex-con-estadio-de-mexico-destino-futbolero/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Edomex realza turismo rumbo al Mundial 2026",
-          "fecha": "2026-04-20 00:40:20",
-          "url": "https://www.razon.com.mx/estados/2026/04/19/delfina-gomez-impulsa-pueblos-magicos-del-edomex-con-estadio-de-mexico-destino-futbolero/",
-          "categorias": ""
         }
       ]
     },
     "guanajuato": {
       "nombre": "Guanajuato",
       "abreviatura": "GUA",
-      "total_articulos": 1,
+      "total_articulos": 2,
       "categorias": [],
       "articulos": [
+        {
+          "titulo": "Grupo México suelta el volante",
+          "fecha": "2026-04-20 11:42:08",
+          "url": "https://www.elfinanciero.com.mx/opinion/de-jefes/2026/04/20/grupo-mexico-suelta-el-volante/",
+          "categorias": ""
+        },
         {
           "titulo": "Luis Miguel sigue enamorado",
           "fecha": "2026-04-20 06:01:25",
@@ -84800,7 +84871,7 @@
     "guerrero": {
       "nombre": "Guerrero",
       "abreviatura": "GRO",
-      "total_articulos": 2,
+      "total_articulos": 3,
       "categorias": [
         "educacion:0.5208",
         "relaciones_exteriores:0.4566"
@@ -84817,6 +84888,12 @@
           "fecha": "2026-04-20 09:00:00",
           "url": "https://www.cronica.com.mx/opinion/2026/04/20/sheinbaum-y-serrat-diplomacia-del-reencuentro/",
           "categorias": "relaciones_exteriores:0.4566"
+        },
+        {
+          "titulo": "Mezcaleros de Guerrero reclaman apoyo para vender miles de litros",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/estados/028n1est?partner=rss",
+          "categorias": ""
         }
       ]
     },
@@ -84830,12 +84907,32 @@
     "jalisco": {
       "nombre": "Jalisco",
       "abreviatura": "JAL",
-      "total_articulos": 2,
+      "total_articulos": 5,
       "categorias": [
+        "igualdad_genero:0.6213",
         "infraestructura:0.5365",
-        "seguridad_justicia:0.4676"
+        "seguridad_justicia:0.4676",
+        "seguridad_justicia:0.6231"
       ],
       "articulos": [
+        {
+          "titulo": "A sus 23, Gabriela Sarahí pilota un helicóptero en unidad de élite de la Fuerza Aérea; busca abrir camino a más mujeres",
+          "fecha": "2026-04-20 10:30:30",
+          "url": "https://www.eluniversal.com.mx/nacion/a-sus-23-gabriela-sarahi-pilota-un-helicoptero-en-unidad-de-elite-de-la-fuerza-aerea-busca-abrir-camino-a-mas-mujeres/",
+          "categorias": "igualdad_genero:0.6213"
+        },
+        {
+          "titulo": "Atacan con drones a fuerzas policiales en el noroeste de Jalisco",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/estados/029n2est?partner=rss",
+          "categorias": "seguridad_justicia:0.6231"
+        },
+        {
+          "titulo": "Denuncian buscadoras de Jalisco amenazas de nueve sujetos armados",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/004n2pol?partner=rss",
+          "categorias": ""
+        },
         {
           "titulo": "Frangie, o ¿para qué sirve un alcalde?",
           "fecha": "2026-04-20 07:00:00",
@@ -84853,7 +84950,7 @@
     "michoacan": {
       "nombre": "Michoacan",
       "abreviatura": "MIC",
-      "total_articulos": 5,
+      "total_articulos": 6,
       "categorias": [
         "electoral_politico:0.4204",
         "medio_ambiente:0.5863",
@@ -84861,6 +84958,12 @@
         "seguridad_justicia:0.6326"
       ],
       "articulos": [
+        {
+          "titulo": "Inauguran teleférico en Uruapan, Michoacán",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/011n1pol?partner=rss",
+          "categorias": ""
+        },
         {
           "titulo": "Michoacán estrena Teleférico; inversión de $3,200 millones",
           "fecha": "2026-04-20 08:15:06",
@@ -84896,12 +84999,25 @@
     "morelos": {
       "nombre": "Morelos",
       "abreviatura": "MOR",
-      "total_articulos": 1,
+      "total_articulos": 3,
       "categorias": [
         "relaciones_exteriores:0.6577",
+        "seguridad_justicia:0.5132",
         "seguridad_justicia:0.6697"
       ],
       "articulos": [
+        {
+          "titulo": "Editorial:   Instructores de EU: preguntas ineludibles",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/opinion/002a1edi?partner=rss",
+          "categorias": ""
+        },
+        {
+          "titulo": "Mueren dos oficiales de EU y dos mexicanos tras acción antinarco",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/005n1pol?partner=rss",
+          "categorias": "seguridad_justicia:0.5132"
+        },
         {
           "titulo": "Así fue el operativo contra narcolaboratorios en el que murieron los elementos de la embajada de EU; fiscal destaca magnitud del hallazgo",
           "fecha": "2026-04-20 02:11:25",
@@ -84920,7 +85036,7 @@
     "nuevo_leon": {
       "nombre": "Nuevo Leon",
       "abreviatura": "NLE",
-      "total_articulos": 4,
+      "total_articulos": 6,
       "categorias": [
         "igualdad_genero:2.5241",
         "seguridad_justicia:0.4902",
@@ -84940,6 +85056,18 @@
           "categorias": "igualdad_genero:2.5241"
         },
         {
+          "titulo": "Segundo crimen similar  en BJ en menos de un año",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/capital/031n2cap?partner=rss",
+          "categorias": ""
+        },
+        {
+          "titulo": "Indicios biológicos y hallazgos periciales respaldan acusación  en el caso Edith: FGJ",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/capital/031n1cap?partner=rss",
+          "categorias": ""
+        },
+        {
           "titulo": "Fiscalía defiende captura en caso Edith Guadalupe; indaga si hay más delitos",
           "fecha": "2026-04-20 08:16:10",
           "url": "https://www.razon.com.mx/ciudad/2026/04/20/fiscalia-defiende-captura-en-caso-edith-guadalupe-indaga-si-hay-mas-delitos/",
@@ -84956,9 +85084,15 @@
     "oaxaca": {
       "nombre": "Oaxaca",
       "abreviatura": "OAX",
-      "total_articulos": 3,
+      "total_articulos": 4,
       "categorias": [],
       "articulos": [
+        {
+          "titulo": "Asesinan en Juchitán al sobrino del secretario de Gobierno de Oaxaca",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/estados/029n1est?partner=rss",
+          "categorias": ""
+        },
         {
           "titulo": "“La distancia conspira contra nosotros”",
           "fecha": "2026-04-20 06:43:07",
@@ -85030,9 +85164,18 @@
     "sinaloa": {
       "nombre": "Sinaloa",
       "abreviatura": "SIN",
-      "total_articulos": 0,
-      "categorias": [],
-      "articulos": []
+      "total_articulos": 1,
+      "categorias": [
+        "seguridad_justicia:0.5132"
+      ],
+      "articulos": [
+        {
+          "titulo": "Mueren dos oficiales de EU y dos mexicanos tras acción antinarco",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/005n1pol?partner=rss",
+          "categorias": "seguridad_justicia:0.5132"
+        }
+      ]
     },
     "sonora": {
       "nombre": "Sonora",
@@ -85072,12 +85215,28 @@
     "veracruz": {
       "nombre": "Veracruz",
       "abreviatura": "VER",
-      "total_articulos": 3,
+      "total_articulos": 5,
       "categorias": [
+        "energia:0.4526",
         "energia:1.3269",
-        "medio_ambiente:0.7174"
+        "infraestructura:0.7501",
+        "medio_ambiente:0.5476",
+        "medio_ambiente:0.7174",
+        "seguridad_justicia:1.0521"
       ],
       "articulos": [
+        {
+          "titulo": "Desechó el PJF cientos de amparos contra grandes obras y reformas en 7 años",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/007n1pol?partner=rss",
+          "categorias": "seguridad_justicia:1.0521,infraestructura:0.7501"
+        },
+        {
+          "titulo": "Iván Restrepo: El derrame, la mentira y sus consecuencias",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/politica/016a1pol?partner=rss",
+          "categorias": "medio_ambiente:0.5476,energia:0.4526"
+        },
         {
           "titulo": "Pemex descarta daños en Río Cazones, Veracruz, tras derrame de hidrocarburos",
           "fecha": "2026-04-20 04:14:05",
@@ -85115,9 +85274,18 @@
     "zacatecas": {
       "nombre": "Zacatecas",
       "abreviatura": "ZAC",
-      "total_articulos": 0,
-      "categorias": [],
-      "articulos": []
+      "total_articulos": 1,
+      "categorias": [
+        "seguridad_justicia:0.6231"
+      ],
+      "articulos": [
+        {
+          "titulo": "Atacan con drones a fuerzas policiales en el noroeste de Jalisco",
+          "fecha": "2026-04-20 08:53:50",
+          "url": "https://www.jornada.com.mx/2026/04/20/estados/029n2est?partner=rss",
+          "categorias": "seguridad_justicia:0.6231"
+        }
+      ]
     }
   },
   "resoluciones": {
