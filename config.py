@@ -2207,14 +2207,21 @@ def normalizar_comision_senado(nombre_raw):
             return _COMISIONES_SENADO_INDEX[primera.lower()]
 
     # 3. Nombre en MAYÚSCULAS pegado a texto (ej: "AGRICULTURAConvocatoria...")
-    #    Buscar la comisión más larga cuyo nombre en mayúsculas sea prefijo
+    #    Buscar la comisión más larga cuyo nombre en mayúsculas sea prefijo.
+    #    Se normaliza la puntuación para que "RELACIONES EXTERIORES ÁFRICA..."
+    #    (sin coma) matchee "Relaciones Exteriores, África" (con coma).
+    import re as _re_punct
     nombre_upper = nombre.upper()
+    _strip_punct = lambda s: _re_punct.sub(r"[,\.]", "", s).upper()
+    nombre_upper_norm = _strip_punct(nombre)
     mejor = None
+    mejor_len = 0
     for canonica in COMISIONES_SENADO:
-        prefijo = canonica.upper()
-        if nombre_upper.startswith(prefijo):
-            if mejor is None or len(canonica) > len(mejor):
+        prefijo = _strip_punct(canonica)
+        if nombre_upper_norm.startswith(prefijo):
+            if len(prefijo) > mejor_len:
                 mejor = canonica
+                mejor_len = len(prefijo)
     if mejor:
         return mejor
 
