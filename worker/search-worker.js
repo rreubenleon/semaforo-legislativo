@@ -410,7 +410,7 @@ async function handleComisiones(request, env) {
              sitl_tasa_aprobacion, sitl_tasa_resolucion,
              sitl_ini_turnadas, sitl_ini_aprobadas, sitl_ini_pendientes,
              sitl_prop_turnadas, sitl_prop_aprobadas, sitl_prop_pendientes, sitl_desglose,
-             ultimo_dictamen, dias_sin_dictamen,
+             ultimo_dictamen, ultimo_dictamen_url, dias_sin_dictamen,
              composicion, total_integrantes,
              historico_mensual,
              actualizado_gaceta, actualizado_sitl
@@ -449,6 +449,7 @@ async function handleComisiones(request, env) {
         score_actividad: r.score_actividad || 0,
         ultima_actividad: r.ultima_actividad,
         ultimo_dictamen: r.ultimo_dictamen,
+        ultimo_dictamen_url: r.ultimo_dictamen_url || null,
         dias_sin_dictamen: r.dias_sin_dictamen,
         composicion,
         total_integrantes: r.total_integrantes || 0,

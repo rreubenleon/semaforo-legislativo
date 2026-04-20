@@ -255,14 +255,18 @@ def paso_gaceta(dry_run=False):
     for k in composicion_map:
         composicion_map[k].sort(key=lambda m: (cargo_orden.get(m["cargo"], 9), m["nombre"]))
 
-    # ── 3. Último dictamen ──
+    # ── 3. Último dictamen (fecha + URL) ──
+    # Query ordenada DESC para que la primera fila por (comision_norm, camara)
+    # sea el dictamen más reciente, incluyendo su URL para linkear en UI.
     logger.info("Leyendo último dictamen…")
     dict_rows = conn.execute("""
-        SELECT comision, camara, MAX(fecha) as uf
-        FROM gaceta WHERE tipo='dictamen' AND comision IS NOT NULL AND comision != ''
-        GROUP BY comision, camara
+        SELECT comision, camara, fecha, url, url_pdf
+        FROM gaceta
+        WHERE tipo='dictamen' AND comision IS NOT NULL AND comision != ''
+        ORDER BY fecha DESC, id DESC
     """).fetchall()
-    ultimo_dict = {}
+    ultimo_dict = {}       # key -> fecha
+    ultimo_dict_url = {}   # key -> url
     for r in dict_rows:
         camara = r["camara"] or "Diputados"
         nombre = r["comision"]
@@ -271,9 +275,10 @@ def paso_gaceta(dry_run=False):
             if not nombre:
                 continue
         key = f"{nombre}|{camara}"
-        fecha = r["uf"]
+        fecha = r["fecha"]
         if key not in ultimo_dict or (fecha and fecha > ultimo_dict[key]):
             ultimo_dict[key] = fecha
+            ultimo_dict_url[key] = r["url_pdf"] or r["url"] or ""
 
     # ── 4. Histórico mensual ──
     # Nota: el GROUP BY SQL agrupa por nombre RAW de comisión. Para Senado,
@@ -317,9 +322,10 @@ def paso_gaceta(dry_run=False):
         comp = composicion_map.get(key, [])
         c["composicion"] = comp[:30]
         c["total_integrantes"] = len(comp)
-        # Último dictamen
+        # Último dictamen (+ URL para linkear en UI)
         fd = ultimo_dict.get(key)
         c["ultimo_dictamen"] = fd
+        c["ultimo_dictamen_url"] = ultimo_dict_url.get(key) or None
         if fd:
             try:
                 c["dias_sin_dictamen"] = (datetime.strptime(hoy_str, "%Y-%m-%d") - datetime.strptime(fd, "%Y-%m-%d")).days
@@ -349,7 +355,7 @@ def paso_gaceta(dry_run=False):
             f"(nombre, camara, categoria, categoria_nombre, "
             f"docs_dictamen, docs_iniciativa, docs_proposicion, docs_comunicacion, docs_otro, "
             f"total_docs, score_actividad, ultima_actividad, "
-            f"ultimo_dictamen, dias_sin_dictamen, "
+            f"ultimo_dictamen, ultimo_dictamen_url, dias_sin_dictamen, "
             f"composicion, total_integrantes, historico_mensual, actualizado_gaceta) "
             f"VALUES ("
             f"{_sql_escape(c['nombre'])}, {_sql_escape(c['camara'])}, "
@@ -358,7 +364,8 @@ def paso_gaceta(dry_run=False):
             f"{c['tipos'].get('proposicion', 0)}, {c['tipos'].get('comunicacion', 0)}, "
             f"{sum(v for k, v in c['tipos'].items() if k not in ('dictamen','iniciativa','proposicion','comunicacion'))}, "
             f"{c['total_docs']}, {c['score_actividad']}, {_sql_escape(c['ultima_actividad'])}, "
-            f"{_sql_escape(c['ultimo_dictamen'])}, {c['dias_sin_dictamen'] if c['dias_sin_dictamen'] is not None else 'NULL'}, "
+            f"{_sql_escape(c['ultimo_dictamen'])}, {_sql_escape(c.get('ultimo_dictamen_url'))}, "
+            f"{c['dias_sin_dictamen'] if c['dias_sin_dictamen'] is not None else 'NULL'}, "
             f"{_sql_escape(comp_json)}, {c['total_integrantes']}, "
             f"{_sql_escape(hist_json)}, {_sql_escape(ahora)}) "
             f"ON CONFLICT(nombre, camara) DO UPDATE SET "
@@ -367,7 +374,8 @@ def paso_gaceta(dry_run=False):
             f"docs_proposicion=excluded.docs_proposicion, docs_comunicacion=excluded.docs_comunicacion, "
             f"docs_otro=excluded.docs_otro, total_docs=excluded.total_docs, "
             f"score_actividad=excluded.score_actividad, ultima_actividad=excluded.ultima_actividad, "
-            f"ultimo_dictamen=excluded.ultimo_dictamen, dias_sin_dictamen=excluded.dias_sin_dictamen, "
+            f"ultimo_dictamen=excluded.ultimo_dictamen, ultimo_dictamen_url=excluded.ultimo_dictamen_url, "
+            f"dias_sin_dictamen=excluded.dias_sin_dictamen, "
             f"composicion=excluded.composicion, total_integrantes=excluded.total_integrantes, "
             f"historico_mensual=excluded.historico_mensual, actualizado_gaceta=excluded.actualizado_gaceta;"
         )
