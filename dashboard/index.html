@@ -2713,8 +2713,10 @@
         }
 
         function PageComisiones({ data }) {
-            const [filtroCamara, setFiltroCamara] = useState('todas');
-            const [filtroCategoria, setFiltroCategoria] = useState(null);
+            const [filtroCamara, setFiltroCamara] = useState('');
+            const [filtroCategoria, setFiltroCategoria] = useState('');
+            const [qCom, setQCom] = useState('');
+            const [sortCom, setSortCom] = useState('score');
             const [comExpanded, setComExpanded] = useState(false);
             const [selectedCom, setSelectedCom] = useState(null);
             const [comisiones, setComisiones] = useState([]);
@@ -2732,9 +2734,17 @@
 
             /* Filtrar comisiones */
             const comisionesFiltradas = comisiones.filter(c => {
-                if (filtroCamara !== 'todas' && c.camara !== filtroCamara) return false;
+                if (filtroCamara && c.camara !== filtroCamara) return false;
                 if (filtroCategoria && c.categoria !== filtroCategoria) return false;
+                if (qCom.trim()) {
+                    const term = qCom.trim().toLowerCase();
+                    if (!c.nombre.toLowerCase().includes(term)) return false;
+                }
                 return true;
+            }).sort((a, b) => {
+                if (sortCom === 'nombre') return a.nombre.localeCompare(b.nombre);
+                if (sortCom === 'total') return (b.sitl?.turnadas || b.total_docs || 0) - (a.sitl?.turnadas || a.total_docs || 0);
+                return (b.score_actividad || 0) - (a.score_actividad || 0);
             });
 
             /* Categorías presentes en comisiones */
@@ -2751,43 +2761,52 @@
                         <div className="text-center py-8 text-sm text-gray-400">Cargando comisiones...</div>
                     )}
 
-                    {/* Filtros compactos */}
+                    {/* Filter bar: search + selects (mismo estilo que Radar) */}
                     {!comLoading && <React.Fragment>
-                    <div className="flex flex-wrap gap-3 items-center">
-                        <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
-                            {[['todas', 'Todas'], ['Senado', 'Senado'], ['Diputados', 'Diputados']].map(([val, label]) => (
-                                <button key={val} onClick={() => { setFiltroCamara(val); setComExpanded(false); setSelectedCom(null); }}
-                                    className={`px-3 py-1 rounded-md text-xs font-medium transition-all ${filtroCamara === val ? 'bg-white text-acento shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
-                                    {label}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="flex flex-wrap gap-1.5">
-                            {categoriasComisiones.map(cat => {
-                                const catData = semaforo.find(s => s.categoria === cat);
-                                const nombre = catData?.nombre || cat;
-                                const isActive = filtroCategoria === cat;
-                                return (
-                                    <button key={cat} onClick={() => { setFiltroCategoria(isActive ? null : cat); setComExpanded(false); setSelectedCom(null); }}
-                                        className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all border ${isActive ? 'bg-acento text-white border-acento' : 'bg-white text-gray-600 border-gray-200 hover:border-acento/50'}`}>
-                                        {nombre}
-                                    </button>
-                                );
-                            })}
+                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 space-y-2">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <div className="relative flex-1 min-w-[180px]">
+                                <svg className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                <input type="text" value={qCom} onChange={e => { setQCom(e.target.value); setComExpanded(false); setSelectedCom(null); }} placeholder="Buscar comisión…"
+                                    className="w-full pl-8 pr-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-acento/20 focus:border-acento focus:bg-white transition-all" />
+                            </div>
+                            <select value={filtroCamara} onChange={e => { setFiltroCamara(e.target.value); setComExpanded(false); setSelectedCom(null); }}
+                                className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-acento/20">
+                                <option value="">Cámara · todas</option>
+                                <option value="Diputados">Diputados</option>
+                                <option value="Senado">Senado</option>
+                            </select>
+                            <select value={filtroCategoria} onChange={e => { setFiltroCategoria(e.target.value); setComExpanded(false); setSelectedCom(null); }}
+                                className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-acento/20">
+                                <option value="">Tema · todos</option>
+                                {categoriasComisiones.map(cat => {
+                                    const catData = semaforo.find(s => s.categoria === cat);
+                                    const nombre = catData?.nombre || cat;
+                                    return <option key={cat} value={cat}>{nombre}</option>;
+                                })}
+                            </select>
+                            <div className="ml-auto flex items-center gap-1.5">
+                                <span className="text-[10px] uppercase text-gray-400 font-semibold tracking-wide">Ordenar</span>
+                                <select value={sortCom} onChange={e => setSortCom(e.target.value)}
+                                    className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-acento/20">
+                                    <option value="score">Score actividad</option>
+                                    <option value="total">Total instrumentos</option>
+                                    <option value="nombre">Nombre</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
                     {/* Layout de dos columnas: tabla principal + side panel con próximas sesiones */}
                     <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_300px] gap-5">
                     <div>
-                    {/* Tabla estilo PFF */}
+                    {/* Tabla abierta estilo Radar */}
                     {comisionesFiltradas.length > 0 ? (
-                    <div className="glass border border-borde rounded-xl overflow-hidden">
+                    <div>
                         {/* Header */}
-                        <div className="hidden md:grid items-center bg-gray-50 border-b border-gray-200 px-4 py-2.5 text-[10px] font-semibold text-gray-500 uppercase tracking-wider"
-                            style={{gridTemplateColumns: 'minmax(0, 1fr) 80px 56px 56px 56px 56px 64px 24px'}}>
-                            <div>Comision</div>
-                            <div className="text-center">Camara</div>
+                        <div className="hidden md:grid items-center px-3 py-2 border-b-2 border-gray-300 text-[10px] uppercase tracking-wider text-gray-500 font-bold font-mono"
+                            style={{gridTemplateColumns: 'minmax(0, 1fr) 56px 56px 56px 56px 64px 24px'}}>
+                            <div>Comisión</div>
                             <div className="text-center">Dict.</div>
                             <div className="text-center">Inic.</div>
                             <div className="text-center">Prop.</div>
@@ -2805,25 +2824,20 @@
                             return (
                             <React.Fragment key={comKey}>
                             <div onClick={() => setSelectedCom(isSelected ? null : i)}
-                                className={`grid items-center px-4 py-3 border-b border-gray-100 cursor-pointer transition-colors ${isSelected ? 'bg-acento/5 border-l-2 border-l-acento' : 'hover:bg-gray-50/50'} ${i % 2 === 1 && !isSelected ? 'bg-gray-50/30' : ''}`}
-                                style={{gridTemplateColumns: 'minmax(0, 1fr) 80px 56px 56px 56px 56px 64px 24px'}}>
-                                {/* Comision name + category tag */}
+                                className={`grid items-center px-3 py-3 border-b border-gray-200 cursor-pointer transition-colors ${isSelected ? 'bg-acento/5 border-l-2 border-l-acento' : 'hover:bg-gray-50/50'}`}
+                                style={{gridTemplateColumns: 'minmax(0, 1fr) 56px 56px 56px 56px 64px 24px'}}>
+                                {/* Comisión nombre + categoría + cámara inline */}
                                 <div className="min-w-0 pr-3">
                                     <div className="font-medium text-sm text-gray-800 truncate">{c.nombre}</div>
                                     <div className="flex items-center gap-2 mt-0.5">
+                                        <span className={`text-[9px] font-mono ${c.camara === 'Senado' ? 'text-blue-600' : 'text-purple-600'}`}>{c.camara === 'Senado' ? 'Sen.' : 'Dip.'}</span>
                                         {c.categoria_nombre && (
-                                            <span className="text-[10px] text-gray-400 truncate font-mono">{c.categoria_nombre}</span>
+                                            <span className="text-[10px] text-gray-400 truncate font-mono">· {c.categoria_nombre}</span>
                                         )}
                                         {c.sitl && (
-                                            <span className="text-[9px] px-1.5 py-0 rounded bg-gray-100 text-gray-500 font-medium hidden md:inline">{c.sitl.tasa_aprobacion}% aprob.</span>
+                                            <span className="text-[9px] text-gray-400 font-mono hidden md:inline">· {c.sitl.tasa_aprobacion}% aprob.</span>
                                         )}
                                     </div>
-                                </div>
-                                {/* Camara badge */}
-                                <div className="text-center hidden md:block">
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${c.camara === 'Senado' ? 'bg-blue-50 text-blue-600' : 'bg-purple-50 text-purple-600'}`}>
-                                        {c.camara === 'Senado' ? 'Sen.' : 'Dip.'}
-                                    </span>
                                 </div>
                                 {/* Dict / Inic / Prop / Total: SITL para Diputados, Gaceta para Senado */}
                                 {(() => {
