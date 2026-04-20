@@ -276,6 +276,11 @@ def paso_gaceta(dry_run=False):
             ultimo_dict[key] = fecha
 
     # ── 4. Histórico mensual ──
+    # Nota: el GROUP BY SQL agrupa por nombre RAW de comisión. Para Senado,
+    # múltiples variantes del nombre colapsan al mismo nombre canónico tras
+    # normalizar, así que hay que re-agregar por (key, mes) sumando counts
+    # en Python. De lo contrario el histórico muestra el mismo mes repetido
+    # con counts distintos y el frontend renderiza vacío/rotos.
     logger.info("Leyendo histórico mensual…")
     hist_rows = conn.execute("""
         SELECT comision, camara, strftime('%Y-%m', fecha) as mes, COUNT(*) as n
@@ -283,7 +288,7 @@ def paso_gaceta(dry_run=False):
         WHERE fecha >= '2024-09-01' AND comision IS NOT NULL AND comision != ''
         GROUP BY comision, camara, mes ORDER BY comision, mes
     """).fetchall()
-    historico_map = {}
+    historico_agg = {}  # key -> {mes: count}
     for r in hist_rows:
         camara = r["camara"] or "Diputados"
         nombre = r["comision"]
@@ -292,7 +297,15 @@ def paso_gaceta(dry_run=False):
             if not nombre:
                 continue
         key = f"{nombre}|{camara}"
-        historico_map.setdefault(key, []).append({"mes": r["mes"], "count": r["n"]})
+        mes = r["mes"]
+        bucket = historico_agg.setdefault(key, {})
+        bucket[mes] = bucket.get(mes, 0) + r["n"]
+
+    # Serializar como lista ordenada ascendente por mes
+    historico_map = {
+        key: [{"mes": m, "count": c} for m, c in sorted(bucket.items())]
+        for key, bucket in historico_agg.items()
+    }
 
     conn.close()
 

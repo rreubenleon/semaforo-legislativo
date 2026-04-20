@@ -443,22 +443,82 @@ def _scrape_detalle_senador(senador_url, senador_id):
         if "Entidad:" in line:
             detalle["estado"] = line.replace("Entidad:", "").strip()
 
-    # Buscar comisiones
-    in_comisiones = False
-    for line in text_lines:
-        if "COMISIONES" in line.upper():
-            in_comisiones = True
-            continue
-        if in_comisiones:
-            if line.startswith("Informe") or line.startswith("Turnado"):
+    # ── Comisiones del Senado ──
+    # El sitio del Senado pone las comisiones reales dentro de un bloque
+    # anclado por <h4 class="comisiones-lista-titulo">COMISIONES</h4>. Hay que
+    # parsear ESE bloque, no buscar la palabra "COMISIONES" en texto plano
+    # (eso captura el ítem del menú lateral y trae 70+ entradas basura).
+    #
+    # Estructura del bloque (texto extraído):
+    #   COMISIONES
+    #   Presidente(a):
+    #   <comisión 1 donde es Presidente>
+    #   Secretario(a):
+    #   <comisión 1 donde es Secretario>
+    #   <comisión 2 donde es Secretario>
+    #   Integrante:
+    #   <comisión 1 donde es Integrante>
+    #   <comisión 2 donde es Integrante>
+    #   ...
+    h4_com = soup.find("h4", class_="comisiones-lista-titulo")
+    if h4_com is not None:
+        # Subir hasta el container <div class="row"> que envuelve el bloque
+        container = h4_com.parent
+        for _ in range(4):
+            if container is None or container.name == "body":
                 break
-            # Detectar cargo
-            cargo_match = re.search(r'\(([^)]*(?:President|Secretari|Integrante)[^)]*)\)', line, re.IGNORECASE)
-            comision_nombre = re.sub(r'\s*\([^)]*\)\s*', '', line).strip()
-            if comision_nombre and len(comision_nombre) > 3 and comision_nombre not in ("|", "ORDINARIA", "ESPECIAL"):
-                cargo = cargo_match.group(1) if cargo_match else "Integrante"
+            cls = container.get("class") or []
+            if "row" in cls and container.find("h4", class_="comisiones-lista-titulo") is h4_com:
+                break
+            container = container.parent
+
+        if container is not None:
+            block_lines = [
+                l.strip() for l in container.get_text("\n", strip=True).split("\n")
+                if l.strip()
+            ]
+            # Saltarse el rótulo "COMISIONES" inicial
+            cargo_actual = "Integrante"
+            empezo = False
+            # Regex que detecta rótulos de cargo: "Presidente:", "Presidente(a):",
+            # "Secretario:", "Secretario(a):", "Secretaría:", "Integrante:".
+            # Tolerante a espacios y mayúsculas/minúsculas.
+            re_cargo = re.compile(
+                r"^(Presidente|Presidenta|Secretari[oa]|Secretar[ií]a|Integrante)\s*\(?a?\)?\s*:\s*$",
+                re.IGNORECASE,
+            )
+
+            def _normalizar_cargo(raw):
+                low = raw.lower()
+                if low.startswith("presiden"):
+                    return "Presidente"
+                if low.startswith("secretar"):
+                    return "Secretario"
+                return "Integrante"
+
+            for line in block_lines:
+                if not empezo:
+                    if line.upper() == "COMISIONES":
+                        empezo = True
+                    continue
+                m = re_cargo.match(line)
+                if m:
+                    cargo_actual = _normalizar_cargo(m.group(1))
+                    continue
+                # Línea de comisión: limpiar punto final y ruido
+                comision_nombre = line.rstrip(".").strip()
+                # Filtrar entradas claramente no-comisión (URLs, menús que se cuelan)
+                if (
+                    not comision_nombre
+                    or len(comision_nombre) < 4
+                    or comision_nombre.lower().startswith("http")
+                    or comision_nombre.startswith('"')
+                ):
+                    continue
                 detalle["comisiones"].append(comision_nombre)
-                detalle["comisiones_cargo"].append(f"{comision_nombre}:{cargo}")
+                detalle["comisiones_cargo"].append(
+                    f"{comision_nombre}:{cargo_actual}"
+                )
 
     return detalle
 
