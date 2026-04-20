@@ -2552,6 +2552,101 @@
            PAGE: COMISIONES
            ================================================================ */
 
+        /* ── Mini chart para Actividad mensual de una comisión (área + picos) ── */
+        function HistoricoComisionChart({ historico }) {
+            const ref = useRef(null);
+            const inst = useRef(null);
+            useEffect(() => {
+                if (!ref.current || !historico || historico.length === 0) return;
+                if (inst.current) inst.current.destroy();
+
+                const MESES_ABBR = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+                const labels = historico.map(h => {
+                    const [y, m] = h.mes.split('-');
+                    return `${MESES_ABBR[parseInt(m,10)-1] || m}'${y.slice(-2)}`;
+                });
+                const valores = historico.map(h => h.count);
+
+                const lineColor = '#2e7d32';
+                const fillColor = 'rgba(46, 125, 50, 0.18)';
+                const peakColor = '#8b5cf6';
+
+                // Detectar picos locales
+                const localMax = [];
+                valores.forEach((v, i) => {
+                    if (v <= 0) return;
+                    const left = i > 0 ? valores[i-1] : -Infinity;
+                    const right = i < valores.length - 1 ? valores[i+1] : -Infinity;
+                    if (v >= left && v >= right) localMax.push({ i, v });
+                });
+                const topPeaksIdx = new Set(localMax.sort((a,b) => b.v - a.v).slice(0, 5).map(p => p.i));
+                const peakData = valores.map((v, i) => topPeaksIdx.has(i) ? v : null);
+
+                const peakLinesPlugin = {
+                    id: 'peakLinesComision',
+                    beforeDatasetsDraw(chart) {
+                        const ctx = chart.ctx;
+                        const yAxis = chart.scales.y;
+                        const xAxis = chart.scales.x;
+                        ctx.save();
+                        ctx.strokeStyle = 'rgba(139, 92, 246, 0.45)';
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([3, 4]);
+                        topPeaksIdx.forEach(idx => {
+                            const x = xAxis.getPixelForValue(idx);
+                            ctx.beginPath();
+                            ctx.moveTo(x, yAxis.top);
+                            ctx.lineTo(x, yAxis.bottom);
+                            ctx.stroke();
+                        });
+                        ctx.restore();
+                    }
+                };
+
+                inst.current = new Chart(ref.current, {
+                    type: 'line',
+                    plugins: [peakLinesPlugin],
+                    data: {
+                        labels,
+                        datasets: [
+                            { label: 'Docs', data: valores, borderColor: lineColor, backgroundColor: fillColor, borderWidth: 2, fill: true, tension: 0.35, pointRadius: 0, pointHitRadius: 10, pointHoverRadius: 4, pointBackgroundColor: lineColor, pointBorderColor: '#fff', pointBorderWidth: 2 },
+                            { label: 'Picos', data: peakData, borderColor: 'transparent', backgroundColor: peakColor, pointRadius: 4, pointBackgroundColor: peakColor, pointBorderColor: '#fff', pointBorderWidth: 1.5, pointHoverRadius: 6, pointStyle: 'circle', fill: false, showLine: false, spanGaps: false }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                backgroundColor: 'rgba(15,23,42,0.92)', titleColor: '#f1f5f9', bodyColor: '#cbd5e1',
+                                borderColor: 'rgba(255,255,255,0.08)', borderWidth: 1, cornerRadius: 10,
+                                padding: { top: 6, bottom: 6, left: 10, right: 10 },
+                                displayColors: false,
+                                titleFont: { size: 10, weight: '600' }, bodyFont: { size: 10 },
+                                filter: item => item.datasetIndex === 0,
+                                callbacks: {
+                                    title: items => items[0]?.label || '',
+                                    label: item => ` ${item.raw} docs${topPeaksIdx.has(item.dataIndex) ? ' (pico)' : ''}`
+                                }
+                            }
+                        },
+                        scales: {
+                            y: { display: false, beginAtZero: true, grid: { display: false } },
+                            x: {
+                                ticks: { color: '#b0b8c4', font: { size: 8 }, maxRotation: 0, autoSkip: true, maxTicksLimit: Math.min(6, labels.length) },
+                                grid: { display: false },
+                                border: { display: false }
+                            }
+                        }
+                    }
+                });
+                return () => { if (inst.current) { inst.current.destroy(); inst.current = null; } };
+            }, [historico]);
+
+            return <div style={{height: '90px'}}><canvas ref={ref}></canvas></div>;
+        }
+
         /* ── Panel de detalle expandible por comisión ── */
         function ComisionDetalle({ comision }) {
             const c = comision;
@@ -2590,21 +2685,21 @@
                                 <div className="space-y-1">
                                     {presidente.map((m, i) => (
                                         <div key={`p${i}`} className="flex items-center gap-2 text-xs">
-                                            <span className="text-amber-500 font-bold text-[10px] w-16">PRES.</span>
+                                            <span className="text-gray-900 font-mono font-bold text-[10px] w-16">PRES.</span>
                                             <PartidoBadge partido={m.partido} size="sm" />
                                             <span className="font-medium text-gray-800 truncate">{m.nombre}</span>
                                         </div>
                                     ))}
                                     {secretarios.map((m, i) => (
                                         <div key={`s${i}`} className="flex items-center gap-2 text-xs">
-                                            <span className="text-blue-500 font-bold text-[10px] w-16">SEC.</span>
+                                            <span className="text-gray-900 font-mono font-bold text-[10px] w-16">SEC.</span>
                                             <PartidoBadge partido={m.partido} size="sm" />
                                             <span className="font-medium text-gray-700 truncate">{m.nombre}</span>
                                         </div>
                                     ))}
                                     {visibleIntegrantes.map((m, i) => (
                                         <div key={`i${i}`} className="flex items-center gap-2 text-xs">
-                                            <span className="text-gray-400 text-[10px] w-16"></span>
+                                            <span className="text-gray-400 font-mono text-[10px] w-16">INT.</span>
                                             <PartidoBadge partido={m.partido} size="sm" />
                                             <span className="text-gray-600 truncate">{m.nombre}</span>
                                         </div>
@@ -2702,18 +2797,7 @@
                             {historico.length > 0 && (
                                 <div>
                                     <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Actividad mensual (LXVI)</div>
-                                    <div className="flex items-end gap-0.5 h-16">
-                                        {historico.map((h, i) => (
-                                            <div key={i} className="flex-1 h-full flex flex-col justify-end group relative" title={`${h.mes}: ${h.count} docs`}>
-                                                <div className="bg-acento/70 rounded-t-sm hover:bg-acento transition-colors w-full"
-                                                    style={{height: `${Math.max((h.count / maxHist) * 100, 6)}%`}}></div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="flex justify-between text-[9px] text-gray-400 mt-0.5 font-mono">
-                                        <span>{historico[0]?.mes}</span>
-                                        <span>{historico[historico.length - 1]?.mes}</span>
-                                    </div>
+                                    <HistoricoComisionChart historico={historico} />
                                 </div>
                             )}
                         </div>
