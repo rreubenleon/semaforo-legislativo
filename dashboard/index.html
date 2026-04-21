@@ -1338,29 +1338,29 @@
                             /* -mx-6 -mb-6 y !mt-0 para full-bleed pegado al
                                borde inferior del modal, sin gap blanco arriba */
                             return tieneCorrelacion ? (
-                                <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-950 p-6 rounded-b-2xl" style={{marginTop: 0, marginLeft: '-1.5rem', marginRight: '-1.5rem', marginBottom: '-1.5rem'}}>
+                                <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-950 p-6 rounded-b-2xl" style={{marginTop: 0, marginLeft: '-1.5rem', marginRight: '-1.5rem', marginBottom: '-1.5rem', padding: '1rem 1.5rem'}}>
                                     <svg className="absolute pointer-events-none" style={{right: '-50px', top: '50%', transform: 'translateY(-50%)', width: '280px', height: '280px', opacity: 0.06}} viewBox="0 0 280 280">
                                         <circle cx="140" cy="140" r="50" stroke="white" strokeWidth="1" fill="none"/>
                                         <circle cx="140" cy="140" r="90" stroke="white" strokeWidth="0.8" fill="none"/>
                                         <circle cx="140" cy="140" r="130" stroke="white" strokeWidth="0.6" fill="none"/>
                                     </svg>
                                     <div className="relative font-mono">
-                                        <div className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-2">Predicción temporal</div>
-                                        <div className="text-white text-sm leading-relaxed">{prediccion.prediccion}</div>
-                                        <div className="mt-3 text-[11px] text-white/55 leading-relaxed">
-                                            Lag: <span className="text-white/90 font-semibold">{prediccion.lag_historico_dias} días</span>
-                                            <span className="mx-2 text-white/30">·</span>
-                                            r = <span className="text-white/90 font-semibold">{prediccion.correlacion?.toFixed(2)}</span>
-                                            <span className="mx-2 text-white/30">·</span>
-                                            Confianza: <span className="text-white/90 font-semibold">{prediccion.confianza?.toFixed(0)}%</span>
+                                        <div className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1.5">Predicción temporal</div>
+                                        <div className="text-white/90 text-[11px] leading-relaxed">{prediccion.prediccion}</div>
+                                        <div className="mt-1.5 text-[10px] text-white/50 leading-relaxed">
+                                            Lag: <span className="text-white/80 font-semibold">{prediccion.lag_historico_dias} días</span>
+                                            <span className="mx-1.5 text-white/25">·</span>
+                                            r = <span className="text-white/80 font-semibold">{prediccion.correlacion?.toFixed(2)}</span>
+                                            <span className="mx-1.5 text-white/25">·</span>
+                                            Confianza: <span className="text-white/80 font-semibold">{prediccion.confianza?.toFixed(0)}%</span>
                                         </div>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-b-2xl" style={{marginTop: 0, marginLeft: '-1.5rem', marginRight: '-1.5rem', marginBottom: '-1.5rem'}}>
+                                <div className="relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-b-2xl" style={{marginTop: 0, marginLeft: '-1.5rem', marginRight: '-1.5rem', marginBottom: '-1.5rem', padding: '1rem 1.5rem'}}>
                                     <div className="font-mono">
-                                        <div className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-2">Modelo predictivo en entrenamiento</div>
-                                        <div className="text-[12px] text-white/70 leading-relaxed">Se requieren al menos 14 días de monitoreo continuo para generar una predicción estadísticamente significativa.</div>
+                                        <div className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1.5">Modelo predictivo en entrenamiento</div>
+                                        <div className="text-[11px] text-white/70 leading-relaxed">Se requieren al menos 14 días de monitoreo continuo para generar una predicción estadísticamente significativa.</div>
                                     </div>
                                 </div>
                             );
