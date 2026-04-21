@@ -273,7 +273,11 @@ CATEGORIAS = {
                 "nombre": "Seguridad pública y policía",
                 "keywords": ["policía", "guardia nacional", "seguridad pública", "operativo", "patrullaje", "estrategia de seguridad",
                              "balacera", "enfrentamiento armado", "emboscada", "levantón", "toque de queda", "militarización",
-                             "autodefensa", "grupo armado", "célula criminal", "abuso policial", "ejecución extrajudicial"],
+                             "autodefensa", "grupo armado", "célula criminal", "abuso policial", "ejecución extrajudicial",
+                             # Nuevos (abr 2026 — gap detectado en benchmark ground truth):
+                             # CURP biométrica fue un tema legislativo clave 2025-2026 que sub-detectaba.
+                             "CURP biométrica", "CURP biometrica", "identidad biométrica",
+                             "Sistema Nacional de Inteligencia", "Sistema Nacional de Seguridad"],
             },
             "justicia_penal": {
                 "nombre": "Justicia penal y reforma judicial",
