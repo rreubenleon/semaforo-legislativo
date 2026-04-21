@@ -696,8 +696,9 @@
             const trendArrow = momentum.tendencia === 'up' ? '\u2191' : momentum.tendencia === 'down' ? '\u2193' : '';
             const trendColor = momentum.tendencia === 'up' ? 'text-green-600' : momentum.tendencia === 'down' ? 'text-red-500' : 'text-gray-400';
             const topSubs = (data.subcategorias_activas || []).slice(0, 2);
-            const div = computeDivergence(data);
-            const divToneClass = div.tone === 'alert' ? 'bg-rose-50 text-rose-700 border-rose-200' : div.tone === 'warn' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-blue-50 text-blue-700 border-blue-200';
+            /* Divergence badge DESACTIVADO en UI hasta que resolvamos el tema
+               de fondo: varias categorías reportan score_media=100 perma y
+               compararlas contra Trends bajo mete ruido en el pattern. */
             return (
                 <div onClick={() => onClick(data)}
                     className={`glass border ${colorClasses[data.color]} rounded-xl p-4 cursor-pointer transition-all duration-300 hover:scale-[1.02] ${pulseClass}`}>
@@ -716,13 +717,6 @@
                         </div>
                         <ScoreRing score={data.score_total} color={data.color} size={56} />
                     </div>
-                    {div.pattern && div.hasAlert && (
-                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md border text-[10px] font-mono font-medium mb-2 ${divToneClass}`}>
-                            <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                            <span className="truncate">{div.pattern}</span>
-                            <span className="ml-auto text-[9px] opacity-70">Δ{div.spread.toFixed(0)}</span>
-                        </div>
-                    )}
                     {topSubs.length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-2">
                             {topSubs.map(s => (
@@ -1320,22 +1314,7 @@
                                 <div className="text-xs text-gray-400 mt-1 font-mono">{formatearActualizacion(generado)}</div>
                             </div>
                         </div>
-                        {(() => {
-                            const div = computeDivergence(data);
-                            if (!div.pattern) return null;
-                            const toneCls = div.tone === 'alert' ? 'bg-rose-50 border-rose-200 text-rose-900' : div.tone === 'warn' ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-blue-50 border-blue-200 text-blue-900';
-                            const dotCls = div.tone === 'alert' ? 'bg-rose-500' : div.tone === 'warn' ? 'bg-amber-500' : 'bg-blue-500';
-                            return (
-                                <div className={`border rounded-lg p-3 ${toneCls}`}>
-                                    <div className="flex items-center gap-2 mb-1.5">
-                                        <span className={`w-1.5 h-1.5 rounded-full ${dotCls}`}></span>
-                                        <span className="text-[10px] uppercase tracking-widest font-mono font-bold">Divergence Index · spread {div.spread.toFixed(0)}</span>
-                                    </div>
-                                    <div className="text-sm font-semibold mb-1">{div.pattern}</div>
-                                    <div className="text-xs leading-relaxed opacity-90 font-mono">{div.narrative}</div>
-                                </div>
-                            );
-                        })()}
+                        {/* Divergence Index oculto en modal hasta resolver calibración de las 5 capas del score */}
                         <div className="bg-gray-50/50 border border-gray-100 rounded-lg p-3">
                             <div className="flex items-center justify-between mb-3">
                                 <div>
@@ -3615,12 +3594,184 @@
             );
         }
 
+        /* ================================================================
+           WALK-FORWARD BACKTEST — Calibración del modelo FIAT.
+           Para cada punto histórico, comparar score FIAT vs actividad real
+           en los 7 días siguientes. Binariza la actividad en "normal/alta"
+           usando la mediana histórica de la categoría, y calcula el hit
+           rate por bucket de score.
+           ================================================================ */
+        function computeBacktest(data, ventanaDias = 7) {
+            const hist = data.historial_scores || {};
+            const fechas = hist.fechas || [];
+            const categorias = hist.categorias || {};
+            const series = data.series_temporales || {};
+            if (fechas.length < 5) return null;
+
+            const observaciones = [];
+
+            /* Por cada categoría, construir mapa fecha→count desde series_temporales */
+            const countsPorCatFecha = {};
+            for (const cat of Object.keys(categorias)) {
+                const serie = series[cat] || [];
+                const m = {};
+                for (const s of serie) m[s.fecha] = s.count;
+                countsPorCatFecha[cat] = m;
+            }
+
+            /* Para cada categoría, calcular mediana histórica (ventana 7d) como umbral */
+            const umbralPorCat = {};
+            for (const cat of Object.keys(categorias)) {
+                const serie = series[cat] || [];
+                const rollingSums = [];
+                for (let i = 0; i + ventanaDias < serie.length; i++) {
+                    let s = 0;
+                    for (let j = i; j < i + ventanaDias; j++) s += serie[j].count;
+                    if (s > 0) rollingSums.push(s);
+                }
+                if (rollingSums.length === 0) { umbralPorCat[cat] = 1; continue; }
+                rollingSums.sort((a, b) => a - b);
+                umbralPorCat[cat] = rollingSums[Math.floor(rollingSums.length / 2)];
+            }
+
+            /* Iterar cada (fecha_histórica, categoría) */
+            for (let i = 0; i < fechas.length; i++) {
+                const fecha = fechas[i];
+                const fechaDate = new Date(fecha + 'T12:00:00');
+                /* Saltar últimos puntos donde no hay 7 días de observación futura */
+                const hoy = new Date(data.metadata?.generado || new Date().toISOString());
+                const diasRestantes = (hoy - fechaDate) / (1000 * 60 * 60 * 24);
+                if (diasRestantes < ventanaDias) continue;
+
+                for (const cat of Object.keys(categorias)) {
+                    const score = categorias[cat].scores[i];
+                    if (score === null || score === undefined) continue;
+
+                    /* Sumar actividad en los ventanaDias siguientes */
+                    let actividad = 0;
+                    for (let d = 1; d <= ventanaDias; d++) {
+                        const futuro = new Date(fechaDate);
+                        futuro.setDate(futuro.getDate() + d);
+                        const keyFuturo = futuro.toISOString().slice(0, 10);
+                        actividad += (countsPorCatFecha[cat] || {})[keyFuturo] || 0;
+                    }
+
+                    const hit = actividad >= umbralPorCat[cat];
+                    observaciones.push({ fecha, cat, score, actividad, hit, umbral: umbralPorCat[cat] });
+                }
+            }
+
+            /* Buckets: 0-30, 30-50, 50-65, 65-80, 80-100 */
+            const bucketDefs = [
+                { label: '0-30',   min: 0,  max: 30 },
+                { label: '30-50',  min: 30, max: 50 },
+                { label: '50-65',  min: 50, max: 65 },
+                { label: '65-80',  min: 65, max: 80 },
+                { label: '80-100', min: 80, max: 101 },
+            ];
+            const buckets = bucketDefs.map(b => {
+                const obs = observaciones.filter(o => o.score >= b.min && o.score < b.max);
+                const hits = obs.filter(o => o.hit).length;
+                const mean = obs.length ? obs.reduce((a, o) => a + o.score, 0) / obs.length : 0;
+                return {
+                    label: b.label,
+                    min: b.min, max: b.max,
+                    n: obs.length,
+                    hits,
+                    hit_rate: obs.length ? hits / obs.length : null,
+                    mean_score: mean,
+                };
+            });
+
+            const total = observaciones.length;
+            const hits = observaciones.filter(o => o.hit).length;
+            const accuracyGlobal = total ? hits / total : 0;
+
+            /* Brier score: mean((score/100 - actual)^2) */
+            const brier = total ? observaciones.reduce((a, o) => a + ((o.score / 100) - (o.hit ? 1 : 0)) ** 2, 0) / total : null;
+
+            return {
+                observaciones: total,
+                hits,
+                accuracy_global: accuracyGlobal,
+                brier,
+                buckets,
+                ventana_dias: ventanaDias,
+            };
+        }
+
+        function CalibrationChart({ buckets }) {
+            const ref = useRef(null);
+            const inst = useRef(null);
+            useEffect(() => {
+                if (!ref.current) return;
+                if (inst.current) inst.current.destroy();
+                const points = buckets.filter(b => b.n > 0).map(b => ({ x: b.mean_score, y: (b.hit_rate || 0) * 100, n: b.n }));
+                inst.current = new Chart(ref.current, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [
+                            {
+                                label: 'Calibración ideal',
+                                data: [{ x: 0, y: 0 }, { x: 100, y: 100 }],
+                                type: 'line',
+                                borderColor: 'rgba(0,0,0,0.15)',
+                                borderDash: [4, 4],
+                                borderWidth: 1,
+                                pointRadius: 0,
+                                fill: false,
+                            },
+                            {
+                                label: 'Observado',
+                                data: points,
+                                backgroundColor: '#2e7d32',
+                                borderColor: '#fff',
+                                borderWidth: 2,
+                                pointRadius: points.map(p => Math.max(6, Math.min(20, Math.sqrt(p.n) * 2.2))),
+                                pointHoverRadius: 10,
+                                showLine: true,
+                                borderColor: '#2e7d32',
+                                borderWidth: 2,
+                                tension: 0,
+                            },
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                titleFont: { family: 'JetBrains Mono, ui-monospace, monospace', size: 11 },
+                                bodyFont: { family: 'JetBrains Mono, ui-monospace, monospace', size: 11 },
+                                callbacks: {
+                                    title: (items) => `Score ${items[0].parsed.x.toFixed(0)}%`,
+                                    label: (item) => {
+                                        const p = item.raw;
+                                        if (!p.n) return '';
+                                        return ` Hit rate real: ${p.y.toFixed(0)}% · n=${p.n}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { min: 0, max: 100, title: { display: true, text: 'Score FIAT predicho (%)', font: { size: 10, family: 'JetBrains Mono, ui-monospace, monospace' } }, ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
+                            y: { min: 0, max: 100, title: { display: true, text: 'Hit rate observado (%)', font: { size: 10, family: 'JetBrains Mono, ui-monospace, monospace' } }, ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.04)' } }
+                        }
+                    }
+                });
+                return () => { if (inst.current) { inst.current.destroy(); inst.current = null; } };
+            }, [buckets]);
+            return <div style={{height: '300px'}}><canvas ref={ref}></canvas></div>;
+        }
+
         function PageResolucionesInner({ data }) {
             const [semanaIdx, setSemanaIdx] = useState(null);
             const chartRef = useRef(null);
             const chartInstance = useRef(null);
             const resoluciones = data.resoluciones || { accuracy_global: 0, semanas: [] };
             const semanas = resoluciones.semanas || [];
+            /* Backtest se calcula una vez por mount (es pesado iterar ~80 puntos × 19 cats) */
+            const backtest = React.useMemo(() => computeBacktest(data, 7), [data]);
 
             // Auto-select last week
             useEffect(() => {
@@ -3696,6 +3847,71 @@
             const ringCirc = 2 * Math.PI * ringR;
             const ringOffset = ringCirc * (1 - speedVal / 100);
 
+            /* Componente de backtest reutilizable en ambas ramas del return */
+            const backtestBlock = backtest && backtest.observaciones >= 30 ? (
+                <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gray-500">Walk-forward backtest</span>
+                            <span className="text-[10px] font-mono text-gray-400">ventana {backtest.ventana_dias}d</span>
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-800">Calibración del modelo FIAT</h3>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Para cada punto histórico, comparamos el score predicho contra la actividad legislativa real en los 7 días posteriores.
+                            Un modelo bien calibrado cae sobre la diagonal: cuando FIAT dice 70%, la actividad es alta en ~70% de los casos.
+                        </p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                        <div className="border border-gray-200 rounded-xl p-3">
+                            <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500">Observaciones</div>
+                            <div className="text-2xl font-bold font-mono text-gray-800 mt-1">{backtest.observaciones.toLocaleString()}</div>
+                            <div className="text-[10px] font-mono text-gray-400">categoría × fecha</div>
+                        </div>
+                        <div className="border border-gray-200 rounded-xl p-3">
+                            <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500">Accuracy global</div>
+                            <div className="text-2xl font-bold font-mono mt-1" style={{ color: backtest.accuracy_global >= 0.65 ? '#2e7d32' : backtest.accuracy_global >= 0.5 ? '#c6972b' : '#c62828' }}>{(backtest.accuracy_global * 100).toFixed(1)}%</div>
+                            <div className="text-[10px] font-mono text-gray-400">hits / total</div>
+                        </div>
+                        <div className="border border-gray-200 rounded-xl p-3">
+                            <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500">Brier score</div>
+                            <div className="text-2xl font-bold font-mono text-gray-800 mt-1">{backtest.brier !== null ? backtest.brier.toFixed(3) : '—'}</div>
+                            <div className="text-[10px] font-mono text-gray-400">menor = mejor</div>
+                        </div>
+                    </div>
+                    <div className="border border-gray-200 rounded-xl p-4">
+                        <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2">Curva de calibración</div>
+                        <CalibrationChart buckets={backtest.buckets} />
+                        <div className="text-[10px] font-mono text-gray-400 mt-2">Tamaño del punto = número de observaciones en ese bucket.</div>
+                    </div>
+                    <div className="border border-gray-200 rounded-xl overflow-hidden">
+                        <div className="grid grid-cols-5 bg-gray-50 border-b border-gray-200 px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-wider text-gray-500">
+                            <div>Bucket</div>
+                            <div className="text-right">Observaciones</div>
+                            <div className="text-right">Score medio</div>
+                            <div className="text-right">Hit rate real</div>
+                            <div className="text-right">Δ calibración</div>
+                        </div>
+                        {backtest.buckets.map((b, i) => {
+                            const delta = b.hit_rate !== null ? (b.mean_score / 100 - b.hit_rate) * 100 : null;
+                            const deltaClass = delta === null ? 'text-gray-400' : Math.abs(delta) <= 5 ? 'text-emerald-600' : Math.abs(delta) <= 12 ? 'text-amber-600' : 'text-rose-600';
+                            return (
+                                <div key={i} className="grid grid-cols-5 px-3 py-2 text-xs font-mono border-b border-gray-100 last:border-0">
+                                    <div className="font-semibold text-gray-700">{b.label}</div>
+                                    <div className="text-right text-gray-700">{b.n}</div>
+                                    <div className="text-right text-gray-700">{b.n > 0 ? b.mean_score.toFixed(1) + '%' : '—'}</div>
+                                    <div className="text-right text-gray-700">{b.hit_rate !== null ? (b.hit_rate * 100).toFixed(1) + '%' : '—'}</div>
+                                    <div className={`text-right font-semibold ${deltaClass}`}>{delta !== null ? (delta > 0 ? '+' : '') + delta.toFixed(1) : '—'}</div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                    <div className="text-[10px] font-mono text-gray-400 leading-relaxed">
+                        <strong className="text-gray-600">Cómo leerlo:</strong> Δ calibración positivo = FIAT sobreestima (score mayor al hit rate real).
+                        Negativo = FIAT subestima. Objetivo: |Δ| ≤ 5 puntos en todos los buckets. Brier score ≤ 0.25 indica calibración razonable.
+                    </div>
+                </div>
+            ) : null;
+
             if (semanas.length === 0) {
                 return (
                     <div className="space-y-6">
@@ -3704,6 +3920,7 @@
                             <div className="text-sm font-medium text-gray-500">Sin datos de resoluciones aun</div>
                             <div className="text-xs mt-1">Los datos de precision predictiva se generan semanalmente. La primera resolucion aparecera cuando el semaforo complete al menos una semana de operacion.</div>
                         </div>
+                        {backtestBlock}
                     </div>
                 );
             }
@@ -3871,6 +4088,8 @@
                         </div>
                         <p className="text-gray-400 mt-1">Los datos se calculan cada 2 horas y se acumulan semanalmente. La precision mejora con mas semanas de datos.</p>
                     </div>
+
+                    {backtestBlock}
                 </div>
             );
         }
