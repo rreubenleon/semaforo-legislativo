@@ -613,6 +613,43 @@ def _contar_actividad_gaceta_por_fecha(categoria=None, dias=60):
     return {r[0]: r[1] for r in rows}
 
 
+def _contar_articulos_medios_por_fecha(categoria=None, dias=60):
+    """Serie temporal: {fecha: count} de artículos de medios para una categoría."""
+    conn = get_connection()
+    fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
+    if categoria:
+        like_pattern = f"%{categoria}%"
+        rows = conn.execute("""
+            SELECT fecha, COUNT(*) as n
+            FROM articulos
+            WHERE categorias LIKE ? AND fecha >= ? AND fecha != ''
+            GROUP BY fecha
+        """, (like_pattern, fecha_limite)).fetchall()
+    else:
+        rows = conn.execute("""
+            SELECT fecha, COUNT(*) as n
+            FROM articulos
+            WHERE fecha >= ? AND fecha != ''
+            GROUP BY fecha
+        """, (fecha_limite,)).fetchall()
+    return {r[0]: r[1] for r in rows}
+
+
+def obtener_serie_temporal_medios(categoria=None, dias=14):
+    """
+    Serie temporal de cobertura mediática para una categoría.
+    Retorna lista [{"fecha": "YYYY-MM-DD", "count": N}, ...] de `dias` puntos
+    consecutivos hasta hoy, rellenando con 0 los días sin notas.
+    """
+    actividad = _contar_articulos_medios_por_fecha(categoria, dias)
+    hoy = datetime.now()
+    return [
+        {"fecha": (hoy - timedelta(days=i)).strftime("%Y-%m-%d"),
+         "count": actividad.get((hoy - timedelta(days=i)).strftime("%Y-%m-%d"), 0)}
+        for i in range(dias - 1, -1, -1)
+    ]
+
+
 def obtener_serie_temporal_legislativa(categoria=None, dias=540):
     """
     Serie temporal combinada: SIL + Gaceta (Diputados + Senado).
