@@ -1244,12 +1244,24 @@
                                 <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full border-2 bg-white" style={{borderColor: '#2e7d32'}}></span>Pico legislativo</span>
                             </div>
                         </div>
-                        <div className="grid grid-cols-5 gap-2 text-xs">
-                            <div className="bg-acento/5 border border-acento/10 rounded-lg p-2 text-center"><div className="font-bold text-acento font-mono">{data.score_media.toFixed(0)}%</div><div className="text-gray-500">Media</div></div>
-                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-2 text-center"><div className="font-bold text-gray-700 font-mono">{data.score_trends.toFixed(0)}%</div><div className="text-gray-500">Trends</div></div>
-                            <div className="bg-amber-50 border border-amber-200 rounded-lg p-2 text-center"><div className="font-bold text-amber-800 font-mono">{data.score_congreso.toFixed(0)}%</div><div className="text-gray-500">Congreso</div></div>
-                            <div className="bg-rose-50 border border-rose-200 rounded-lg p-2 text-center"><div className="font-bold text-rose-600 font-mono">{(data.score_mananera || 0).toFixed(0)}%</div><div className="text-gray-500">CSP</div></div>
-                            <div className="bg-purple-50 border border-purple-200 rounded-lg p-2 text-center"><div className="font-bold text-purple-800 font-mono">{data.score_urgencia.toFixed(0)}%</div><div className="text-gray-500">Urgencia</div></div>
+                        <div className="grid grid-cols-5 gap-3 text-xs">
+                            {[
+                                { label: 'Media', value: data.score_media, danger: false },
+                                { label: 'Trends', value: data.score_trends, danger: false },
+                                { label: 'Congreso', value: data.score_congreso, danger: false },
+                                { label: 'CSP', value: data.score_mananera || 0, danger: true },
+                                { label: 'Urgencia', value: data.score_urgencia, danger: false },
+                            ].map(m => (
+                                <div key={m.label}>
+                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                        <div className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
+                                            <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(Math.max(m.value, 0), 100)}%`, backgroundColor: m.danger ? '#c62828' : '#2e7d32' }} />
+                                        </div>
+                                        <span className={`text-[11px] font-mono font-semibold ${m.danger ? 'text-rose-600' : 'text-gray-700'}`}>{m.value.toFixed(0)}%</span>
+                                    </div>
+                                    <div className="text-[9px] uppercase tracking-wider text-gray-400">{m.label}</div>
+                                </div>
+                            ))}
                         </div>
                         {data.subcategorias_activas?.length > 0 && (
                             <div className="bg-gray-50/50 border border-gray-100 rounded-lg p-3">
@@ -1326,7 +1338,7 @@
                             /* -mx-6 -mb-6 y !mt-0 para full-bleed pegado al
                                borde inferior del modal, sin gap blanco arriba */
                             return tieneCorrelacion ? (
-                                <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-950 p-6 -mx-6 -mb-6 rounded-b-2xl" style={{marginTop: 0}}>
+                                <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-950 p-6 rounded-b-2xl" style={{marginTop: 0, marginLeft: '-1.5rem', marginRight: '-1.5rem', marginBottom: '-1.5rem'}}>
                                     <svg className="absolute pointer-events-none" style={{right: '-50px', top: '50%', transform: 'translateY(-50%)', width: '280px', height: '280px', opacity: 0.06}} viewBox="0 0 280 280">
                                         <circle cx="140" cy="140" r="50" stroke="white" strokeWidth="1" fill="none"/>
                                         <circle cx="140" cy="140" r="90" stroke="white" strokeWidth="0.8" fill="none"/>
@@ -1345,7 +1357,7 @@
                                     </div>
                                 </div>
                             ) : (
-                                <div className="relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 p-6 -mx-6 -mb-6 rounded-b-2xl" style={{marginTop: 0}}>
+                                <div className="relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-b-2xl" style={{marginTop: 0, marginLeft: '-1.5rem', marginRight: '-1.5rem', marginBottom: '-1.5rem'}}>
                                     <div className="font-mono">
                                         <div className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-2">Modelo predictivo en entrenamiento</div>
                                         <div className="text-[12px] text-white/70 leading-relaxed">Se requieren al menos 14 días de monitoreo continuo para generar una predicción estadísticamente significativa.</div>
