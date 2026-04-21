@@ -619,6 +619,71 @@
             );
         }
 
+        /* ================================================================
+           DIVERGENCE INDEX — detecta cuando las 5 señales del score se
+           separan entre sí. Un alto spread esconde historias que el score
+           promedio oculta (medios gritan pero Congreso ignora, o viceversa).
+           ================================================================ */
+        function computeDivergence(d) {
+            const m = Math.max(d.score_media || 0, 0);
+            const t = Math.max(d.score_trends || 0, 0);
+            const c = Math.max(d.score_congreso || 0, 0);
+            const csp = Math.max(d.score_mananera || 0, 0);
+            const u = Math.max(d.score_urgencia || 0, 0);
+            const signals = [m, t, c, csp, u];
+            const names = ['media', 'trends', 'congreso', 'csp', 'urgencia'];
+            const max = Math.max(...signals);
+            const min = Math.min(...signals);
+            const spread = max - min;
+            const avg = signals.reduce((a, b) => a + b, 0) / signals.length;
+            const variance = signals.reduce((a, v) => a + (v - avg) ** 2, 0) / signals.length;
+            const std = Math.sqrt(variance);
+
+            /* Detectar patrón dominante. Orden importa: los patterns más
+               específicos se evalúan primero. */
+            let pattern = null;
+            let narrative = null;
+            let tone = 'info';  // info | alert | warn
+
+            if (m >= 70 && c <= 30) {
+                pattern = 'Presión sin respuesta';
+                narrative = 'Los medios cubren intensamente el tema pero el Congreso no está moviendo instrumentos. Gap de reacción.';
+                tone = 'warn';
+            } else if (m <= 30 && c >= 70) {
+                pattern = 'Legislación silenciosa';
+                narrative = 'El Congreso avanza con instrumentos sin que los medios lo cubran. Tema que se mueve por debajo del radar público.';
+                tone = 'alert';
+            } else if (csp >= 60 && m <= 40) {
+                pattern = 'Agenda presidencial sola';
+                narrative = 'La Presidencia habla del tema pero los medios no le dan tracción. Señal de que la conversación no cuajó públicamente.';
+                tone = 'warn';
+            } else if (u >= 70 && c <= 30) {
+                pattern = 'Urgencia sin acción';
+                narrative = 'El modelo proyecta alta reactividad legislativa histórica, pero el Congreso no está presentando instrumentos ahora. Tema caliente en cola.';
+                tone = 'alert';
+            } else if (min >= 60) {
+                pattern = 'Consenso alto';
+                narrative = 'Las 5 señales apuntan al mismo lado con fuerza. Momento maduro del tema.';
+                tone = 'info';
+            } else if (max <= 35) {
+                pattern = 'Sin señal';
+                narrative = 'Ninguna capa marca actividad significativa. Categoría en silencio.';
+                tone = 'info';
+            } else if (spread >= 60) {
+                /* Encontrar qué señal está fuera del grupo */
+                const maxIdx = signals.indexOf(max);
+                const minIdx = signals.indexOf(min);
+                pattern = 'Señal fragmentada';
+                narrative = `${names[maxIdx].toUpperCase()} dispara (${max.toFixed(0)}%) mientras ${names[minIdx].toUpperCase()} se mantiene bajo (${min.toFixed(0)}%). Historias contradictorias entre capas.`;
+                tone = 'warn';
+            }
+
+            return {
+                spread, std, max, min, pattern, narrative, tone,
+                hasAlert: tone === 'alert' || (tone === 'warn' && spread >= 55),
+            };
+        }
+
         function SemaforoCard({ data, onClick }) {
             const colorClasses = {
                 verde: 'border-semaforo-verde/40 hover:border-semaforo-verde',
@@ -631,6 +696,8 @@
             const trendArrow = momentum.tendencia === 'up' ? '\u2191' : momentum.tendencia === 'down' ? '\u2193' : '';
             const trendColor = momentum.tendencia === 'up' ? 'text-green-600' : momentum.tendencia === 'down' ? 'text-red-500' : 'text-gray-400';
             const topSubs = (data.subcategorias_activas || []).slice(0, 2);
+            const div = computeDivergence(data);
+            const divToneClass = div.tone === 'alert' ? 'bg-rose-50 text-rose-700 border-rose-200' : div.tone === 'warn' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-blue-50 text-blue-700 border-blue-200';
             return (
                 <div onClick={() => onClick(data)}
                     className={`glass border ${colorClasses[data.color]} rounded-xl p-4 cursor-pointer transition-all duration-300 hover:scale-[1.02] ${pulseClass}`}>
@@ -649,6 +716,13 @@
                         </div>
                         <ScoreRing score={data.score_total} color={data.color} size={56} />
                     </div>
+                    {div.pattern && div.hasAlert && (
+                        <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md border text-[10px] font-mono font-medium mb-2 ${divToneClass}`}>
+                            <svg className="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                            <span className="truncate">{div.pattern}</span>
+                            <span className="ml-auto text-[9px] opacity-70">Δ{div.spread.toFixed(0)}</span>
+                        </div>
+                    )}
                     {topSubs.length > 0 && (
                         <div className="flex flex-wrap gap-1 mb-2">
                             {topSubs.map(s => (
@@ -1246,6 +1320,22 @@
                                 <div className="text-xs text-gray-400 mt-1 font-mono">{formatearActualizacion(generado)}</div>
                             </div>
                         </div>
+                        {(() => {
+                            const div = computeDivergence(data);
+                            if (!div.pattern) return null;
+                            const toneCls = div.tone === 'alert' ? 'bg-rose-50 border-rose-200 text-rose-900' : div.tone === 'warn' ? 'bg-amber-50 border-amber-200 text-amber-900' : 'bg-blue-50 border-blue-200 text-blue-900';
+                            const dotCls = div.tone === 'alert' ? 'bg-rose-500' : div.tone === 'warn' ? 'bg-amber-500' : 'bg-blue-500';
+                            return (
+                                <div className={`border rounded-lg p-3 ${toneCls}`}>
+                                    <div className="flex items-center gap-2 mb-1.5">
+                                        <span className={`w-1.5 h-1.5 rounded-full ${dotCls}`}></span>
+                                        <span className="text-[10px] uppercase tracking-widest font-mono font-bold">Divergence Index · spread {div.spread.toFixed(0)}</span>
+                                    </div>
+                                    <div className="text-sm font-semibold mb-1">{div.pattern}</div>
+                                    <div className="text-xs leading-relaxed opacity-90 font-mono">{div.narrative}</div>
+                                </div>
+                            );
+                        })()}
                         <div className="bg-gray-50/50 border border-gray-100 rounded-lg p-3">
                             <div className="flex items-center justify-between mb-3">
                                 <div>
