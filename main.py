@@ -31,6 +31,7 @@ from scrapers.sil import (
     obtener_stats_por_partido,
     obtener_serie_temporal_sil,
     obtener_serie_temporal_legislativa,
+    obtener_serie_temporal_medios,
     obtener_conteo_sil,
     enriquecer_fechas_sil,
     normalizar_partidos_existentes,
@@ -742,10 +743,13 @@ def paso_7_exportar_dashboard():
         predicciones[cat_clave] = obtener_prediccion(cat_clave)
 
     # Series temporales por categoría (para gráficas de línea)
-    # Usamos 540 días para capturar datos desde septiembre 2024
+    # Legislativa: 540 días desde septiembre 2024
+    # Medios: 30 días rolling para el overlay de reactividad del modal
     series_temporales = {}
+    series_temporales_medios = {}
     for cat_clave in CATEGORIAS:
         series_temporales[cat_clave] = obtener_serie_temporal_legislativa(cat_clave, dias=540)
+        series_temporales_medios[cat_clave] = obtener_serie_temporal_medios(cat_clave, dias=30)
 
     # Estadísticas por partido político
     try:
@@ -824,6 +828,7 @@ def paso_7_exportar_dashboard():
         "fuentes": fuentes,
         "historial_scores": historial_scores,
         "series_temporales": series_temporales,
+        "series_temporales_medios": series_temporales_medios,
         "partidos": partidos,
         "autoria": autoria,
         "autoria_stats": autoria_stats,
