@@ -168,7 +168,42 @@ def calcular_score_urgencia_historica(categoria_clave, score_media, score_trends
     else:
         sil_score = 0
 
-    # ── Componente 3: Calendario legislativo (peso 20%) ──
+    # ── Componente 3: Ratio de reactividad observada (peso 25%) ──
+    # NUEVO (abr 2026): Actividad legislativa (SIL + Gaceta) de los últimos
+    # 30 días vs promedio mensual de los 6 meses previos. Captura picos
+    # post-evento que el benchmark identificó como verdadero diferenciador
+    # entre "tema que sí se legisla" vs "tema con solo ruido mediático".
+    ratio_score = 0.0
+    try:
+        act_30d = conn.execute("""
+            SELECT COUNT(*) FROM (
+                SELECT id FROM gaceta WHERE categorias LIKE ? AND fecha >= date('now', '-30 days')
+                UNION ALL
+                SELECT id FROM sil_documentos WHERE categoria LIKE ? AND fecha_presentacion >= date('now', '-30 days')
+            )
+        """, (f"%{categoria_clave}%", f"{categoria_clave}%")).fetchone()[0] or 0
+
+        act_180d = conn.execute("""
+            SELECT COUNT(*) FROM (
+                SELECT id FROM gaceta WHERE categorias LIKE ? AND fecha BETWEEN date('now', '-180 days') AND date('now', '-30 days')
+                UNION ALL
+                SELECT id FROM sil_documentos WHERE categoria LIKE ? AND fecha_presentacion BETWEEN date('now', '-180 days') AND date('now', '-30 days')
+            )
+        """, (f"%{categoria_clave}%", f"{categoria_clave}%")).fetchone()[0] or 0
+
+        # Baseline mensual: act_180d / 5 (150 días / 30 días por mes)
+        baseline_mensual = act_180d / 5.0 if act_180d > 0 else 0
+        if baseline_mensual > 0:
+            ratio = act_30d / baseline_mensual
+            # Ratio 1.0 = normal → 50; ratio 2.0 = duplica → 100; ratio 0.5 = mitad → 25
+            ratio_score = min(max(ratio * 50.0, 0), 100)
+        else:
+            # Sin baseline pero con actividad reciente → valor moderado
+            ratio_score = min(act_30d * 10.0, 70) if act_30d > 0 else 0
+    except (sqlite3.OperationalError, ZeroDivisionError):
+        ratio_score = 0.0
+
+    # ── Componente 4: Calendario legislativo (peso 15%) ──
     factor_cal = calcular_factor_urgencia()
     # Solo amplifica si hay presión real (media + trends)
     presion_real = (score_media * 0.6 + score_trends * 0.4)
@@ -180,10 +215,16 @@ def calcular_score_urgencia_historica(categoria_clave, score_media, score_trends
     # En receso: calendario_score permanece en 0
 
     # ── Score final ponderado ──
+    # Reponderación abr 2026 para incluir ratio_score:
+    #   30% correlación histórica (antes 40%)
+    #   30% aceleración SIL reciente (antes 40%)
+    #   25% ratio de reactividad vs baseline (NUEVO)
+    #   15% calendario (antes 20%)
     urgencia = (
-        corr_score * 0.40 +
-        sil_score * 0.40 +
-        calendario_score * 0.20
+        corr_score * 0.30 +
+        sil_score * 0.30 +
+        ratio_score * 0.25 +
+        calendario_score * 0.15
     )
 
     # ── Amplificación condicional ──
@@ -352,6 +393,32 @@ def calcular_score_categoria(categoria_clave):
     # Relación entre presión mediática y actividad legislativa
     score_dominancia = calcular_dominancia_discursiva(categoria_clave, keywords)
 
+    # Métrica derivada (no pondera en score_total): ratio de reactividad observada
+    # Útil para diferenciar "tema con ley real" vs "tema con ruido mediático".
+    # Expone el ratio directo (no normalizado) para el dashboard.
+    try:
+        conn = get_connection()
+        act_30d = conn.execute("""
+            SELECT COUNT(*) FROM (
+                SELECT id FROM gaceta WHERE categorias LIKE ? AND fecha >= date('now', '-30 days')
+                UNION ALL
+                SELECT id FROM sil_documentos WHERE categoria LIKE ? AND fecha_presentacion >= date('now', '-30 days')
+            )
+        """, (f"%{categoria_clave}%", f"{categoria_clave}%")).fetchone()[0] or 0
+        act_180d = conn.execute("""
+            SELECT COUNT(*) FROM (
+                SELECT id FROM gaceta WHERE categorias LIKE ? AND fecha BETWEEN date('now', '-180 days') AND date('now', '-30 days')
+                UNION ALL
+                SELECT id FROM sil_documentos WHERE categoria LIKE ? AND fecha_presentacion BETWEEN date('now', '-180 days') AND date('now', '-30 days')
+            )
+        """, (f"%{categoria_clave}%", f"{categoria_clave}%")).fetchone()[0] or 0
+        baseline_mensual = act_180d / 5.0 if act_180d > 0 else 0
+        ratio_reactividad = round(act_30d / baseline_mensual, 2) if baseline_mensual > 0 else None
+    except (sqlite3.OperationalError, ZeroDivisionError):
+        ratio_reactividad = None
+        act_30d = 0
+        baseline_mensual = 0
+
     # Fórmula principal
     score_total = (
         pesos["media"] * score_media
@@ -374,6 +441,11 @@ def calcular_score_categoria(categoria_clave):
         "score_congreso": score_congreso,
         "score_mananera": score_mananera,
         "score_urgencia": score_urgencia,
+        "ratio_reactividad": ratio_reactividad,
+        "reactividad_detalle": {
+            "docs_30d": act_30d,
+            "baseline_mensual": round(baseline_mensual, 1) if baseline_mensual else 0,
+        },
         "score_dominancia": score_dominancia,
         "color": color,
         "factor_calendario": calcular_factor_urgencia(),
