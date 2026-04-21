@@ -645,10 +645,14 @@ CATEGORIAS = {
         "subcategorias": {
             "reforma_electoral": {
                 "nombre": "Reforma electoral",
-                "keywords": ["reforma electoral", "INE", "TEPJF", "voto", "campaña electoral", "elección", "casilla",
-                             "jornada electoral", "proceso electoral", "padrón electoral", "credencial de elector",
-                             "lista nominal", "PREP", "conteo rápido", "resultados electorales", "urna", "boleta",
-                             "casilla electoral", "distrito electoral", "circunscripción", "fiscalización de campañas",
+                # Endurecido abr 2026: "voto" solo capturaba "voto a favor",
+                # "voto de los diputados", etc. Se sustituye por variantes
+                # explícitas del ejercicio del sufragio.
+                "keywords": ["reforma electoral", "INE", "TEPJF", "campaña electoral", "jornada electoral",
+                             "voto popular", "voto electoral", "voto en urna", "voto razonado",
+                             "proceso electoral", "padrón electoral", "credencial de elector",
+                             "lista nominal", "PREP", "conteo rápido", "resultados electorales", "urna", "boleta electoral",
+                             "casilla electoral", "distrito electoral", "circunscripción electoral", "fiscalización de campañas",
                              "Guadalupe Taddei", "consejero electoral", "consejera electoral", "tribunal electoral",
                              "impugnación electoral", "tómbola", "insaculación",
                              # Leyes federales
@@ -669,11 +673,14 @@ CATEGORIAS = {
             },
             "gobernabilidad": {
                 "nombre": "Gobernabilidad",
+                # Endurecido abr 2026: se quitaron "sesión plenaria", "tribuna",
+                # "coordinador parlamentario", "líder parlamentario", "ejecutivo
+                # federal" y "periodo de sesiones" — aparecen en CUALQUIER nota
+                # legislativa rutinaria y metían falsos positivos por centenares.
                 "keywords": ["gobernabilidad", "sistema político", "crisis política", "desafuero",
                              "juicio político", "Ley Orgánica del Congreso",
-                             "periodo de sesiones", "sesión plenaria", "tribuna", "coordinador parlamentario",
-                             "líder parlamentario", "ejecutivo federal",
                              "crisis de gobierno", "ingobernabilidad", "vacío de poder",
+                             "ruptura del orden", "polarización política",
                              # Leyes federales — sólo las propiamente políticas/parlamentarias.
                              # Las leyes administrativas (LOAPF, Planeación, Entidades Paraestatales,
                              # Servicio Profesional, Procedimiento Administrativo, etc.) se movieron
@@ -687,10 +694,22 @@ CATEGORIAS = {
             },
             "participacion_ciudadana": {
                 "nombre": "Participación ciudadana",
-                "keywords": ["consulta popular", "revocación de mandato", "democracia", "referéndum", "plebiscito",
-                             "encuesta", "preferencia electoral", "intención de voto", "precampaña", "proselitismo",
-                             "candidatura", "candidato", "candidata", "debate", "debate presidencial",
-                             "gubernatura", "gobernador", "gobernadora", "alcalde", "alcaldesa", "elección intermedia"],
+                # Endurecido abr 2026: "candidato/a", "debate", "gobernador/a",
+                # "alcalde/sa" y "encuesta" sueltos capturaban cualquier nota
+                # de un gobernador o alcalde en funciones, cualquier candidato
+                # a concurso o premio, cualquier debate público. Se sustituyen
+                # por variantes explícitamente electorales.
+                "keywords": ["consulta popular", "revocación de mandato", "democracia representativa", "referéndum", "plebiscito",
+                             "encuesta electoral", "preferencia electoral", "intención de voto", "precampaña", "proselitismo",
+                             "candidatura electoral",
+                             "candidato a presidente", "candidato a la presidencia", "candidata a presidenta",
+                             "candidato a gobernador", "candidata a gobernadora",
+                             "candidato a senador", "candidata a senadora",
+                             "candidato a diputado", "candidata a diputada",
+                             "candidato a alcalde", "candidata a alcaldesa",
+                             "debate presidencial", "debate electoral", "debate de candidatos",
+                             "elección de gobernador", "elección de senadores", "elección de diputados",
+                             "gubernatura", "elección intermedia", "elección presidencial", "elección federal"],
             },
         },
     },
@@ -796,8 +815,14 @@ CATEGORIAS = {
             },
             "obra_publica": {
                 "nombre": "Obra pública",
-                "keywords": ["obra pública", "obra de infraestructura", "corredor interoceánico", "licitación de obra", "puente",
-                             "concesión", "APP", "asociación público privada", "Jorge Nuño Lara", "secretario de infraestructura",
+                # Endurecido abr 2026: "puente" solo matcheaba "megapuente" en
+                # notas de días feriados y cualquier uso figurado. Se sustituye
+                # por variantes explícitas de infraestructura. Lo mismo con
+                # "concesión" y "APP" que son siglas ambiguas.
+                "keywords": ["obra pública", "obra de infraestructura", "corredor interoceánico", "licitación de obra",
+                             "puente vehicular", "puente peatonal", "construcción de puente", "puente federal",
+                             "concesión de obra", "concesión carretera", "concesión federal",
+                             "asociación público privada", "Jorge Nuño Lara", "secretario de infraestructura",
                              # Leyes federales
                              "Ley de Obras Públicas", "Ley de Asociaciones Público Privadas"],
             },
@@ -832,8 +857,15 @@ CATEGORIAS = {
             },
             "proteccion_civil": {
                 "nombre": "Protección civil y desastres",
-                "keywords": ["terremoto", "sismo", "inundación", "huracán", "desastre natural", "protección civil",
-                             "reconstrucción", "declaratoria de emergencia", "damnificados", "derrumbe", "evacuación"],
+                # Endurecido abr 2026: "sismo" suelto capturaba todas las notas
+                # de sismos internacionales (caso testigo: sismo Japón 7.7 apr-26).
+                # "terremoto" y "huracán" se limitan a contexto mexicano.
+                "keywords": ["sismo en México", "sismo México", "sismo CDMX", "sismo Ciudad de México",
+                             "terremoto México", "terremoto en México", "temblor en México",
+                             "huracán México", "huracán en México",
+                             "inundación", "desastre natural", "protección civil",
+                             "reconstrucción", "declaratoria de emergencia", "damnificados", "derrumbe", "evacuación",
+                             "réplica sísmica", "zona sísmica"],
             },
             "megaproyectos": {
                 "nombre": "Megaproyectos federales",
