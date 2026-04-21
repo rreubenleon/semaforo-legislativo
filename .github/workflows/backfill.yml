@@ -1,0 +1,189 @@
+name: Backfill histórico (Gaceta + Mañaneras + SIL)
+
+# Workflow manual para rellenar ventanas de datos perdidas. Usa el mismo
+# cache SQLite del pipeline principal para que los backfills se acumulen
+# al estado vigente y el próximo run del pipeline los clasifique + sincronice.
+
+on:
+  workflow_dispatch:
+    inputs:
+      desde:
+        description: 'Fecha desde (YYYY-MM-DD)'
+        required: true
+        default: '2026-03-12'
+        type: string
+      hasta:
+        description: 'Fecha hasta (YYYY-MM-DD)'
+        required: true
+        default: '2026-04-06'
+        type: string
+      fuentes:
+        description: 'Qué backfillear'
+        required: true
+        default: 'todo'
+        type: choice
+        options:
+          - todo
+          - gaceta_diputados
+          - gaceta_senado
+          - mananeras
+          - sil
+      reclasificar:
+        description: '¿Correr clasificación NLP al terminar?'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "pipeline"
+  cancel-in-progress: false
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Restaurar SQLite DB
+        id: cache-db
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - name: Descargar DB seed si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            echo "No se encontró DB en cache, descargando seed..."
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          else
+            echo "DB restaurada del cache ($(du -h semaforo.db | cut -f1))"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Backfill Gaceta Diputados
+        if: ${{ inputs.fuentes == 'todo' || inputs.fuentes == 'gaceta_diputados' }}
+        run: |
+          echo "=== Backfill Gaceta Diputados ${{ inputs.desde }} → ${{ inputs.hasta }} ==="
+          python backfill_gaceta.py diputados
+        env:
+          SEMAFORO_DB_MODE: local
+          BACKFILL_DESDE: ${{ inputs.desde }}
+          BACKFILL_HASTA: ${{ inputs.hasta }}
+        continue-on-error: true
+
+      - name: Backfill Gaceta Senado
+        if: ${{ inputs.fuentes == 'todo' || inputs.fuentes == 'gaceta_senado' }}
+        run: |
+          echo "=== Backfill Gaceta Senado ${{ inputs.desde }} → ${{ inputs.hasta }} ==="
+          python backfill_gaceta.py senado
+        env:
+          SEMAFORO_DB_MODE: local
+          BACKFILL_DESDE: ${{ inputs.desde }}
+          BACKFILL_HASTA: ${{ inputs.hasta }}
+        continue-on-error: true
+
+      - name: Backfill Mañaneras
+        if: ${{ inputs.fuentes == 'todo' || inputs.fuentes == 'mananeras' }}
+        run: |
+          echo "=== Backfill Mañaneras ${{ inputs.desde }} → ${{ inputs.hasta }} ==="
+          python backfill_mananeras.py
+        env:
+          SEMAFORO_DB_MODE: local
+          BACKFILL_DESDE: ${{ inputs.desde }}
+          BACKFILL_HASTA: ${{ inputs.hasta }}
+        continue-on-error: true
+
+      - name: Backfill SIL (rango)
+        if: ${{ inputs.fuentes == 'todo' || inputs.fuentes == 'sil' }}
+        run: |
+          echo "=== SIL: el scraper es incremental por fecha_presentacion ==="
+          # El SIL scraper no navega por fecha; corre un SIL completo que
+          # recupera docs nuevos por búsquedas temáticas. Para el rango pedido
+          # lo más efectivo es correrlo una vez más — docs del gap ya tendrían
+          # fecha_presentacion en el rango correcto desde el momento en que
+          # existan en SIL oficial.
+          python -c "from scrapers.sil import scrape_sil_completo; scrape_sil_completo(fecha_desde='${{ inputs.desde }}', detalle_max=500)"
+        env:
+          SEMAFORO_DB_MODE: local
+        continue-on-error: true
+
+      - name: Reclasificar NLP sobre la ventana
+        if: ${{ inputs.reclasificar }}
+        run: |
+          echo "=== Reclasificar NLP del rango ${{ inputs.desde }} → ${{ inputs.hasta }} ==="
+          python -c "
+          import sqlite3
+          from db import get_connection
+          conn = get_connection()
+          desde = '${{ inputs.desde }}'
+          hasta = '${{ inputs.hasta }}'
+          r1 = conn.execute(\"UPDATE gaceta SET categorias = '' WHERE fecha BETWEEN ? AND ?\", (desde, hasta))
+          r2 = conn.execute(\"UPDATE articulos SET categorias = '' WHERE fecha BETWEEN ? AND ?\", (desde, hasta))
+          try:
+              r3 = conn.execute(\"UPDATE sil_documentos SET categoria = '' WHERE fecha_presentacion BETWEEN ? AND ?\", (desde, hasta))
+              sil_n = r3.rowcount
+          except sqlite3.OperationalError:
+              sil_n = 0
+          conn.commit()
+          print(f'Limpiados para reclasificar: gaceta={r1.rowcount} articulos={r2.rowcount} sil={sil_n}')
+          "
+          python -c "from nlp.clasificador import actualizar_categorias_en_db; actualizar_categorias_en_db(limit_articulos=None, limit_gaceta=None, limit_sil=None)"
+        env:
+          SEMAFORO_DB_MODE: local
+        continue-on-error: true
+
+      - name: Recalcular scores
+        run: |
+          echo "=== Recalcular scores ==="
+          python -c "from api.correlacion import calcular_todos_los_scores; calcular_todos_los_scores()"
+        env:
+          SEMAFORO_DB_MODE: local
+        continue-on-error: true
+
+      - name: Guardar SQLite DB actualizada en cache
+        uses: actions/cache/save@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-${{ github.run_id }}
+
+      - name: Reporte final
+        run: |
+          echo "=== Conteos en la ventana del backfill ==="
+          python -c "
+          import sqlite3
+          conn = sqlite3.connect('semaforo.db')
+          desde = '${{ inputs.desde }}'
+          hasta = '${{ inputs.hasta }}'
+          for tabla, col in [('gaceta','fecha'), ('articulos','fecha'), ('sil_documentos','fecha_presentacion'), ('mananera','fecha')]:
+              try:
+                  n = conn.execute(f\"SELECT COUNT(*) FROM {tabla} WHERE {col} BETWEEN ? AND ?\", (desde, hasta)).fetchone()[0]
+                  print(f'  {tabla:20} {n:>6}')
+              except Exception as e:
+                  print(f'  {tabla:20} ERROR: {e}')
+          "
