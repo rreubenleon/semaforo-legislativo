@@ -893,11 +893,21 @@
                     }
                 };
 
-                /* Usamos la animación nativa de Chart.js (estable y sin estado custom)
-                   en vez de un plugin custom con requestAnimationFrame — ese enfoque
-                   causaba que el canvas se quedara pasmado al cambiar de tab. */
+                /* Animación progressive line drawing (patrón canónico de Chart.js):
+                   cada punto se dibuja después del anterior, de izquierda a derecha,
+                   trazando la línea. El y.from toma la Y del punto previo, así nunca
+                   se aplasta al eje y deja de verse "flat" al entrar. */
                 const isFirstRender = !window._fiatChartRevealed;
                 window._fiatChartRevealed = true;
+                const totalDuration = 1400;
+                const delayBetweenPoints = totalDuration / Math.max(labels.length, 1);
+                const previousY = (ctx) => {
+                    if (ctx.index === 0) return ctx.chart.scales.y.getPixelForValue(ctx.chart.scales.y.min);
+                    const meta = ctx.chart.getDatasetMeta(ctx.datasetIndex);
+                    const prev = meta && meta.data && meta.data[ctx.index - 1];
+                    if (!prev) return ctx.chart.scales.y.getPixelForValue(ctx.chart.scales.y.min);
+                    return prev.getProps(['y'], true).y;
+                };
 
                 chartInstance.current = new Chart(chartRef.current, {
                     type: 'line',
@@ -906,9 +916,16 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        animation: isFirstRender
-                            ? { duration: 1800, easing: 'easeOutCubic', x: { from: 0 }, y: { from: (ctx) => ctx.chart.scales.y.getPixelForValue(0) } }
-                            : { duration: 400, easing: 'easeOutQuad' },
+                        animation: isFirstRender ? {
+                            x: {
+                                type: 'number', easing: 'linear', duration: delayBetweenPoints, from: NaN,
+                                delay(ctx) { if (ctx.type !== 'data' || ctx.xStarted) return 0; ctx.xStarted = true; return ctx.index * delayBetweenPoints; }
+                            },
+                            y: {
+                                type: 'number', easing: 'linear', duration: delayBetweenPoints * 2, from: previousY,
+                                delay(ctx) { if (ctx.type !== 'data' || ctx.yStarted) return 0; ctx.yStarted = true; return ctx.index * delayBetweenPoints; }
+                            }
+                        } : { duration: 400, easing: 'easeOutQuad' },
                         interaction: { mode: 'index', intersect: false },
                         plugins: {
                             legend: { display: false },
@@ -1450,8 +1467,8 @@
                                         <NewsTicker articulos={topArticulos} max={5} />
                                     </div>
                                     <div className="flex flex-col items-end ml-6">
-                                        <div className="text-white text-5xl md:text-6xl font-black leading-none tracking-tight">{top.score_total.toFixed(0)}%</div>
-                                        <div className="text-[11px] text-white/50 mt-2 uppercase tracking-widest font-mono">score compuesto</div>
+                                        <div className="text-white text-4xl md:text-5xl font-black leading-none tracking-tight">{top.score_total.toFixed(0)}%</div>
+                                        <div className="text-[10px] text-white/50 mt-2 uppercase tracking-widest font-mono">score compuesto</div>
                                     </div>
                                 </div>
                             </div>
