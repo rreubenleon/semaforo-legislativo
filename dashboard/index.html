@@ -924,8 +924,8 @@
                                 boxWidth: 8,
                                 boxHeight: 8,
                                 boxPadding: 6,
-                                titleFont: { size: 12, weight: '600', family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                bodyFont: { size: 11, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
+                                titleFont: { size: 12, weight: '600', family: 'JetBrains Mono, ui-monospace, monospace' },
+                                bodyFont: { size: 11, family: 'JetBrains Mono, ui-monospace, monospace' },
                                 callbacks: {
                                     label: (item) => ` ${item.dataset.label}: ${item.raw?.toFixed(1)}%`
                                 },
@@ -999,10 +999,10 @@
                                     onClick={() => toggleCat(cat)}
                                     onMouseEnter={() => setHoveredCat(cat)}
                                     onMouseLeave={() => setHoveredCat(null)}
-                                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-medium transition-all border ${isVisible ? 'border-gray-300 bg-white shadow-sm' : 'border-transparent bg-gray-100 text-gray-400'}`}>
+                                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono font-medium transition-all border ${isVisible ? 'border-gray-300 bg-white shadow-sm' : 'border-transparent bg-gray-100 text-gray-400'}`}>
                                     <div className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: isVisible ? color : '#d1d5db'}}></div>
                                     <span className={isVisible ? 'text-gray-700' : ''}>{catInfo.nombre.length > 15 ? catInfo.nombre.substring(0, 13) + '..' : catInfo.nombre}</span>
-                                    {lastScore !== undefined && isVisible && <span className="text-gray-400 ml-0.5 font-mono">{lastScore.toFixed(0)}%</span>}
+                                    {lastScore !== undefined && isVisible && <span className="text-gray-700 ml-0.5 font-bold">{lastScore.toFixed(0)}%</span>}
                                 </button>
                             );
                         })}
