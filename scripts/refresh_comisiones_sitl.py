@@ -147,7 +147,10 @@ def _normalizar_cargo(cargo_raw):
 
 def paso_gaceta(dry_run=False):
     """Lee datos de Gaceta + legisladores desde SQLite → D1."""
-    from config import comision_a_categoria, CATEGORIAS, normalizar_comision_senado
+    from config import (
+        comision_a_categoria, CATEGORIAS, normalizar_comision_senado,
+        COMISIONES_SENADO,
+    )
 
     if not DB_PATH.exists():
         logger.error(f"DB no encontrada: {DB_PATH}")
@@ -193,6 +196,22 @@ def paso_gaceta(dry_run=False):
         c["total_docs"] += r["total"]
         if r["ultima_fecha"] and r["ultima_fecha"] > c["ultima_actividad"]:
             c["ultima_actividad"] = r["ultima_fecha"]
+
+    # ── Completar con TODAS las comisiones oficiales del Senado, incluso las
+    # que no tienen actividad en Gaceta (espíritu de transparencia: FIAT
+    # muestra TODO lo que existe, no sólo las que trabajan). Las inactivas
+    # entran con counts=0, total_docs=0, score_actividad=0.
+    for nombre_oficial in COMISIONES_SENADO:
+        key = f"{nombre_oficial}|Senado"
+        if key in comisiones:
+            continue
+        cat = comision_a_categoria(nombre_oficial)
+        comisiones[key] = {
+            "nombre": nombre_oficial, "camara": "Senado",
+            "categoria": cat,
+            "categoria_nombre": CATEGORIAS[cat]["nombre"] if cat and cat in CATEGORIAS else None,
+            "tipos": {}, "total_docs": 0, "ultima_actividad": "",
+        }
 
     # Score
     resultado = list(comisiones.values())
