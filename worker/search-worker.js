@@ -230,7 +230,7 @@ function extraerCategoriaFIAT(categoriaStr, fuenteTipo) {
  *   partido=PAN|MORENA|...
  *   categoria=seguridad_justicia|...
  *   q=<texto libre sobre nombre>
- *   sort=hit_rate|iniciativas|proposiciones|nombre  (default hit_rate)
+ *   sort=hit_rate|iniciativas|proposiciones|nombre|actividad|elo  (default hit_rate)
  *   pagina=1 (default)
  *   limite=50 (default 30, max 100)
  */
@@ -256,6 +256,7 @@ async function handleRadar(request, env) {
     proposiciones: 's.proposiciones_proy_15d DESC NULLS LAST',
     nombre: 'l.nombre ASC',
     actividad: '(COALESCE(s.iniciativas_proy_15d,0) + COALESCE(s.proposiciones_proy_15d,0)) DESC',
+    elo: 'e.rating DESC NULLS LAST, e.partidas DESC',
   };
   const orderSql = orderMap[sort] || orderMap.hit_rate;
 
@@ -299,10 +300,14 @@ async function handleRadar(request, env) {
           s.promedio_l3p_iniciativas, s.promedio_l3p_proposiciones,
           s.matchup_grade, s.matchup_comision_target, s.matchup_tasa_dictamen,
           s.narrativa,
-          hr.respondio, hr.total_oportunidades
+          hr.respondio, hr.total_oportunidades,
+          e.rating as elo_rating, e.partidas as elo_partidas,
+          e.aprobados as elo_aprobados, e.desechados as elo_desechados,
+          e.pendientes_largo as elo_pendientes, e.draws as elo_draws
         FROM legisladores l
         LEFT JOIN legisladores_perfil p ON p.legislador_id = l.id
         LEFT JOIN legisladores_stats s ON s.legislador_id = l.id
+        LEFT JOIN legisladores_elo e ON e.legislador_id = l.id
         LEFT JOIN legisladores_hit_rate hr
           ON hr.legislador_id = l.id
          AND hr.categoria = s.categoria_dominante
@@ -344,6 +349,12 @@ async function handleRadar(request, env) {
       matchup_tasa: r.matchup_tasa_dictamen,
       comisiones_cargo: r.comisiones_cargo || '',
       narrativa: r.narrativa || '',
+      elo_rating: r.elo_rating,
+      elo_partidas: r.elo_partidas,
+      elo_aprobados: r.elo_aprobados,
+      elo_desechados: r.elo_desechados,
+      elo_pendientes: r.elo_pendientes,
+      elo_draws: r.elo_draws,
     }));
 
     // Meta agregada (útil para poblar filtros en el cliente)

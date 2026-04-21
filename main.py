@@ -14,6 +14,7 @@ import json
 import logging
 import argparse
 import os
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -456,6 +457,33 @@ def paso_5b_resoluciones():
         logger.warning(f"Resoluciones falló (no crítico): {e}")
 
     return n_semanas
+
+
+def paso_5d_elo_legisladores():
+    """Paso 5d: Calcular ELO de legisladores según track record SIL."""
+    logger.info("=" * 60)
+    logger.info("PASO 5d: ELO Legisladores")
+    logger.info("=" * 60)
+
+    inicio = time.time()
+    try:
+        import subprocess
+        result = subprocess.run(
+            [sys.executable, str(Path(__file__).parent / "scripts" / "calcular_elo_legisladores.py"), "--guardar"],
+            capture_output=True, text=True, timeout=120,
+        )
+        duracion = time.time() - inicio
+        # Extraer count de output si está disponible
+        for line in result.stdout.splitlines():
+            if "Guardados" in line:
+                logger.info(f"ELO: {line.strip()} ({duracion:.1f}s)")
+                break
+        else:
+            logger.info(f"ELO: calculado ({duracion:.1f}s)")
+        if result.returncode != 0:
+            logger.warning(f"ELO stderr: {result.stderr[:500]}")
+    except Exception as e:
+        logger.warning(f"ELO Legisladores falló (no crítico): {e}")
 
 
 def paso_5c_indice_busqueda():
@@ -1103,6 +1131,7 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     scores = paso_5_scoring()
     paso_5b_resoluciones()
     paso_5c_indice_busqueda()
+    paso_5d_elo_legisladores()
 
     try:
         paso_6_correlacion_temporal()
@@ -1153,6 +1182,7 @@ def ejecutar_solo_scoring():
     sync_db()
     paso_5b_resoluciones()
     paso_5c_indice_busqueda()
+    paso_5d_elo_legisladores()
     sync_db()
     paso_7_exportar_dashboard()
     reporte = generar_reporte()
