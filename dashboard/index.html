@@ -4013,229 +4013,86 @@
             return <div style={{ height: '260px' }}><canvas ref={ref}></canvas></div>;
         }
 
-        function CalibracionFiat() {
-            const [calib, setCalib] = useState(null);
-            const [error, setError] = useState(false);
-
-            useEffect(() => {
-                fetch('calibracion.json?t=' + Date.now())
-                    .then(r => r.ok ? r.json() : Promise.reject(r.status))
-                    .then(setCalib)
-                    .catch(() => setError(true));
-            }, []);
-
-            if (error) {
-                return (
-                    <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-800">
-                        Calibración aún no disponible. El cálculo corre cada domingo a las 10:00 CDMX.
-                    </div>
-                );
+        /* ================================================================
+           PAGE: MÉTRICAS — diseño data-terminal unificado.
+           Combina calibracion.json (fetch) + data.resoluciones (semanas)
+           en un solo flujo top-to-bottom estilo monospace.
+           ================================================================ */
+        function VitalCell({ label, value, hint, suffix, colorful }) {
+            let valColor = "text-gray-800";
+            if (colorful !== undefined && colorful !== null) {
+                valColor = colorful >= 70 ? "text-emerald-700" : colorful >= 50 ? "text-amber-700" : "text-rose-700";
             }
-            if (!calib) {
-                return (
-                    <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-sm text-gray-400">
-                        Cargando calibración…
-                    </div>
-                );
-            }
-
-            const v14 = calib.ventana_14d;
-            const ga = v14.global_a;
-            const gb = v14.global_b;
-            const hl = calib.headline;
-            const fechaCalc = calib.fecha_calculo ? new Date(calib.fecha_calculo).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
-
             return (
-                <div className="space-y-5">
-                    {/* HEADLINE */}
-                    <div className="relative overflow-hidden bg-gradient-to-br from-emerald-700 to-emerald-900 text-white rounded-2xl p-6 md:p-8 shadow-xl">
-                        <div className="flex items-center gap-2 mb-3">
-                            <span className="text-[10px] uppercase tracking-widest font-mono font-bold text-white/70">Calibración del modelo</span>
-                            <span className="text-[10px] font-mono text-white/50">·  actualizada {fechaCalc}</span>
-                        </div>
-                        <h2 className="text-2xl md:text-3xl font-bold leading-tight">{hl.principal}</h2>
-                        <p className="text-sm text-white/80 mt-2 font-mono">{hl.sub}</p>
+                <div className="px-4 py-3">
+                    <div className="text-[9px] font-mono uppercase tracking-widest text-gray-500 font-bold">{label}</div>
+                    <div className={`text-2xl font-bold font-mono ${valColor} mt-0.5 leading-none`}>
+                        {value}{suffix && <span className="text-sm text-gray-400 ml-0.5">{suffix}</span>}
                     </div>
+                    <div className="text-[9px] font-mono text-gray-400 mt-1">{hint}</div>
+                </div>
+            );
+        }
 
-                    {/* STATS GRID */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        <div className="bg-white border border-gray-200 rounded-xl p-3">
-                            <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500">Predicciones evaluadas</div>
-                            <div className="text-2xl font-bold font-mono text-gray-800 mt-1">{ga.n.toLocaleString()}</div>
-                            <div className="text-[10px] font-mono text-gray-400">categoría × fecha</div>
-                        </div>
-                        <div className="bg-white border border-gray-200 rounded-xl p-3">
-                            <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500">Brier score (B)</div>
-                            <div className="text-2xl font-bold font-mono text-gray-800 mt-1">{gb.brier}</div>
-                            <div className="text-[10px] font-mono text-gray-400">menor = mejor</div>
-                        </div>
-                        <div className="bg-white border border-gray-200 rounded-xl p-3">
-                            <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500">ECE (B)</div>
-                            <div className="text-2xl font-bold font-mono text-gray-800 mt-1">{gb.ece}<span className="text-sm text-gray-400"> pts</span></div>
-                            <div className="text-[10px] font-mono text-gray-400">error de calibración</div>
-                        </div>
-                        <div className="bg-white border border-gray-200 rounded-xl p-3">
-                            <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500">Log-loss (B)</div>
-                            <div className="text-2xl font-bold font-mono text-gray-800 mt-1">{gb.log_loss}</div>
-                            <div className="text-[10px] font-mono text-gray-400">menor = mejor</div>
-                        </div>
+        function MetricasSectionHeader({ idx, label, sub, badge }) {
+            return (
+                <div className="px-4 py-2.5 border-b border-gray-200 bg-gray-50/60 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <span className="text-[9px] font-mono text-gray-400">[{String(idx).padStart(2, "0")}]</span>
+                        <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-gray-700">{label}</span>
                     </div>
-
-                    {/* DOS CURVAS LADO A LADO */}
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <div className="bg-white border border-gray-200 rounded-xl p-4">
-                            <div className="flex items-baseline justify-between mb-2">
-                                <div>
-                                    <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500">Método B · estricto</div>
-                                    <div className="text-sm font-bold text-gray-800">Hit sobre baseline histórica</div>
-                                </div>
-                                <div className="text-[10px] font-mono text-gray-400 max-w-[140px] text-right">conteo en +14d &gt; mediana de 90d previos</div>
-                            </div>
-                            <CurvaCalibracion bins={v14.bins_b} color="#2e7d32" label="Hit B" />
-                            <div className="text-[11px] text-gray-600 mt-2 font-mono">
-                                {gb.hit_rate_observado}% hit observado · score promedio {gb.score_promedio}%
-                            </div>
-                        </div>
-                        <div className="bg-white border border-gray-200 rounded-xl p-4">
-                            <div className="flex items-baseline justify-between mb-2">
-                                <div>
-                                    <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500">Método A · amplio</div>
-                                    <div className="text-sm font-bold text-gray-800">Hit binario simple</div>
-                                </div>
-                                <div className="text-[10px] font-mono text-gray-400 max-w-[140px] text-right">≥1 instrumento en la categoría en +14d</div>
-                            </div>
-                            <CurvaCalibracion bins={v14.bins_a} color="#9ca3af" label="Hit A" />
-                            <div className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md mt-2 p-2 font-mono leading-snug">
-                                ⚠ Saturado por la actividad permanente del Congreso. Útil como contexto, pero la métrica honesta es la (B).
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* BREAKDOWN POR CATEGORÍA */}
-                    <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-                        <div className="px-4 py-3 border-b border-gray-200">
-                            <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500">Top categorías por volumen de predicción</div>
-                            <div className="text-sm font-bold text-gray-800 mt-0.5">Calibración por tema (método B)</div>
-                        </div>
-                        <div className="grid grid-cols-[1.6fr_0.6fr_0.6fr_0.6fr_0.6fr_0.6fr] bg-gray-50 px-4 py-2 text-[10px] font-mono font-bold uppercase tracking-wider text-gray-500">
-                            <div>Categoría</div>
-                            <div className="text-right">N</div>
-                            <div className="text-right">Score promedio</div>
-                            <div className="text-right">Hit B</div>
-                            <div className="text-right">Δ</div>
-                            <div className="text-right">Brier</div>
-                        </div>
-                        {v14.por_categoria.map(c => {
-                            const delta = c.metricas_b.hit_rate_observado - c.metricas_b.score_promedio;
-                            const dCls = Math.abs(delta) <= 8 ? 'text-emerald-600' : Math.abs(delta) <= 18 ? 'text-amber-600' : 'text-rose-600';
-                            return (
-                                <div key={c.categoria} className="grid grid-cols-[1.6fr_0.6fr_0.6fr_0.6fr_0.6fr_0.6fr] px-4 py-2 text-xs font-mono border-b border-gray-100 last:border-0 items-center">
-                                    <div className="flex items-center gap-1.5">
-                                        <span className="text-gray-800 font-semibold">{c.categoria.replace(/_/g, ' ')}</span>
-                                        {c.siempre_activa && <span title="Categoría con baseline alto: siempre tiene actividad" className="text-[9px] px-1 py-0.5 rounded bg-amber-100 text-amber-700 font-bold">⚑ activa</span>}
-                                    </div>
-                                    <div className="text-right text-gray-700">{c.n}</div>
-                                    <div className="text-right text-gray-700">{c.metricas_b.score_promedio}%</div>
-                                    <div className="text-right text-gray-700">{c.metricas_b.hit_rate_observado}%</div>
-                                    <div className={`text-right font-semibold ${dCls}`}>{delta > 0 ? '+' : ''}{delta.toFixed(1)}</div>
-                                    <div className="text-right text-gray-700">{c.metricas_b.brier}</div>
-                                </div>
-                            );
-                        })}
-                    </div>
-
-                    {/* NOTA DE CATEGORÍAS SIEMPRE ACTIVAS */}
-                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-[12px] text-gray-700 leading-relaxed">
-                        <div className="font-bold text-gray-900 mb-1 font-mono uppercase text-[10px] tracking-wider">Cómo leer estos números</div>
-                        <ul className="space-y-1.5">
-                            <li><strong>Δ ≈ 0</strong> → calibración limpia. Lo que FIAT dice es lo que pasa.</li>
-                            <li><strong>Δ &gt; 0</strong> → FIAT subestima. Pasa más actividad de la anunciada.</li>
-                            <li><strong>Δ &lt; 0</strong> → FIAT sobreestima. Anuncia más de lo que pasa.</li>
-                            <li>Categorías marcadas con <span className="px-1 py-0.5 rounded bg-amber-100 text-amber-700 font-bold text-[10px]">⚑ activa</span> tienen actividad legislativa casi todos los días (Seguridad, Economía, Política, Derechos Humanos). El método (A) saldrá siempre cerca de 100% para esas; usa el método (B) para juzgar predicción real.</li>
-                        </ul>
-                    </div>
-
-                    {/* METODOLOGÍA COLAPSABLE */}
-                    <details className="bg-white border border-gray-200 rounded-xl">
-                        <summary className="px-4 py-3 cursor-pointer text-[11px] font-mono font-bold uppercase tracking-wider text-gray-700 hover:bg-gray-50">Metodología técnica</summary>
-                        <div className="px-4 pb-4 space-y-2 text-[12px] text-gray-700 leading-relaxed">
-                            <div><strong>Método A (hit binario)</strong>: {calib.metodologia.hit_a}</div>
-                            <div><strong>Método B (hit vs baseline)</strong>: {calib.metodologia.hit_b}</div>
-                            <div><strong>Bins</strong>: {calib.metodologia.bins}</div>
-                            <div><strong>Exclusiones</strong>: {calib.metodologia.exclusiones}</div>
-                            <div><strong>Métricas</strong>: Brier score = mean((p - y)²). ECE = expected calibration error, promedio ponderado de |hit_observado − score_predicho| por bin. Log-loss = -mean(y·log(p) + (1-y)·log(1-p)).</div>
-                            <div><strong>Cadencia</strong>: cálculo semanal vía GitHub Actions (cron domingo 16:00 UTC = 10:00 CDMX). Lee solo lectura de `semaforo.db` en CI.</div>
-                        </div>
-                    </details>
+                    {badge ? badge : sub && <span className="text-[9px] font-mono text-gray-400">{sub}</span>}
                 </div>
             );
         }
 
         function PageResolucionesInner({ data }) {
             const [semanaIdx, setSemanaIdx] = useState(null);
+            const [calib, setCalib] = useState(null);
+            const [calibError, setCalibError] = useState(false);
             const chartRef = useRef(null);
             const chartInstance = useRef(null);
             const resoluciones = data.resoluciones || { accuracy_global: 0, semanas: [] };
             const semanas = resoluciones.semanas || [];
-            /* Backtest sintético cliente (legacy, se mantiene como fallback si calibracion.json no carga) */
-            const backtest = React.useMemo(() => computeBacktest(data, 7), [data]);
 
-            // Auto-select last week
+            // Cargar calibracion.json
+            useEffect(() => {
+                fetch("calibracion.json?t=" + Date.now())
+                    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+                    .then(setCalib)
+                    .catch(() => setCalibError(true));
+            }, []);
+
+            // Auto-select última semana
             useEffect(() => {
                 if (semanas.length > 0 && semanaIdx === null) setSemanaIdx(semanas.length - 1);
             }, [semanas.length]);
-
             const semanaActual = semanaIdx !== null ? semanas[semanaIdx] : null;
 
-            // Chart
+            // Chart de precisión semanal (estilo terminal monospace)
             useEffect(() => {
                 if (!chartRef.current || semanas.length === 0) return;
                 if (chartInstance.current) chartInstance.current.destroy();
-
-                const labels = semanas.map(s => {
-                    const parts = s.semana.split('-W');
-                    return 'Sem ' + parseInt(parts[1]);
+                const labels = semanas.map(s => "W" + s.semana.split("-W")[1]);
+                const colors = semanas.map((s, i) => {
+                    if (i === semanaIdx) return "#111827";
+                    return s.accuracy >= 70 ? "#2e7d32" : s.accuracy >= 50 ? "#c6972b" : "#dc2626";
                 });
-
-                const barColors = semanas.map(s =>
-                    s.accuracy >= 70 ? '#22c55e' : s.accuracy >= 50 ? '#eab308' : '#ef4444'
-                );
-
                 chartInstance.current = new Chart(chartRef.current, {
-                    type: 'bar',
-                    data: {
-                        labels,
-                        datasets: [{
-                            label: 'Precision',
-                            data: semanas.map(s => s.accuracy),
-                            backgroundColor: barColors,
-                            borderRadius: 6,
-                            barPercentage: 0.6,
-                        }]
-                    },
+                    type: "bar",
+                    data: { labels, datasets: [{ data: semanas.map(s => s.accuracy), backgroundColor: colors, borderRadius: 2, barPercentage: 0.7 }] },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
+                        responsive: true, maintainAspectRatio: false,
                         scales: {
-                            y: {
-                                min: 0, max: 100,
-                                ticks: { callback: v => v + '%', font: { size: 11 } },
-                                grid: { color: '#f3f4f6' },
-                            },
-                            x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                            y: { min: 0, max: 100, ticks: { callback: v => v + "%", font: { size: 10, family: "JetBrains Mono, ui-monospace, monospace" } }, grid: { color: "rgba(0,0,0,0.04)" } },
+                            x: { grid: { display: false }, ticks: { font: { size: 10, family: "JetBrains Mono, ui-monospace, monospace" } } },
                         },
                         plugins: {
                             legend: { display: false },
-                            annotation: {
-                                annotations: {
-                                    line70: { type: 'line', yMin: 70, yMax: 70, borderColor: '#22c55e', borderWidth: 1, borderDash: [4, 4] },
-                                    line50: { type: 'line', yMin: 50, yMax: 50, borderColor: '#eab308', borderWidth: 1, borderDash: [4, 4] },
-                                }
-                            },
                             tooltip: {
-                                callbacks: {
-                                    label: ctx => ctx.parsed.y.toFixed(1) + '% de acierto',
-                                }
+                                titleFont: { family: "JetBrains Mono, ui-monospace, monospace", size: 11 },
+                                bodyFont: { family: "JetBrains Mono, ui-monospace, monospace", size: 11 },
+                                callbacks: { label: ctx => `${ctx.parsed.y.toFixed(1)}% acierto` }
                             }
                         },
                         onClick: (evt, elements) => {
@@ -4243,260 +4100,254 @@
                         }
                     }
                 });
-
                 return () => { if (chartInstance.current) chartInstance.current.destroy(); };
-            }, [semanas]);
+            }, [semanas, semanaIdx]);
 
-            // Speedometer SVG - Semicircle (half gauge)
-            const gaugeColor = resoluciones.accuracy_global >= 70 ? '#22c55e' : resoluciones.accuracy_global >= 50 ? '#eab308' : '#ef4444';
-            const speedVal = resoluciones.accuracy_global;
-            const ringR = 44;
-            const ringCirc = 2 * Math.PI * ringR;
-            const ringOffset = ringCirc * (1 - speedVal / 100);
-
-            /* Componente legacy (sintético) — ya reemplazado por <CalibracionFiat />.
-               Lo dejamos definido por si el JSON real de calibración no está disponible
-               y queremos un fallback, pero ya no se renderiza por default. */
-            const backtestBlock = backtest && backtest.observaciones >= 30 ? (
-                <div className="bg-white border border-gray-200 rounded-2xl p-5 space-y-4">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gray-500">Walk-forward backtest</span>
-                            <span className="text-[10px] font-mono text-gray-400">ventana {backtest.ventana_dias}d</span>
-                        </div>
-                        <h3 className="text-lg font-bold text-gray-800">Calibración del modelo FIAT</h3>
-                        <p className="text-xs text-gray-500 mt-1">
-                            Para cada punto histórico, comparamos el score predicho contra la actividad legislativa real en los 7 días posteriores.
-                            Un modelo bien calibrado cae sobre la diagonal: cuando FIAT dice 70%, la actividad es alta en ~70% de los casos.
-                        </p>
-                    </div>
-                    <div className="grid grid-cols-3 gap-3">
-                        <div className="border border-gray-200 rounded-xl p-3">
-                            <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500">Observaciones</div>
-                            <div className="text-2xl font-bold font-mono text-gray-800 mt-1">{backtest.observaciones.toLocaleString()}</div>
-                            <div className="text-[10px] font-mono text-gray-400">categoría × fecha</div>
-                        </div>
-                        <div className="border border-gray-200 rounded-xl p-3">
-                            <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500">Accuracy global</div>
-                            <div className="text-2xl font-bold font-mono mt-1" style={{ color: backtest.accuracy_global >= 0.65 ? '#2e7d32' : backtest.accuracy_global >= 0.5 ? '#c6972b' : '#c62828' }}>{(backtest.accuracy_global * 100).toFixed(1)}%</div>
-                            <div className="text-[10px] font-mono text-gray-400">hits / total</div>
-                        </div>
-                        <div className="border border-gray-200 rounded-xl p-3">
-                            <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500">Brier score</div>
-                            <div className="text-2xl font-bold font-mono text-gray-800 mt-1">{backtest.brier !== null ? backtest.brier.toFixed(3) : '—'}</div>
-                            <div className="text-[10px] font-mono text-gray-400">menor = mejor</div>
-                        </div>
-                    </div>
-                    <div className="border border-gray-200 rounded-xl p-4">
-                        <div className="text-[10px] font-mono uppercase tracking-wider text-gray-500 mb-2">Curva de calibración</div>
-                        <CalibrationChart buckets={backtest.buckets} />
-                        <div className="text-[10px] font-mono text-gray-400 mt-2">Tamaño del punto = número de observaciones en ese bucket.</div>
-                    </div>
-                    <div className="border border-gray-200 rounded-xl overflow-hidden">
-                        <div className="grid grid-cols-5 bg-gray-50 border-b border-gray-200 px-3 py-2 text-[10px] font-mono font-bold uppercase tracking-wider text-gray-500">
-                            <div>Bucket</div>
-                            <div className="text-right">Observaciones</div>
-                            <div className="text-right">Score medio</div>
-                            <div className="text-right">Hit rate real</div>
-                            <div className="text-right">Δ calibración</div>
-                        </div>
-                        {backtest.buckets.map((b, i) => {
-                            const delta = b.hit_rate !== null ? (b.mean_score / 100 - b.hit_rate) * 100 : null;
-                            const deltaClass = delta === null ? 'text-gray-400' : Math.abs(delta) <= 5 ? 'text-emerald-600' : Math.abs(delta) <= 12 ? 'text-amber-600' : 'text-rose-600';
-                            return (
-                                <div key={i} className="grid grid-cols-5 px-3 py-2 text-xs font-mono border-b border-gray-100 last:border-0">
-                                    <div className="font-semibold text-gray-700">{b.label}</div>
-                                    <div className="text-right text-gray-700">{b.n}</div>
-                                    <div className="text-right text-gray-700">{b.n > 0 ? b.mean_score.toFixed(1) + '%' : '—'}</div>
-                                    <div className="text-right text-gray-700">{b.hit_rate !== null ? (b.hit_rate * 100).toFixed(1) + '%' : '—'}</div>
-                                    <div className={`text-right font-semibold ${deltaClass}`}>{delta !== null ? (delta > 0 ? '+' : '') + delta.toFixed(1) : '—'}</div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                    <div className="text-[10px] font-mono text-gray-400 leading-relaxed">
-                        <strong className="text-gray-600">Cómo leerlo:</strong> Δ calibración positivo = FIAT sobreestima (score mayor al hit rate real).
-                        Negativo = FIAT subestima. Objetivo: |Δ| ≤ 5 puntos en todos los buckets. Brier score ≤ 0.25 indica calibración razonable.
-                    </div>
-                </div>
-            ) : null;
-
-            if (semanas.length === 0) {
-                return (
-                    <div className="space-y-6">
-                        <CalibracionFiat />
-                    </div>
-                );
-            }
+            const v14 = calib?.ventana_14d;
+            const ga = v14?.global_a;
+            const gb = v14?.global_b;
+            const hl = calib?.headline;
+            const fechaCalc = calib?.fecha_calculo ? new Date(calib.fecha_calculo) : null;
+            const fechaCalcStr = fechaCalc ? fechaCalc.toLocaleDateString("es-MX", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
             const totalAciertos = semanas.reduce((s, w) => s + w.aciertos, 0);
             const totalEvaluados = semanas.reduce((s, w) => s + w.total, 0);
 
             return (
-                <div className="space-y-6">
-                    {/* Header: Gauge + Summary */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {/* Speedometer */}
-                        <div className="glass border border-borde rounded-xl p-4 flex flex-col items-center justify-center">
-                            <svg width="120" height="120" viewBox="0 0 120 120">
-                                <circle cx="60" cy="60" r={ringR} fill="none" stroke="#e5e7eb" strokeWidth="10" />
-                                <circle cx="60" cy="60" r={ringR} fill="none" stroke={gaugeColor} strokeWidth="10"
-                                    strokeDasharray={ringCirc} strokeDashoffset={ringOffset}
-                                    strokeLinecap="round" transform="rotate(-90 60 60)"
-                                    style={{transition: 'stroke-dashoffset 1s ease'}} />
-                                <text x="60" y="55" textAnchor="middle" fill={gaugeColor} style={{fontSize: '26px', fontWeight: 700}}>{resoluciones.accuracy_global.toFixed(0)}%</text>
-                                <text x="60" y="70" textAnchor="middle" fill="#9ca3af" style={{fontSize: '9px'}}>precision global</text>
-                            </svg>
+                <div className="space-y-3">
+                    {/* STATUS BAR */}
+                    <div className="flex items-center justify-between text-[10px] font-mono text-gray-500 px-1">
+                        <div className="flex items-center gap-2">
+                            <span className={`inline-block w-1.5 h-1.5 rounded-full ${calib ? "bg-emerald-500" : calibError ? "bg-rose-500" : "bg-gray-300"} ${calib ? "" : "animate-pulse"}`}></span>
+                            <span className="uppercase tracking-widest font-bold">{calib ? "modelo calibrado" : calibError ? "calibración no disponible" : "cargando…"}</span>
                         </div>
-
-                        {/* Summary stats */}
-                        <div className="glass border border-borde rounded-xl p-5 flex flex-col justify-center space-y-3">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs text-gray-400">Semanas evaluadas</span>
-                                <span className="text-lg font-bold text-gray-700">{semanas.length}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs text-gray-400">Total aciertos</span>
-                                <span className="text-lg font-bold text-gray-700">{totalAciertos}/{totalEvaluados}</span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs text-gray-400">Categorias monitoreadas</span>
-                                <span className="text-lg font-bold text-gray-700">17</span>
-                            </div>
-                        </div>
-
-                        {/* Best/worst week */}
-                        <div className="glass border border-borde rounded-xl p-5 flex flex-col justify-center space-y-3">
-                            {(() => {
-                                const best = semanas.reduce((a, b) => a.accuracy > b.accuracy ? a : b);
-                                const worst = semanas.reduce((a, b) => a.accuracy < b.accuracy ? a : b);
-                                return (
-                                    <>
-                                        <div>
-                                            <span className="text-[10px] text-gray-400 uppercase tracking-wider">Mejor semana</span>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                <span className="text-lg font-bold text-green-600">{best.accuracy.toFixed(1)}%</span>
-                                                <span className="text-xs text-gray-400">{best.semana} ({best.fecha_inicio})</span>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <span className="text-[10px] text-gray-400 uppercase tracking-wider">Semana mas baja</span>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                <span className="text-lg font-bold text-red-500">{worst.accuracy.toFixed(1)}%</span>
-                                                <span className="text-xs text-gray-400">{worst.semana} ({worst.fecha_inicio})</span>
-                                            </div>
-                                        </div>
-                                    </>
-                                );
-                            })()}
+                        <div className="flex items-center gap-3">
+                            <span>últ · {fechaCalcStr}</span>
+                            <span className="text-gray-300">·</span>
+                            <span>próx · dom 10:00 cdmx</span>
                         </div>
                     </div>
 
-                    {/* Chart: Weekly accuracy */}
-                    <div className="glass border border-borde rounded-xl p-4">
-                        <h3 className="font-semibold text-gray-700 mb-3 text-sm">Precision Semanal</h3>
-                        <div style={{height: '220px'}}>
-                            <canvas ref={chartRef}></canvas>
-                        </div>
-                        <div className="text-[10px] text-gray-400 mt-2 text-center">Haz clic en una barra para ver el detalle de esa semana</div>
-                    </div>
-
-                    {/* Week selector pills */}
-                    <div className="flex gap-2 flex-wrap">
-                        {semanas.map((s, i) => {
-                            const c = s.accuracy >= 70 ? 'bg-green-50 text-green-700 border-green-200' : s.accuracy >= 50 ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-red-50 text-red-700 border-red-200';
-                            return (
-                                <button key={s.semana} onClick={() => setSemanaIdx(i)}
-                                    className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${semanaIdx === i ? c + ' ring-2 ring-offset-1 ring-gray-300' : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100'}`}>
-                                    {s.semana.split('-W')[1] && 'Sem ' + parseInt(s.semana.split('-W')[1])} — {s.accuracy.toFixed(0)}%
-                                </button>
-                            );
-                        })}
-                    </div>
-
-                    {/* Detail table for selected week */}
-                    {semanaActual && (
-                        <div className="glass border border-borde rounded-xl p-4">
-                            <div className="flex items-center justify-between mb-3">
-                                <h3 className="font-semibold text-gray-700 text-sm">
-                                    Detalle {semanaActual.semana}
-                                    <span className="text-gray-400 font-normal ml-2 text-xs">desde {semanaActual.fecha_inicio}</span>
-                                </h3>
-                                <div className="text-sm font-bold" style={{color: semanaActual.accuracy >= 70 ? '#22c55e' : semanaActual.accuracy >= 50 ? '#eab308' : '#ef4444'}}>
-                                    {semanaActual.accuracy.toFixed(1)}% precision ({semanaActual.aciertos}/{semanaActual.total})
-                                </div>
+                    {/* HERO HEADLINE */}
+                    <div className="relative overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-emerald-950 text-white rounded-2xl p-6 md:p-7 shadow-xl">
+                        <svg className="absolute pointer-events-none opacity-[0.05]" style={{right: "-40px", top: "-40px", width: "320px", height: "320px"}} viewBox="0 0 320 320">
+                            <defs><pattern id="dotpat" x="0" y="0" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1" fill="white"/></pattern></defs>
+                            <rect width="320" height="320" fill="url(#dotpat)"/>
+                        </svg>
+                        <div className="relative">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="text-[9px] uppercase tracking-widest font-mono font-bold text-emerald-400/90">▸ fiat metrics / calibración primaria</span>
                             </div>
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-xs">
-                                    <thead>
-                                        <tr className="text-gray-400 border-b border-gray-200">
-                                            <th className="text-left py-2 font-medium">Categoria</th>
-                                            <th className="text-center py-2 font-medium">Score</th>
-                                            <th className="text-center py-2 font-medium">Prediccion</th>
-                                            <th className="text-center py-2 font-medium">Docs reales</th>
-                                            <th className="text-center py-2 font-medium">Prom. hist.</th>
-                                            <th className="text-center py-2 font-medium">Resultado</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {semanaActual.detalle.map((d, i) => {
-                                            const dotColor = d.color === 'verde' ? '#22c55e' : d.color === 'amarillo' ? '#eab308' : '#ef4444';
-                                            const resultIcon = d.acierto ? '\u2705' : (d.tipo === 'sobreestimacion' ? '\u2B06\uFE0F' : '\u2B07\uFE0F');
-                                            const resultLabel = d.acierto ? 'Acierto' : (d.tipo === 'sobreestimacion' ? 'Sobreest.' : 'Subestim.');
-                                            const resultColor = d.acierto ? 'text-green-600' : 'text-orange-500';
-                                            return (
-                                                <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/50">
-                                                    <td className="py-2.5 text-gray-800 font-medium">{d.nombre}</td>
-                                                    <td className="py-2.5 text-center">
-                                                        <span className="inline-flex items-center gap-1">
-                                                            <span className="w-2.5 h-2.5 rounded-full inline-block" style={{backgroundColor: dotColor}}></span>
-                                                            {d.score_promedio?.toFixed(1)}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-2.5 text-center">
-                                                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${d.color === 'verde' ? 'bg-green-50 text-green-700' : d.color === 'amarillo' ? 'bg-yellow-50 text-yellow-700' : 'bg-red-50 text-red-700'}`}>
-                                                            {d.score_promedio >= 50 ? 'Alta' : 'Baja'}
-                                                        </span>
-                                                    </td>
-                                                    <td className="py-2.5 text-center font-bold text-gray-700">{d.docs_reales}</td>
-                                                    <td className="py-2.5 text-center text-gray-400">{d.promedio_historico?.toFixed(1)}</td>
-                                                    <td className={`py-2.5 text-center font-medium ${resultColor}`}>
-                                                        {resultIcon} {resultLabel}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
+                            <h2 className="text-xl md:text-2xl font-bold leading-tight tracking-tight">
+                                {hl ? hl.principal : "Calibrando modelo…"}
+                            </h2>
+                            {hl && <p className="text-xs md:text-sm text-white/70 mt-2 font-mono">{hl.sub}</p>}
+                        </div>
+                    </div>
+
+                    {/* VITAL SIGNS */}
+                    {calib && (
+                        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                            <MetricasSectionHeader idx={1} label="vital signs" sub="método (b) hit sobre baseline · ventana 14d" />
+                            <div className="grid grid-cols-2 md:grid-cols-6 divide-y md:divide-y-0 md:divide-x divide-gray-100">
+                                <VitalCell label="N" value={ga.n.toLocaleString()} hint="predicciones" />
+                                <VitalCell label="brier" value={gb.brier.toFixed(3)} hint="↓ mejor" />
+                                <VitalCell label="ece" value={gb.ece.toFixed(1)} suffix="pts" hint="error cal." />
+                                <VitalCell label="log-loss" value={gb.log_loss.toFixed(3)} hint="↓ mejor" />
+                                <VitalCell label="acc · sem" value={resoluciones.accuracy_global.toFixed(1)} suffix="%" hint={`${semanas.length} semanas`} colorful={resoluciones.accuracy_global} />
+                                <VitalCell label="hits" value={`${totalAciertos}/${totalEvaluados}`} hint="aciertos sem." />
                             </div>
                         </div>
                     )}
 
-                    {/* Methodology explanation */}
-                    <div className="glass border border-borde rounded-xl p-4 text-xs text-gray-500 space-y-2">
-                        <h3 className="font-semibold text-gray-600 text-sm">Como se calcula la precision</h3>
-                        <p>Cada semana, FIAT compara sus predicciones contra la actividad legislativa real registrada en el SIL (Sistema de Informacion Legislativa).</p>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
-                            <div className="bg-green-50/50 rounded-lg p-2.5 border border-green-100">
-                                <div className="font-semibold text-green-700 mb-1">Acierto</div>
-                                <div className="text-green-600">Score alto + actividad por encima del promedio, o score bajo + actividad por debajo del promedio.</div>
+                    {/* GRÁFICAS PRINCIPALES (2 columnas) */}
+                    {calib && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                                <MetricasSectionHeader idx={2} label="curva de calibración" sub="hit (b) sobre baseline" />
+                                <div className="p-4">
+                                    <CurvaCalibracion bins={v14.bins_b} color="#2e7d32" label="Hit B" />
+                                    <div className="flex items-center justify-between text-[10px] font-mono text-gray-500 mt-2 px-1">
+                                        <span>score promedio · {gb.score_promedio.toFixed(1)}%</span>
+                                        <span>hit observado · {gb.hit_rate_observado.toFixed(1)}%</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="bg-orange-50/50 rounded-lg p-2.5 border border-orange-100">
-                                <div className="font-semibold text-orange-700 mb-1">Sobreestimacion</div>
-                                <div className="text-orange-600">El semaforo predijo actividad alta pero no se materializo en el Congreso.</div>
+                            {semanas.length > 0 ? (
+                                <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                                    <MetricasSectionHeader idx={3} label="precisión semanal" sub={`últimas ${semanas.length} semanas`} />
+                                    <div className="p-4">
+                                        <div style={{ height: "240px" }}>
+                                            <canvas ref={chartRef}></canvas>
+                                        </div>
+                                        <div className="text-[10px] font-mono text-gray-400 mt-2 text-center">click una barra para drill-down semanal</div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="bg-white border border-gray-200 rounded-xl p-8 text-center text-[11px] font-mono text-gray-400">
+                                    sin data semanal acumulada
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* DESGLOSE POR CATEGORÍA */}
+                    {calib && (
+                        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                            <MetricasSectionHeader idx={4} label="desglose por categoría · top 5 por volumen" sub="método (b) · ventana 14d" />
+                            <div className="grid grid-cols-[1.4fr_0.5fr_0.7fr_0.7fr_0.6fr_0.7fr_0.9fr] bg-gray-50/60 px-4 py-2 text-[9px] font-mono font-bold uppercase tracking-widest text-gray-500 border-b border-gray-100">
+                                <div>categoría</div>
+                                <div className="text-right">n</div>
+                                <div className="text-right">scorē</div>
+                                <div className="text-right">hit b</div>
+                                <div className="text-right">Δ</div>
+                                <div className="text-right">brier</div>
+                                <div className="text-right">cal · tier</div>
                             </div>
-                            <div className="bg-orange-50/50 rounded-lg p-2.5 border border-orange-100">
-                                <div className="font-semibold text-orange-700 mb-1">Subestimacion</div>
-                                <div className="text-orange-600">El semaforo predijo actividad baja pero hubo actividad legislativa significativa.</div>
+                            {v14.por_categoria.map(c => {
+                                const delta = c.metricas_b.hit_rate_observado - c.metricas_b.score_promedio;
+                                const dCls = Math.abs(delta) <= 8 ? "text-emerald-600" : Math.abs(delta) <= 18 ? "text-amber-600" : "text-rose-600";
+                                const score = Math.max(0, 100 - Math.abs(delta) * 2.5);
+                                const filled = Math.round(score / 10);
+                                const blockColor = Math.abs(delta) <= 8 ? "bg-emerald-500" : Math.abs(delta) <= 18 ? "bg-amber-500" : "bg-rose-500";
+                                return (
+                                    <div key={c.categoria} className="grid grid-cols-[1.4fr_0.5fr_0.7fr_0.7fr_0.6fr_0.7fr_0.9fr] px-4 py-2.5 text-xs font-mono border-b border-gray-100 last:border-0 items-center hover:bg-gray-50/40">
+                                        <div className="flex items-center gap-1.5 min-w-0">
+                                            <span className="text-gray-800 truncate">{c.categoria.replace(/_/g, " ")}</span>
+                                            {c.siempre_activa && <span title="categoría con baseline alto" className="flex-shrink-0 text-[8px] px-1 py-px rounded bg-amber-100 text-amber-700 font-bold uppercase tracking-wider">⚑ alta</span>}
+                                        </div>
+                                        <div className="text-right text-gray-700">{c.n}</div>
+                                        <div className="text-right text-gray-700">{c.metricas_b.score_promedio.toFixed(1)}%</div>
+                                        <div className="text-right text-gray-700">{c.metricas_b.hit_rate_observado.toFixed(1)}%</div>
+                                        <div className={`text-right font-bold ${dCls}`}>{delta > 0 ? "+" : ""}{delta.toFixed(1)}</div>
+                                        <div className="text-right text-gray-700">{c.metricas_b.brier.toFixed(3)}</div>
+                                        <div className="flex items-center justify-end gap-px">
+                                            {Array.from({length: 10}, (_, i) => (
+                                                <div key={i} className={`w-1 h-2.5 rounded-sm ${i < filled ? blockColor : "bg-gray-200"}`} />
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+
+                    {/* DRILL-DOWN SEMANAL */}
+                    {semanas.length > 0 && (
+                        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                            <MetricasSectionHeader
+                                idx={5}
+                                label="drill-down semanal"
+                                badge={semanaActual && (
+                                    <span className="text-[9px] font-mono text-gray-500">
+                                        {semanaActual.semana} · {semanaActual.fecha_inicio} ·{" "}
+                                        <span className={semanaActual.accuracy >= 70 ? "text-emerald-600 font-bold" : semanaActual.accuracy >= 50 ? "text-amber-600 font-bold" : "text-rose-600 font-bold"}>
+                                            {semanaActual.aciertos}/{semanaActual.total} · {semanaActual.accuracy.toFixed(1)}%
+                                        </span>
+                                    </span>
+                                )}
+                            />
+                            <div className="p-4 space-y-3">
+                                <div className="flex gap-1 flex-wrap">
+                                    {semanas.map((s, i) => {
+                                        const sel = i === semanaIdx;
+                                        const c = s.accuracy >= 70 ? "border-emerald-300 text-emerald-700" : s.accuracy >= 50 ? "border-amber-300 text-amber-700" : "border-rose-300 text-rose-700";
+                                        return (
+                                            <button key={s.semana} onClick={() => setSemanaIdx(i)}
+                                                className={`px-2 py-1 text-[10px] font-mono border rounded transition-all ${sel ? "bg-gray-900 text-white border-gray-900" : `bg-white ${c} hover:bg-gray-50`}`}>
+                                                W{s.semana.split("-W")[1]} · {s.accuracy.toFixed(0)}%
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                {semanaActual && semanaActual.detalle && (
+                                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                        <div className="grid grid-cols-[1.5fr_0.7fr_0.9fr_0.7fr] bg-gray-50/60 px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-gray-500 border-b border-gray-100">
+                                            <div>categoría</div>
+                                            <div className="text-right">scorē</div>
+                                            <div className="text-right">docs · μ hist</div>
+                                            <div className="text-right">veredicto</div>
+                                        </div>
+                                        {semanaActual.detalle.map((d, i) => {
+                                            const cls = d.acierto ? "text-emerald-600" : "text-rose-600";
+                                            const tipo = d.tipo === "sobreestimacion" ? "sobreest" : d.tipo === "subestimacion" ? "subest" : (d.tipo || "miss");
+                                            return (
+                                                <div key={i} className="grid grid-cols-[1.5fr_0.7fr_0.9fr_0.7fr] px-3 py-1.5 text-[11px] font-mono border-b border-gray-50 last:border-0 items-center hover:bg-gray-50/40">
+                                                    <div className="text-gray-800 truncate" title={d.nombre}>{d.nombre || d.categoria}</div>
+                                                    <div className="text-right text-gray-700">{(d.score_promedio ?? 0).toFixed(1)}%</div>
+                                                    <div className="text-right text-gray-700">{d.docs_reales} <span className="text-gray-400">/ {(d.promedio_historico ?? 0).toFixed(1)}</span></div>
+                                                    <div className={`text-right font-bold ${cls}`}>{d.acierto ? "✓ hit" : `✗ ${tipo}`}</div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         </div>
-                        <p className="text-gray-400 mt-1">Los datos se calculan cada 2 horas y se acumulan semanalmente. La precision mejora con mas semanas de datos.</p>
-                    </div>
+                    )}
 
-                    <CalibracionFiat />
+                    {/* MÉTODO A AMPLIO */}
+                    {calib && (
+                        <details className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                            <summary className="px-4 py-2.5 border-b border-gray-200 bg-gray-50/60 cursor-pointer flex items-center justify-between hover:bg-gray-100/50 list-none">
+                                <div className="flex items-center gap-2">
+                                    <span className="text-[9px] font-mono text-gray-400">[06]</span>
+                                    <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-gray-700">método (a) amplio · referencia</span>
+                                </div>
+                                <span className="text-[9px] font-mono text-amber-700">⚠ saturado por base alta</span>
+                            </summary>
+                            <div className="p-4">
+                                <CurvaCalibracion bins={v14.bins_a} color="#9ca3af" label="Hit A" />
+                                <div className="text-[10px] font-mono text-gray-500 mt-2 leading-relaxed">
+                                    con 19 categorías y ventana de 14d, casi siempre hay ≥1 instrumento — esta curva no es interpretable en agregado, por eso la primaria es la (b).
+                                </div>
+                            </div>
+                        </details>
+                    )}
+
+                    {/* GUÍA DE LECTURA */}
+                    <details className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                        <summary className="px-4 py-2.5 border-b border-gray-200 bg-gray-50/60 cursor-pointer flex items-center hover:bg-gray-100/50 list-none">
+                            <span className="text-[9px] font-mono text-gray-400 mr-2">[07]</span>
+                            <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-gray-700">cómo leer</span>
+                        </summary>
+                        <div className="p-4 space-y-1.5 text-[11px] font-mono text-gray-700 leading-relaxed">
+                            <div>· <strong>Δ ≈ 0</strong> → calibración limpia</div>
+                            <div>· <strong>Δ &gt; 0</strong> → fiat subestima (pasa más de lo que anuncia)</div>
+                            <div>· <strong>Δ &lt; 0</strong> → fiat sobreestima</div>
+                            <div>· categorías con <span className="px-1 py-px rounded bg-amber-100 text-amber-700 font-bold text-[9px]">⚑ alta</span> tienen actividad legislativa casi diaria → la métrica honesta es la (b)</div>
+                        </div>
+                    </details>
+
+                    {/* METODOLOGÍA */}
+                    {calib && (
+                        <details className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                            <summary className="px-4 py-2.5 border-b border-gray-200 bg-gray-50/60 cursor-pointer flex items-center hover:bg-gray-100/50 list-none">
+                                <span className="text-[9px] font-mono text-gray-400 mr-2">[08]</span>
+                                <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-gray-700">metodología técnica</span>
+                            </summary>
+                            <div className="p-4 space-y-2 text-[11px] font-mono text-gray-700 leading-relaxed">
+                                <div><strong>método a (hit binario)</strong>: {calib.metodologia.hit_a}</div>
+                                <div><strong>método b (hit vs baseline)</strong>: {calib.metodologia.hit_b}</div>
+                                <div><strong>bins</strong>: {calib.metodologia.bins}</div>
+                                <div><strong>exclusiones</strong>: {calib.metodologia.exclusiones}</div>
+                                <div><strong>brier</strong>: mean((p − y)²). 0 = perfecto.</div>
+                                <div><strong>ece</strong>: promedio ponderado por bin de |hit observado − score predicho|.</div>
+                                <div><strong>log-loss</strong>: −mean(y·log(p) + (1−y)·log(1−p)). penaliza más predicciones confiadas y equivocadas.</div>
+                                <div><strong>cadencia</strong>: cron domingo 16:00 utc = 10:00 cdmx. lectura read-only de semaforo.db en ci.</div>
+                            </div>
+                        </details>
+                    )}
+
+                    {calibError && (
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 text-[11px] font-mono text-amber-800">
+                            no se pudo cargar calibracion.json. el cálculo corre cada domingo a las 10:00 cdmx.
+                        </div>
+                    )}
                 </div>
             );
         }
+
 
         /* ================================================================
            PAGE: METODOLOGIA
