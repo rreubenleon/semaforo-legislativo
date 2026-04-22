@@ -460,7 +460,15 @@ def paso_5b_resoluciones():
 
 
 def paso_5d_elo_legisladores():
-    """Paso 5d: Calcular ELO de legisladores según track record SIL."""
+    """Paso 5d: Calcular ELO de legisladores según track record SIL.
+
+    Antes del cálculo, corre `completar_legisladores_desde_elo.py` para
+    asegurar que legisladores que firman en SIL pero no aparecen en el
+    listado oficial SITL/Senado (suplentes activos, ex-titulares que
+    alcanzaron a firmar) tengan stubs en la tabla `legisladores`. Sin
+    ese paso previo, el matcheo ELO→legisladores falla y el Radar
+    queda ciego a esas personas.
+    """
     logger.info("=" * 60)
     logger.info("PASO 5d: ELO Legisladores")
     logger.info("=" * 60)
@@ -468,6 +476,11 @@ def paso_5d_elo_legisladores():
     inicio = time.time()
     try:
         import subprocess
+        # Pre-paso: crear stubs para firmantes sin perfil oficial
+        subprocess.run(
+            [sys.executable, str(Path(__file__).parent / "scripts" / "completar_legisladores_desde_elo.py")],
+            capture_output=True, text=True, timeout=60,
+        )
         result = subprocess.run(
             [sys.executable, str(Path(__file__).parent / "scripts" / "calcular_elo_legisladores.py"), "--guardar"],
             capture_output=True, text=True, timeout=120,

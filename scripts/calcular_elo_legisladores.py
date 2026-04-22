@@ -242,67 +242,63 @@ def imprimir_ranking(elos, top_n=20):
 _STOPWORDS = {"de", "la", "del", "los", "las", "y", "san"}
 
 
-def _tokenizar_nombre(s: str) -> set:
-    """Tokeniza un nombre para match difuso:
+def _tokenizar_nombre(s: str) -> list:
+    """Tokeniza un nombre para match difuso (devuelve LISTA, no set, para
+    conservar multiplicidad — casos "García García", "Castro Castro"):
     - quita título (Sen./Dip./Lic./...)
     - quita acentos y puntuación
     - lowercase
     - filtra tokens cortos (≤2) y stopwords ("de", "la", "del"…)
-    Retorna set de tokens significativos."""
+    """
     if not s:
-        return set()
+        return []
     s = s.lower()
     s = re.sub(r"^(sen\.|dip\.|sra\.|sr\.|lic\.|mtro\.|dra\.|dr\.|c\.)\s*", "", s)
     s = unicodedata.normalize("NFKD", s)
     s = "".join(c for c in s if not unicodedata.combining(c))
-    return {t for t in re.findall(r"[a-z]+", s) if len(t) >= 3 and t not in _STOPWORDS}
+    return [t for t in re.findall(r"[a-z]+", s) if len(t) >= 3 and t not in _STOPWORDS]
 
 
 def _construir_indice_legisladores(conn):
     """Construye lookup invertido: dict[token] → set(legislador_ids).
-    Usado por el matcher difuso para encontrar candidatos por overlap
-    de apellidos+nombres. Retorna también el set de tokens por id para
-    rankear por intersección."""
+    Retorna también tokens_by_id con listas (Counter-compatible) por id."""
+    from collections import Counter
     rows = conn.execute("SELECT id, nombre FROM legisladores").fetchall()
-    inverted = {}      # token → set(ids)
-    tokens_by_id = {}  # id → set(tokens)
+    inverted = {}        # token → set(ids)
+    tokens_by_id = {}    # id → Counter(tokens)
     for id_, nombre in rows:
         toks = _tokenizar_nombre(nombre or "")
         if not toks:
             continue
-        tokens_by_id[id_] = toks
-        for t in toks:
+        tokens_by_id[id_] = Counter(toks)
+        for t in set(toks):
             inverted.setdefault(t, set()).add(id_)
     return inverted, tokens_by_id
 
 
 def _matchear_legislador(nombre_elo: str, inverted: dict, tokens_by_id: dict) -> int | None:
-    """Matchea un nombre del ELO contra el índice de legisladores por
-    intersección de tokens. Estrategia:
-      - tokeniza el nombre del ELO
-      - busca todos los IDs candidatos vía inverted index
-      - para cada candidato, calcula |intersección| y Jaccard
-      - acepta el mejor si |∩| ≥ 3 Y Jaccard ≥ 0.5
-    Esto tolera typos (Aracelly/Aracely), orden distinto, y ausencia de
-    segundo nombre — pero rechaza coincidencias accidentales por apellido
-    común (Pérez, García) sin más evidencia.
+    """Matchea por intersección multiset (Counter) para respetar apellidos
+    duplicados (García García, Márquez Márquez). Regla:
+      |intersección_multiset| ≥ 3 AND Jaccard_multiset ≥ 0.5
     """
+    from collections import Counter
     toks_elo = _tokenizar_nombre(nombre_elo)
     if len(toks_elo) < 3:
         return None
+    c_elo = Counter(toks_elo)
     candidatos = set()
-    for t in toks_elo:
+    for t in c_elo:
         candidatos |= inverted.get(t, set())
     if not candidatos:
         return None
     mejor_id = None
-    mejor_score = (0, 0.0)  # (interseccion, jaccard)
+    mejor_score = (0, 0.0)
     for cid in candidatos:
-        toks_leg = tokens_by_id[cid]
-        inter = len(toks_elo & toks_leg)
+        c_leg = tokens_by_id[cid]
+        inter = sum((c_elo & c_leg).values())   # multiset intersection count
         if inter < 3:
             continue
-        union = len(toks_elo | toks_leg)
+        union = sum((c_elo | c_leg).values())   # multiset union count
         jac = inter / union if union else 0
         if jac < 0.5:
             continue
