@@ -4128,20 +4128,21 @@
                         </div>
                     </div>
 
-                    {/* HERO HEADLINE */}
-                    <div className="relative overflow-hidden bg-gradient-to-br from-gray-950 via-gray-900 to-emerald-950 text-white rounded-2xl p-6 md:p-7 shadow-xl">
-                        <svg className="absolute pointer-events-none opacity-[0.05]" style={{right: "-40px", top: "-40px", width: "320px", height: "320px"}} viewBox="0 0 320 320">
-                            <defs><pattern id="dotpat" x="0" y="0" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="3" cy="3" r="1" fill="white"/></pattern></defs>
-                            <rect width="320" height="320" fill="url(#dotpat)"/>
+                    {/* HERO HEADLINE — mismo lenguaje que "Predicción temporal" */}
+                    <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-950 text-white rounded-xl shadow-xl" style={{padding: "1rem 1.5rem"}}>
+                        <svg className="absolute pointer-events-none" style={{right: "-50px", top: "50%", transform: "translateY(-50%)", width: "260px", height: "260px", opacity: 0.06}} viewBox="0 0 260 260">
+                            <circle cx="130" cy="130" r="48" stroke="white" strokeWidth="1" fill="none"/>
+                            <circle cx="130" cy="130" r="84" stroke="white" strokeWidth="0.8" fill="none"/>
+                            <circle cx="130" cy="130" r="120" stroke="white" strokeWidth="0.6" fill="none"/>
                         </svg>
-                        <div className="relative">
-                            <div className="flex items-center gap-2 mb-2">
-                                <span className="text-[9px] uppercase tracking-widest font-mono font-bold text-emerald-400/90">▸ fiat metrics / calibración primaria</span>
-                            </div>
-                            <h2 className="text-xl md:text-2xl font-bold leading-tight tracking-tight">
+                        <div className="relative font-mono">
+                            <div className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1.5">Calibración primaria</div>
+                            <div className="text-white/90 text-[13px] leading-snug font-semibold">
                                 {hl ? hl.principal : "Calibrando modelo…"}
-                            </h2>
-                            {hl && <p className="text-xs md:text-sm text-white/70 mt-2 font-mono">{hl.sub}</p>}
+                            </div>
+                            {hl && (
+                                <div className="mt-1.5 text-[10px] text-white/50 leading-relaxed">{hl.sub}</div>
+                            )}
                         </div>
                     </div>
 
