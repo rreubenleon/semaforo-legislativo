@@ -1,14 +1,16 @@
 name: Calibración - Métricas FIAT
 
-# Calibración probabilística semanal del score_total.
+# Calibración probabilística + walk-forward backtest semanal.
 #
 # Cadencia: Domingo 16:00 UTC = 10:00 hora CDMX.
 # Justificación: el Congreso sesiona martes/jueves, la Gaceta se publica
-# esos días. Recalibrar cada 4h sería 168 corridas idénticas a la semana.
-# Una sola corrida dominical captura toda la actividad de la semana.
+# esos días. Una sola corrida dominical captura toda la actividad de la
+# semana.
 #
-# Pipeline read-only sobre semaforo.db. Output: dashboard/calibracion.json
-# se commitea al repo y dispara redeploy de Pages.
+# Pipeline read-only sobre semaforo.db. Outputs:
+#   - dashboard/calibracion.json (calibración retrospectiva)
+#   - dashboard/backtest.json    (validación temporal walk-forward)
+# Ambos se commitean al repo y disparan redeploy de Pages.
 
 on:
   schedule:
@@ -68,17 +70,20 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements.txt
 
-      - name: Calcular calibración
+      - name: Calcular calibración retrospectiva
         run: python scripts/calibracion_score.py
 
-      - name: Commitear calibracion.json si cambió
+      - name: Calcular walk-forward backtest
+        run: python scripts/backtest_walkforward.py
+
+      - name: Commitear artefactos si cambiaron
         run: |
-          if git diff --quiet dashboard/calibracion.json; then
-            echo "Sin cambios en calibracion.json"
+          if git diff --quiet dashboard/calibracion.json dashboard/backtest.json; then
+            echo "Sin cambios"
             exit 0
           fi
           git config user.name "fiat-bot"
           git config user.email "fiat-bot@users.noreply.github.com"
-          git add dashboard/calibracion.json
-          git commit -m "Calibración semanal: $(date -u +%Y-%m-%d)"
+          git add dashboard/calibracion.json dashboard/backtest.json
+          git commit -m "Métricas semanales: $(date -u +%Y-%m-%d)"
           git push

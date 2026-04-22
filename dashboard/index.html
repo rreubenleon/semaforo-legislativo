@@ -4058,18 +4058,67 @@
             const [semanaIdx, setSemanaIdx] = useState(null);
             const [calib, setCalib] = useState(null);
             const [calibError, setCalibError] = useState(false);
+            const [backtest, setBacktest] = useState(null);
             const chartRef = useRef(null);
             const chartInstance = useRef(null);
+            const brierChartRef = useRef(null);
+            const brierChartInst = useRef(null);
             const resoluciones = data.resoluciones || { accuracy_global: 0, semanas: [] };
             const semanas = resoluciones.semanas || [];
 
-            // Cargar calibracion.json
+            // Cargar calibracion.json + backtest.json
             useEffect(() => {
                 fetch("calibracion.json?t=" + Date.now())
                     .then(r => r.ok ? r.json() : Promise.reject(r.status))
                     .then(setCalib)
                     .catch(() => setCalibError(true));
+                fetch("backtest.json?t=" + Date.now())
+                    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+                    .then(setBacktest)
+                    .catch(() => {});
             }, []);
+
+            // Sparkline Brier rodante
+            useEffect(() => {
+                if (!backtest || !brierChartRef.current) return;
+                if (brierChartInst.current) brierChartInst.current.destroy();
+                const rolling = backtest.rolling_30d || [];
+                if (!rolling.length) return;
+                brierChartInst.current = new Chart(brierChartRef.current, {
+                    type: "line",
+                    data: {
+                        labels: rolling.map(r => r.fecha.slice(5)),
+                        datasets: [{
+                            data: rolling.map(r => r.brier),
+                            borderColor: "#2e7d32",
+                            backgroundColor: "rgba(46,125,50,0.08)",
+                            borderWidth: 1.5,
+                            pointRadius: 0,
+                            fill: true,
+                            tension: 0.3,
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                titleFont: { family: "JetBrains Mono, ui-monospace, monospace", size: 10 },
+                                bodyFont: { family: "JetBrains Mono, ui-monospace, monospace", size: 10 },
+                                callbacks: {
+                                    title: (items) => rolling[items[0].dataIndex].fecha,
+                                    label: (item) => `Brier ${item.parsed.y.toFixed(3)} · n=${rolling[item.dataIndex].n}`,
+                                }
+                            }
+                        },
+                        scales: {
+                            y: { min: 0, max: 1, ticks: { font: { size: 9, family: "JetBrains Mono, ui-monospace, monospace" }, stepSize: 0.25 }, grid: { color: "rgba(0,0,0,0.04)" } },
+                            x: { ticks: { font: { size: 8, family: "JetBrains Mono, ui-monospace, monospace" }, maxRotation: 0, autoSkip: true, maxTicksLimit: 8 }, grid: { display: false } },
+                        }
+                    }
+                });
+                return () => { if (brierChartInst.current) brierChartInst.current.destroy(); };
+            }, [backtest]);
 
             // Auto-select última semana
             useEffect(() => {
@@ -4241,11 +4290,129 @@
                         </div>
                     )}
 
+                    {/* [05] VALIDACIÓN TEMPORAL — walk-forward */}
+                    {backtest && (
+                        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                            <MetricasSectionHeader
+                                idx={5}
+                                label="validación temporal · walk-forward"
+                                sub={`rolling ${backtest.ventana_rodante_dias}d · ${backtest.rango.n_pares.toLocaleString()} pares · ${backtest.rango.n_semanas} semanas`}
+                            />
+                            <div className="p-4 space-y-4">
+                                {/* Verdict textual */}
+                                <div className={`px-3 py-2 rounded-lg border text-[12px] font-mono leading-relaxed ${
+                                    backtest.verdict.tipo === "mejorando" ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+                                    : backtest.verdict.tipo === "empeorando" ? "bg-rose-50 border-rose-200 text-rose-900"
+                                    : backtest.verdict.tipo === "estable" ? "bg-gray-50 border-gray-200 text-gray-800"
+                                    : "bg-amber-50 border-amber-200 text-amber-900"
+                                }`}>
+                                    <span className="text-[9px] uppercase tracking-widest font-bold mr-2">verdict:</span>
+                                    {backtest.verdict.texto}
+                                </div>
+
+                                {/* Sparkline Brier rodante */}
+                                {backtest.rolling_30d && backtest.rolling_30d.length > 0 && (
+                                    <div>
+                                        <div className="flex items-baseline justify-between mb-1">
+                                            <div className="text-[10px] font-mono uppercase tracking-widest font-bold text-gray-500">brier score rodante 30d</div>
+                                            <div className="text-[9px] font-mono text-gray-400">↓ mejor · 0 = perfecto</div>
+                                        </div>
+                                        <div style={{ height: "120px" }}>
+                                            <canvas ref={brierChartRef}></canvas>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Stats comparativos primer cuarto vs último cuarto */}
+                                {backtest.rolling_30d && backtest.rolling_30d.length >= 4 && (() => {
+                                    const r = backtest.rolling_30d;
+                                    const k = Math.max(1, Math.floor(r.length / 4));
+                                    const avg = (arr, key) => {
+                                        const vals = arr.map(x => x[key]).filter(v => v != null);
+                                        return vals.length ? vals.reduce((s, v) => s + v, 0) / vals.length : null;
+                                    };
+                                    const brierIni = avg(r.slice(0, k), "brier");
+                                    const brierFin = avg(r.slice(-k), "brier");
+                                    const llIni = avg(r.slice(0, k), "log_loss");
+                                    const llFin = avg(r.slice(-k), "log_loss");
+                                    const accIni = avg(r.slice(0, k), "acc_alta_confianza");
+                                    const accFin = avg(r.slice(-k), "acc_alta_confianza");
+                                    const deltaIni = avg(r.slice(0, k), "delta_calibracion");
+                                    const deltaFin = avg(r.slice(-k), "delta_calibracion");
+
+                                    const Row = ({ label, ini, fin, invert, unit }) => {
+                                        if (ini == null || fin == null) return null;
+                                        const delta = fin - ini;
+                                        const mejor = invert ? delta < 0 : delta > 0;
+                                        const cls = Math.abs(delta) < (unit === "%" ? 3 : 0.01) ? "text-gray-500" : mejor ? "text-emerald-600" : "text-rose-600";
+                                        const signo = delta > 0 ? "+" : "";
+                                        const fmt = v => unit === "%" ? `${v.toFixed(1)}%` : v.toFixed(3);
+                                        return (
+                                            <div className="grid grid-cols-[1.2fr_0.7fr_0.7fr_0.6fr] py-1.5 text-[11px] font-mono border-b border-gray-50 last:border-0 items-center">
+                                                <div className="text-gray-700">{label}</div>
+                                                <div className="text-right text-gray-700">{fmt(ini)}</div>
+                                                <div className="text-right text-gray-700">{fmt(fin)}</div>
+                                                <div className={`text-right font-bold ${cls}`}>{signo}{unit === "%" ? delta.toFixed(1) + "pp" : delta.toFixed(3)}</div>
+                                            </div>
+                                        );
+                                    };
+                                    return (
+                                        <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                            <div className="grid grid-cols-[1.2fr_0.7fr_0.7fr_0.6fr] bg-gray-50/60 px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-gray-500 border-b border-gray-100">
+                                                <div>métrica</div>
+                                                <div className="text-right">primer 25%</div>
+                                                <div className="text-right">último 25%</div>
+                                                <div className="text-right">Δ</div>
+                                            </div>
+                                            <div className="px-3">
+                                                <Row label="brier score" ini={brierIni} fin={brierFin} invert={true} />
+                                                <Row label="log-loss" ini={llIni} fin={llFin} invert={true} />
+                                                <Row label="accuracy score ≥70" ini={accIni} fin={accFin} invert={false} unit="%" />
+                                                <Row label="delta calibración" ini={deltaIni} fin={deltaFin} invert={true} unit="%" />
+                                            </div>
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* Drift por categoría */}
+                                {backtest.drift_por_categoria && backtest.drift_por_categoria.length > 0 && (
+                                    <div>
+                                        <div className="text-[10px] font-mono uppercase tracking-widest font-bold text-gray-500 mb-2">
+                                            drift por categoría · primer mes vs último mes
+                                        </div>
+                                        <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                            <div className="grid grid-cols-[1.4fr_0.7fr_0.7fr_0.6fr_0.7fr] bg-gray-50/60 px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-gray-500 border-b border-gray-100">
+                                                <div>categoría</div>
+                                                <div className="text-right">acc · primer</div>
+                                                <div className="text-right">acc · último</div>
+                                                <div className="text-right">Δ</div>
+                                                <div className="text-right">dirección</div>
+                                            </div>
+                                            {backtest.drift_por_categoria.slice(0, 8).map(d => {
+                                                const cls = d.direccion === "mejora" ? "text-emerald-600" : d.direccion === "empeora" ? "text-rose-600" : "text-gray-500";
+                                                const arrow = d.direccion === "mejora" ? "↑" : d.direccion === "empeora" ? "↓" : "→";
+                                                return (
+                                                    <div key={d.categoria} className="grid grid-cols-[1.4fr_0.7fr_0.7fr_0.6fr_0.7fr] px-3 py-1.5 text-[11px] font-mono border-b border-gray-50 last:border-0 items-center hover:bg-gray-50/40">
+                                                        <div className="text-gray-800 truncate">{d.categoria.replace(/_/g, " ")}</div>
+                                                        <div className="text-right text-gray-700">{d.hit_primer_mes.toFixed(1)}%</div>
+                                                        <div className="text-right text-gray-700">{d.hit_ultimo_mes.toFixed(1)}%</div>
+                                                        <div className={`text-right font-bold ${cls}`}>{d.delta > 0 ? "+" : ""}{d.delta.toFixed(1)}pp</div>
+                                                        <div className={`text-right font-bold ${cls}`}>{arrow} {d.direccion}</div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
                     {/* DRILL-DOWN SEMANAL */}
                     {semanas.length > 0 && (
                         <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
                             <MetricasSectionHeader
-                                idx={5}
+                                idx={6}
                                 label="drill-down semanal"
                                 badge={semanaActual && (
                                     <span className="text-[9px] font-mono text-gray-500">
@@ -4300,7 +4467,7 @@
                         <details className="bg-white border border-gray-200 rounded-xl overflow-hidden">
                             <summary className="px-4 py-2.5 border-b border-gray-200 bg-gray-50/60 cursor-pointer flex items-center justify-between hover:bg-gray-100/50 list-none">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[9px] font-mono text-gray-400">[06]</span>
+                                    <span className="text-[9px] font-mono text-gray-400">[07]</span>
                                     <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-gray-700">método (a) amplio · referencia</span>
                                 </div>
                                 <span className="text-[9px] font-mono text-amber-700">⚠ saturado por base alta</span>
@@ -4317,7 +4484,7 @@
                     {/* GUÍA DE LECTURA */}
                     <details className="bg-white border border-gray-200 rounded-xl overflow-hidden">
                         <summary className="px-4 py-2.5 border-b border-gray-200 bg-gray-50/60 cursor-pointer flex items-center hover:bg-gray-100/50 list-none">
-                            <span className="text-[9px] font-mono text-gray-400 mr-2">[07]</span>
+                            <span className="text-[9px] font-mono text-gray-400 mr-2">[08]</span>
                             <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-gray-700">cómo leer</span>
                         </summary>
                         <div className="p-4 space-y-1.5 text-[11px] font-mono text-gray-700 leading-relaxed">
@@ -4332,7 +4499,7 @@
                     {calib && (
                         <details className="bg-white border border-gray-200 rounded-xl overflow-hidden">
                             <summary className="px-4 py-2.5 border-b border-gray-200 bg-gray-50/60 cursor-pointer flex items-center hover:bg-gray-100/50 list-none">
-                                <span className="text-[9px] font-mono text-gray-400 mr-2">[08]</span>
+                                <span className="text-[9px] font-mono text-gray-400 mr-2">[09]</span>
                                 <span className="text-[10px] font-mono uppercase tracking-widest font-bold text-gray-700">metodología técnica</span>
                             </summary>
                             <div className="p-4 space-y-2 text-[11px] font-mono text-gray-700 leading-relaxed">
