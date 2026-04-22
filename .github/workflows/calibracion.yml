@@ -1,0 +1,84 @@
+name: Calibración - Métricas FIAT
+
+# Calibración probabilística semanal del score_total.
+#
+# Cadencia: Domingo 16:00 UTC = 10:00 hora CDMX.
+# Justificación: el Congreso sesiona martes/jueves, la Gaceta se publica
+# esos días. Recalibrar cada 4h sería 168 corridas idénticas a la semana.
+# Una sola corrida dominical captura toda la actividad de la semana.
+#
+# Pipeline read-only sobre semaforo.db. Output: dashboard/calibracion.json
+# se commitea al repo y dispara redeploy de Pages.
+
+on:
+  schedule:
+    - cron: '0 16 * * 0'   # Domingo 16:00 UTC = 10:00 CDMX
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "calibracion-fiat"
+  cancel-in-progress: false
+
+jobs:
+  calibracion:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Obtener semaforo.db (read-only)
+        id: cache-db
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-readonly
+          restore-keys: |
+            semaforo-db-
+
+      - name: Fallback a release si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            echo "No se encontró DB en cache, descargando seed…"
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          else
+            echo "DB restaurada del cache ($(du -h semaforo.db | cut -f1))"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Forzar DB en modo solo lectura
+        run: chmod 0444 semaforo.db
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Calcular calibración
+        run: python scripts/calibracion_score.py
+
+      - name: Commitear calibracion.json si cambió
+        run: |
+          if git diff --quiet dashboard/calibracion.json; then
+            echo "Sin cambios en calibracion.json"
+            exit 0
+          fi
+          git config user.name "fiat-bot"
+          git config user.email "fiat-bot@users.noreply.github.com"
+          git add dashboard/calibracion.json
+          git commit -m "Calibración semanal: $(date -u +%Y-%m-%d)"
+          git push
