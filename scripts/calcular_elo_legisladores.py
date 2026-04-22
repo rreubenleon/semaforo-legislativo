@@ -264,9 +264,44 @@ def _construir_indice_legisladores(conn):
     return idx
 
 
+def _calcular_indices(elos):
+    """Remapea el rating ELO a dos escalas amigables:
+      - indice (0-100): percentil global dentro de LXVI. 50 = mediana.
+      - percentil_camara (0-100): percentil dentro de la cámara del legislador.
+    Ambas son percentiles de rango (no lineales sobre el rating), así que
+    son robustas a la cola larga del ELO (Lilia Aguilar con 2767 no distorsiona
+    el resto)."""
+    # Filtro para el ranking: solo legisladores con ≥3 partidas cuentan para
+    # el percentil. Los que tienen <3 quedan marcados como None y no reciben
+    # índice (muy poco evidencia).
+    elegibles = [(n, v) for n, v in elos.items() if v["partidas"] >= 3]
+
+    # Ranking global
+    global_sorted = sorted(elegibles, key=lambda kv: kv[1]["rating"])
+    n_global = len(global_sorted)
+    indice_por_nombre = {}
+    for i, (nombre, _) in enumerate(global_sorted):
+        # Percentil: 0 = peor, 100 = mejor. Centrado en 50 para la mediana.
+        indice_por_nombre[nombre] = round(100 * i / max(1, n_global - 1), 1)
+
+    # Ranking por cámara
+    por_camara = {}
+    for nombre, v in elegibles:
+        por_camara.setdefault(v["camara"] or "—", []).append((nombre, v))
+    percentil_camara_por_nombre = {}
+    for cam, lista in por_camara.items():
+        lista_sorted = sorted(lista, key=lambda kv: kv[1]["rating"])
+        n_cam = len(lista_sorted)
+        for i, (nombre, _) in enumerate(lista_sorted):
+            percentil_camara_por_nombre[nombre] = round(100 * i / max(1, n_cam - 1), 1)
+
+    return indice_por_nombre, percentil_camara_por_nombre
+
+
 def guardar_en_db(conn, elos):
     """Persiste ratings en tabla nueva legisladores_elo.
-    Incluye legislador_id resolviendo match contra tabla legisladores."""
+    Incluye legislador_id resolviendo match contra tabla legisladores y
+    los índices percentiles user-facing (0-100)."""
     conn.execute("""
         CREATE TABLE IF NOT EXISTS legisladores_elo (
             nombre TEXT PRIMARY KEY,
@@ -279,29 +314,35 @@ def guardar_en_db(conn, elos):
             pendientes_largo INTEGER,
             draws INTEGER,
             fecha_calculo TEXT,
-            legislador_id INTEGER
+            legislador_id INTEGER,
+            indice REAL,
+            percentil_camara REAL
         )
     """)
-    # Migración: agregar columna si tabla ya existía
-    try:
-        conn.execute("ALTER TABLE legisladores_elo ADD COLUMN legislador_id INTEGER")
-    except sqlite3.OperationalError:
-        pass  # ya existe
+    # Migraciones idempotentes
+    for col, tipo in [("legislador_id", "INTEGER"), ("indice", "REAL"), ("percentil_camara", "REAL")]:
+        try:
+            conn.execute(f"ALTER TABLE legisladores_elo ADD COLUMN {col} {tipo}")
+        except sqlite3.OperationalError:
+            pass
 
-    idx = _construir_indice_legisladores(conn)
+    idx_leg = _construir_indice_legisladores(conn)
+    indices, percentiles_cam = _calcular_indices(elos)
     ahora = datetime.now().isoformat()
     matches = 0
     for nombre, v in elos.items():
         key = _normalizar_nombre(nombre)
-        leg_id = idx.get(key)
+        leg_id = idx_leg.get(key)
         if leg_id:
             matches += 1
+        indice = indices.get(nombre)
+        pct_cam = percentiles_cam.get(nombre)
         conn.execute("""
             INSERT INTO legisladores_elo (
                 nombre, partido, camara, rating, partidas,
                 aprobados, desechados, pendientes_largo, draws, fecha_calculo,
-                legislador_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                legislador_id, indice, percentil_camara
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(nombre) DO UPDATE SET
                 rating=excluded.rating,
                 partidas=excluded.partidas,
@@ -310,14 +351,18 @@ def guardar_en_db(conn, elos):
                 pendientes_largo=excluded.pendientes_largo,
                 draws=excluded.draws,
                 fecha_calculo=excluded.fecha_calculo,
-                legislador_id=excluded.legislador_id
+                legislador_id=excluded.legislador_id,
+                indice=excluded.indice,
+                percentil_camara=excluded.percentil_camara
         """, (nombre, v["partido"], v["camara"], round(v["rating"], 1),
               v["partidas"], v["aprobados"], v["desechados"],
-              v["pendientes_largo"], v["draws"], ahora, leg_id))
+              v["pendientes_largo"], v["draws"], ahora, leg_id, indice, pct_cam))
     conn.commit()
     n = conn.execute("SELECT COUNT(*) FROM legisladores_elo").fetchone()[0]
+    con_indice = conn.execute("SELECT COUNT(*) FROM legisladores_elo WHERE indice IS NOT NULL").fetchone()[0]
     print(f"\n  ✓ Guardados {n} legisladores en tabla legisladores_elo")
     print(f"  ✓ Match con tabla legisladores: {matches}/{len(elos)} ({100*matches/len(elos):.0f}%)")
+    print(f"  ✓ Con índice (≥3 partidas): {con_indice}/{n}")
 
 
 def main():

@@ -39,7 +39,7 @@ def generar_sql(dry_run=False):
     rows = conn.execute("""
         SELECT nombre, partido, camara, rating, partidas, aprobados,
                desechados, pendientes_largo, draws, fecha_calculo,
-               legislador_id
+               legislador_id, indice, percentil_camara
         FROM legisladores_elo
         ORDER BY rating DESC
     """).fetchall()
@@ -60,7 +60,9 @@ def generar_sql(dry_run=False):
             pendientes_largo INTEGER,
             draws INTEGER,
             fecha_calculo TEXT,
-            legislador_id INTEGER
+            legislador_id INTEGER,
+            indice REAL,
+            percentil_camara REAL
         );""",
         "CREATE INDEX idx_elo_legislador ON legisladores_elo(legislador_id);",
     ]
@@ -70,15 +72,18 @@ def generar_sql(dry_run=False):
         batch = rows[i:i + BATCH]
         vals = []
         for r in batch:
-            nombre, partido, camara, rating, partidas, apr, des, pend, draws, fecha, leg_id = r
+            nombre, partido, camara, rating, partidas, apr, des, pend, draws, fecha, leg_id, indice, pct_cam = r
             vals.append(
                 f"({sql_escape(nombre)}, {sql_escape(partido)}, {sql_escape(camara)}, "
                 f"{rating or 0}, {partidas or 0}, {apr or 0}, {des or 0}, {pend or 0}, "
-                f"{draws or 0}, {sql_escape(fecha)}, {leg_id if leg_id is not None else 'NULL'})"
+                f"{draws or 0}, {sql_escape(fecha)}, "
+                f"{leg_id if leg_id is not None else 'NULL'}, "
+                f"{indice if indice is not None else 'NULL'}, "
+                f"{pct_cam if pct_cam is not None else 'NULL'})"
             )
         sql_parts.append(
             "INSERT INTO legisladores_elo "
-            "(nombre, partido, camara, rating, partidas, aprobados, desechados, pendientes_largo, draws, fecha_calculo, legislador_id) VALUES\n"
+            "(nombre, partido, camara, rating, partidas, aprobados, desechados, pendientes_largo, draws, fecha_calculo, legislador_id, indice, percentil_camara) VALUES\n"
             + ",\n".join(vals) + ";"
         )
 

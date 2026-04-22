@@ -256,7 +256,8 @@ async function handleRadar(request, env) {
     proposiciones: 's.proposiciones_proy_15d DESC NULLS LAST',
     nombre: 'l.nombre ASC',
     actividad: '(COALESCE(s.iniciativas_proy_15d,0) + COALESCE(s.proposiciones_proy_15d,0)) DESC',
-    elo: 'e.rating DESC NULLS LAST, e.partidas DESC',
+    elo: 'e.indice DESC NULLS LAST, e.partidas DESC',
+    efectividad: 'e.indice DESC NULLS LAST, e.partidas DESC',
   };
   const orderSql = orderMap[sort] || orderMap.hit_rate;
 
@@ -303,7 +304,8 @@ async function handleRadar(request, env) {
           hr.respondio, hr.total_oportunidades,
           e.rating as elo_rating, e.partidas as elo_partidas,
           e.aprobados as elo_aprobados, e.desechados as elo_desechados,
-          e.pendientes_largo as elo_pendientes, e.draws as elo_draws
+          e.pendientes_largo as elo_pendientes, e.draws as elo_draws,
+          e.indice as elo_indice, e.percentil_camara as elo_percentil_camara
         FROM legisladores l
         LEFT JOIN legisladores_perfil p ON p.legislador_id = l.id
         LEFT JOIN legisladores_stats s ON s.legislador_id = l.id
@@ -355,6 +357,8 @@ async function handleRadar(request, env) {
       elo_desechados: r.elo_desechados,
       elo_pendientes: r.elo_pendientes,
       elo_draws: r.elo_draws,
+      elo_indice: r.elo_indice,
+      elo_percentil_camara: r.elo_percentil_camara,
     }));
 
     // Meta agregada (útil para poblar filtros en el cliente)
