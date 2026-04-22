@@ -26,8 +26,20 @@ import logging
 import re
 import sqlite3
 import sys
+from collections import Counter
 from datetime import datetime
 from pathlib import Path
+
+_STOPWORDS = {"de", "la", "del", "los", "las", "y", "san"}
+
+
+def _tokens_multiset(s: str) -> Counter:
+    """Multiset de tokens significativos — mismo criterio que el matcher
+    ELO. Respeta apellidos duplicados (García García)."""
+    if not s:
+        return Counter()
+    return Counter(t for t in s.lower().split()
+                   if len(t) >= 3 and t not in _STOPWORDS)
 
 ROOT = Path(__file__).resolve().parent.parent
 DB = ROOT / "semaforo.db"
@@ -104,11 +116,32 @@ def main():
             errores += 1
             continue
 
+        # Chequeo 1: match literal por nombre_normalizado + cámara
         existente = conn.execute(
             "SELECT id FROM legisladores WHERE nombre_normalizado = ? AND camara = ?",
             (nombre_norm, camara),
         ).fetchone()
         if existente:
+            ya_existia += 1
+            continue
+
+        # Chequeo 2: match fuzzy por tokens multiset (detecta casos como
+        # "García García Margarita" vs "Margarita García García" que son
+        # la misma persona con orden distinto)
+        c_nuevo = _tokens_multiset(nombre_norm)
+        candidatos = conn.execute(
+            "SELECT id, nombre_normalizado FROM legisladores WHERE camara = ?",
+            (camara,),
+        ).fetchall()
+        dup_fuzzy = False
+        for cand in candidatos:
+            c_cand = _tokens_multiset(cand["nombre_normalizado"])
+            inter = sum((c_nuevo & c_cand).values())
+            union = sum((c_nuevo | c_cand).values())
+            if inter >= 3 and union and (inter / union) >= 0.5:
+                dup_fuzzy = True
+                break
+        if dup_fuzzy:
             ya_existia += 1
             continue
 
