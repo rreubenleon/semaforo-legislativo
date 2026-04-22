@@ -239,29 +239,77 @@ def imprimir_ranking(elos, top_n=20):
     print(f"    min:    {min(ratings):.0f}")
 
 
-def _normalizar_nombre(s: str) -> str:
-    """Normaliza nombre para match: sin título, sin acentos, sin puntuación,
-    tokens ordenados alfabéticamente. Así 'Sen. José Clemente Castañeda' y
-    'Castañeda Hoeflich José Clemente' colisionan en el mismo hash."""
+_STOPWORDS = {"de", "la", "del", "los", "las", "y", "san"}
+
+
+def _tokenizar_nombre(s: str) -> set:
+    """Tokeniza un nombre para match difuso:
+    - quita título (Sen./Dip./Lic./...)
+    - quita acentos y puntuación
+    - lowercase
+    - filtra tokens cortos (≤2) y stopwords ("de", "la", "del"…)
+    Retorna set de tokens significativos."""
     if not s:
-        return ""
+        return set()
     s = s.lower()
-    s = re.sub(r"^(sen\.|dip\.|sra\.|sr\.|lic\.|mtro\.|dra\.|dr\.)\s*", "", s)
+    s = re.sub(r"^(sen\.|dip\.|sra\.|sr\.|lic\.|mtro\.|dra\.|dr\.|c\.)\s*", "", s)
     s = unicodedata.normalize("NFKD", s)
     s = "".join(c for c in s if not unicodedata.combining(c))
-    tokens = sorted(t for t in re.findall(r"[a-z0-9]+", s) if len(t) >= 2)
-    return " ".join(tokens)
+    return {t for t in re.findall(r"[a-z]+", s) if len(t) >= 3 and t not in _STOPWORDS}
 
 
 def _construir_indice_legisladores(conn):
-    """Dict: nombre_normalizado → id de la tabla legisladores."""
+    """Construye lookup invertido: dict[token] → set(legislador_ids).
+    Usado por el matcher difuso para encontrar candidatos por overlap
+    de apellidos+nombres. Retorna también el set de tokens por id para
+    rankear por intersección."""
     rows = conn.execute("SELECT id, nombre FROM legisladores").fetchall()
-    idx = {}
+    inverted = {}      # token → set(ids)
+    tokens_by_id = {}  # id → set(tokens)
     for id_, nombre in rows:
-        key = _normalizar_nombre(nombre or "")
-        if key and key not in idx:
-            idx[key] = id_
-    return idx
+        toks = _tokenizar_nombre(nombre or "")
+        if not toks:
+            continue
+        tokens_by_id[id_] = toks
+        for t in toks:
+            inverted.setdefault(t, set()).add(id_)
+    return inverted, tokens_by_id
+
+
+def _matchear_legislador(nombre_elo: str, inverted: dict, tokens_by_id: dict) -> int | None:
+    """Matchea un nombre del ELO contra el índice de legisladores por
+    intersección de tokens. Estrategia:
+      - tokeniza el nombre del ELO
+      - busca todos los IDs candidatos vía inverted index
+      - para cada candidato, calcula |intersección| y Jaccard
+      - acepta el mejor si |∩| ≥ 3 Y Jaccard ≥ 0.5
+    Esto tolera typos (Aracelly/Aracely), orden distinto, y ausencia de
+    segundo nombre — pero rechaza coincidencias accidentales por apellido
+    común (Pérez, García) sin más evidencia.
+    """
+    toks_elo = _tokenizar_nombre(nombre_elo)
+    if len(toks_elo) < 3:
+        return None
+    candidatos = set()
+    for t in toks_elo:
+        candidatos |= inverted.get(t, set())
+    if not candidatos:
+        return None
+    mejor_id = None
+    mejor_score = (0, 0.0)  # (interseccion, jaccard)
+    for cid in candidatos:
+        toks_leg = tokens_by_id[cid]
+        inter = len(toks_elo & toks_leg)
+        if inter < 3:
+            continue
+        union = len(toks_elo | toks_leg)
+        jac = inter / union if union else 0
+        if jac < 0.5:
+            continue
+        if (inter, jac) > mejor_score:
+            mejor_score = (inter, jac)
+            mejor_id = cid
+    return mejor_id
 
 
 def _calcular_indices(elos):
@@ -326,15 +374,17 @@ def guardar_en_db(conn, elos):
         except sqlite3.OperationalError:
             pass
 
-    idx_leg = _construir_indice_legisladores(conn)
+    inverted, tokens_by_id = _construir_indice_legisladores(conn)
     indices, percentiles_cam = _calcular_indices(elos)
     ahora = datetime.now().isoformat()
     matches = 0
+    sin_match = []
     for nombre, v in elos.items():
-        key = _normalizar_nombre(nombre)
-        leg_id = idx_leg.get(key)
+        leg_id = _matchear_legislador(nombre, inverted, tokens_by_id)
         if leg_id:
             matches += 1
+        else:
+            sin_match.append(nombre)
         indice = indices.get(nombre)
         pct_cam = percentiles_cam.get(nombre)
         conn.execute("""
@@ -363,6 +413,8 @@ def guardar_en_db(conn, elos):
     print(f"\n  ✓ Guardados {n} legisladores en tabla legisladores_elo")
     print(f"  ✓ Match con tabla legisladores: {matches}/{len(elos)} ({100*matches/len(elos):.0f}%)")
     print(f"  ✓ Con índice (≥3 partidas): {con_indice}/{n}")
+    if sin_match:
+        print(f"  ⚠ Sin match ({len(sin_match)}): {sin_match[:5]}{'…' if len(sin_match) > 5 else ''}")
 
 
 def main():
