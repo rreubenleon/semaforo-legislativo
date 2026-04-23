@@ -579,49 +579,63 @@
             // Si no hay nada narrativo hoy, mostramos placeholder en vez de ocultar
             const vacio = lista.length === 0;
 
+            // Intensidad cualitativa en lugar de KL crudo.
+            // El número técnico se mantiene en el tooltip para lectores avanzados.
+            const intensidad = (kl) => {
+                if (kl >= 0.6) return { label: 'Muy alta', cls: 'bg-rose-50 text-rose-700 border-rose-200' };
+                if (kl >= 0.45) return { label: 'Alta',     cls: 'bg-amber-50 text-amber-700 border-amber-200' };
+                return              { label: 'Moderada',  cls: 'bg-violet-50 text-violet-700 border-violet-200' };
+            };
+
             return (
                 <div className="glass border border-borde rounded-xl p-4">
                     <div className="flex items-baseline justify-between mb-1">
                         <h3 className="font-semibold text-gray-700 text-sm">Divergencias</h3>
-                        <span className="text-[9px] font-mono uppercase tracking-widest text-gray-400">KL ≥ {DIVERGENCIA_THRESHOLD}</span>
+                        <span className="text-[10px] text-gray-400" title="Una divergencia aparece cuando las fuentes que alimentan el score (Media, Congreso, Mañanera, Trends, etc.) están desalineadas entre sí más de lo habitual.">
+                            ⓘ señales atípicas
+                        </span>
                     </div>
-                    <p className="text-[10px] text-gray-400 mb-3 font-mono leading-snug">
-                        Categorías donde la mezcla de las 6 fuentes hoy difiere de su distribución típica.
+                    <p className="text-[11px] text-gray-500 mb-3 leading-snug">
+                        Categorías donde las fuentes del score están desalineadas entre sí: una destaca mientras otras quedan rezagadas.
                     </p>
                     {vacio ? (
-                        <div className="py-4 text-center text-[11px] text-gray-400 font-mono italic">
-                            sin divergencias narrativas hoy
+                        <div className="py-4 text-center text-[11px] text-gray-400 italic">
+                            Sin señales atípicas hoy
                         </div>
                     ) : (
                         <div className="space-y-2">
-                            {lista.map((s, i) => (
-                                <div key={s.categoria}
-                                    onClick={() => onSelect && onSelect(s)}
-                                    className="cursor-pointer border border-gray-200 hover:border-acento/40 hover:bg-acento/5 rounded-lg p-2.5 transition-colors group">
-                                    <div className="flex items-baseline justify-between gap-2 mb-1">
-                                        <div className="text-[11px] font-mono uppercase tracking-wider text-gray-700 font-bold truncate">
-                                            {s.nombre || s.categoria}
+                            {lista.map((s, i) => {
+                                const nivel = intensidad(s.divergencia.indice);
+                                return (
+                                    <div key={s.categoria}
+                                        onClick={() => onSelect && onSelect(s)}
+                                        title={`Intensidad ${nivel.label.toLowerCase()} · KL ${s.divergencia.indice.toFixed(2)}`}
+                                        className="cursor-pointer border border-gray-200 hover:border-acento/40 hover:bg-acento/5 rounded-lg p-2.5 transition-colors group">
+                                        <div className="flex items-baseline justify-between gap-2 mb-1">
+                                            <div className="text-sm font-semibold text-gray-800 truncate">
+                                                {s.nombre || s.categoria}
+                                            </div>
+                                            <span className={`text-[9px] font-mono font-bold uppercase tracking-widest px-1.5 py-0.5 rounded border flex-shrink-0 ${nivel.cls}`}>
+                                                {nivel.label}
+                                            </span>
                                         </div>
-                                        <div className="text-[10px] font-mono text-gray-400 flex-shrink-0">
-                                            KL {s.divergencia.indice.toFixed(2)}
+                                        <div className="text-[11px] text-gray-700 leading-snug mb-1.5">
+                                            {s.divergencia.patron_label}
+                                        </div>
+                                        <div className="flex items-center gap-2 text-[10px] font-mono text-gray-500">
+                                            <span className="inline-flex items-center gap-0.5">
+                                                <span className="text-emerald-600 font-bold">↑</span>
+                                                <span>{s.divergencia.sobre_representada}</span>
+                                            </span>
+                                            <span className="text-gray-300">·</span>
+                                            <span className="inline-flex items-center gap-0.5">
+                                                <span className="text-rose-600 font-bold">↓</span>
+                                                <span>{s.divergencia.sub_representada}</span>
+                                            </span>
                                         </div>
                                     </div>
-                                    <div className="text-[11px] text-gray-700 font-mono leading-snug mb-1.5">
-                                        {s.divergencia.patron_label}
-                                    </div>
-                                    <div className="flex items-center gap-2 text-[10px] font-mono text-gray-500">
-                                        <span className="inline-flex items-center gap-0.5">
-                                            <span className="text-emerald-600 font-bold">↑</span>
-                                            <span>{s.divergencia.sobre_representada}</span>
-                                        </span>
-                                        <span className="text-gray-300">·</span>
-                                        <span className="inline-flex items-center gap-0.5">
-                                            <span className="text-rose-600 font-bold">↓</span>
-                                            <span>{s.divergencia.sub_representada}</span>
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                 </div>
@@ -810,7 +824,7 @@
                                 {tieneDiv && (
                                     <span
                                         className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-violet-50 text-violet-700 border border-violet-200"
-                                        title={`${data.divergencia.patron_label} · KL ${data.divergencia.indice} · ↑ ${data.divergencia.sobre_representada} · ↓ ${data.divergencia.sub_representada}`}>
+                                        title={`Señal atípica: ${data.divergencia.patron_label}. ${data.divergencia.sobre_representada} destaca mientras ${data.divergencia.sub_representada} queda rezagada.`}>
                                         ⚐ {data.divergencia.patron_label}
                                     </span>
                                 )}

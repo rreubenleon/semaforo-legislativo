@@ -124,12 +124,20 @@ def _es_contexto_no_legislativo(titulo, resumen=""):
     if "para referirse a la situación" in texto or "para referirse a la " in texto:
         return True
 
+    # Matcher con word boundary para evitar falsos positivos como
+    # "nfl" en "iNFLación" o "gol" en "riesGO Legal". Para frases
+    # (keywords con espacios) basta substring.
+    def _hit(kw, txt):
+        if " " in kw:
+            return kw in txt
+        return bool(re.search(r'\b' + re.escape(kw) + r'\b', txt))
+
     # Contar señales deportivas
-    hits_deporte = sum(1 for kw in CONTEXTO_DEPORTIVO if kw in texto)
+    hits_deporte = sum(1 for kw in CONTEXTO_DEPORTIVO if _hit(kw, texto))
     # Contar señales de entretenimiento
-    hits_entretenimiento = sum(1 for kw in CONTEXTO_ENTRETENIMIENTO if kw in texto)
+    hits_entretenimiento = sum(1 for kw in CONTEXTO_ENTRETENIMIENTO if _hit(kw, texto))
     # Contar señales climáticas/operativas
-    hits_clima = sum(1 for kw in CONTEXTO_CLIMATICO if kw in texto)
+    hits_clima = sum(1 for kw in CONTEXTO_CLIMATICO if _hit(kw, texto))
 
     # Si no hay señales de ningún contexto no-legislativo, NO excluir
     if hits_deporte == 0 and hits_entretenimiento == 0 and hits_clima == 0:
@@ -352,32 +360,60 @@ def clasificar_texto(titulo, resumen="", comision=None):
         score = 0.0
 
         for keyword in keywords:
+            # normalizar_texto filtra stopwords ("de", "y", "la"...) y tokens
+            # ≤2 chars. Así, "Ley de Aguas Nacionales" → ["ley", "aguas", "nacional"].
+            # Esto es intencional: queremos matchear por los tokens significativos.
             kw_tokens = normalizar_texto(keyword)
+            if not kw_tokens:
+                continue
 
-            for kw_token in kw_tokens:
-                # Coincidencia en título (peso 3x)
-                if kw_token in tf_titulo:
-                    score += tf_titulo[kw_token] * 3.0
-
-                # Coincidencia en resumen (peso 1x)
-                if kw_token in tf_resumen:
-                    score += tf_resumen[kw_token] * 1.0
-
-            # Bonus por keyword compuesta encontrada completa
-            kw_lower = keyword.lower()
-            # Keywords cortas (≤4 chars, ej: INE, PRI, SAT) usan word boundaries
-            # para evitar falsos positivos (cINE, pRIvada, etc.)
-            if len(kw_lower) <= 4:
-                patron = r'\b' + re.escape(kw_lower) + r'\b'
-                if re.search(patron, titulo.lower()):
-                    score += 2.0
-                if resumen and re.search(patron, resumen.lower()):
-                    score += 0.8
+            # Keywords de 1 token significativo: match directo permitido
+            # Keywords compuestas (≥2 tokens significativos): SOLO cuentan si
+            # TODOS los tokens significativos están presentes. Antes cada
+            # token sumaba score independientemente, lo que generaba falsos
+            # positivos:
+            #   "inversión pública" → token "publica" matcheaba
+            #   "instituciones públicas" aunque "inversion" no estuviera.
+            if len(kw_tokens) == 1:
+                tok = kw_tokens[0]
+                if tok in tf_titulo:
+                    score += tf_titulo[tok] * 3.0
+                if tok in tf_resumen:
+                    score += tf_resumen[tok] * 1.0
             else:
-                if kw_lower in titulo.lower():
-                    score += 2.0
-                if resumen and kw_lower in resumen.lower():
-                    score += 0.8
+                # Compuesta: requiere todos los tokens significativos
+                en_titulo = all(t in tf_titulo for t in kw_tokens)
+                en_resumen = all(t in tf_resumen for t in kw_tokens)
+                if en_titulo:
+                    score += sum(tf_titulo[t] for t in kw_tokens) * 3.0
+                elif en_resumen:
+                    score += sum(tf_resumen[t] for t in kw_tokens) * 1.0
+                else:
+                    # Mixto título+resumen (ej. "vivienda" en título y
+                    # "social" en resumen) — también cuenta pero con peso
+                    # intermedio
+                    en_mixto = all((t in tf_titulo or t in tf_resumen) for t in kw_tokens)
+                    if en_mixto:
+                        score += sum(tf_titulo.get(t, 0) + tf_resumen.get(t, 0) for t in kw_tokens) * 1.5
+
+            # Bonus por keyword compuesta encontrada completa.
+            # SIEMPRE con word boundary (cambio abr 2026): antes solo las
+            # keywords ≤4 chars usaban \b. Las de 5+ hacían substring match,
+            # lo que generaba falsos positivos como:
+            #   "Metro"  → "Metropolitana", "Metrópoli"
+            #   "presa"  → "representa", "empresa", "expresa"
+            #   "banda"  → "abandonar"
+            #   "sismo"  → "mecanismo", "organismo"
+            # El word boundary preserva el match legítimo de palabra completa
+            # o inicio/fin de frase compuesta.
+            kw_lower = keyword.lower()
+            # Para keywords con espacios ("puente vehicular"), \b funciona
+            # alrededor de cada palabra; regex escape ya maneja los espacios.
+            patron = r'\b' + re.escape(kw_lower) + r'\b'
+            if re.search(patron, titulo.lower()):
+                score += 2.0
+            if resumen and re.search(patron, resumen.lower()):
+                score += 0.8
 
         # Normalizar score por número de keywords (evitar sesgo por categorías con más keywords)
         # Usamos log2 en vez de sqrt porque sqrt penaliza demasiado a categorías con

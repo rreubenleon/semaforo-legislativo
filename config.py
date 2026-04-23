@@ -380,7 +380,10 @@ CATEGORIAS = {
             },
             "presupuesto_gasto": {
                 "nombre": "Presupuesto y gasto público",
-                "keywords": ["presupuesto", "gasto público", "PEF", "deuda pública", "déficit", "austeridad", "deuda",
+                # "austeridad" quitada abr 2026: ambigua (austeridad política,
+                # personal, republicana — no siempre económica). Si se habla de
+                # austeridad presupuestal, ya matcheará "presupuesto".
+                "keywords": ["presupuesto", "gasto público", "PEF", "deuda pública", "déficit", "deuda",
                              "Rogelio Ramírez de la O", "secretario de hacienda", "subasta", "Cetes", "bonos gubernamentales"],
             },
             "politica_monetaria": {
@@ -1527,7 +1530,10 @@ LAG_CONFIG = {
 NLP_CONFIG = {
     "modelo": "keyword_matching",  # Fase 1: keywords. Fase 2: transformers
     "idioma": "es",
-    "min_confianza": 0.4,          # Umbral mínimo (ajustado tras stopwords legales + log2 norm)
+    "min_confianza": 0.3,          # Umbral mínimo (bajado abr 2026 tras fix word boundary
+                                   # + match de tokens compuestos. Los FPs que antes pasaban
+                                   # por tokens sueltos ya no existen, así que el umbral puede
+                                   # ser más permisivo para rescatar casos con 1 keyword limpia.)
     "max_categorias": 3,           # Probado v3=4 contra eval set v1 → meseta (recupera 1 TP en derechos_humanos pero mete 4 FPs en categorías ruidosas). Volver a 3 hasta arreglar la precision de electoral_politico/relaciones_exteriores.
     "stopwords_extra": [
         "México", "mexicano", "país", "república",
