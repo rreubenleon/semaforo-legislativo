@@ -499,6 +499,34 @@ def paso_5d_elo_legisladores():
         logger.warning(f"ELO Legisladores falló (no crítico): {e}")
 
 
+def paso_5f_divergencia():
+    """Paso 5f: Divergencia entre las 6 fuentes del score_total (KL).
+    Detecta cuándo una categoría tiene una mezcla atípica de fuentes
+    vs su baseline histórico de 90 días. Etiqueta el patrón
+    (presión sin respuesta, movimiento legislativo silencioso, etc).
+    """
+    logger.info("=" * 60)
+    logger.info("PASO 5f: Divergencia (KL entre fuentes)")
+    logger.info("=" * 60)
+
+    inicio = time.time()
+    try:
+        import subprocess
+        result = subprocess.run(
+            [sys.executable, str(Path(__file__).parent / "scripts" / "calcular_divergencia.py")],
+            capture_output=True, text=True, timeout=60,
+        )
+        duracion = time.time() - inicio
+        for line in result.stdout.splitlines():
+            if "Guardadas" in line or "Categorías" in line:
+                logger.info(f"Divergencia: {line.strip()}")
+        logger.info(f"Divergencia calculada ({duracion:.1f}s)")
+        if result.returncode != 0:
+            logger.warning(f"Divergencia stderr: {result.stderr[:500]}")
+    except Exception as e:
+        logger.warning(f"Divergencia falló (no crítico): {e}")
+
+
 def paso_5e_h2h_legisladores():
     """Paso 5e: Head-to-head legislador × comisión.
     Convierte el matchup grade en tasas crudas por comisión con lista de
@@ -913,6 +941,27 @@ def paso_7_exportar_dashboard():
     conn_sub = get_connection()
     conn_sub.row_factory = sqlite3.Row
 
+    # Cargar divergencias de la fecha más reciente para inyectar por categoría
+    divergencias_por_cat = {}
+    try:
+        div_rows = conn_sub.execute("""
+            SELECT categoria, kl, patron_id, patron_label, explicacion,
+                   sobre_representada, sub_representada, fecha
+            FROM divergencia
+            WHERE fecha = (SELECT MAX(fecha) FROM divergencia)
+        """).fetchall()
+        for r in div_rows:
+            divergencias_por_cat[r["categoria"]] = {
+                "indice": round(r["kl"], 3),
+                "patron_id": r["patron_id"],
+                "patron_label": r["patron_label"],
+                "explicacion": r["explicacion"],
+                "sobre_representada": r["sobre_representada"],
+                "sub_representada": r["sub_representada"],
+            }
+    except sqlite3.OperationalError:
+        pass  # tabla aún no existe
+
     for score in scores:
         cat_clave = score.get("categoria", "")
         cat_config = CATEGORIAS.get(cat_clave, {})
@@ -960,10 +1009,12 @@ def paso_7_exportar_dashboard():
             "score_congreso": score.get("score_congreso", 0),
             "score_mananera": score.get("score_mananera", 0),
             "score_urgencia": score.get("score_urgencia", 0),
+            "score_dominancia": score.get("score_dominancia", 0),
             "color": score.get("color", "rojo"),
             "fecha": score.get("fecha", ""),
             "momentum": calcular_momentum(cat_clave),
             "subcategorias_activas": subcats_activas,
+            "divergencia": divergencias_por_cat.get(cat_clave),
         })
 
     # Escribir JSON
@@ -1174,6 +1225,7 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     paso_5c_indice_busqueda()
     paso_5d_elo_legisladores()
     paso_5e_h2h_legisladores()
+    paso_5f_divergencia()
 
     try:
         paso_6_correlacion_temporal()
@@ -1226,6 +1278,7 @@ def ejecutar_solo_scoring():
     paso_5c_indice_busqueda()
     paso_5d_elo_legisladores()
     paso_5e_h2h_legisladores()
+    paso_5f_divergencia()
     sync_db()
     paso_7_exportar_dashboard()
     reporte = generar_reporte()
