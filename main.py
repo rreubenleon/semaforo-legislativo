@@ -499,6 +499,34 @@ def paso_5d_elo_legisladores():
         logger.warning(f"ELO Legisladores falló (no crítico): {e}")
 
 
+def paso_5e_h2h_legisladores():
+    """Paso 5e: Head-to-head legislador × comisión.
+    Convierte el matchup grade en tasas crudas por comisión con lista de
+    instrumentos recientes. Requiere ELO ya calculado (usa el matcher
+    de nombres y la tabla legisladores).
+    """
+    logger.info("=" * 60)
+    logger.info("PASO 5e: H2H Legisladores × Comisión")
+    logger.info("=" * 60)
+
+    inicio = time.time()
+    try:
+        import subprocess
+        result = subprocess.run(
+            [sys.executable, str(Path(__file__).parent / "scripts" / "calcular_h2h_legisladores.py")],
+            capture_output=True, text=True, timeout=120,
+        )
+        duracion = time.time() - inicio
+        for line in result.stdout.splitlines():
+            if "Guardadas" in line or "Cobertura" in line:
+                logger.info(f"H2H: {line.strip()}")
+        logger.info(f"H2H calculado ({duracion:.1f}s)")
+        if result.returncode != 0:
+            logger.warning(f"H2H stderr: {result.stderr[:500]}")
+    except Exception as e:
+        logger.warning(f"H2H Legisladores falló (no crítico): {e}")
+
+
 def paso_5c_indice_busqueda():
     """Paso 5c: Reconstruir índice FTS5 para búsqueda full-text."""
     logger.info("=" * 60)
@@ -1145,6 +1173,7 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     paso_5b_resoluciones()
     paso_5c_indice_busqueda()
     paso_5d_elo_legisladores()
+    paso_5e_h2h_legisladores()
 
     try:
         paso_6_correlacion_temporal()
@@ -1196,6 +1225,7 @@ def ejecutar_solo_scoring():
     paso_5b_resoluciones()
     paso_5c_indice_busqueda()
     paso_5d_elo_legisladores()
+    paso_5e_h2h_legisladores()
     sync_db()
     paso_7_exportar_dashboard()
     reporte = generar_reporte()

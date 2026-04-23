@@ -29,7 +29,7 @@ export default {
 
     if (url.pathname === '/') {
       return corsResponse(
-        { status: 'ok', endpoints: ['/buscar', '/registro', '/radar', '/comisiones'] },
+        { status: 'ok', endpoints: ['/buscar', '/registro', '/radar', '/comisiones', '/h2h'] },
         200,
         request
       );
@@ -48,6 +48,11 @@ export default {
     // ── Stats de Comisiones (SITL) ──
     if (url.pathname === '/comisiones') {
       return handleComisiones(request, env);
+    }
+
+    // ── H2H legislador × comisión ──
+    if (url.pathname === '/h2h') {
+      return handleH2H(request, env);
     }
 
     if (url.pathname !== '/buscar') {
@@ -504,6 +509,70 @@ async function handleComisiones(request, env) {
     return corsResponse({
       total: comisiones.length,
       comisiones,
+    }, 200, request);
+  } catch (err) {
+    return corsResponse({ error: 'Error consultando D1', detalle: err.message }, 500, request);
+  }
+}
+
+
+/**
+ * GET /h2h?legislador_id=X — Head-to-head por comisión.
+ *
+ * Devuelve todas las filas de legisladores_h2h para un legislador,
+ * ordenadas por n_instrumentos DESC (la comisión donde más ha
+ * presentado primero). Cada fila incluye stats agregados +
+ * lista de hasta 5 instrumentos recientes (parseado del JSON).
+ */
+async function handleH2H(request, env) {
+  if (request.method !== 'GET') {
+    return corsResponse({ error: 'Solo GET' }, 405, request);
+  }
+  const url = new URL(request.url);
+  const legId = parseInt(url.searchParams.get('legislador_id') || '0');
+  if (!legId) {
+    return corsResponse({ error: 'Falta legislador_id' }, 400, request);
+  }
+  try {
+    const result = await env.DB
+      .prepare(`
+        SELECT comision, n_instrumentos, aprobados, desechados, retirados,
+               pendientes_largo, pendientes_corto, pendientes_recientes,
+               tasa_aprobacion, tasa_comision_lxvi, diferencial_pp,
+               dias_promedio_dictamen, instrumentos_recientes
+        FROM legisladores_h2h
+        WHERE legislador_id = ?
+        ORDER BY n_instrumentos DESC, ABS(diferencial_pp) DESC
+      `)
+      .bind(legId)
+      .all();
+
+    const matchups = (result.results || []).map(r => {
+      let recientes = [];
+      try {
+        recientes = JSON.parse(r.instrumentos_recientes || '[]');
+      } catch (e) { /* ignore */ }
+      return {
+        comision: r.comision,
+        n_instrumentos: r.n_instrumentos,
+        aprobados: r.aprobados,
+        desechados: r.desechados,
+        retirados: r.retirados,
+        pendientes_largo: r.pendientes_largo,
+        pendientes_corto: r.pendientes_corto,
+        pendientes_recientes: r.pendientes_recientes,
+        tasa_aprobacion: r.tasa_aprobacion,
+        tasa_comision_lxvi: r.tasa_comision_lxvi,
+        diferencial_pp: r.diferencial_pp,
+        dias_promedio_dictamen: r.dias_promedio_dictamen,
+        instrumentos_recientes: recientes,
+      };
+    });
+
+    return corsResponse({
+      legislador_id: legId,
+      total_matchups: matchups.length,
+      matchups,
     }, 200, request);
   } catch (err) {
     return corsResponse({ error: 'Error consultando D1', detalle: err.message }, 500, request);

@@ -2538,36 +2538,172 @@
             );
         }
 
-        function TabMatchup({ leg }) {
-            if (!leg.matchup_comision) {
-                return <div className="text-xs text-gray-500 italic">Sin comisión dictaminadora dominante todavía. Necesita más instrumentos turnados a una comisión con volumen mínimo.</div>;
-            }
-            const tasa = leg.matchup_tasa != null ? Math.round(leg.matchup_tasa * 100) : null;
-            const grade = leg.matchup_grade;
-            const gradeLabel = { A: 'EXCELENTE', B: 'BUENO', C: 'REGULAR', D: 'BAJO', F: 'DIFÍCIL' }[grade] || '—';
-            const gradeColor = grade === 'A' ? 'text-emerald-400' : grade === 'B' ? 'text-lime-400' : grade === 'C' ? 'text-amber-400' : grade === 'D' ? 'text-orange-400' : grade === 'F' ? 'text-red-400' : 'text-gray-400';
+        function EstatusPill({ estatus }) {
+            const cfg = {
+                Aprobado:  { cls: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: '✓' },
+                Desechado: { cls: 'bg-rose-100 text-rose-700 border-rose-200',          icon: '✗' },
+                Rechazado: { cls: 'bg-rose-100 text-rose-700 border-rose-200',          icon: '✗' },
+                Retirada:  { cls: 'bg-gray-100 text-gray-600 border-gray-200',          icon: '⊘' },
+                Pendiente: { cls: 'bg-amber-50 text-amber-700 border-amber-200',        icon: '◯' },
+            }[estatus] || { cls: 'bg-gray-50 text-gray-500 border-gray-200', icon: '·' };
+            return (
+                <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-mono font-bold rounded border ${cfg.cls}`}>
+                    <span>{cfg.icon}</span><span>{estatus}</span>
+                </span>
+            );
+        }
+
+        function MatchupCard({ m, expandido, onToggle, principal }) {
+            const tasa = m.tasa_aprobacion != null ? Math.round(m.tasa_aprobacion * 100) : null;
+            const base = m.tasa_comision_lxvi != null ? Math.round(m.tasa_comision_lxvi * 100) : null;
+            const dif = m.diferencial_pp;
+            const difCls = dif == null ? 'text-gray-400'
+                : dif >= 10 ? 'text-emerald-600'
+                : dif >= 0 ? 'text-lime-600'
+                : dif >= -10 ? 'text-amber-600'
+                : 'text-rose-600';
+            const arrow = dif == null ? '·' : dif > 0 ? '↑' : dif < 0 ? '↓' : '→';
 
             return (
-                <div className="space-y-4">
-                    <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-xl p-4 text-white">
-                        <div className="text-[10px] uppercase tracking-wider text-white/60 font-semibold mb-1">Comisión dictaminadora principal</div>
-                        <div className="font-semibold text-base">{leg.matchup_comision}</div>
-                        <div className="mt-3 flex items-end justify-between">
-                            <div>
-                                <div className="text-[10px] uppercase text-white/60 font-semibold">Tasa de dictamen</div>
-                                <div className="text-3xl font-bold mt-0.5 font-mono">{tasa != null ? `${tasa}%` : '—'}</div>
+                <div className={`bg-white border rounded-xl overflow-hidden ${principal ? 'border-gray-300 shadow-sm' : 'border-gray-200'}`}>
+                    {/* Header */}
+                    <div
+                        className={`px-4 py-3 ${onToggle ? 'cursor-pointer hover:bg-gray-50' : ''} ${principal ? 'bg-gradient-to-br from-gray-900 to-gray-950 text-white' : ''}`}
+                        onClick={onToggle}
+                    >
+                        <div className="flex items-baseline justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                                <div className={`text-[10px] uppercase tracking-widest font-mono font-bold ${principal ? 'text-white/60' : 'text-gray-500'}`}>
+                                    {principal ? 'Matchup principal' : 'comisión'}
+                                </div>
+                                <div className={`text-sm font-semibold mt-0.5 truncate ${principal ? 'text-white' : 'text-gray-800'}`} title={m.comision}>
+                                    {m.comision}
+                                </div>
                             </div>
-                            <div className="text-right">
-                                <div className="text-[10px] uppercase text-white/60 font-semibold">Calificación</div>
-                                <div className={`text-2xl font-black ${gradeColor}`}>{grade || '—'}</div>
-                                <div className={`text-[10px] font-bold tracking-wider ${gradeColor}`}>{gradeLabel}</div>
+                            <div className="text-right flex-shrink-0">
+                                <div className={`text-[9px] uppercase tracking-widest font-mono ${principal ? 'text-white/50' : 'text-gray-400'}`}>n / Δ</div>
+                                <div className={`text-sm font-mono ${principal ? 'text-white' : 'text-gray-700'}`}>
+                                    {m.n_instrumentos} <span className={`font-bold ${principal ? difCls.replace('600', '300') : difCls}`}>{arrow}{dif != null ? Math.abs(dif).toFixed(1) + 'pp' : '—'}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Mini stats inline */}
+                        <div className={`grid grid-cols-4 gap-2 mt-3 text-[10px] font-mono ${principal ? 'text-white/70' : 'text-gray-600'}`}>
+                            <div>
+                                <div className={principal ? 'text-white/40' : 'text-gray-400'}>aprobados</div>
+                                <div className={`text-base font-bold ${principal ? 'text-emerald-300' : 'text-emerald-700'}`}>{m.aprobados}</div>
+                            </div>
+                            <div>
+                                <div className={principal ? 'text-white/40' : 'text-gray-400'}>tasa</div>
+                                <div className={`text-base font-bold ${principal ? 'text-white' : 'text-gray-800'}`}>{tasa != null ? `${tasa}%` : '—'}</div>
+                            </div>
+                            <div>
+                                <div className={principal ? 'text-white/40' : 'text-gray-400'}>baseline</div>
+                                <div className={`text-base ${principal ? 'text-white/80' : 'text-gray-600'}`}>{base != null ? `${base}%` : '—'}</div>
+                            </div>
+                            <div>
+                                <div className={principal ? 'text-white/40' : 'text-gray-400'}>tiempo</div>
+                                <div className={`text-base ${principal ? 'text-white/80' : 'text-gray-600'}`}>{m.dias_promedio_dictamen != null ? `${Math.round(m.dias_promedio_dictamen)}d` : '—'}</div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="text-xs text-gray-500 leading-relaxed">
-                        El grade mide qué tan activamente dictamina la comisión principal del legislador durante la LXVI.
-                        A/B indica que la comisión procesa rápido sus asuntos; F indica que la mayoría de los turnos se quedan en pendiente sin resolución.
+                    {/* Detalle expandible: instrumentos recientes */}
+                    {expandido && m.instrumentos_recientes && m.instrumentos_recientes.length > 0 && (
+                        <div className="border-t border-gray-100 px-4 py-3">
+                            <div className="text-[10px] uppercase tracking-widest font-mono font-bold text-gray-500 mb-2">
+                                Últimos {m.instrumentos_recientes.length} instrumentos
+                            </div>
+                            <div className="space-y-1.5">
+                                {m.instrumentos_recientes.map((inst, i) => (
+                                    <div key={i} className="flex items-start gap-2 text-[11px] py-1 border-b border-gray-50 last:border-0">
+                                        <div className="flex-shrink-0 mt-0.5">
+                                            <EstatusPill estatus={inst.estatus} />
+                                        </div>
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-gray-700 leading-snug truncate" title={inst.titulo}>
+                                                {inst.titulo || <span className="text-gray-400 italic">sin título</span>}
+                                            </div>
+                                            <div className="text-[9px] font-mono text-gray-400 mt-0.5">
+                                                {inst.fecha_pres}
+                                                {inst.dias_a_dictamen != null && <> · {inst.dias_a_dictamen}d a dictamen</>}
+                                                {inst.dias_a_dictamen == null && inst.estatus === 'Pendiente' && <> · {inst.dias_desde_pres}d sin resolver</>}
+                                                {inst.tipo && <> · {inst.tipo}</>}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function TabMatchup({ leg }) {
+            const [matchups, setMatchups] = useState(null);
+            const [loading, setLoading] = useState(true);
+            const [expandidoIdx, setExpandidoIdx] = useState(0);
+
+            useEffect(() => {
+                if (!leg.id) { setLoading(false); return; }
+                fetch(`${WORKER_URL}/h2h?legislador_id=${leg.id}`)
+                    .then(r => r.ok ? r.json() : Promise.reject(r.status))
+                    .then(d => { setMatchups(d.matchups || []); setLoading(false); })
+                    .catch(() => { setMatchups([]); setLoading(false); });
+            }, [leg.id]);
+
+            if (loading) return <div className="text-xs text-gray-400 italic font-mono">Cargando matchups…</div>;
+
+            if (!matchups || matchups.length === 0) {
+                return (
+                    <div className="space-y-3">
+                        <div className="text-xs text-gray-500 italic">
+                            Sin matchups suficientes para reportar. Se requieren ≥3 instrumentos en una misma comisión y ≥10 instrumentos totales en la comisión para baseline.
+                        </div>
+                        {leg.matchup_comision && (
+                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-[11px] font-mono text-gray-600">
+                                <div className="font-bold mb-1">Matchup grade legacy:</div>
+                                vs {leg.matchup_comision} · grade {leg.matchup_grade || '—'} · tasa {leg.matchup_tasa != null ? Math.round(leg.matchup_tasa * 100) + '%' : '—'}
+                            </div>
+                        )}
+                    </div>
+                );
+            }
+
+            const principal = matchups[0];
+            const otros = matchups.slice(1);
+
+            return (
+                <div className="space-y-4">
+                    <MatchupCard m={principal} expandido={true} principal />
+
+                    {otros.length > 0 && (
+                        <div>
+                            <div className="text-[10px] uppercase tracking-widest font-mono font-bold text-gray-500 mb-2">
+                                Otras comisiones · {otros.length}
+                            </div>
+                            <div className="space-y-1.5">
+                                {otros.map((m, i) => (
+                                    <MatchupCard
+                                        key={i}
+                                        m={m}
+                                        expandido={expandidoIdx === i + 1}
+                                        onToggle={() => setExpandidoIdx(expandidoIdx === i + 1 ? -1 : i + 1)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Guía de lectura */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-[11px] font-mono text-gray-600 leading-relaxed">
+                        <div className="font-bold text-gray-700 mb-1 uppercase text-[10px] tracking-widest">cómo leer</div>
+                        <div>· <strong>tasa</strong>: % de instrumentos del legislador en esa comisión que obtuvieron dictamen (excluye pendientes &lt;90d)</div>
+                        <div>· <strong>baseline</strong>: tasa de dictaminación de la comisión en LXVI con todos los presentadores</div>
+                        <div>· <strong>Δ</strong>: diferencial en puntos porcentuales · ↑ por encima del baseline · ↓ por debajo</div>
+                        <div>· <strong>tiempo</strong>: mediana de días entre presentación y dictamen (solo aprobados)</div>
                     </div>
                 </div>
             );

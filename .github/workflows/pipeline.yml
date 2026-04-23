@@ -108,6 +108,15 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         continue-on-error: true  # No bloquear pipeline si D1 sync falla
 
+      # 5b.2. Sync ELO + H2H legisladores a D1 (depende de paso 5d/5e local)
+      - name: Sync ELO + H2H a D1
+        run: |
+          python scripts/sync_elo_d1.py || true
+          python scripts/sync_h2h_d1.py || true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        continue-on-error: true
+
       # 5c. Guardar DB actualizada en cache (key única por run)
       - name: Guardar SQLite DB en cache
         uses: actions/cache/save@v4
