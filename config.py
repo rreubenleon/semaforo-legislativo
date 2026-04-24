@@ -325,6 +325,11 @@ CATEGORIAS = {
             },
             "violencia_victimas": {
                 "nombre": "Violencia y víctimas",
+                # Señales de hechos criminales agregadas abr 2026 (benchmark):
+                # casos tipo "mujer herida de bala", "cae presunto", "mató a menor"
+                # no clasificaban o iban a DDHH/igualdad. Agregan patrones de
+                # hechos delictivos con víctimas para que Seguridad gane cuando
+                # haya evidencia textual clara.
                 "keywords": ["homicidio", "desaparición forzada", "violencia", "impunidad", "víctimas",
                              "fosa clandestina", "fosas", "asesinato", "muertos", "restos humanos",
                              "desaparecidos", "persona desaparecida", "búsqueda de personas", "tortura", "detención arbitraria",
@@ -333,6 +338,14 @@ CATEGORIAS = {
                              "agresor sexual", "agresores sexuales", "abuso sexual", "abusador", "abusadores",
                              "delito sexual", "delitos sexuales", "violación sexual", "pederastia", "pedofilia",
                              "registro de agresores", "trata de personas", "acoso sexual",
+                             # Señales de hechos criminales (benchmark abr 2026)
+                             "herido de bala", "herida de bala", "heridos de bala", "heridas de bala",
+                             "a balazos", "por impacto de bala", "disparos",
+                             "ráfaga de disparos", "tiroteo", "balacera con saldo",
+                             "mató a", "mata a", "mataron a", "dispararon a",
+                             "asesinó a", "asesinaron a", "apuñaló", "apuñalado",
+                             "cae presunto", "detienen a presunto", "presunto responsable",
+                             "vinculado a proceso", "captura a presunto",
                              # Leyes federales
                              "Ley General de Víctimas", "Ley para Prevenir y Sancionar la Tortura",
                              "Ley de Prevención Social de la Violencia",
@@ -565,8 +578,13 @@ CATEGORIAS = {
             },
             "educacion_superior": {
                 "nombre": "Educación superior e investigación",
-                "keywords": ["universidad", "UNAM", "IPN", "Conahcyt", "CONACYT", "investigación", "becas", "posgrado",
+                # "investigación" atómica quitada abr 2026: ambigua (investigación
+                # criminal, periodística, administrativa). Reemplazada por frases
+                # específicas del dominio académico.
+                "keywords": ["universidad", "UNAM", "IPN", "Conahcyt", "CONACYT", "becas", "posgrado",
                              "beca universal",
+                             "investigación científica", "investigación académica",
+                             "centros de investigación", "investigadores del SNI", "SNII",
                              # Leyes federales
                              "Ley Orgánica de la UNAM", "Ley Orgánica de la UAM",
                              "Ley Orgánica del IPN", "Ley de la Universidad Autónoma Chapingo",
@@ -574,13 +592,29 @@ CATEGORIAS = {
             },
             "ciencia_tecnologia": {
                 "nombre": "Ciencia y tecnología",
-                "keywords": ["ciencia", "tecnología", "innovación", "desarrollo tecnológico", "patente",
+                # Atómicas ambiguas quitadas abr 2026: "ciencia", "tecnología",
+                # "innovación" y "patente". Todas aparecen en contextos económicos,
+                # empresariales y políticos. Se mantiene "desarrollo tecnológico"
+                # y se agregan frases específicas del dominio científico.
+                "keywords": ["desarrollo tecnológico", "política científica",
+                             "divulgación científica", "fomento a la ciencia",
+                             "innovación educativa", "innovación tecnológica",
+                             "sistema nacional de ciencia",
                              # Leyes federales
                              "Ley General de Humanidades Ciencias Tecnologías e Innovación"],
             },
             "cultura_deporte": {
                 "nombre": "Cultura y deporte",
-                "keywords": ["cultura", "patrimonio cultural", "juventud", "deporte", "biblioteca",
+                # Atómicas ambiguas quitadas abr 2026: "cultura", "juventud",
+                # "deporte", "biblioteca". Todas demasiado amplias en notas
+                # generales (cultura popular, deporte profesional, juventud
+                # política). Reemplazadas por frases del dominio político-cultural.
+                "keywords": ["patrimonio cultural", "política cultural",
+                             "fomento cultural", "industrias culturales",
+                             "biblioteca pública", "red de bibliotecas",
+                             "política de juventud", "apoyos a la juventud",
+                             "deporte estudiantil", "fomento al deporte",
+                             "política deportiva",
                              # Leyes federales
                              "Ley General de Cultura y Derechos Culturales", "Ley General de Bibliotecas",
                              "Ley de Fomento para la Lectura y el Libro", "Ley de Derechos Lingüísticos",
@@ -771,8 +805,16 @@ CATEGORIAS = {
             },
             "derechos_ninez": {
                 "nombre": "Derechos de la niñez",
-                "keywords": ["niñez", "adolescencia", "trabajo infantil", "adopción", "menor de edad",
+                # "menor de edad" atómica quitada abr 2026: FP en noticias
+                # criminales como "cae sujeto que mató a una menor de edad" que
+                # son Seguridad, no DDHH. Se reemplaza por compuestas específicas
+                # del lenguaje legislativo de niñez.
+                "keywords": ["niñez", "adolescencia", "trabajo infantil", "adopción",
                              "matrimonio infantil", "matrimonio forzado",
+                             "derechos de menores", "protección de menores",
+                             "derechos de niñas y niños", "derechos de la niñez",
+                             "derechos de niñez y adolescencia", "interés superior del niño",
+                             "interés superior de la niñez",
                              # Leyes federales
                              "Ley General de los Derechos de Niñas Niños y Adolescentes",
                              "Ley General de Prestación de Servicios para Cuidado Infantil",
@@ -1064,10 +1106,18 @@ CATEGORIAS = {
             },
             "contaminacion_residuos": {
                 "nombre": "Contaminación y residuos",
+                # Keywords de calidad del agua agregadas abr 2026 tras benchmark:
+                # el caso "Contaminada, 59.1% del agua superficial de México"
+                # caía en infraestructura por "Ley de Aguas Nacionales" en vez
+                # de en medio_ambiente (donde sí pertenece).
                 "keywords": ["contaminación ambiental", "residuos peligrosos", "contingencia ambiental", "calidad del aire",
                              "economía circular", "ley ambiental", "norma ambiental", "impacto ambiental", "política ambiental",
                              "gestión de residuos", "residuos sólidos", "Gestión Integral de los Residuos",
-                             "agua contaminada", "río contaminado", "derrame petrolero", "derrame químico", "derrame industrial", "derrame de hidrocarburos", "basura", "relleno sanitario",
+                             "agua contaminada", "contaminación del agua", "calidad del agua",
+                             "crisis del agua", "agua superficial", "agua subterránea",
+                             "mantos acuíferos", "río contaminado", "derrame petrolero",
+                             "derrame químico", "derrame industrial", "derrame de hidrocarburos",
+                             "basura", "relleno sanitario",
                              "tiradero", "smog", "mala calidad del aire", "contingencia",
                              # Leyes federales
                              "Ley General para la Prevención y Gestión de Residuos",

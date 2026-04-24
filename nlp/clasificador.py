@@ -397,19 +397,14 @@ def clasificar_texto(titulo, resumen="", comision=None):
                         score += sum(tf_titulo.get(t, 0) + tf_resumen.get(t, 0) for t in kw_tokens) * 1.5
 
             # Bonus por keyword compuesta encontrada completa.
-            # SIEMPRE con word boundary (cambio abr 2026): antes solo las
-            # keywords ≤4 chars usaban \b. Las de 5+ hacían substring match,
-            # lo que generaba falsos positivos como:
-            #   "Metro"  → "Metropolitana", "Metrópoli"
-            #   "presa"  → "representa", "empresa", "expresa"
-            #   "banda"  → "abandonar"
-            #   "sismo"  → "mecanismo", "organismo"
-            # El word boundary preserva el match legítimo de palabra completa
-            # o inicio/fin de frase compuesta.
+            # Word boundary con sufijo plural opcional (abr 2026):
+            # - \b evita FPs como "Metro" → "Metropolitana" o "presa" → "representa"
+            # - (?:s|es)? al final permite que "empleo" matchee "empleos",
+            #   "crecimiento" matchee "crecimientos", etc. (plurales castellanos)
+            # Las formas irregulares (raras en dominio legislativo) dependen
+            # del token match que corre en paralelo con stemming.
             kw_lower = keyword.lower()
-            # Para keywords con espacios ("puente vehicular"), \b funciona
-            # alrededor de cada palabra; regex escape ya maneja los espacios.
-            patron = r'\b' + re.escape(kw_lower) + r'\b'
+            patron = r'\b' + re.escape(kw_lower) + r'(?:s|es)?\b'
             if re.search(patron, titulo.lower()):
                 score += 2.0
             if resumen and re.search(patron, resumen.lower()):
