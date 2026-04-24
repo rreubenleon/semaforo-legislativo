@@ -109,10 +109,15 @@ def calcular_tasas_comision(conn):
     Los pendientes <180 días NO cuentan aún. Mínimo 10 instrumentos para dar tasa.
     Fallback global: tasa media del universo.
     """
+    # Solo instrumentos legislativos sustantivos (filtra licencias,
+    # informes, comunicaciones, efemérides, intervenciones genéricas).
+    # Ver scripts/clasificar_instrumentos.py para las reglas.
     rows = conn.execute("""
         SELECT comision, estatus, fecha_presentacion
         FROM sil_documentos
-        WHERE fecha_presentacion >= '2024-09-01' AND comision IS NOT NULL AND comision != ''
+        WHERE fecha_presentacion >= '2024-09-01'
+          AND comision IS NOT NULL AND comision != ''
+          AND (clasificacion = 'legislativo_sustantivo' OR clasificacion IS NULL)
     """).fetchall()
 
     por_comision = {}  # nombre → [aprobados, desechados, pendiente_largo]
@@ -144,11 +149,12 @@ def calcular_elos(conn):
     tasas_com, tasa_global = calcular_tasas_comision(conn)
     print(f"  Tasa global LXVI: {100*tasa_global:.1f}% · {len(tasas_com)} comisiones con data suficiente")
 
-    # Iterar instrumentos cronológicamente
+    # Iterar instrumentos cronológicamente — solo legislativo sustantivo
     rows = conn.execute("""
         SELECT presentador, partido, camara, tipo, comision, estatus, fecha_presentacion
         FROM sil_documentos
         WHERE fecha_presentacion >= '2024-09-01' AND presentador != ''
+          AND (clasificacion = 'legislativo_sustantivo' OR clasificacion IS NULL)
         ORDER BY fecha_presentacion
     """).fetchall()
 

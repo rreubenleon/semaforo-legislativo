@@ -82,6 +82,7 @@ def calcular_baseline_comisiones(conn):
         FROM sil_documentos
         WHERE fecha_presentacion >= '2024-09-01'
           AND comision IS NOT NULL AND comision != ''
+          AND (clasificacion = 'legislativo_sustantivo' OR clasificacion IS NULL)
     """).fetchall()
 
     por_com = defaultdict(lambda: {"apr": 0, "des": 0, "pen_largo": 0, "total": 0})
@@ -126,6 +127,7 @@ def construir_h2h(conn):
         WHERE fecha_presentacion >= '2024-09-01'
           AND presentador != ''
           AND comision IS NOT NULL AND comision != ''
+          AND (clasificacion = 'legislativo_sustantivo' OR clasificacion IS NULL)
         ORDER BY fecha_presentacion DESC
     """).fetchall()
     logger.info(f"  {len(rows)} instrumentos con comisión")
