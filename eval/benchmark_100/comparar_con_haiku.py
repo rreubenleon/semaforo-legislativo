@@ -44,11 +44,16 @@ def main():
     pares = []
     t0 = time.time()
     llamadas_haiku = 0
+    total_casos = sum(1 for id_str, cat_real in etiquetas.items() if cat_real and id_str in datos)
+    procesados = 0
 
     for id_str, cat_real in etiquetas.items():
         if not cat_real or id_str not in datos:
             continue
         a = datos[id_str]
+        procesados += 1
+        if procesados % 10 == 0:
+            print(f"  ... {procesados}/{total_casos} procesados ({llamadas_haiku} llamadas Haiku, {time.time()-t0:.1f}s)", flush=True)
 
         # 1) Keyword classifier
         scores_kw = clasificar_texto(a["titulo"], a["resumen"] or "")

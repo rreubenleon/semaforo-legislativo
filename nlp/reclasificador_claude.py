@@ -107,13 +107,15 @@ Ejemplos:
 - "Pueblos indígenas demandan consulta previa en megaproyecto" → derechos_humanos
 
 ## economia_hacienda
-Impuestos (SAT, ISR, IVA, IEPS), Banxico, presupuesto federal (PEF, Ley de Ingresos), inflación, tipo de cambio, deuda pública, comercio exterior, aranceles, inversión extranjera, fomento económico, competitividad, PyMES, Ramírez de la O. NO incluye política pública de subsidios sociales (→ politica_social).
+Impuestos (SAT, ISR, IVA, IEPS), Banxico, presupuesto federal (PEF, Ley de Ingresos), inflación, tipo de cambio, deuda pública, comercio exterior, aranceles, inversión extranjera, fomento económico, competitividad, PyMES, Ramírez de la O. **Mercados financieros internacionales (S&P, Dow, Fed, dólar, petróleo WTI/Brent) cuando la nota menciona impacto en México o el peso** → aquí, NO ninguna. NO incluye política pública de subsidios sociales (→ politica_social).
 
 Ejemplos:
 - "Banxico sube tasa de interés por inflación persistente" → economia_hacienda
 - "Paquete Económico 2026 propone nuevo IEPS a refrescos" → economia_hacienda
 - "México y OCDE evalúan carga fiscal al ingreso" → economia_hacienda
 - "SAT recauda récord de ISR en primer trimestre" → economia_hacienda
+- "S&P 500 cae, petróleo y dólar suben por escalada en Medio Oriente" → economia_hacienda (afecta al peso y a la economía MX)
+- "Fed mantiene tasa de interés; peso reacciona" → economia_hacienda
 
 ## educacion
 SEP, UNAM, IPN, CONACYT, universidades, escuelas, maestros, libros de texto, CNTE, SNTE, becas, ciencia, investigación científica, posgrados, divulgación científica. NO incluye eventos culturales masivos no legislativos (conciertos, deportes profesionales).
@@ -142,12 +144,14 @@ Ejemplos:
 - "Apagón afecta cinco estados del norte" → energia
 
 ## igualdad_genero
-Feminicidios como tema de política pública (violencia sistémica de género), paridad de género, derechos específicos de mujeres, violencia política de género, derechos reproductivos, Instituto de las Mujeres. NO incluye hechos criminales individuales contra mujeres cuando el foco es el crimen (→ seguridad_justicia).
+Feminicidios como tema de política pública (violencia sistémica de género), paridad de género, derechos específicos de mujeres, violencia política de género, derechos reproductivos, Instituto de las Mujeres, **editoriales y análisis sobre feminismo, brecha de género (incluso en finanzas, inversiones, salarios), y empoderamiento de mujeres**. NO incluye hechos criminales individuales contra mujeres cuando el foco es el crimen (→ seguridad_justicia).
 
 Ejemplos:
 - "Reforma propone paridad total en Poder Judicial" → igualdad_genero
 - "Alerta de género activa en cinco municipios de Puebla" → igualdad_genero
 - "Iztacalco reconoce labor de mujeres en seguridad" → igualdad_genero (reconocimiento institucional)
+- "¿Para qué sirve el feminismo?" (editorial sobre feminismo) → igualdad_genero
+- "¿Las mujeres invierten menos que los hombres? Mitos y realidades" (brecha de género en finanzas) → igualdad_genero
 - "Mujer es herida de bala en bar de Tapachula" → seguridad_justicia (hecho criminal, no política de género)
 
 ## infraestructura
@@ -160,12 +164,15 @@ Ejemplos:
 - "Tren Maya inaugura tramo en Yucatán" → infraestructura
 
 ## inteligencia_artificial
-Inteligencia artificial, algoritmos, deepfakes, protección de datos personales (cuando el foco es tecnología/plataformas), regulación de plataformas digitales, automatización, ciberseguridad gubernamental aplicada a IA.
+Inteligencia artificial, algoritmos, deepfakes, ChatGPT, Grok, Claude, Gemini, Copilot, redes neuronales, modelos de lenguaje, protección de datos personales (cuando el foco es tecnología/plataformas), regulación de plataformas digitales, automatización, ciberseguridad aplicada a IA. **Si el tema central de la nota es IA —aunque el evento sea internacional o técnico—, clasifica aquí.**
 
 Ejemplos:
 - "Senado discute Ley de Inteligencia Artificial" → inteligencia_artificial
 - "Reforma a Ley de Datos Personales frente a IA generativa" → inteligencia_artificial
 - "La fragilidad del Estado frente a la IA" (editorial sobre IA) → inteligencia_artificial
+- "Aplicación de IA en diseño de procesos químicos" (nota técnica) → inteligencia_artificial
+- "Grok difundió desinformación sobre ataque iraní" (chatbot de IA, aunque evento sea internacional) → inteligencia_artificial
+- "Gobernador profesionaliza a 350 mil sonorenses en IA con Microsoft" (el tema central es IA, educación es el vehículo) → inteligencia_artificial
 
 ## medio_ambiente
 Cambio climático, contaminación (aire, agua, suelo), Semarnat, Profepa, biodiversidad, deforestación, áreas naturales protegidas, residuos, calidad del agua y del aire, economía circular, ecosistemas, manglares, incendios forestales, sequía como fenómeno ambiental. La calidad del agua (contaminación, saneamiento ambiental) ES medio_ambiente; la distribución e infraestructura es infraestructura.
@@ -177,12 +184,14 @@ Ejemplos:
 - "Reforma a Ley General de Cambio Climático avanza" → medio_ambiente
 
 ## medios_comunicacion
-Prensa, periodistas, libertad de expresión, telecomunicaciones (política de contenidos), IFT/Instituto Federal de Telecomunicaciones, radiodifusión, concesiones de medios, agresiones a periodistas, ley anti-chayote.
+Prensa, periodistas, libertad de expresión, telecomunicaciones (política de contenidos), IFT/Instituto Federal de Telecomunicaciones, radiodifusión, concesiones de medios, agresiones a periodistas, ley anti-chayote, **festivales culturales y cinematográficos que ocurren en México (FIC, FICG, FICM, Guadalajara, Morelia, CDMX)**, creación de nuevos medios (canales TV, portales digitales, streaming).
 
 Ejemplos:
 - "Reforma a Ley de Telecomunicaciones elimina al IFT" → medios_comunicacion
 - "Periodistas exigen mecanismo de protección" → medios_comunicacion
 - "Diputados discuten regulación de radio comunitaria" → medios_comunicacion
+- "Darren Aronofsky liderará Festival Internacional de Cine en Guadalajara" → medios_comunicacion
+- "Pedro Haces prepara canal de TV por internet" → medios_comunicacion (aunque tenga tinte político, el objeto es un medio)
 
 ## politica_social
 Programas sociales (Bienestar, Adultos Mayores, Becas Benito Juárez, Sembrando Vida), combate a la pobreza, asistencia social, Secretaría de Bienestar, transferencias condicionadas, Coneval, índices de pobreza.
@@ -236,18 +245,31 @@ Ejemplos:
 - "Reforma a Ley General de Turismo simplifica trámites" → turismo
 
 ## ninguna
-La nota NO aplica a política/legislación mexicana. Usa esta categoría cuando:
-- El contenido es exclusivamente internacional sin impacto legislativo mexicano (ej. elecciones en EU, conflicto Rusia-Ucrania, Fed estadounidense)
-- Es contenido de entretenimiento, deportes profesionales, farándula, clima operativo, eventos sociales sin carga política
-- Es nota económica internacional sin relevancia mexicana (OCDE comparativo sin legislación derivada, resultados financieros de empresas extranjeras)
-- Es nota de servicio general sin ángulo legislativo (horóscopo, receta de cocina, agenda cultural)
-- El contenido es demasiado genérico para asignar una categoría específica
+**Usa esta categoría SOLO como último recurso.** Primero revisa si el tema central encaja en alguna de las 19 categorías — aunque el evento sea internacional, el sujeto técnico, o el tono editorial, si hay tema sustantivo que corresponde a una categoría, úsala.
 
-Ejemplos:
-- "Departamento de Justicia de EU cierra investigación contra Jerome Powell" → ninguna (asunto EU, sin implicación MX)
-- "Nike reducirá 2% de su plantilla global por reestructura" → ninguna (empresa extranjera, sin impacto MX legislativo)
-- "Clima: mañana fresca en Zona Metropolitana de Monterrey" → ninguna
-- "Libro 'El Consejo Mexicano de Negocios' analiza élite empresarial" → ninguna (es análisis académico, no política activa)
+Usa "ninguna" SOLO cuando la nota es genuinamente una de estas:
+- **Deportes profesionales** (Liga MX, NFL, futbol de selección, eliminatorias) sin ángulo legislativo
+- **Entretenimiento puro** (farándula, horóscopo, memes, influencers)
+- **Clima operativo** (reporte de lluvias, alerta naranja, pronóstico) sin contexto de política pública
+- **Eventos personales de figuras** (cumpleaños, bodas, obituarios) sin carga política
+- **Noticias extranjeras sin tema de ninguna categoría** (ej. evento cultural en Japón sin relación con MX)
+- **Contenido genuinamente no sustantivo** (agenda cultural lista, receta, servicio)
+
+**Importante**: Si la nota menciona una de las 19 categorías —aunque sea tangencialmente— en su tema central, clasifica ahí. La pregunta NO es "¿es legislación mexicana activa?" sino "¿el tema cae en alguna de estas categorías?". Notas académicas, técnicas o editoriales SÍ cuentan.
+
+Ejemplos claros de "ninguna":
+- "Clima: mañana fresca en Zona Metropolitana de Monterrey" → ninguna (clima operativo)
+- "México vs EU en el Clásico Mundial de Beisbol" → ninguna (deporte profesional)
+- "Horóscopo semanal del 15 al 21 de abril" → ninguna (entretenimiento)
+- "Muere reconocido cronista deportivo a los 78 años" → ninguna (obituario sin carga política)
+- "Caso MetaXchange: denuncias por fraude de cripto internacional" → ninguna (fraude cripto sin marco legislativo MX)
+
+Ejemplos que NO son "ninguna" (aunque pudieran parecerlo):
+- Nota académica sobre IA → inteligencia_artificial
+- Análisis de feminismo en medios → igualdad_genero
+- Mercados financieros que afectan al peso → economia_hacienda
+- Festival de cine en Guadalajara → medios_comunicacion
+- Editorial sobre el rumbo del país → electoral_politico
 
 # Reglas de desambiguación
 
@@ -266,6 +288,12 @@ Ejemplos:
 7. **Deporte**: Fútbol profesional, atletas, selecciones, Liga MX, NFL, NBA → ninguna. Única excepción: reforma al deporte amateur/estudiantil con iniciativa legislativa → educacion.
 
 8. **Internacional con ángulo MX**: Si la nota describe un evento internacional que detona reacción legislativa mexicana (exhorto, iniciativa, comparecencia), → la categoría temática mexicana. Si es puramente descriptiva del evento extranjero, → ninguna.
+
+9. **Prioriza el tema sobre el vehículo**: Si una iniciativa es PARA regular algo de salud (aunque pase por educación o el sujeto sean menores), el tema es salud. Si es PARA enseñar IA (aunque sea programa educativo), el tema central es IA si la nota lo destaca como el objeto de interés. Pregúntate qué aporta sustantivamente la nota.
+
+10. **Salud mental y protección de menores**: Propuestas sobre salud mental, adicciones, tiempo de pantalla o uso de tecnología con impacto en bienestar de menores → salud. Propuestas sobre currículo educativo, educación socioemocional como materia → educacion.
+
+11. **Tema claramente encuadrado aunque poco legislativo**: Editoriales, ensayos, análisis, columnas de opinión sobre cualquier categoría pertenecen a esa categoría (no a "ninguna"). Un ensayo sobre el Estado mexicano → electoral_politico/administracion. Un análisis sobre IA → inteligencia_artificial.
 
 # Formato de entrada
 
