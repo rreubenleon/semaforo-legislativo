@@ -306,19 +306,34 @@ def _obtener_detalle(seg_id, asu_id):
     fecha_raw = meta.get("fecha de presentación", meta.get("fecha de presentacion", ""))
     fecha = _parsear_fecha(fecha_raw)
 
-    # Tipo de instrumento
+    # Tipo de instrumento — el SIL pone el TIPO como CLAVE de la fila.
+    # Toda clave que no sea metadato fijo es candidata a ser el tipo.
+    # Esto captura: Iniciativa, Proposición con punto de acuerdo, Minuta,
+    # Dictamen (variantes), Acuerdo parlamentario, Comunicado, Comunicación,
+    # Informe, Efeméride/s, Posicionamiento, Pronunciamiento, Solicitud de
+    # licencia, Modificación en la integración de comisiones, Intervención
+    # de legisladora/legislador, Acta de sesión, etc.
+    META_FIJA = {
+        "cámara origen", "camara origen", "cámara revisora", "camara revisora",
+        "fecha de presentación", "fecha de presentacion",
+        "fecha de publicación", "fecha de publicacion",
+        "legislatura", "año", "periodo de sesiones", "periodo",
+        "presentador", "último trámite", "ultimo trámite", "ultimo tramite",
+        "último estatus", "ultimo estatus",
+        "aspectos relevantes", "aspecto relevante",
+    }
     tipo = ""
     for k in meta:
-        if k in ("iniciativa", "minuta", "proposición con punto de acuerdo",
-                 "acuerdo parlamentario", "dictamen", "instrumento internacional"):
-            tipo = k.capitalize()
-            break
-        # También buscar como valor
-    if not tipo:
-        for k, v in meta.items():
-            if "iniciativa" in k or "proposición" in k or "dictamen" in k:
-                tipo = k.capitalize()
-                break
+        if k in META_FIJA:
+            continue
+        if len(k) <= 2:  # claves muy cortas son ruido
+            continue
+        # Esta es la clave del tipo
+        tipo = k.title()  # "iniciativa" → "Iniciativa", "dictamen a discusión" → "Dictamen A Discusión"
+        # Normalizar capitalización para tipos compuestos
+        tipo = re.sub(r'\b(De|Del|La|El|En|A|Y|Con)\b', lambda m: m.group(1).lower(), tipo)
+        tipo = tipo[0].upper() + tipo[1:] if tipo else tipo
+        break
 
     # Extraer presentador raw y normalizar partido
     presentador_raw = meta.get("presentador", "").strip()
