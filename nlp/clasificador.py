@@ -457,8 +457,13 @@ def clasificar_texto(titulo, resumen="", comision=None):
 # Haiku 4.5 via el módulo nlp.reclasificador_claude. Caché persistente
 # SQLite evita re-costar el mismo artículo.
 #
-# Benchmark sobre 100 títulos: keyword solo = 72% → keyword + Haiku = 90%
-# (+18pp). Costo estimado: ~$0.02 por 1000 artículos con cache activo.
+# Operación incremental: actualizar_categorias_en_db() solo procesa
+# artículos NUEVOS (sin categoría asignada). Los ya clasificados no
+# vuelven a Haiku → costo real ~$2-4/mes para 180 pipelines.
+#
+# IMPORTANTE: NUNCA correr force_nlp_reset_days > 0 sin estimar
+# costo primero — un reset de 30 días procesa ~15,000 artículos
+# con Haiku, lo que cuesta ~$10-15 USD en una sola corrida.
 # ──────────────────────────────────────────────────────────────────────
 _HAIKU_AMBIGUO_MIN = 0.25
 _HAIKU_AMBIGUO_MAX = 0.55
