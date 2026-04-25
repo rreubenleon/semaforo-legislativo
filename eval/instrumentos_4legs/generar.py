@@ -43,7 +43,7 @@ def main():
     todos = []
     for presentador_db, nombre_corto, info in LEGISLADORES:
         rows = conn.execute("""
-            SELECT id, titulo, tipo, tipo_inferido, comision, estatus,
+            SELECT id, titulo, tipo, tipo_grupo, comision, estatus,
                    fecha_presentacion, clasificacion,
                    seguimiento_id, asunto_id
             FROM sil_documentos
@@ -57,13 +57,13 @@ def main():
                 "legislador": nombre_corto,
                 "info_leg": info,
                 "titulo": r["titulo"],
-                "tipo_scraper": r["tipo"] or "",
-                "tipo_sil": r["tipo_inferido"] or r["tipo"] or "",
+                "tipo_sil_oficial": r["tipo"] or "",  # tipo crudo del SIL (p.ej. "Iniciativa", "Efemérides")
+                "tipo_grupo": r["tipo_grupo"] or "",  # 7 grupos canónicos
                 "funcion_fiat": r["clasificacion"] or "",
                 "comision": r["comision"] or "",
                 "estatus": (r["estatus"] or "").split("/")[0][:60],
                 "fecha": r["fecha_presentacion"],
-                "clasificacion_fiat": r["tipo_inferido"] or "",  # mantener compat con HTML
+                "clasificacion_fiat": r["tipo_grupo"] or "",  # para compat con dropdown
                 "seguimiento_id": r["seguimiento_id"],
                 "asunto_id": r["asunto_id"],
             })
@@ -223,7 +223,7 @@ def render_html(todos):
 <script>
 const TODOS = {datos_json};
 const CLASES = {clases_json};
-const STORAGE_KEY = 'fiat_instrumentos_4legs_v2_silcats';
+const STORAGE_KEY = 'fiat_instrumentos_4legs_v3_taxonomia_sil_correcta';
 
 let etiquetas = {{}};
 try {{ etiquetas = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{{}}'); }} catch (e) {{}}
@@ -334,8 +334,8 @@ function render() {{
       ? `<a href="${{url}}" target="_blank" class="titulo-link">${{escapeHTML(t.titulo)}}</a>`
       : escapeHTML(t.titulo);
 
-    const tipoCambio = t.tipo_scraper && t.tipo_scraper !== t.tipo_sil
-      ? `<span style="color:#9ca3af; font-size:9px"> (scraper dijo: ${{escapeHTML(t.tipo_scraper)}})</span>` : '';
+    const tipoOficialPill = t.tipo_sil_oficial
+      ? `<span style="color:#9ca3af; font-size:9px"> SIL oficial: <b>${{escapeHTML(t.tipo_sil_oficial)}}</b></span>` : '';
 
     const funcColors = {{ legislativa: '#065f46', administrativa: '#92400e', ceremonial: '#5b21b6' }};
     const funcBg = {{ legislativa: '#d1fae5', administrativa: '#fef3c7', ceremonial: '#ede9fe' }};
@@ -348,12 +348,12 @@ function render() {{
       <div class="cuerpo">
         <div class="titulo">${{tituloHtml}}</div>
         <div class="meta">
-          <span class="pill tipo">${{escapeHTML(t.tipo_sil || t.tipo_scraper || '?')}}</span>
+          <span class="pill tipo">${{escapeHTML(t.tipo_grupo || '?')}}</span>
           ${{funcPill}}
           ${{pillEstatus(t.estatus)}}
           ${{t.comision ? `<span class="pill comision" title="${{escapeHTML(t.comision)}}">${{escapeHTML(t.comision.slice(0, 50))}}${{t.comision.length>50?'…':''}}</span>` : ''}}
           <span style="color:#9ca3af">${{t.fecha}}</span>
-          ${{tipoCambio}}
+          ${{tipoOficialPill}}
         </div>
       </div>
       <div>
