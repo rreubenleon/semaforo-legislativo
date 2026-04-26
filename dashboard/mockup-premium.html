@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FIAT Premium — Mockup</title>
+<link rel="icon" href="favicon.ico">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,8 +15,7 @@
       fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
       colors: {
         semaforo: { verde: '#2e7d32', amarillo: '#c6972b', rojo: '#c62828' },
-        fondo: '#fafafa', acento: '#1a365d',
-        premium: { 500: '#7c3aed', 600: '#6d28d9', 700: '#5b21b6', gold: '#b8860b' },
+        fondo: '#fafafa', tarjeta: '#ffffff', borde: '#d1d5db', acento: '#1a365d',
       }
     }}
   };
@@ -23,97 +23,108 @@
 <style>
   body { background: #fafafa; font-family: 'Inter', system-ui, sans-serif; }
   .glass { background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-  .nav-pill { background: rgba(255,255,255,0.85); backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 16px rgba(0,0,0,0.06); }
-  .nav-pill-tab { padding: 6px 14px; font-size: 13px; font-weight: 500; color: #9ca3af; border-radius: 9999px; cursor: pointer; transition: all 0.2s; }
+  .glass:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .nav-pill { background: rgba(255,255,255,0.85); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03); }
+  .nav-pill-tab { padding: 6px 14px; font-size: 13px; font-weight: 500; color: #9ca3af; border-radius: 9999px; transition: all 0.2s; cursor: pointer; letter-spacing: 0.01em; white-space: nowrap; position: relative; }
   .nav-pill-tab:hover { color: #000; font-weight: 600; }
   .nav-pill-tab-active { color: #000; font-weight: 700; }
+  .nav-pill-tab-active::after { content: ''; position: absolute; bottom: 0; left: 20%; right: 20%; height: 1.5px; background: #d1d5db; border-radius: 1px; }
 
-  /* Premium badge */
-  .premium-badge { background: linear-gradient(135deg, #b8860b 0%, #d4a017 50%, #6d28d9 100%); color: white; }
-  .premium-glow { box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.15), 0 8px 24px rgba(124, 58, 237, 0.2); }
+  /* Premium badge sobrio: acento institucional, sin gradientes */
+  .badge-premium {
+    background: #1a365d;
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 9999px;
+  }
 
-  /* Paywall gradient overlay */
+  /* Paywall fade */
   .paywall-fade {
-    background: linear-gradient(to bottom, rgba(250,250,250,0) 0%, rgba(250,250,250,0.8) 30%, #fafafa 70%);
-    backdrop-filter: blur(2px);
+    background: linear-gradient(to bottom, rgba(250,250,250,0) 0%, rgba(250,250,250,0.85) 35%, #fafafa 75%);
+    backdrop-filter: blur(2.5px);
   }
 
-  /* FAB Terminal IA */
-  .fab-ai {
-    background: linear-gradient(135deg, #6d28d9 0%, #b8860b 100%);
-    box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4), 0 0 0 0 rgba(124, 58, 237, 0.4);
-    animation: fab-pulse 2.5s infinite;
+  /* FAB Terminal IA: sobrio acento */
+  .fab-terminal {
+    background: #1a365d;
+    color: white;
+    box-shadow: 0 4px 16px rgba(26, 54, 93, 0.25);
+    transition: all 0.2s;
   }
-  @keyframes fab-pulse {
-    0%, 100% { box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4), 0 0 0 0 rgba(124, 58, 237, 0.4); }
-    50% { box-shadow: 0 8px 24px rgba(124, 58, 237, 0.4), 0 0 0 12px rgba(124, 58, 237, 0); }
-  }
+  .fab-terminal:hover { background: #0f2747; box-shadow: 0 6px 20px rgba(26, 54, 93, 0.35); transform: translateY(-1px); }
 
   /* Mockup banner */
   .mockup-banner {
-    background: linear-gradient(90deg, #1a365d, #6d28d9, #1a365d);
+    background: #1a365d;
     color: white;
   }
 
-  /* Drawer slide */
-  .drawer { transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-  .drawer.open { transform: translateX(0); }
+  /* Drawer */
+  .drawer-content {
+    box-shadow: -8px 0 24px rgba(0,0,0,0.08);
+  }
 
-  /* Faded tab style */
+  /* Score ring */
+  .score-ring { transition: stroke-dashoffset 1s ease-in-out; }
+
+  /* Pulse animations (igual al actual) */
+  @keyframes pulse-verde { 0%,100% { box-shadow: 0 1px 3px rgba(0,0,0,0.06); } 50% { box-shadow: 0 0 0 3px rgba(46,125,50,0.15); } }
+  @keyframes pulse-amarillo { 0%,100% { box-shadow: 0 1px 3px rgba(0,0,0,0.06); } 50% { box-shadow: 0 0 0 3px rgba(198,151,43,0.15); } }
+  .pulse-verde { animation: pulse-verde 2.5s infinite; }
+  .pulse-amarillo { animation: pulse-amarillo 2.5s infinite; }
+
+  /* Vista switcher */
   .vista { display: none; }
   .vista.active { display: block; }
 
-  /* Chip animations */
-  @keyframes shimmerGold { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
-  .shimmer-gold { animation: shimmerGold 3s infinite; }
-
-  /* Mock chart bars */
-  .bar { background: linear-gradient(180deg, #2e7d32, #6d28d9); }
-
-  /* Spinner */
-  .spinner { border: 2px solid #e5e7eb; border-top-color: #6d28d9; border-radius: 50%; width: 16px; height: 16px; animation: spin 0.8s linear infinite; }
+  /* Spinner sobrio */
+  .spinner { border: 2px solid #e5e7eb; border-top-color: #1a365d; border-radius: 50%; width: 14px; height: 14px; animation: spin 0.8s linear infinite; display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Tooltip mock */
-  .tooltip-mock { position: relative; }
-  .tooltip-mock:hover .tooltip-text { opacity: 1; }
-  .tooltip-text { opacity: 0; transition: opacity 0.2s; position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%); background: #111; color: white; font-size: 10px; padding: 2px 6px; border-radius: 4px; white-space: nowrap; pointer-events: none; }
+  /* Mapa de México placeholder */
+  .mapa-mx-bg {
+    background: #f8faf8;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(46,125,50,0.05) 0%, transparent 50%),
+      radial-gradient(circle at 80% 60%, rgba(198,40,40,0.04) 0%, transparent 50%);
+  }
 </style>
 </head>
 <body>
 
-<!-- ─────────────────────────────────────────────────────── -->
-<!-- BANNER + SWITCHER de vistas (solo en mockup, no real)   -->
-<!-- ─────────────────────────────────────────────────────── -->
-<div class="mockup-banner sticky top-0 z-[100] py-2 px-4">
+<!-- Banner switcher (solo mockup) -->
+<div class="mockup-banner sticky top-0 z-[100] py-2 px-4 text-[11px]">
   <div class="max-w-7xl mx-auto flex items-center justify-between gap-4 flex-wrap">
-    <div class="text-xs font-bold tracking-widest uppercase">⚡ MOCKUP PREVIEW · FIAT PREMIUM ⚡</div>
-    <div class="flex gap-1 flex-wrap text-xs">
-      <button onclick="setVista('publica')" class="vista-btn px-2.5 py-1 rounded font-medium hover:bg-white/20 transition">1. Visitante (paywall)</button>
-      <button onclick="setVista('registro')" class="vista-btn px-2.5 py-1 rounded font-medium hover:bg-white/20 transition">2. Registro</button>
-      <button onclick="setVista('pricing')" class="vista-btn px-2.5 py-1 rounded font-medium hover:bg-white/20 transition">3. Pricing</button>
-      <button onclick="setVista('premium')" class="vista-btn px-2.5 py-1 rounded font-medium hover:bg-white/20 transition">4. Premium activo</button>
-      <button onclick="setVista('drawer')" class="vista-btn px-2.5 py-1 rounded font-medium hover:bg-white/20 transition">5. Hamburguesa</button>
-      <button onclick="setVista('terminal')" class="vista-btn px-2.5 py-1 rounded font-medium hover:bg-white/20 transition">6. Terminal IA</button>
-      <button onclick="setVista('console')" class="vista-btn px-2.5 py-1 rounded font-medium hover:bg-white/20 transition">7. Console</button>
-      <button onclick="setVista('legisladores')" class="vista-btn px-2.5 py-1 rounded font-medium hover:bg-white/20 transition">8. Mis legisladores</button>
+    <div class="font-semibold tracking-widest uppercase">MOCKUP · FIAT PREMIUM</div>
+    <div class="flex gap-1 flex-wrap">
+      <button onclick="setVista('publica')" class="vista-btn px-2.5 py-1 rounded font-medium hover:bg-white/15 transition">1. Visitante</button>
+      <button onclick="setVista('registro')" class="vista-btn px-2.5 py-1 rounded font-medium hover:bg-white/15 transition">2. Registro</button>
+      <button onclick="setVista('pricing')" class="vista-btn px-2.5 py-1 rounded font-medium hover:bg-white/15 transition">3. Pricing</button>
+      <button onclick="setVista('premium')" class="vista-btn px-2.5 py-1 rounded font-medium hover:bg-white/15 transition">4. Premium</button>
+      <button onclick="setVista('drawer')" class="vista-btn px-2.5 py-1 rounded font-medium hover:bg-white/15 transition">5. Menú</button>
+      <button onclick="setVista('terminal')" class="vista-btn px-2.5 py-1 rounded font-medium hover:bg-white/15 transition">6. Terminal</button>
+      <button onclick="setVista('console')" class="vista-btn px-2.5 py-1 rounded font-medium hover:bg-white/15 transition">7. Console</button>
+      <button onclick="setVista('legisladores')" class="vista-btn px-2.5 py-1 rounded font-medium hover:bg-white/15 transition">8. Mis legisladores</button>
     </div>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- VISTA 1: VISITANTE PÚBLICO (CON PAYWALL)               -->
+<!-- VISTA 1: VISITANTE (con paywall)                        -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <div id="vista-publica" class="vista">
   <div class="max-w-7xl mx-auto px-4 pt-4 pb-6 space-y-4">
-    <!-- Header normal (sin auth) -->
     <header class="sticky top-12 z-50 py-2">
-      <div class="nav-pill rounded-full px-3 py-2 flex items-center gap-2 flex-wrap">
-        <div class="flex items-center gap-2">
-          <div class="text-2xl font-black text-acento">FIAT</div>
+      <div class="nav-pill rounded-2xl md:rounded-full px-3 py-2 flex items-center gap-2 flex-wrap md:flex-nowrap">
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <img src="fiat-logo-transparent.png" alt="FIAT" style="height: 32px; max-width: 100px; object-fit: contain;">
           <div class="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
             <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span class="text-[10px] text-emerald-700 font-semibold">EN VIVO</span>
+            <span class="text-[10px] text-emerald-700 font-semibold tracking-wide">EN VIVO</span>
           </div>
         </div>
         <div class="hidden md:block w-px h-5 bg-gray-200 mx-1"></div>
@@ -124,220 +135,227 @@
           <button class="nav-pill-tab">Comisiones</button>
           <button class="nav-pill-tab">Métricas</button>
         </div>
-        <div class="flex-1"></div>
-        <input type="text" placeholder="Buscar..." class="w-36 pl-7 pr-2 py-1.5 text-xs border border-gray-200 rounded-full bg-gray-50">
-        <button class="text-[12px] text-gray-500 font-medium px-2 py-1">Inicia sesión</button>
-        <button onclick="setVista('registro')" class="text-[12px] text-white font-semibold px-3 py-1.5 rounded-full bg-emerald-700 hover:bg-emerald-800 shadow-sm">Regístrate</button>
+        <div class="hidden md:block flex-1"></div>
+        <div class="relative flex-shrink-0">
+          <input type="text" placeholder="Buscar..." class="w-28 md:w-36 pl-7 pr-2 py-1.5 text-xs border border-gray-200 rounded-full bg-gray-50">
+          <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        </div>
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <button class="text-[12px] text-gray-500 hover:text-gray-800 font-medium px-2 py-1">Inicia sesión</button>
+          <button onclick="setVista('registro')" class="text-[12px] text-white font-semibold px-3 py-1.5 rounded-full transition-colors shadow-sm" style="background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);">Regístrate</button>
+        </div>
       </div>
     </header>
 
-    <!-- Hero métricas -->
+    <!-- Hero métricas (estilo actual) -->
     <div class="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-6 text-white">
-      <div class="text-xs uppercase tracking-widest text-emerald-400 mb-2 font-bold">FIAT — INTELIGENCIA LEGISLATIVA</div>
+      <div class="flex items-center justify-between mb-2">
+        <div class="text-[10px] uppercase tracking-widest text-emerald-400 font-bold">FIAT — INTELIGENCIA LEGISLATIVA</div>
+        <div class="text-[10px] text-gray-400 font-mono">Actualizado hace 14 min</div>
+      </div>
       <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4">
-        <div><div class="text-3xl font-bold font-mono">682</div><div class="text-[11px] text-gray-400 uppercase tracking-wider">Legisladores</div></div>
-        <div><div class="text-3xl font-bold font-mono">16,352</div><div class="text-[11px] text-gray-400 uppercase tracking-wider">Instrumentos</div></div>
-        <div><div class="text-3xl font-bold font-mono">66,052</div><div class="text-[11px] text-gray-400 uppercase tracking-wider">Notas medios</div></div>
-        <div><div class="text-3xl font-bold font-mono">53</div><div class="text-[11px] text-gray-400 uppercase tracking-wider">Comisiones</div></div>
-        <div><div class="text-3xl font-bold font-mono text-emerald-400">87%</div><div class="text-[11px] text-gray-400 uppercase tracking-wider">Precisión</div></div>
+        <div><div class="text-3xl font-bold font-mono">682</div><div class="text-[10px] text-gray-400 uppercase tracking-wider">Legisladores</div></div>
+        <div><div class="text-3xl font-bold font-mono">16,352</div><div class="text-[10px] text-gray-400 uppercase tracking-wider">Instrumentos</div></div>
+        <div><div class="text-3xl font-bold font-mono">66,052</div><div class="text-[10px] text-gray-400 uppercase tracking-wider">Notas medios</div></div>
+        <div><div class="text-3xl font-bold font-mono">53</div><div class="text-[10px] text-gray-400 uppercase tracking-wider">Comisiones</div></div>
+        <div><div class="text-3xl font-bold font-mono text-emerald-400">87%</div><div class="text-[10px] text-gray-400 uppercase tracking-wider">Precisión</div></div>
       </div>
     </div>
 
-    <!-- Mañanera + tweets -->
+    <!-- Top 3 categorías (estilo actual con score_total real) -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <div class="glass rounded-xl p-4 lg:col-span-2">
-        <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">📺 MAÑANERA</div>
-        <div class="text-sm font-semibold text-gray-800">"El paquete económico 2026 fortalece programas sociales sin nuevos impuestos"</div>
-        <div class="text-xs text-gray-500 mt-1">Hoy · 7:20 AM · Claudia Sheinbaum</div>
-      </div>
-      <div class="glass rounded-xl p-4">
-        <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">🐦 @Fiat_MX</div>
-        <div class="text-xs text-gray-700">Reforma electoral entra a comisiones esta semana. Score: 87 (alta urgencia)</div>
-      </div>
-    </div>
-
-    <!-- Top 3 categorías hero -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="bg-gradient-to-br from-rose-700 to-red-900 rounded-2xl p-6 text-white shadow-lg">
-        <div class="text-[10px] uppercase tracking-widest opacity-80 font-bold">#1 · CRÍTICO</div>
-        <div class="text-xl font-bold mt-2">Seguridad y justicia</div>
-        <div class="text-5xl font-black font-mono mt-3">87</div>
-        <div class="text-xs opacity-80 mt-2">+12 vs semana pasada</div>
-      </div>
-      <div class="bg-gradient-to-br from-amber-600 to-orange-700 rounded-2xl p-6 text-white shadow-lg">
-        <div class="text-[10px] uppercase tracking-widest opacity-80 font-bold">#2 · ALTO</div>
-        <div class="text-xl font-bold mt-2">Educación</div>
-        <div class="text-5xl font-black font-mono mt-3">71</div>
-        <div class="text-xs opacity-80 mt-2">+5 vs semana pasada</div>
-      </div>
-      <div class="bg-gradient-to-br from-emerald-700 to-green-900 rounded-2xl p-6 text-white shadow-lg">
-        <div class="text-[10px] uppercase tracking-widest opacity-80 font-bold">#3 · MEDIO</div>
-        <div class="text-xl font-bold mt-2">Economía y hacienda</div>
-        <div class="text-5xl font-black font-mono mt-3">65</div>
-        <div class="text-xs opacity-80 mt-2">-2 vs semana pasada</div>
+      <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="rounded-2xl p-5 text-white shadow-lg" style="background: linear-gradient(135deg, #2e7d32 0%, #1f5f24 100%);">
+          <div class="text-[10px] uppercase tracking-widest opacity-80 font-semibold">#1</div>
+          <div class="text-base font-bold mt-1">Seguridad y Justicia</div>
+          <div class="text-5xl font-black font-mono mt-2">75</div>
+          <div class="text-[10px] opacity-80 mt-2 font-mono">Score total</div>
+        </div>
+        <div class="rounded-2xl p-5 text-white shadow-lg" style="background: linear-gradient(135deg, #2e7d32 0%, #1f5f24 100%);">
+          <div class="text-[10px] uppercase tracking-widest opacity-80 font-semibold">#2</div>
+          <div class="text-base font-bold mt-1">Relaciones Exteriores</div>
+          <div class="text-5xl font-black font-mono mt-2">74</div>
+          <div class="text-[10px] opacity-80 mt-2 font-mono">Score total</div>
+        </div>
+        <div class="rounded-2xl p-5 text-white shadow-lg" style="background: linear-gradient(135deg, #2e7d32 0%, #1f5f24 100%);">
+          <div class="text-[10px] uppercase tracking-widest opacity-80 font-semibold">#3</div>
+          <div class="text-base font-bold mt-1">Infraestructura</div>
+          <div class="text-5xl font-black font-mono mt-2">73</div>
+          <div class="text-[10px] opacity-80 mt-2 font-mono">Score total</div>
+        </div>
       </div>
     </div>
 
-    <!-- Historial de scores (chart fake) -->
+    <!-- Tendencia de scores (chart) -->
     <div class="glass rounded-xl p-5">
       <div class="flex items-center justify-between mb-4">
         <div>
           <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Tendencia de scores</div>
           <div class="text-sm font-semibold text-gray-800 mt-0.5">Últimos 30 días · Top 5 categorías</div>
         </div>
-        <div class="flex gap-2">
-          <span class="flex items-center gap-1 text-[10px]"><span class="w-2 h-2 rounded-full bg-rose-600"></span>Seguridad</span>
-          <span class="flex items-center gap-1 text-[10px]"><span class="w-2 h-2 rounded-full bg-amber-600"></span>Educación</span>
-          <span class="flex items-center gap-1 text-[10px]"><span class="w-2 h-2 rounded-full bg-emerald-600"></span>Economía</span>
+        <div class="flex gap-3 text-[10px]">
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full" style="background:#2e7d32"></span><span class="text-gray-600">Seguridad</span></span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full" style="background:#1a365d"></span><span class="text-gray-600">Relaciones</span></span>
+          <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full" style="background:#c6972b"></span><span class="text-gray-600">Infraestructura</span></span>
         </div>
       </div>
-      <!-- SVG chart fake -->
       <svg viewBox="0 0 700 200" class="w-full h-48">
         <defs>
-          <linearGradient id="grad-rose" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#e11d48" stop-opacity="0.3"/>
-            <stop offset="100%" stop-color="#e11d48" stop-opacity="0"/>
-          </linearGradient>
+          <linearGradient id="gv" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2e7d32" stop-opacity="0.18"/><stop offset="100%" stop-color="#2e7d32" stop-opacity="0"/></linearGradient>
         </defs>
-        <path d="M 0 120 L 60 110 L 120 100 L 180 90 L 240 95 L 300 80 L 360 70 L 420 85 L 480 60 L 540 55 L 600 45 L 700 40 L 700 200 L 0 200 Z" fill="url(#grad-rose)"/>
-        <polyline fill="none" stroke="#e11d48" stroke-width="2" points="0,120 60,110 120,100 180,90 240,95 300,80 360,70 420,85 480,60 540,55 600,45 700,40"/>
-        <polyline fill="none" stroke="#d97706" stroke-width="2" points="0,140 60,135 120,130 180,140 240,125 300,120 360,115 420,110 480,100 540,95 600,90 700,85"/>
-        <polyline fill="none" stroke="#059669" stroke-width="2" points="0,160 60,155 120,150 180,155 240,160 300,165 360,150 420,140 480,135 540,138 600,135 700,130"/>
-        <text x="0" y="195" font-size="10" fill="#9ca3af">26 mar</text>
-        <text x="350" y="195" font-size="10" fill="#9ca3af">10 abr</text>
-        <text x="660" y="195" font-size="10" fill="#9ca3af">26 abr</text>
+        <path d="M 0 130 L 60 125 L 120 110 L 180 100 L 240 95 L 300 80 L 360 75 L 420 70 L 480 60 L 540 58 L 600 55 L 700 50 L 700 200 L 0 200 Z" fill="url(#gv)"/>
+        <polyline fill="none" stroke="#2e7d32" stroke-width="2" points="0,130 60,125 120,110 180,100 240,95 300,80 360,75 420,70 480,60 540,58 600,55 700,50"/>
+        <polyline fill="none" stroke="#1a365d" stroke-width="2" points="0,150 60,148 120,145 180,140 240,135 300,128 360,120 420,115 480,108 540,100 600,95 700,90"/>
+        <polyline fill="none" stroke="#c6972b" stroke-width="2" points="0,165 60,160 120,158 180,155 240,152 300,148 360,142 420,138 480,135 540,132 600,128 700,125"/>
+        <text x="0" y="195" font-size="10" fill="#9ca3af" font-family="JetBrains Mono">26 mar</text>
+        <text x="350" y="195" font-size="10" fill="#9ca3af" font-family="JetBrains Mono">10 abr</text>
+        <text x="660" y="195" font-size="10" fill="#9ca3af" font-family="JetBrains Mono">26 abr</text>
       </svg>
     </div>
 
-    <!-- ════════ INICIO PAYWALL ════════ -->
-    <div class="relative mt-6">
-      <!-- Contenido difuminado (fake del semáforo grid) -->
-      <div class="space-y-4 opacity-60">
-        <!-- Ordenar por... -->
+    <!-- ═════ PAYWALL ═════ -->
+    <div class="relative mt-2">
+      <!-- Contenido difuminado real -->
+      <div class="space-y-4 opacity-50">
         <div class="flex items-center gap-3 text-xs">
-          <span class="text-gray-500 uppercase tracking-wider font-bold">Ordenar por</span>
-          <button class="px-3 py-1.5 bg-acento text-white rounded-full font-semibold">Score</button>
+          <span class="text-gray-500 uppercase tracking-wider font-semibold">Ordenar por</span>
+          <button class="px-3 py-1.5 rounded-full text-white font-semibold" style="background:#1a365d">Score</button>
           <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-gray-600">Volumen</button>
           <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-gray-600">Aprobación</button>
         </div>
-        <!-- Cards del semáforo (3 visibles parcial) -->
-        <div class="grid grid-cols-3 gap-4">
-          <div class="glass rounded-xl p-4">
-            <div class="text-xs text-gray-500 uppercase tracking-wider">Salud</div>
-            <div class="text-3xl font-bold font-mono mt-2 text-rose-700">79</div>
-            <div class="h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden"><div class="h-full bg-rose-600" style="width:79%"></div></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <!-- Card semáforo (mismo estilo que el real) -->
+          <div class="glass border border-semaforo-verde/40 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full" style="background:#2e7d32"></div>
+                <h3 class="font-semibold text-sm text-gray-800">Salud</h3>
+              </div>
+              <div class="w-14 h-14 flex items-center justify-center"><span class="text-2xl font-bold font-mono">68</span></div>
+            </div>
+            <div class="grid grid-cols-5 gap-2 text-xs text-gray-500">
+              <div><div class="h-1 bg-gray-200 rounded-full"><div class="h-full rounded-full" style="width:72%; background:#2e7d32"></div></div><div class="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">Media</div></div>
+              <div><div class="h-1 bg-gray-200 rounded-full"><div class="h-full rounded-full" style="width:48%; background:#2e7d32"></div></div><div class="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">Trends</div></div>
+              <div><div class="h-1 bg-gray-200 rounded-full"><div class="h-full rounded-full" style="width:81%; background:#2e7d32"></div></div><div class="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">Congreso</div></div>
+              <div><div class="h-1 bg-gray-200 rounded-full"><div class="h-full rounded-full" style="width:30%; background:#c62828"></div></div><div class="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">CSP</div></div>
+              <div><div class="h-1 bg-gray-200 rounded-full"><div class="h-full rounded-full" style="width:65%; background:#2e7d32"></div></div><div class="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">Urgencia</div></div>
+            </div>
           </div>
-          <div class="glass rounded-xl p-4">
-            <div class="text-xs text-gray-500 uppercase tracking-wider">Trabajo</div>
-            <div class="text-3xl font-bold font-mono mt-2 text-amber-700">58</div>
-            <div class="h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden"><div class="h-full bg-amber-600" style="width:58%"></div></div>
+          <div class="glass border border-semaforo-amarillo/40 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full" style="background:#c6972b"></div>
+                <h3 class="font-semibold text-sm text-gray-800">Trabajo</h3>
+              </div>
+              <div class="w-14 h-14 flex items-center justify-center"><span class="text-2xl font-bold font-mono">58</span></div>
+            </div>
           </div>
-          <div class="glass rounded-xl p-4">
-            <div class="text-xs text-gray-500 uppercase tracking-wider">Energía</div>
-            <div class="text-3xl font-bold font-mono mt-2 text-emerald-700">42</div>
-            <div class="h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden"><div class="h-full bg-emerald-600" style="width:42%"></div></div>
+          <div class="glass border border-semaforo-verde/40 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <div class="w-3 h-3 rounded-full" style="background:#2e7d32"></div>
+                <h3 class="font-semibold text-sm text-gray-800">Energía</h3>
+              </div>
+              <div class="w-14 h-14 flex items-center justify-center"><span class="text-2xl font-bold font-mono">42</span></div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Overlay de paywall con degradado -->
-      <div class="absolute inset-0 paywall-fade flex items-start justify-center pt-32"></div>
+      <!-- Overlay degradado -->
+      <div class="absolute inset-0 paywall-fade pointer-events-none"></div>
     </div>
 
-    <!-- Bloque de paywall premium -->
-    <div class="relative -mt-32 z-10">
-      <div class="bg-white rounded-3xl shadow-2xl border border-purple-100 p-8 md:p-12 max-w-3xl mx-auto">
-        <div class="flex items-center justify-center gap-2 mb-3">
-          <span class="text-2xl">✦</span>
-          <span class="text-sm font-bold tracking-widest uppercase bg-gradient-to-r from-premium-700 to-premium-gold bg-clip-text text-transparent">FIAT Premium</span>
-        </div>
-        <h2 class="text-2xl md:text-3xl font-black text-center text-gray-900 mb-3">
-          Acceso completo a la inteligencia legislativa más avanzada de México
-        </h2>
-        <p class="text-center text-gray-600 max-w-xl mx-auto mb-8 text-sm">
-          Sigue lo que importa, antes que importe. Para periodistas, asesores, lobbyists y consultoras políticas.
-        </p>
-
-        <!-- Features grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-          <div class="flex items-start gap-3">
-            <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-lg">🤖</div>
-            <div>
-              <div class="text-sm font-bold text-gray-900">Terminal IA con citas</div>
-              <div class="text-xs text-gray-500 leading-relaxed">Pregunta cualquier cosa en español sobre el Congreso. Respuesta con fuentes clicables.</div>
-            </div>
-          </div>
-          <div class="flex items-start gap-3">
-            <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-lg">👥</div>
-            <div>
-              <div class="text-sm font-bold text-gray-900">Monitoreo personal</div>
-              <div class="text-xs text-gray-500 leading-relaxed">Hasta 20 legisladores. Alertas de su actividad en tiempo real.</div>
-            </div>
-          </div>
-          <div class="flex items-start gap-3">
-            <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-lg">🔔</div>
-            <div>
-              <div class="text-sm font-bold text-gray-900">Alertas configurables</div>
-              <div class="text-xs text-gray-500 leading-relaxed">Email cuando un tema escala o un legislador presenta sobre lo que vigilas.</div>
-            </div>
-          </div>
-          <div class="flex items-start gap-3">
-            <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-lg">📊</div>
-            <div>
-              <div class="text-sm font-bold text-gray-900">Stats cruzadas</div>
-              <div class="text-xs text-gray-500 leading-relaxed">"Cuál es la constante de Moreira?" "Quién responde a incendios forestales?"</div>
-            </div>
-          </div>
-          <div class="flex items-start gap-3">
-            <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-lg">⚙️</div>
-            <div>
-              <div class="text-sm font-bold text-gray-900">Console personalizable</div>
-              <div class="text-xs text-gray-500 leading-relaxed">Tu Bloomberg Terminal del Congreso. Widgets que armas tú.</div>
-            </div>
-          </div>
-          <div class="flex items-start gap-3">
-            <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-lg">📥</div>
-            <div>
-              <div class="text-sm font-bold text-gray-900">Exports PDF & Excel</div>
-              <div class="text-xs text-gray-500 leading-relaxed">Reportes listos para imprimir. Trayectorias, comparativas, cobertura.</div>
-            </div>
-          </div>
+    <!-- Bloque paywall (sobre el degradado) -->
+    <div class="relative -mt-24 z-10">
+      <div class="bg-white rounded-2xl border border-gray-200 p-8 md:p-10 max-w-3xl mx-auto" style="box-shadow: 0 20px 60px rgba(0,0,0,0.08), 0 4px 12px rgba(0,0,0,0.04);">
+        <div class="text-center">
+          <div class="inline-block badge-premium mb-4">FIAT PREMIUM</div>
+          <h2 class="text-2xl md:text-3xl font-black text-gray-900 leading-tight">
+            Acceso completo a la inteligencia<br>legislativa más avanzada de México
+          </h2>
+          <p class="text-sm text-gray-600 mt-3 max-w-xl mx-auto">
+            Para periodistas, asesores parlamentarios, lobbyists y consultoras políticas que necesitan ver lo que importa, antes que importe.
+          </p>
         </div>
 
-        <!-- Pricing cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div class="border-2 border-gray-200 rounded-2xl p-6 hover:border-purple-300 transition cursor-pointer">
-            <div class="text-xs uppercase tracking-widest text-gray-500 font-bold mb-2">MENSUAL</div>
-            <div class="flex items-baseline gap-1">
-              <span class="text-4xl font-black text-gray-900">$699</span>
-              <span class="text-sm text-gray-500">MXN/mes</span>
+        <!-- Features -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mt-8 text-sm">
+          <div class="flex items-start gap-3">
+            <div class="w-1 h-12 rounded-full" style="background:#2e7d32"></div>
+            <div>
+              <div class="font-bold text-gray-900">Terminal IA con citas</div>
+              <div class="text-xs text-gray-500 mt-0.5">Pregunta cualquier cosa. Respuesta con fuentes clicables.</div>
             </div>
-            <div class="text-xs text-gray-500 mt-1">IVA incluido · Cancela cuando quieras</div>
-            <button onclick="setVista('registro')" class="w-full mt-5 bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-xl text-sm transition">Empezar trial 48h</button>
           </div>
-          <div class="border-2 border-purple-500 rounded-2xl p-6 bg-gradient-to-br from-purple-50 to-white relative cursor-pointer">
-            <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-premium-600 to-premium-gold text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-md">⭐ Recomendado</div>
-            <div class="text-xs uppercase tracking-widest text-purple-700 font-bold mb-2">ANUAL</div>
-            <div class="flex items-baseline gap-1">
-              <span class="text-4xl font-black text-gray-900">$7,699</span>
-              <span class="text-sm text-gray-500">MXN/año</span>
+          <div class="flex items-start gap-3">
+            <div class="w-1 h-12 rounded-full" style="background:#2e7d32"></div>
+            <div>
+              <div class="font-bold text-gray-900">Monitoreo personal</div>
+              <div class="text-xs text-gray-500 mt-0.5">Hasta 20 legisladores con alertas en tiempo real.</div>
             </div>
-            <div class="text-xs text-purple-700 font-semibold mt-1">1 mes gratis · Ahorra $689</div>
-            <button onclick="setVista('registro')" class="w-full mt-5 bg-gradient-to-r from-premium-600 to-premium-700 hover:from-premium-700 hover:to-premium-700 text-white font-bold py-3 rounded-xl text-sm transition shadow-lg">Empezar trial 48h</button>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-1 h-12 rounded-full" style="background:#2e7d32"></div>
+            <div>
+              <div class="font-bold text-gray-900">Alertas configurables</div>
+              <div class="text-xs text-gray-500 mt-0.5">Email cuando un tema escala o un legislador se manifiesta.</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-1 h-12 rounded-full" style="background:#2e7d32"></div>
+            <div>
+              <div class="font-bold text-gray-900">Stats cruzadas</div>
+              <div class="text-xs text-gray-500 mt-0.5">Constantes históricas, patrones de respuesta, comparativas.</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-1 h-12 rounded-full" style="background:#2e7d32"></div>
+            <div>
+              <div class="font-bold text-gray-900">Console personalizable</div>
+              <div class="text-xs text-gray-500 mt-0.5">Tu dashboard. Tus temas, legisladores, estados, alertas.</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-3">
+            <div class="w-1 h-12 rounded-full" style="background:#2e7d32"></div>
+            <div>
+              <div class="font-bold text-gray-900">Exports PDF y Excel</div>
+              <div class="text-xs text-gray-500 mt-0.5">Reportes listos para imprimir o enviar a clientes.</div>
+            </div>
           </div>
         </div>
 
-        <div class="text-center text-xs text-gray-500">
+        <!-- Pricing -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-8">
+          <div class="border border-gray-200 rounded-xl p-5">
+            <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Mensual</div>
+            <div class="flex items-baseline gap-1 mt-2">
+              <span class="text-3xl font-black text-gray-900">$699</span>
+              <span class="text-xs text-gray-500">MXN/mes</span>
+            </div>
+            <div class="text-[11px] text-gray-500 mt-1">IVA incluido · Cancela cuando quieras</div>
+            <button onclick="setVista('registro')" class="w-full mt-4 text-white font-semibold py-2.5 rounded-full text-xs transition" style="background:#1a365d">Empezar prueba 48h</button>
+          </div>
+          <div class="border-2 rounded-xl p-5 relative" style="border-color:#2e7d32">
+            <div class="absolute -top-2.5 left-1/2 -translate-x-1/2 text-white text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-widest" style="background:#2e7d32">Recomendado</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold" style="color:#2e7d32">Anual</div>
+            <div class="flex items-baseline gap-1 mt-2">
+              <span class="text-3xl font-black text-gray-900">$7,699</span>
+              <span class="text-xs text-gray-500">MXN/año</span>
+            </div>
+            <div class="text-[11px] font-semibold mt-1" style="color:#2e7d32">1 mes gratis · Ahorra $689</div>
+            <button onclick="setVista('registro')" class="w-full mt-4 text-white font-semibold py-2.5 rounded-full text-xs transition" style="background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);">Empezar prueba 48h</button>
+          </div>
+        </div>
+
+        <div class="text-center text-[11px] text-gray-500 mt-5">
           48 horas de prueba gratis · Sin tarjeta para empezar · Cancela cuando quieras
         </div>
 
         <hr class="my-6 border-gray-100">
-
-        <div class="text-center">
-          <div class="text-xs text-gray-600">
-            ¿Trabajas en gobierno, academia o medios?
-            <a href="#" class="text-purple-700 font-semibold underline ml-1">Tarifa institucional disponible</a>
-          </div>
+        <div class="text-center text-[12px] text-gray-600">
+          ¿Trabajas en gobierno, academia o medios?
+          <a href="#" class="font-semibold underline ml-1" style="color:#1a365d">Tarifa institucional disponible</a>
         </div>
       </div>
     </div>
@@ -345,199 +363,190 @@
 </div>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- VISTA 2: MODAL DE REGISTRO                              -->
+<!-- VISTA 2: REGISTRO                                       -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <div id="vista-registro" class="vista">
   <div class="min-h-screen flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 border border-gray-100">
+    <div class="bg-white rounded-2xl max-w-md w-full p-8 border border-gray-200" style="box-shadow: 0 20px 60px rgba(0,0,0,0.08);">
       <div class="flex items-center justify-between mb-1">
-        <div class="text-2xl font-black text-acento">FIAT</div>
-        <button onclick="setVista('publica')" class="text-gray-400 hover:text-gray-700 text-xl">✕</button>
+        <img src="fiat-logo-transparent.png" alt="FIAT" style="height: 28px; max-width: 90px;">
+        <button onclick="setVista('publica')" class="text-gray-400 hover:text-gray-700 text-xl leading-none">×</button>
       </div>
-      <div class="flex items-center gap-2 mb-6">
-        <span class="text-sm font-bold tracking-widest uppercase bg-gradient-to-r from-premium-700 to-premium-gold bg-clip-text text-transparent">✦ Premium</span>
-        <span class="text-xs text-gray-500">— 48h prueba gratis</span>
-      </div>
+      <div class="inline-block badge-premium mt-3 mb-1">PREMIUM · 48h DE PRUEBA</div>
 
-      <h2 class="text-2xl font-black text-gray-900 mb-1">Crea tu cuenta</h2>
-      <p class="text-sm text-gray-500 mb-6">Empieza tu prueba ahora — sin tarjeta requerida</p>
+      <h2 class="text-2xl font-black text-gray-900 mt-4">Crea tu cuenta</h2>
+      <p class="text-sm text-gray-500 mt-1">Empieza tu prueba — sin tarjeta requerida</p>
 
-      <button class="w-full flex items-center justify-center gap-3 border border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-800 font-semibold py-3 rounded-xl transition">
-        <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      <button class="w-full mt-6 flex items-center justify-center gap-3 border border-gray-300 hover:border-gray-400 hover:bg-gray-50 text-gray-800 font-semibold py-3 rounded-full transition text-sm">
+        <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
         Continuar con Google
       </button>
 
       <div class="flex items-center gap-3 my-5">
         <div class="flex-1 h-px bg-gray-200"></div>
-        <span class="text-[10px] uppercase tracking-widest text-gray-400 font-bold">o con email</span>
+        <span class="text-[10px] uppercase tracking-widest text-gray-400 font-semibold">o con email</span>
         <div class="flex-1 h-px bg-gray-200"></div>
       </div>
 
       <div class="space-y-3">
         <div>
-          <label class="text-xs font-bold uppercase tracking-wider text-gray-500">Email</label>
-          <input type="email" value="rrleon@diputados.gob.mx" class="w-full mt-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-premium-600">
+          <label class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Email</label>
+          <input type="email" value="rrleon@diputados.gob.mx" class="w-full mt-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white transition">
         </div>
 
-        <!-- Banner detección institucional -->
-        <div class="bg-gradient-to-r from-purple-50 to-amber-50 border border-purple-200 rounded-lg p-3">
-          <div class="flex items-start gap-2">
-            <span class="text-lg">🏛️</span>
-            <div class="flex-1">
-              <div class="text-xs font-bold text-purple-900">Correo institucional detectado</div>
-              <div class="text-[11px] text-purple-700 mt-0.5">Cámara de Diputados aplica para tarifa institucional <strong>$349/mes</strong> (50% off). Te enviamos info por email tras el registro.</div>
-            </div>
-          </div>
+        <!-- Banner detección institucional (institucional, no infantil) -->
+        <div class="border-l-2 rounded-r-lg p-3" style="background:#f8faf8; border-color:#2e7d32">
+          <div class="text-[10px] uppercase tracking-widest font-bold" style="color:#2e7d32">CORREO INSTITUCIONAL DETECTADO</div>
+          <div class="text-xs text-gray-700 mt-1.5">Cámara de Diputados aplica para tarifa institucional <strong>$349 MXN/mes</strong> (50% descuento). Te enviamos información tras el registro.</div>
         </div>
 
         <div>
-          <label class="text-xs font-bold uppercase tracking-wider text-gray-500">Nombre completo</label>
-          <input type="text" placeholder="Rubén León" class="w-full mt-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-premium-600">
+          <label class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Nombre completo</label>
+          <input type="text" placeholder="Rubén León" class="w-full mt-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white transition">
         </div>
         <div>
-          <label class="text-xs font-bold uppercase tracking-wider text-gray-500">Organización (opcional)</label>
-          <input type="text" placeholder="Cámara de Diputados" class="w-full mt-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-premium-600">
+          <label class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Organización (opcional)</label>
+          <input type="text" placeholder="Cámara de Diputados" class="w-full mt-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white transition">
         </div>
         <div>
-          <label class="text-xs font-bold uppercase tracking-wider text-gray-500">Contraseña</label>
-          <input type="password" class="w-full mt-1 px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-premium-600">
+          <label class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Contraseña</label>
+          <input type="password" class="w-full mt-1 px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white transition">
         </div>
       </div>
 
-      <button onclick="setVista('pricing')" class="w-full mt-5 bg-gradient-to-r from-premium-600 to-premium-700 text-white font-bold py-3 rounded-xl text-sm transition shadow-lg hover:shadow-xl">
+      <button onclick="setVista('pricing')" class="w-full mt-5 text-white font-semibold py-3 rounded-full text-sm transition shadow-sm" style="background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);">
         Crear cuenta y empezar prueba
       </button>
 
-      <p class="text-[10px] text-gray-500 mt-4 text-center">
-        Al continuar aceptas los <a href="#" class="underline">Términos</a> y la <a href="#" class="underline">Política de privacidad</a>.
+      <p class="text-[10px] text-gray-400 mt-4 text-center leading-relaxed">
+        Al continuar aceptas los <a href="#" class="underline hover:text-gray-600">Términos</a> y la <a href="#" class="underline hover:text-gray-600">Política de privacidad</a>.
       </p>
       <p class="text-[10px] text-gray-500 mt-2 text-center">
-        ¿Ya tienes cuenta? <a href="#" class="text-purple-700 font-semibold">Inicia sesión</a>
+        ¿Ya tienes cuenta? <a href="#" class="font-semibold" style="color:#1a365d">Inicia sesión</a>
       </p>
     </div>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- VISTA 3: PÁGINA PRICING (más detallada)                -->
+<!-- VISTA 3: PRICING                                        -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <div id="vista-pricing" class="vista">
   <div class="max-w-6xl mx-auto px-4 py-12">
-    <div class="text-center mb-12">
-      <div class="text-sm font-bold tracking-widest uppercase bg-gradient-to-r from-premium-700 to-premium-gold bg-clip-text text-transparent mb-2">✦ FIAT Premium</div>
-      <h1 class="text-4xl md:text-5xl font-black text-gray-900 mb-3">El Congreso de México, descifrado</h1>
-      <p class="text-lg text-gray-600 max-w-2xl mx-auto">Una herramienta de inteligencia legislativa para profesionales que necesitan ver lo que importa, antes que importe.</p>
+    <div class="text-center mb-10">
+      <div class="inline-block badge-premium mb-4">FIAT PREMIUM</div>
+      <h1 class="text-4xl md:text-5xl font-black text-gray-900 leading-tight">El Congreso de México, descifrado</h1>
+      <p class="text-base text-gray-600 max-w-2xl mx-auto mt-3">Una herramienta de inteligencia legislativa para profesionales que necesitan ver lo que importa, antes que importe.</p>
     </div>
 
-    <!-- Pricing tiers -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
       <!-- Free -->
       <div class="border border-gray-200 rounded-2xl p-6 bg-white">
-        <div class="text-xs uppercase tracking-widest text-gray-500 font-bold mb-2">GRATIS</div>
-        <div class="text-3xl font-black text-gray-900 mb-1">$0</div>
-        <div class="text-xs text-gray-500 mb-6">Uso público sin registro</div>
-        <ul class="space-y-2 text-xs text-gray-700 mb-6">
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span>Top 3 categorías con scores</li>
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span>Tendencia de scores 30 días</li>
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span>Mañanera + Tweets FIAT</li>
-          <li class="flex gap-2 text-gray-300 line-through"><span>✗</span>Semáforo completo (19 categorías)</li>
-          <li class="flex gap-2 text-gray-300 line-through"><span>✗</span>Radar de legisladores</li>
-          <li class="flex gap-2 text-gray-300 line-through"><span>✗</span>Comisiones · Mapa</li>
-          <li class="flex gap-2 text-gray-300 line-through"><span>✗</span>Terminal IA</li>
+        <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">GRATIS</div>
+        <div class="flex items-baseline gap-1">
+          <span class="text-3xl font-black text-gray-900">$0</span>
+        </div>
+        <div class="text-[11px] text-gray-500 mt-1 mb-5">Uso público sin registro</div>
+        <ul class="space-y-2 text-xs text-gray-700">
+          <li class="flex gap-2"><span style="color:#2e7d32">✓</span>Top 3 categorías</li>
+          <li class="flex gap-2"><span style="color:#2e7d32">✓</span>Tendencia 30 días</li>
+          <li class="flex gap-2"><span style="color:#2e7d32">✓</span>Mañanera + Tweets FIAT</li>
+          <li class="flex gap-2 text-gray-300"><span>−</span>Semáforo completo (19 categorías)</li>
+          <li class="flex gap-2 text-gray-300"><span>−</span>Radar de legisladores</li>
+          <li class="flex gap-2 text-gray-300"><span>−</span>Comisiones · Mapa</li>
+          <li class="flex gap-2 text-gray-300"><span>−</span>Terminal IA</li>
+          <li class="flex gap-2 text-gray-300"><span>−</span>Console personalizada</li>
+          <li class="flex gap-2 text-gray-300"><span>−</span>Alertas y exports</li>
         </ul>
-        <button class="w-full border-2 border-gray-300 text-gray-700 font-bold py-3 rounded-xl text-sm">Estás aquí</button>
+        <button class="w-full mt-6 border border-gray-300 text-gray-700 font-semibold py-2.5 rounded-full text-xs">Estás aquí</button>
       </div>
 
       <!-- Mensual -->
       <div class="border-2 border-gray-200 rounded-2xl p-6 bg-white">
-        <div class="text-xs uppercase tracking-widest text-gray-500 font-bold mb-2">MENSUAL</div>
-        <div class="flex items-baseline gap-1 mb-1">
+        <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-2">MENSUAL</div>
+        <div class="flex items-baseline gap-1">
           <span class="text-3xl font-black text-gray-900">$699</span>
           <span class="text-xs text-gray-500">MXN/mes</span>
         </div>
-        <div class="text-xs text-gray-500 mb-6">IVA incluido · Cancela cuando quieras</div>
-        <ul class="space-y-2 text-xs text-gray-700 mb-6">
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span>Todo lo de gratis</li>
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span>Acceso completo al dashboard</li>
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span>Radar de 682 legisladores</li>
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span>Terminal IA · 200 queries/mes</li>
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span>Hasta 20 legisladores en monitoreo</li>
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span>5 alertas configurables</li>
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span>Console personalizable</li>
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span>Exports PDF & Excel</li>
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span>Trayectoria histórica reelectos</li>
+        <div class="text-[11px] text-gray-500 mt-1 mb-5">IVA incluido · Cancela cuando quieras</div>
+        <ul class="space-y-2 text-xs text-gray-700">
+          <li class="flex gap-2"><span style="color:#2e7d32">✓</span>Todo lo de Gratis</li>
+          <li class="flex gap-2"><span style="color:#2e7d32">✓</span>Acceso completo al dashboard</li>
+          <li class="flex gap-2"><span style="color:#2e7d32">✓</span>Radar de 682 legisladores</li>
+          <li class="flex gap-2"><span style="color:#2e7d32">✓</span>Terminal IA · 200 queries/mes</li>
+          <li class="flex gap-2"><span style="color:#2e7d32">✓</span>Hasta 20 legisladores en monitoreo</li>
+          <li class="flex gap-2"><span style="color:#2e7d32">✓</span>5 alertas configurables</li>
+          <li class="flex gap-2"><span style="color:#2e7d32">✓</span>Console personalizable</li>
+          <li class="flex gap-2"><span style="color:#2e7d32">✓</span>Exports PDF y Excel</li>
+          <li class="flex gap-2"><span style="color:#2e7d32">✓</span>Trayectoria histórica reelectos</li>
         </ul>
-        <button onclick="setVista('registro')" class="w-full bg-gray-900 hover:bg-black text-white font-bold py-3 rounded-xl text-sm transition">Empezar trial 48h</button>
+        <button onclick="setVista('registro')" class="w-full mt-6 text-white font-semibold py-2.5 rounded-full text-xs" style="background:#1a365d">Empezar prueba 48h</button>
       </div>
 
       <!-- Anual -->
-      <div class="border-2 border-purple-500 rounded-2xl p-6 bg-gradient-to-br from-purple-50 to-white relative">
-        <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-premium-600 to-premium-gold text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-md">⭐ Recomendado</div>
-        <div class="text-xs uppercase tracking-widest text-purple-700 font-bold mb-2">ANUAL</div>
-        <div class="flex items-baseline gap-1 mb-1">
+      <div class="border-2 rounded-2xl p-6 relative" style="border-color:#2e7d32; background:#f8faf8">
+        <div class="absolute -top-2.5 left-1/2 -translate-x-1/2 text-white text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-widest" style="background:#2e7d32">Recomendado</div>
+        <div class="text-[10px] uppercase tracking-widest font-bold mb-2" style="color:#2e7d32">ANUAL</div>
+        <div class="flex items-baseline gap-1">
           <span class="text-3xl font-black text-gray-900">$7,699</span>
           <span class="text-xs text-gray-500">MXN/año</span>
         </div>
-        <div class="text-xs text-purple-700 font-semibold mb-6">1 mes gratis · Equivale a $641/mes</div>
-        <ul class="space-y-2 text-xs text-gray-700 mb-6">
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span>Todo lo del plan mensual</li>
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span><strong>1 mes gratis</strong> (ahorras $689)</li>
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span>Onboarding personalizado 30min</li>
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span>Soporte prioritario</li>
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span>Acceso anticipado a nuevos features</li>
+        <div class="text-[11px] font-semibold mt-1 mb-5" style="color:#2e7d32">1 mes gratis · Equivale a $641/mes</div>
+        <ul class="space-y-2 text-xs text-gray-700">
+          <li class="flex gap-2"><span style="color:#2e7d32">✓</span>Todo lo del plan Mensual</li>
+          <li class="flex gap-2"><span style="color:#2e7d32">✓</span><strong>1 mes gratis</strong> (ahorras $689)</li>
+          <li class="flex gap-2"><span style="color:#2e7d32">✓</span>Onboarding personalizado 30 min</li>
+          <li class="flex gap-2"><span style="color:#2e7d32">✓</span>Soporte prioritario</li>
+          <li class="flex gap-2"><span style="color:#2e7d32">✓</span>Acceso anticipado a nuevos features</li>
         </ul>
-        <button onclick="setVista('registro')" class="w-full bg-gradient-to-r from-premium-600 to-premium-700 text-white font-bold py-3 rounded-xl text-sm transition shadow-lg">Empezar trial 48h</button>
+        <button onclick="setVista('registro')" class="w-full mt-6 text-white font-semibold py-2.5 rounded-full text-xs" style="background: linear-gradient(135deg, #2e7d32 0%, #388e3c 100%);">Empezar prueba 48h</button>
       </div>
     </div>
 
     <!-- Tarifas institucionales -->
-    <div class="bg-gradient-to-r from-gray-50 to-purple-50 rounded-2xl p-8 border border-gray-200">
-      <div class="text-xs uppercase tracking-widest text-purple-700 font-bold mb-2">TARIFAS INSTITUCIONALES</div>
-      <h3 class="text-2xl font-black text-gray-900 mb-4">¿Trabajas en gobierno, academia o medios?</h3>
-      <p class="text-sm text-gray-600 mb-6">Tenemos tarifas reducidas para organizaciones del sector público, instituciones académicas, ONGs y medios de comunicación.</p>
+    <div class="rounded-2xl p-8 border border-gray-200" style="background:#f8faf8">
+      <div class="text-[10px] uppercase tracking-widest font-bold mb-2" style="color:#1a365d">TARIFAS INSTITUCIONALES</div>
+      <h3 class="text-2xl font-black text-gray-900 mb-3">¿Trabajas en gobierno, academia o medios?</h3>
+      <p class="text-sm text-gray-600 mb-6">Tarifas reducidas para organizaciones del sector público, academia, ONGs y medios de comunicación. Verificación manual del dominio.</p>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="bg-white rounded-xl p-4 border border-gray-100">
-          <div class="text-xs uppercase tracking-wider text-gray-500 font-bold">🏛️ Gobierno</div>
+          <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">GOBIERNO</div>
           <div class="text-2xl font-black text-gray-900 mt-1">$349</div>
-          <div class="text-[10px] text-gray-500">MXN/mes (50% off)</div>
-          <div class="text-[10px] text-gray-600 mt-2">@*.gob.mx</div>
+          <div class="text-[10px] text-gray-500">MXN/mes · 50% off</div>
+          <div class="text-[10px] text-gray-600 mt-2 font-mono">@*.gob.mx</div>
         </div>
         <div class="bg-white rounded-xl p-4 border border-gray-100">
-          <div class="text-xs uppercase tracking-wider text-gray-500 font-bold">🎓 Academia</div>
+          <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">ACADEMIA</div>
           <div class="text-2xl font-black text-gray-900 mt-1">$279</div>
-          <div class="text-[10px] text-gray-500">MXN/mes (60% off)</div>
-          <div class="text-[10px] text-gray-600 mt-2">@*.edu.mx · UNAM · ITAM · CIDE</div>
+          <div class="text-[10px] text-gray-500">MXN/mes · 60% off</div>
+          <div class="text-[10px] text-gray-600 mt-2 font-mono">@*.edu.mx · UNAM · ITAM · CIDE</div>
         </div>
         <div class="bg-white rounded-xl p-4 border border-gray-100">
-          <div class="text-xs uppercase tracking-wider text-gray-500 font-bold">📰 Medios</div>
+          <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">MEDIOS</div>
           <div class="text-2xl font-black text-gray-900 mt-1">$489</div>
-          <div class="text-[10px] text-gray-500">MXN/mes (30% off)</div>
+          <div class="text-[10px] text-gray-500">MXN/mes · 30% off</div>
           <div class="text-[10px] text-gray-600 mt-2">Top 30 medios MX verificados</div>
         </div>
         <div class="bg-white rounded-xl p-4 border border-gray-100">
-          <div class="text-xs uppercase tracking-wider text-gray-500 font-bold">🤝 ONG</div>
+          <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">ONG</div>
           <div class="text-2xl font-black text-gray-900 mt-1">$349</div>
-          <div class="text-[10px] text-gray-500">MXN/mes (50% off)</div>
+          <div class="text-[10px] text-gray-500">MXN/mes · 50% off</div>
           <div class="text-[10px] text-gray-600 mt-2">IMCO · Fundar · etc.</div>
         </div>
-      </div>
-      <div class="mt-6 text-xs text-gray-500">
-        <strong>Verificación manual</strong>: Detectamos tu correo automáticamente. Después de registrarte, te enviamos info por email para activar la tarifa institucional.
       </div>
     </div>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- VISTA 4: PREMIUM ACTIVO (dashboard completo)            -->
+<!-- VISTA 4: PREMIUM ACTIVO                                 -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <div id="vista-premium" class="vista">
   <div class="max-w-7xl mx-auto px-4 pt-4 pb-6 space-y-4">
-    <!-- Header con badge premium + hamburguesa -->
     <header class="sticky top-12 z-50 py-2">
-      <div class="nav-pill rounded-full px-3 py-2 flex items-center gap-2">
-        <div class="flex items-center gap-2">
-          <div class="text-2xl font-black text-acento">FIAT</div>
+      <div class="nav-pill rounded-2xl md:rounded-full px-3 py-2 flex items-center gap-2 flex-wrap md:flex-nowrap">
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <img src="fiat-logo-transparent.png" alt="FIAT" style="height: 32px; max-width: 100px;">
           <div class="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
             <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
             <span class="text-[10px] text-emerald-700 font-semibold">EN VIVO</span>
@@ -550,17 +559,15 @@
           <button class="nav-pill-tab">Mapa</button>
           <button class="nav-pill-tab">Comisiones</button>
           <button class="nav-pill-tab">Métricas</button>
-          <button onclick="setVista('console')" class="nav-pill-tab">⚙️ Console</button>
+          <button onclick="setVista('console')" class="nav-pill-tab">Console</button>
         </div>
-        <div class="flex-1"></div>
-        <input type="text" placeholder="Buscar..." class="w-36 pl-7 pr-2 py-1.5 text-xs border border-gray-200 rounded-full bg-gray-50">
-        <!-- Badge premium dorado/morado -->
-        <div class="flex items-center gap-1.5 premium-badge px-3 py-1.5 rounded-full font-bold text-[11px] shimmer-gold">
-          <span>✦</span>
-          <span>Premium</span>
+        <div class="hidden md:block flex-1"></div>
+        <div class="relative flex-shrink-0">
+          <input type="text" placeholder="Buscar..." class="w-28 md:w-36 pl-7 pr-2 py-1.5 text-xs border border-gray-200 rounded-full bg-gray-50">
+          <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
         </div>
-        <!-- Hamburguesa -->
-        <button onclick="setVista('drawer')" class="w-9 h-9 flex flex-col items-center justify-center gap-[3px] hover:bg-gray-100 rounded-full transition" title="Menú">
+        <div class="badge-premium flex-shrink-0">PREMIUM</div>
+        <button onclick="setVista('drawer')" class="w-9 h-9 flex flex-col items-center justify-center gap-[3px] hover:bg-gray-100 rounded-full transition flex-shrink-0" title="Menú">
           <span class="w-4 h-[1.5px] bg-gray-700 rounded"></span>
           <span class="w-4 h-[1.5px] bg-gray-700 rounded"></span>
           <span class="w-4 h-[1.5px] bg-gray-700 rounded"></span>
@@ -568,338 +575,314 @@
       </div>
     </header>
 
-    <!-- Hero métricas (igual al público) -->
+    <!-- Hero métricas -->
     <div class="bg-gradient-to-br from-gray-900 to-black rounded-2xl p-6 text-white">
       <div class="flex items-center justify-between mb-2">
-        <div class="text-xs uppercase tracking-widest text-emerald-400 font-bold">FIAT — INTELIGENCIA LEGISLATIVA</div>
-        <div class="text-xs text-gray-400">Actualizado hace 14 min</div>
+        <div class="text-[10px] uppercase tracking-widest text-emerald-400 font-bold">FIAT — INTELIGENCIA LEGISLATIVA</div>
+        <div class="text-[10px] text-gray-400 font-mono">Actualizado hace 14 min</div>
       </div>
       <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-4">
-        <div><div class="text-3xl font-bold font-mono">682</div><div class="text-[11px] text-gray-400 uppercase tracking-wider">Legisladores</div></div>
-        <div><div class="text-3xl font-bold font-mono">16,352</div><div class="text-[11px] text-gray-400 uppercase tracking-wider">Instrumentos</div></div>
-        <div><div class="text-3xl font-bold font-mono">66,052</div><div class="text-[11px] text-gray-400 uppercase tracking-wider">Notas medios</div></div>
-        <div><div class="text-3xl font-bold font-mono">53</div><div class="text-[11px] text-gray-400 uppercase tracking-wider">Comisiones</div></div>
-        <div><div class="text-3xl font-bold font-mono text-emerald-400">87%</div><div class="text-[11px] text-gray-400 uppercase tracking-wider">Precisión</div></div>
+        <div><div class="text-3xl font-bold font-mono">682</div><div class="text-[10px] text-gray-400 uppercase tracking-wider">Legisladores</div></div>
+        <div><div class="text-3xl font-bold font-mono">16,352</div><div class="text-[10px] text-gray-400 uppercase tracking-wider">Instrumentos</div></div>
+        <div><div class="text-3xl font-bold font-mono">66,052</div><div class="text-[10px] text-gray-400 uppercase tracking-wider">Notas medios</div></div>
+        <div><div class="text-3xl font-bold font-mono">53</div><div class="text-[10px] text-gray-400 uppercase tracking-wider">Comisiones</div></div>
+        <div><div class="text-3xl font-bold font-mono text-emerald-400">87%</div><div class="text-[10px] text-gray-400 uppercase tracking-wider">Precisión</div></div>
       </div>
     </div>
 
-    <!-- Sin paywall: aparecen TODOS los elementos -->
-    <!-- Top 3 categorías -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div class="bg-gradient-to-br from-rose-700 to-red-900 rounded-2xl p-5 text-white shadow-lg">
-        <div class="text-[10px] uppercase tracking-widest opacity-80 font-bold">#1 CRÍTICO</div>
-        <div class="text-lg font-bold mt-1">Seguridad y justicia</div>
-        <div class="text-4xl font-black font-mono mt-2">87</div>
+    <!-- Top 3 -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div class="rounded-2xl p-5 text-white shadow-lg" style="background: linear-gradient(135deg, #2e7d32 0%, #1f5f24 100%);">
+        <div class="text-[10px] uppercase tracking-widest opacity-80 font-semibold">#1</div>
+        <div class="text-base font-bold mt-1">Seguridad y Justicia</div>
+        <div class="text-5xl font-black font-mono mt-2">75</div>
       </div>
-      <div class="bg-gradient-to-br from-amber-600 to-orange-700 rounded-2xl p-5 text-white shadow-lg">
-        <div class="text-[10px] uppercase tracking-widest opacity-80 font-bold">#2 ALTO</div>
-        <div class="text-lg font-bold mt-1">Educación</div>
-        <div class="text-4xl font-black font-mono mt-2">71</div>
+      <div class="rounded-2xl p-5 text-white shadow-lg" style="background: linear-gradient(135deg, #2e7d32 0%, #1f5f24 100%);">
+        <div class="text-[10px] uppercase tracking-widest opacity-80 font-semibold">#2</div>
+        <div class="text-base font-bold mt-1">Relaciones Exteriores</div>
+        <div class="text-5xl font-black font-mono mt-2">74</div>
       </div>
-      <div class="bg-gradient-to-br from-emerald-700 to-green-900 rounded-2xl p-5 text-white shadow-lg">
-        <div class="text-[10px] uppercase tracking-widest opacity-80 font-bold">#3 MEDIO</div>
-        <div class="text-lg font-bold mt-1">Economía y hacienda</div>
-        <div class="text-4xl font-black font-mono mt-2">65</div>
+      <div class="rounded-2xl p-5 text-white shadow-lg" style="background: linear-gradient(135deg, #2e7d32 0%, #1f5f24 100%);">
+        <div class="text-[10px] uppercase tracking-widest opacity-80 font-semibold">#3</div>
+        <div class="text-base font-bold mt-1">Infraestructura</div>
+        <div class="text-5xl font-black font-mono mt-2">73</div>
       </div>
     </div>
 
     <!-- Semáforo grid completo (sin paywall) -->
-    <div class="flex items-center gap-3 text-xs">
-      <span class="text-gray-500 uppercase tracking-wider font-bold">Ordenar por</span>
-      <button class="px-3 py-1.5 bg-acento text-white rounded-full font-semibold">Score</button>
+    <div class="flex items-center gap-3 text-xs flex-wrap">
+      <span class="text-gray-500 uppercase tracking-wider font-semibold">Ordenar por</span>
+      <button class="px-3 py-1.5 rounded-full text-white font-semibold" style="background:#1a365d">Score</button>
       <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-gray-600">Volumen</button>
       <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-gray-600">Aprobación</button>
       <button class="px-3 py-1.5 bg-white border border-gray-200 rounded-full text-gray-600">Categoría</button>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-      <!-- 9 cards reales -->
-      <div class="glass rounded-xl p-4 hover:shadow-md cursor-pointer">
-        <div class="flex items-center justify-between"><div class="text-xs text-gray-500 uppercase tracking-wider">Salud</div><div class="text-[10px] text-rose-700 font-bold">▲ +5</div></div>
-        <div class="text-3xl font-bold font-mono mt-2 text-rose-700">79</div>
-        <div class="h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden"><div class="h-full bg-rose-600" style="width:79%"></div></div>
+      <!-- 6 cards reales con estructura del SemaforoCard -->
+      <div class="glass border border-semaforo-verde/40 rounded-xl p-4 cursor-pointer">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full" style="background:#2e7d32"></div><h3 class="font-semibold text-sm text-gray-800">Seguridad y Justicia</h3></div>
+          <div class="w-14 h-14 flex items-center justify-center"><span class="text-2xl font-bold font-mono">75</span></div>
+        </div>
+        <div class="grid grid-cols-5 gap-2 text-xs text-gray-500">
+          <div><div class="h-1 bg-gray-200 rounded-full"><div class="h-full rounded-full" style="width:88%; background:#2e7d32"></div></div><div class="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">Media</div></div>
+          <div><div class="h-1 bg-gray-200 rounded-full"><div class="h-full rounded-full" style="width:62%; background:#2e7d32"></div></div><div class="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">Trends</div></div>
+          <div><div class="h-1 bg-gray-200 rounded-full"><div class="h-full rounded-full" style="width:78%; background:#2e7d32"></div></div><div class="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">Congreso</div></div>
+          <div><div class="h-1 bg-gray-200 rounded-full"><div class="h-full rounded-full" style="width:42%; background:#c62828"></div></div><div class="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">CSP</div></div>
+          <div><div class="h-1 bg-gray-200 rounded-full"><div class="h-full rounded-full" style="width:71%; background:#2e7d32"></div></div><div class="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">Urgencia</div></div>
+        </div>
       </div>
-      <div class="glass rounded-xl p-4 hover:shadow-md cursor-pointer">
-        <div class="flex items-center justify-between"><div class="text-xs text-gray-500 uppercase tracking-wider">Anticorrupción</div><div class="text-[10px] text-amber-700 font-bold">▲ +3</div></div>
-        <div class="text-3xl font-bold font-mono mt-2 text-amber-700">68</div>
-        <div class="h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden"><div class="h-full bg-amber-600" style="width:68%"></div></div>
+      <div class="glass border border-semaforo-verde/40 rounded-xl p-4 cursor-pointer">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full" style="background:#2e7d32"></div><h3 class="font-semibold text-sm text-gray-800">Relaciones Exteriores</h3></div>
+          <div class="w-14 h-14 flex items-center justify-center"><span class="text-2xl font-bold font-mono">74</span></div>
+        </div>
       </div>
-      <div class="glass rounded-xl p-4 hover:shadow-md cursor-pointer">
-        <div class="flex items-center justify-between"><div class="text-xs text-gray-500 uppercase tracking-wider">Trabajo</div><div class="text-[10px] text-amber-700 font-bold">→</div></div>
-        <div class="text-3xl font-bold font-mono mt-2 text-amber-700">58</div>
-        <div class="h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden"><div class="h-full bg-amber-600" style="width:58%"></div></div>
+      <div class="glass border border-semaforo-verde/40 rounded-xl p-4 cursor-pointer">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full" style="background:#2e7d32"></div><h3 class="font-semibold text-sm text-gray-800">Infraestructura</h3></div>
+          <div class="w-14 h-14 flex items-center justify-center"><span class="text-2xl font-bold font-mono">73</span></div>
+        </div>
       </div>
-      <div class="glass rounded-xl p-4 hover:shadow-md cursor-pointer">
-        <div class="flex items-center justify-between"><div class="text-xs text-gray-500 uppercase tracking-wider">Igualdad de género</div><div class="text-[10px] text-amber-700 font-bold">▲ +8</div></div>
-        <div class="text-3xl font-bold font-mono mt-2 text-amber-700">55</div>
-        <div class="h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden"><div class="h-full bg-amber-600" style="width:55%"></div></div>
+      <div class="glass border border-semaforo-amarillo/40 rounded-xl p-4 cursor-pointer">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full" style="background:#c6972b"></div><h3 class="font-semibold text-sm text-gray-800">Anticorrupción</h3></div>
+          <div class="w-14 h-14 flex items-center justify-center"><span class="text-2xl font-bold font-mono">68</span></div>
+        </div>
       </div>
-      <div class="glass rounded-xl p-4 hover:shadow-md cursor-pointer">
-        <div class="flex items-center justify-between"><div class="text-xs text-gray-500 uppercase tracking-wider">Energía</div><div class="text-[10px] text-emerald-700 font-bold">▼ -2</div></div>
-        <div class="text-3xl font-bold font-mono mt-2 text-emerald-700">42</div>
-        <div class="h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden"><div class="h-full bg-emerald-600" style="width:42%"></div></div>
+      <div class="glass border border-semaforo-amarillo/40 rounded-xl p-4 cursor-pointer">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full" style="background:#c6972b"></div><h3 class="font-semibold text-sm text-gray-800">Trabajo</h3></div>
+          <div class="w-14 h-14 flex items-center justify-center"><span class="text-2xl font-bold font-mono">58</span></div>
+        </div>
       </div>
-      <div class="glass rounded-xl p-4 hover:shadow-md cursor-pointer">
-        <div class="flex items-center justify-between"><div class="text-xs text-gray-500 uppercase tracking-wider">Medio ambiente</div><div class="text-[10px] text-emerald-700 font-bold">▼ -5</div></div>
-        <div class="text-3xl font-bold font-mono mt-2 text-emerald-700">38</div>
-        <div class="h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden"><div class="h-full bg-emerald-600" style="width:38%"></div></div>
-      </div>
-      <div class="glass rounded-xl p-4 hover:shadow-md cursor-pointer">
-        <div class="flex items-center justify-between"><div class="text-xs text-gray-500 uppercase tracking-wider">Derechos humanos</div><div class="text-[10px] text-emerald-700 font-bold">→</div></div>
-        <div class="text-3xl font-bold font-mono mt-2 text-emerald-700">35</div>
-        <div class="h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden"><div class="h-full bg-emerald-600" style="width:35%"></div></div>
-      </div>
-      <div class="glass rounded-xl p-4 hover:shadow-md cursor-pointer">
-        <div class="flex items-center justify-between"><div class="text-xs text-gray-500 uppercase tracking-wider">IA</div><div class="text-[10px] text-emerald-700 font-bold">▲ +2</div></div>
-        <div class="text-3xl font-bold font-mono mt-2 text-emerald-700">28</div>
-        <div class="h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden"><div class="h-full bg-emerald-600" style="width:28%"></div></div>
-      </div>
-      <div class="glass rounded-xl p-4 hover:shadow-md cursor-pointer">
-        <div class="flex items-center justify-between"><div class="text-xs text-gray-500 uppercase tracking-wider">Turismo</div><div class="text-[10px] text-emerald-700 font-bold">→</div></div>
-        <div class="text-3xl font-bold font-mono mt-2 text-emerald-700">22</div>
-        <div class="h-1.5 bg-gray-100 rounded-full mt-2 overflow-hidden"><div class="h-full bg-emerald-600" style="width:22%"></div></div>
+      <div class="glass border border-semaforo-rojo/40 rounded-xl p-4 cursor-pointer">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full" style="background:#c62828"></div><h3 class="font-semibold text-sm text-gray-800">Energía</h3></div>
+          <div class="w-14 h-14 flex items-center justify-center"><span class="text-2xl font-bold font-mono">42</span></div>
+        </div>
       </div>
     </div>
 
-    <!-- Divergencias widget -->
-    <div class="glass rounded-xl p-5 border-l-4 border-amber-500">
-      <div class="flex items-center gap-2 mb-2">
-        <span class="text-amber-600 text-lg">⚡</span>
-        <div class="text-xs uppercase tracking-widest text-amber-700 font-bold">DIVERGENCIA DETECTADA</div>
-      </div>
-      <div class="text-sm font-semibold text-gray-800">Igualdad de género: presión mediática alta sin respuesta legislativa proporcional</div>
-      <div class="text-xs text-gray-600 mt-1">Score actual 55 con 18 artículos esta semana. Solo 2 instrumentos relacionados en SIL. Patrón típico previo a movilización.</div>
-    </div>
-
-    <!-- FAB Terminal IA flotante -->
-    <button onclick="setVista('terminal')" class="fab-ai fixed bottom-6 right-6 w-14 h-14 rounded-full text-white text-xl flex items-center justify-center hover:scale-110 transition-transform z-40" title="Terminal IA">
-      <span class="font-black">✦</span>
+    <!-- FAB Terminal IA: sobrio, acento institucional -->
+    <button onclick="setVista('terminal')" class="fab-terminal fixed bottom-6 right-6 px-5 py-3 rounded-full font-semibold text-sm flex items-center gap-2 z-40">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      Terminal IA
     </button>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- VISTA 5: HAMBURGUESA / DRAWER ABIERTO                   -->
+<!-- VISTA 5: DRAWER (sin emojis, sobrio)                   -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <div id="vista-drawer" class="vista">
-  <!-- Backdrop oscuro -->
   <div class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onclick="setVista('premium')"></div>
 
-  <!-- Dashboard de fondo (faded) -->
   <div class="max-w-7xl mx-auto px-4 pt-4 pb-6 opacity-30 pointer-events-none">
     <div class="bg-gray-900 rounded-2xl p-6 text-white"><div class="text-xs">FIAT — Inteligencia Legislativa</div></div>
   </div>
 
-  <!-- Drawer derecho -->
-  <aside class="fixed top-0 right-0 bottom-0 w-80 bg-white shadow-2xl z-50 overflow-y-auto">
-    <div class="p-5 bg-gradient-to-br from-gray-900 to-black text-white">
-      <button onclick="setVista('premium')" class="absolute top-4 right-4 text-white/70 hover:text-white text-xl">✕</button>
+  <aside class="drawer-content fixed top-0 right-0 bottom-0 w-80 bg-white z-50 overflow-y-auto">
+    <div class="p-5 bg-gradient-to-br from-gray-900 to-black text-white relative">
+      <button onclick="setVista('premium')" class="absolute top-4 right-4 text-white/70 hover:text-white text-xl leading-none">×</button>
       <div class="flex items-center gap-3">
-        <div class="w-12 h-12 rounded-full bg-gradient-to-br from-premium-600 to-premium-gold flex items-center justify-center font-black text-lg">RL</div>
+        <div class="w-11 h-11 rounded-full bg-white/10 border border-white/20 flex items-center justify-center font-bold text-base">RL</div>
         <div>
-          <div class="font-bold">Rubén León</div>
-          <div class="text-[11px] text-white/70">rrleon@diputados.gob.mx</div>
+          <div class="font-semibold text-sm">Rubén León</div>
+          <div class="text-[10px] text-white/60 font-mono">rrleon@diputados.gob.mx</div>
         </div>
       </div>
-      <div class="mt-3 inline-flex items-center gap-1 premium-badge px-2.5 py-1 rounded-full text-[10px] font-bold">
-        ✦ Premium · activo
-      </div>
-      <div class="text-[10px] text-white/60 mt-2">Renovación: 26 may 2026 · $699 MXN</div>
+      <div class="mt-3 inline-block badge-premium">PREMIUM · ACTIVO</div>
+      <div class="text-[10px] text-white/50 mt-2 font-mono">Renovación: 26 may 2026 · $699 MXN</div>
     </div>
 
     <nav class="py-2">
-      <button onclick="setVista('console')" class="w-full px-5 py-3 flex items-center gap-3 hover:bg-gray-50 transition group">
-        <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-lg">📊</div>
-        <div class="flex-1 text-left">
-          <div class="text-sm font-bold text-gray-900">Mi Console</div>
+      <button onclick="setVista('console')" class="w-full px-5 py-3 flex items-center gap-3 hover:bg-gray-50 transition text-left">
+        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM13 14a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1h-6a1 1 0 01-1-1v-6z"/></svg>
+        <div class="flex-1">
+          <div class="text-sm font-semibold text-gray-900">Mi Console</div>
           <div class="text-[11px] text-gray-500">Dashboard personalizado</div>
         </div>
       </button>
-      <button onclick="setVista('terminal')" class="w-full px-5 py-3 flex items-center gap-3 hover:bg-gray-50 transition group">
-        <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-lg">🤖</div>
-        <div class="flex-1 text-left">
-          <div class="text-sm font-bold text-gray-900">Terminal IA</div>
-          <div class="text-[11px] text-gray-500">187 / 200 queries este mes</div>
+      <button onclick="setVista('terminal')" class="w-full px-5 py-3 flex items-center gap-3 hover:bg-gray-50 transition text-left">
+        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        <div class="flex-1">
+          <div class="text-sm font-semibold text-gray-900">Terminal IA</div>
+          <div class="text-[11px] text-gray-500 font-mono">187 / 200 queries este mes</div>
         </div>
       </button>
-      <button onclick="setVista('legisladores')" class="w-full px-5 py-3 flex items-center gap-3 hover:bg-gray-50 transition group">
-        <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-lg">👥</div>
-        <div class="flex-1 text-left">
-          <div class="text-sm font-bold text-gray-900">Mis legisladores</div>
-          <div class="text-[11px] text-gray-500">5 / 20 seleccionados</div>
+      <button onclick="setVista('legisladores')" class="w-full px-5 py-3 flex items-center gap-3 hover:bg-gray-50 transition text-left">
+        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        <div class="flex-1">
+          <div class="text-sm font-semibold text-gray-900">Mis legisladores</div>
+          <div class="text-[11px] text-gray-500 font-mono">5 / 20 seleccionados</div>
         </div>
       </button>
-      <button class="w-full px-5 py-3 flex items-center gap-3 hover:bg-gray-50 transition">
-        <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-lg">🎯</div>
-        <div class="flex-1 text-left">
-          <div class="text-sm font-bold text-gray-900">Mis temas</div>
+      <button class="w-full px-5 py-3 flex items-center gap-3 hover:bg-gray-50 transition text-left">
+        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a7 7 0 110 14 7 7 0 010-14z M21 21l-4.35-4.35"/></svg>
+        <div class="flex-1">
+          <div class="text-sm font-semibold text-gray-900">Mis temas</div>
           <div class="text-[11px] text-gray-500">3 categorías activas</div>
         </div>
       </button>
-      <button class="w-full px-5 py-3 flex items-center gap-3 hover:bg-gray-50 transition">
-        <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-lg">🔔</div>
-        <div class="flex-1 text-left">
-          <div class="text-sm font-bold text-gray-900">Mis alertas</div>
+      <button class="w-full px-5 py-3 flex items-center gap-3 hover:bg-gray-50 transition text-left">
+        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+        <div class="flex-1">
+          <div class="text-sm font-semibold text-gray-900">Mis alertas</div>
           <div class="text-[11px] text-gray-500">2 activas · 1 disparada hoy</div>
         </div>
       </button>
-      <button class="w-full px-5 py-3 flex items-center gap-3 hover:bg-gray-50 transition">
-        <div class="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-lg">📥</div>
-        <div class="flex-1 text-left">
-          <div class="text-sm font-bold text-gray-900">Exports</div>
+      <button class="w-full px-5 py-3 flex items-center gap-3 hover:bg-gray-50 transition text-left">
+        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        <div class="flex-1">
+          <div class="text-sm font-semibold text-gray-900">Exports</div>
           <div class="text-[11px] text-gray-500">PDF y Excel descargables</div>
         </div>
       </button>
 
       <hr class="my-2 mx-5 border-gray-100">
 
-      <button class="w-full px-5 py-3 flex items-center gap-3 hover:bg-gray-50 transition text-left">
-        <div class="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center">💳</div>
-        <div class="text-sm text-gray-700">Suscripción</div>
-      </button>
-      <button class="w-full px-5 py-3 flex items-center gap-3 hover:bg-gray-50 transition text-left">
-        <div class="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center">⚙️</div>
-        <div class="text-sm text-gray-700">Configuración</div>
-      </button>
-      <button class="w-full px-5 py-3 flex items-center gap-3 hover:bg-gray-50 transition text-left">
-        <div class="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center">💬</div>
-        <div class="text-sm text-gray-700">Soporte</div>
-      </button>
-      <button class="w-full px-5 py-3 flex items-center gap-3 hover:bg-rose-50 hover:text-rose-700 transition text-left text-rose-600">
-        <div class="w-9 h-9 rounded-lg bg-rose-50 flex items-center justify-center">🚪</div>
-        <div class="text-sm font-medium">Cerrar sesión</div>
-      </button>
+      <button class="w-full px-5 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition">Suscripción</button>
+      <button class="w-full px-5 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition">Configuración</button>
+      <button class="w-full px-5 py-3 text-left text-sm text-gray-700 hover:bg-gray-50 transition">Soporte</button>
+      <button class="w-full px-5 py-3 text-left text-sm text-rose-600 hover:bg-rose-50 transition font-medium">Cerrar sesión</button>
     </nav>
   </aside>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- VISTA 6: TERMINAL IA ABIERTA                            -->
+<!-- VISTA 6: TERMINAL IA                                    -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <div id="vista-terminal" class="vista">
-  <!-- Backdrop -->
   <div class="fixed inset-0 bg-black/30 z-40"></div>
 
-  <!-- Dashboard de fondo (faded) -->
   <div class="max-w-7xl mx-auto px-4 pt-4 opacity-25 pointer-events-none">
-    <div class="bg-gray-900 rounded-2xl p-6"></div>
+    <div class="bg-gray-900 rounded-2xl p-6 h-32"></div>
   </div>
 
-  <!-- Panel derecho de Terminal IA -->
-  <aside class="fixed top-0 right-0 bottom-0 w-full md:w-[500px] bg-white shadow-2xl z-50 flex flex-col">
-    <!-- Header del panel -->
-    <div class="px-5 py-4 bg-gradient-to-br from-premium-600 to-premium-gold text-white flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <span class="text-xl">✦</span>
+  <aside class="drawer-content fixed top-0 right-0 bottom-0 w-full md:w-[520px] bg-white z-50 flex flex-col">
+    <!-- Header sobrio -->
+    <div class="px-5 py-4 bg-gradient-to-br from-gray-900 to-black text-white flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
         <div>
-          <div class="font-black text-base">FIAT Brain</div>
-          <div class="text-[10px] opacity-80 tracking-wider uppercase">Terminal IA · Haiku 4.5</div>
+          <div class="font-bold text-sm tracking-wide">TERMINAL IA</div>
+          <div class="text-[10px] text-white/60 tracking-wider uppercase font-mono">Haiku 4.5 · FIAT Brain</div>
         </div>
       </div>
-      <button onclick="setVista('premium')" class="w-8 h-8 rounded-full hover:bg-white/20 flex items-center justify-center">✕</button>
+      <button onclick="setVista('premium')" class="w-8 h-8 rounded-full hover:bg-white/15 flex items-center justify-center text-xl leading-none">×</button>
     </div>
 
     <!-- Conversación -->
     <div class="flex-1 overflow-y-auto p-5 space-y-4 bg-gray-50">
-      <!-- Pregunta del usuario -->
       <div class="flex justify-end">
-        <div class="bg-acento text-white rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[80%] text-sm">
+        <div class="text-white rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[85%] text-sm" style="background:#1a365d">
           ¿Cuál es la constante de Rubén Moreira?
         </div>
       </div>
 
-      <!-- Respuesta del IA -->
       <div class="flex">
         <div class="bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-4 py-3 max-w-[90%] text-sm shadow-sm">
-          <div class="text-[10px] uppercase tracking-widest text-purple-700 font-bold mb-2">✦ FIAT BRAIN</div>
+          <div class="text-[10px] uppercase tracking-widest font-bold mb-2" style="color:#1a365d">FIAT BRAIN</div>
           <div class="text-gray-800 leading-relaxed space-y-3">
             <p>Rubén Moreira tiene una constante muy marcada en <strong>Justicia y Hacienda Pública</strong> a lo largo de sus 3 legislaturas (LXIV, LXV, LXVI):</p>
 
-            <div class="bg-purple-50 rounded-lg p-3 space-y-2">
-              <div class="text-[10px] uppercase tracking-wider text-purple-700 font-bold">📊 Tema dominante: Justicia</div>
-              <div class="text-xs text-gray-700">
-                • <strong>LXIV:</strong> 32 instrumentos <a href="#" class="text-purple-700 underline">[1]</a><br>
-                • <strong>LXV:</strong> 27 instrumentos <a href="#" class="text-purple-700 underline">[2]</a><br>
-                • <strong>LXVI:</strong> en curso, 12 hasta hoy <a href="#" class="text-purple-700 underline">[3]</a>
+            <div class="border-l-2 rounded-r-lg p-3" style="background:#f8faf8; border-color:#1a365d">
+              <div class="text-[10px] uppercase tracking-wider font-bold" style="color:#1a365d">TEMA DOMINANTE: JUSTICIA</div>
+              <div class="text-xs text-gray-700 mt-1.5 leading-relaxed">
+                LXIV: 32 instrumentos <a href="#" class="font-semibold underline" style="color:#1a365d">[1]</a><br>
+                LXV: 27 instrumentos <a href="#" class="font-semibold underline" style="color:#1a365d">[2]</a><br>
+                LXVI: en curso, 12 hasta hoy <a href="#" class="font-semibold underline" style="color:#1a365d">[3]</a>
               </div>
             </div>
 
-            <div class="bg-emerald-50 rounded-lg p-3">
-              <div class="text-[10px] uppercase tracking-wider text-emerald-700 font-bold">📊 Tasa de aprobación histórica: 44.5%</div>
-              <div class="text-xs text-gray-700 mt-1">Por encima del promedio de su partido (PRI: 38%) <a href="#" class="text-emerald-700 underline">[4]</a></div>
+            <div class="border-l-2 rounded-r-lg p-3" style="background:#f8faf8; border-color:#2e7d32">
+              <div class="text-[10px] uppercase tracking-wider font-bold" style="color:#2e7d32">TASA DE APROBACIÓN: 44.5%</div>
+              <div class="text-xs text-gray-700 mt-1">Por encima del promedio de su partido (PRI: 38%) <a href="#" class="font-semibold underline" style="color:#2e7d32">[4]</a></div>
             </div>
 
-            <p>⚖ <strong>Patrón único:</strong> 87% de sus PA en LXV fueron <em>exhortos al Ejecutivo</em> en materia federal <a href="#" class="text-purple-700 underline">[5]</a>. Es de los pocos legisladores priístas que sostiene esta línea desde 2018.</p>
+            <p><strong>Patrón único:</strong> 87% de sus PA en LXV fueron <em>exhortos al Ejecutivo</em> en materia federal <a href="#" class="font-semibold underline" style="color:#1a365d">[5]</a>. Es de los pocos legisladores priístas que sostiene esta línea desde 2018.</p>
 
-            <div class="pt-2 border-t border-gray-100 mt-3">
+            <div class="pt-3 border-t border-gray-100">
               <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-2">Fuentes</div>
               <div class="space-y-1 text-[11px]">
-                <a href="#" class="text-purple-700 hover:underline block">[1] ↗ Trayectoria LXIV en SIL</a>
-                <a href="#" class="text-purple-700 hover:underline block">[2] ↗ Trayectoria LXV en SIL</a>
-                <a href="#" class="text-purple-700 hover:underline block">[3] ↗ Actividad LXVI</a>
-                <a href="#" class="text-purple-700 hover:underline block">[4] ↗ Comparativa partidos</a>
-                <a href="#" class="text-purple-700 hover:underline block">[5] ↗ Análisis sub-clasificación</a>
+                <a href="#" class="hover:underline block" style="color:#1a365d">[1] Trayectoria LXIV en SIL</a>
+                <a href="#" class="hover:underline block" style="color:#1a365d">[2] Trayectoria LXV en SIL</a>
+                <a href="#" class="hover:underline block" style="color:#1a365d">[3] Actividad LXVI</a>
+                <a href="#" class="hover:underline block" style="color:#1a365d">[4] Comparativa partidos</a>
+                <a href="#" class="hover:underline block" style="color:#1a365d">[5] Análisis sub-clasificación</a>
               </div>
             </div>
 
-            <div class="flex gap-2 pt-2">
-              <button class="text-xs px-2 py-1 hover:bg-gray-100 rounded text-gray-600">👍</button>
-              <button class="text-xs px-2 py-1 hover:bg-gray-100 rounded text-gray-600">👎</button>
-              <button class="text-xs px-2 py-1 hover:bg-gray-100 rounded text-gray-600">📋 Copiar</button>
-              <button class="text-xs px-2 py-1 hover:bg-gray-100 rounded text-gray-600">📤 Exportar PDF</button>
+            <div class="flex gap-1 pt-2">
+              <button class="text-[10px] px-2 py-1 hover:bg-gray-100 rounded text-gray-500 font-medium">Útil</button>
+              <button class="text-[10px] px-2 py-1 hover:bg-gray-100 rounded text-gray-500 font-medium">No útil</button>
+              <button class="text-[10px] px-2 py-1 hover:bg-gray-100 rounded text-gray-500 font-medium">Copiar</button>
+              <button class="text-[10px] px-2 py-1 hover:bg-gray-100 rounded text-gray-500 font-medium">Exportar PDF</button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Pregunta sugerida -->
       <div class="flex justify-end">
-        <div class="bg-acento text-white rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[80%] text-sm">
+        <div class="text-white rounded-2xl rounded-br-sm px-4 py-2.5 max-w-[85%] text-sm" style="background:#1a365d">
           ¿Y cuando hay incendios forestales, qué legisladores presentan PA?
         </div>
       </div>
 
-      <!-- Loading state del IA -->
       <div class="flex">
         <div class="bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-4 py-3 text-sm shadow-sm">
           <div class="flex items-center gap-2 text-gray-500">
-            <div class="spinner"></div>
-            <span class="text-xs">FIAT Brain analizando 4,832 artículos × 11K instrumentos…</span>
+            <span class="spinner"></span>
+            <span class="text-xs font-mono">Analizando 4,832 artículos × 11K instrumentos...</span>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Input de pregunta -->
+    <!-- Input -->
     <div class="p-4 bg-white border-t border-gray-200">
       <div class="flex items-center gap-2 mb-2">
-        <input type="text" placeholder="Pregunta lo que quieras sobre el Congreso…" class="flex-1 px-3 py-2.5 border border-gray-300 rounded-xl text-sm focus:outline-none focus:border-premium-600">
-        <button class="bg-gradient-to-r from-premium-600 to-premium-700 text-white p-2.5 rounded-xl hover:shadow-lg transition">
+        <input type="text" placeholder="Pregunta lo que quieras sobre el Congreso..." class="flex-1 px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white transition">
+        <button class="text-white p-2.5 rounded-full hover:opacity-90 transition" style="background:#1a365d">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </button>
       </div>
-      <div class="flex items-center justify-between text-[10px] text-gray-500">
-        <label class="flex items-center gap-1.5"><input type="checkbox"> Análisis profundo (Sonnet 4.5)</label>
-        <div>187 / 200 queries este mes</div>
+      <div class="flex items-center justify-between text-[10px]">
+        <label class="flex items-center gap-1.5 text-gray-500"><input type="checkbox" class="w-3 h-3"> Análisis profundo (Sonnet 4.5)</label>
+        <div class="text-gray-500 font-mono">187 / 200 queries</div>
       </div>
     </div>
   </aside>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- VISTA 7: CONSOLE PERSONALIZADA                          -->
+<!-- VISTA 7: CONSOLE (todo FIAT en una pantalla)            -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <div id="vista-console" class="vista">
   <div class="max-w-7xl mx-auto px-4 pt-4 pb-6 space-y-4">
     <header class="sticky top-12 z-50 py-2">
-      <div class="nav-pill rounded-full px-3 py-2 flex items-center gap-2">
-        <div class="text-2xl font-black text-acento">FIAT</div>
+      <div class="nav-pill rounded-2xl md:rounded-full px-3 py-2 flex items-center gap-2 flex-wrap md:flex-nowrap">
+        <div class="flex items-center gap-2 flex-shrink-0">
+          <img src="fiat-logo-transparent.png" alt="FIAT" style="height: 32px; max-width: 100px;">
+          <div class="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+            <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span class="text-[10px] text-emerald-700 font-semibold">EN VIVO</span>
+          </div>
+        </div>
         <div class="hidden md:block w-px h-5 bg-gray-200 mx-1"></div>
-        <button onclick="setVista('premium')" class="nav-pill-tab">Actividad</button>
-        <button class="nav-pill-tab nav-pill-tab-active">⚙️ Console</button>
-        <div class="flex-1"></div>
-        <div class="premium-badge px-3 py-1.5 rounded-full font-bold text-[11px]">✦ Premium</div>
-        <button onclick="setVista('drawer')" class="w-9 h-9 flex flex-col items-center justify-center gap-[3px] hover:bg-gray-100 rounded-full">
+        <div class="flex items-center gap-0.5">
+          <button onclick="setVista('premium')" class="nav-pill-tab">Actividad</button>
+          <button class="nav-pill-tab">Radar</button>
+          <button class="nav-pill-tab">Mapa</button>
+          <button class="nav-pill-tab">Comisiones</button>
+          <button class="nav-pill-tab">Métricas</button>
+          <button class="nav-pill-tab nav-pill-tab-active">Console</button>
+        </div>
+        <div class="hidden md:block flex-1"></div>
+        <div class="badge-premium flex-shrink-0">PREMIUM</div>
+        <button onclick="setVista('drawer')" class="w-9 h-9 flex flex-col items-center justify-center gap-[3px] hover:bg-gray-100 rounded-full transition flex-shrink-0">
           <span class="w-4 h-[1.5px] bg-gray-700 rounded"></span>
           <span class="w-4 h-[1.5px] bg-gray-700 rounded"></span>
           <span class="w-4 h-[1.5px] bg-gray-700 rounded"></span>
@@ -908,357 +891,465 @@
     </header>
 
     <!-- Page header -->
-    <div class="flex items-end justify-between">
+    <div class="flex items-end justify-between flex-wrap gap-3">
       <div>
-        <div class="text-xs uppercase tracking-widest text-purple-700 font-bold">CONSOLE PERSONAL</div>
-        <h1 class="text-3xl font-black text-gray-900 mt-1">Buen día, Rubén</h1>
-        <p class="text-sm text-gray-500 mt-1">Tienes 3 actualizaciones nuevas en tu monitoreo</p>
+        <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">CONSOLE PERSONAL</div>
+        <h1 class="text-2xl font-black text-gray-900 mt-1">Buen día, Rubén</h1>
+        <p class="text-xs text-gray-500 mt-1">3 actualizaciones nuevas en tu monitoreo</p>
       </div>
       <div class="flex gap-2">
-        <button class="text-xs px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-purple-300 transition font-medium">+ Widget</button>
-        <button class="text-xs px-3 py-2 bg-white border border-gray-200 rounded-lg hover:border-purple-300 transition font-medium">⚙ Editar layout</button>
+        <button class="text-xs px-3 py-2 bg-white border border-gray-200 rounded-full hover:border-gray-400 font-semibold transition">+ Widget</button>
+        <button class="text-xs px-3 py-2 bg-white border border-gray-200 rounded-full hover:border-gray-400 font-semibold transition">Editar layout</button>
       </div>
     </div>
 
     <!-- Stats overview -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
-      <div class="glass rounded-xl p-4">
-        <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Mis legisladores</div>
-        <div class="text-2xl font-black mt-1 font-mono">5/20</div>
-        <div class="text-[11px] text-purple-700 mt-1 font-semibold">2 con actividad esta semana</div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="glass rounded-xl p-3">
+        <div class="text-[9px] uppercase tracking-widest text-gray-500 font-bold">MIS LEGISLADORES</div>
+        <div class="text-2xl font-black mt-1 font-mono">5<span class="text-base text-gray-400">/20</span></div>
+        <div class="text-[10px] text-gray-600 mt-0.5">2 con actividad esta semana</div>
       </div>
-      <div class="glass rounded-xl p-4">
-        <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Mis temas</div>
+      <div class="glass rounded-xl p-3">
+        <div class="text-[9px] uppercase tracking-widest text-gray-500 font-bold">MIS TEMAS</div>
         <div class="text-2xl font-black mt-1 font-mono">3</div>
-        <div class="text-[11px] text-rose-700 mt-1 font-semibold">Seguridad ▲ +12</div>
+        <div class="text-[10px] mt-0.5" style="color:#c62828">Seguridad ▲ +12</div>
       </div>
-      <div class="glass rounded-xl p-4">
-        <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Alertas activas</div>
-        <div class="text-2xl font-black mt-1 font-mono">2</div>
-        <div class="text-[11px] text-amber-700 mt-1 font-semibold">1 disparada hoy</div>
+      <div class="glass rounded-xl p-3">
+        <div class="text-[9px] uppercase tracking-widest text-gray-500 font-bold">ESTADOS VIGILADOS</div>
+        <div class="text-2xl font-black mt-1 font-mono">4</div>
+        <div class="text-[10px] text-gray-600 mt-0.5">CDMX · Coah · Yuc · Son</div>
       </div>
-      <div class="glass rounded-xl p-4">
-        <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Queries IA</div>
-        <div class="text-2xl font-black mt-1 font-mono">187/200</div>
-        <div class="text-[11px] text-gray-500 mt-1">93% del mes</div>
+      <div class="glass rounded-xl p-3">
+        <div class="text-[9px] uppercase tracking-widest text-gray-500 font-bold">QUERIES IA</div>
+        <div class="text-2xl font-black mt-1 font-mono">187<span class="text-base text-gray-400">/200</span></div>
+        <div class="text-[10px] text-gray-600 mt-0.5">93% del mes consumido</div>
       </div>
     </div>
 
-    <!-- Widgets grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <!-- Widget: Mis legisladores -->
-      <div class="glass rounded-xl p-5">
-        <div class="flex items-center justify-between mb-3">
+    <!-- ROW 1: Tendencia de mis temas (chart) | Mapa MX -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <!-- Tendencia (2/3 del ancho) -->
+      <div class="lg:col-span-2 glass rounded-xl p-5">
+        <div class="flex items-center justify-between mb-4">
           <div>
-            <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">👥 MIS LEGISLADORES</div>
-            <div class="text-sm font-bold text-gray-800">Actividad última semana</div>
+            <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Tendencia de mis temas</div>
+            <div class="text-sm font-semibold text-gray-800 mt-0.5">Últimos 30 días</div>
           </div>
-          <button onclick="setVista('legisladores')" class="text-xs text-purple-700 font-semibold hover:underline">Configurar</button>
-        </div>
-        <div class="space-y-2.5">
-          <div class="flex items-center gap-3 hover:bg-gray-50 -mx-2 px-2 py-2 rounded cursor-pointer">
-            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-rose-600 to-red-700 text-white font-bold text-xs flex items-center justify-center">RM</div>
-            <div class="flex-1 min-w-0">
-              <div class="text-sm font-semibold text-gray-800 truncate">Rubén Moreira <span class="text-[10px] text-gray-500">PRI · Diputados</span></div>
-              <div class="text-[11px] text-gray-600">Presentó 2 PA en Justicia · hace 2 días</div>
-            </div>
-            <div class="text-[10px] bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-bold">▲ Activo</div>
-          </div>
-          <div class="flex items-center gap-3 hover:bg-gray-50 -mx-2 px-2 py-2 rounded cursor-pointer">
-            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-rose-600 to-red-700 text-white font-bold text-xs flex items-center justify-center">MA</div>
-            <div class="flex-1 min-w-0">
-              <div class="text-sm font-semibold text-gray-800 truncate">Manuel Añorve <span class="text-[10px] text-gray-500">PRI · Senado</span></div>
-              <div class="text-[11px] text-gray-600">Participó en sesión 4/22 · hace 3 días</div>
-            </div>
-            <div class="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold">→ Normal</div>
-          </div>
-          <div class="flex items-center gap-3 hover:bg-gray-50 -mx-2 px-2 py-2 rounded cursor-pointer">
-            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-rose-700 to-red-900 text-white font-bold text-xs flex items-center justify-center">RM</div>
-            <div class="flex-1 min-w-0">
-              <div class="text-sm font-semibold text-gray-800 truncate">Ricardo Monreal <span class="text-[10px] text-gray-500">Morena · Diputados</span></div>
-              <div class="text-[11px] text-gray-600">Mencionado 3× en El Universal</div>
-            </div>
-            <div class="text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-bold">📰 Cobertura</div>
-          </div>
-          <div class="flex items-center gap-3 hover:bg-gray-50 -mx-2 px-2 py-2 rounded cursor-pointer opacity-60">
-            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 text-white font-bold text-xs flex items-center justify-center">LT</div>
-            <div class="flex-1 min-w-0">
-              <div class="text-sm font-semibold text-gray-800 truncate">Lilly Téllez <span class="text-[10px] text-gray-500">PAN · Senado</span></div>
-              <div class="text-[11px] text-gray-600">Sin actividad nueva</div>
-            </div>
-          </div>
-          <div class="flex items-center gap-3 hover:bg-gray-50 -mx-2 px-2 py-2 rounded cursor-pointer opacity-60">
-            <div class="w-9 h-9 rounded-full bg-gradient-to-br from-orange-500 to-orange-700 text-white font-bold text-xs flex items-center justify-center">IO</div>
-            <div class="flex-1 min-w-0">
-              <div class="text-sm font-semibold text-gray-800 truncate">Ivonne Ortega <span class="text-[10px] text-gray-500">MC · Diputados</span></div>
-              <div class="text-[11px] text-gray-600">Sin actividad nueva</div>
-            </div>
+          <div class="flex gap-3 text-[10px]">
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full" style="background:#c62828"></span><span class="text-gray-600">Seguridad</span></span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full" style="background:#c6972b"></span><span class="text-gray-600">Educación</span></span>
+            <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full" style="background:#1a365d"></span><span class="text-gray-600">Anticorrupción</span></span>
           </div>
         </div>
+        <svg viewBox="0 0 700 180" class="w-full h-44">
+          <defs>
+            <linearGradient id="gr1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c62828" stop-opacity="0.18"/><stop offset="100%" stop-color="#c62828" stop-opacity="0"/></linearGradient>
+          </defs>
+          <path d="M 0 130 L 60 120 L 120 100 L 180 90 L 240 80 L 300 70 L 360 60 L 420 55 L 480 50 L 540 45 L 600 40 L 700 35 L 700 180 L 0 180 Z" fill="url(#gr1)"/>
+          <polyline fill="none" stroke="#c62828" stroke-width="2" points="0,130 60,120 120,100 180,90 240,80 300,70 360,60 420,55 480,50 540,45 600,40 700,35"/>
+          <polyline fill="none" stroke="#c6972b" stroke-width="2" points="0,150 60,148 120,140 180,138 240,135 300,130 360,125 420,118 480,110 540,105 600,100 700,95"/>
+          <polyline fill="none" stroke="#1a365d" stroke-width="2" points="0,160 60,158 120,155 180,150 240,148 300,140 360,130 420,125 480,120 540,118 600,115 700,110"/>
+          <text x="0" y="175" font-size="9" fill="#9ca3af" font-family="JetBrains Mono">26 mar</text>
+          <text x="350" y="175" font-size="9" fill="#9ca3af" font-family="JetBrains Mono">10 abr</text>
+          <text x="660" y="175" font-size="9" fill="#9ca3af" font-family="JetBrains Mono">26 abr</text>
+        </svg>
       </div>
 
-      <!-- Widget: Mis alertas -->
-      <div class="glass rounded-xl p-5">
+      <!-- Mapa MX (1/3 del ancho) -->
+      <div class="glass rounded-xl p-5 mapa-mx-bg">
         <div class="flex items-center justify-between mb-3">
           <div>
-            <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">🔔 MIS ALERTAS</div>
-            <div class="text-sm font-bold text-gray-800">2 activas · 1 disparada hoy</div>
+            <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Mis estados</div>
+            <div class="text-sm font-semibold text-gray-800 mt-0.5">4 estados vigilados</div>
           </div>
-          <button class="text-xs text-purple-700 font-semibold hover:underline">+ Crear</button>
+          <button class="text-[10px] text-gray-500 hover:text-gray-800 font-semibold">Editar</button>
         </div>
-        <div class="space-y-2.5">
-          <div class="border border-rose-200 bg-rose-50 rounded-lg p-3">
-            <div class="flex items-center justify-between mb-1">
-              <div class="text-xs font-bold text-rose-900">🚨 Reforma electoral score &gt;75</div>
-              <div class="text-[10px] bg-rose-200 text-rose-800 px-2 py-0.5 rounded-full font-bold">DISPARADA</div>
-            </div>
-            <div class="text-[11px] text-rose-700">Hoy a las 09:14 — Score subió a 87</div>
-          </div>
-          <div class="border border-gray-200 bg-white rounded-lg p-3">
-            <div class="flex items-center justify-between mb-1">
-              <div class="text-xs font-bold text-gray-900">👤 Ricardo Monreal presenta en seguridad</div>
-              <div class="text-[10px] bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full font-bold">ACTIVA</div>
-            </div>
-            <div class="text-[11px] text-gray-500">Sin disparar este mes</div>
-          </div>
+        <!-- Mapa MX simplificado SVG -->
+        <svg viewBox="0 0 320 220" class="w-full h-44">
+          <!-- México silhouette muy simplificado -->
+          <path d="M 30 80 Q 50 70 80 75 L 110 70 Q 140 60 165 65 L 200 55 Q 230 60 250 70 L 280 90 L 290 110 L 280 130 L 270 145 L 250 155 L 230 160 L 210 170 L 190 175 L 170 185 L 150 180 L 130 175 L 110 165 L 95 155 L 80 140 L 65 125 L 50 110 L 35 95 Z"
+                fill="#e5e7eb" stroke="#d1d5db" stroke-width="1"/>
+          <!-- Estados vigilados como dots -->
+          <!-- CDMX -->
+          <circle cx="170" cy="125" r="7" fill="#c62828"/>
+          <circle cx="170" cy="125" r="14" fill="#c62828" opacity="0.2">
+            <animate attributeName="r" values="7;18;7" dur="2s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.4;0;0.4" dur="2s" repeatCount="indefinite"/>
+          </circle>
+          <text x="180" y="128" font-size="9" fill="#1f2937" font-weight="600">CDMX</text>
+          <!-- Coahuila -->
+          <circle cx="135" cy="80" r="6" fill="#c6972b"/>
+          <text x="100" y="78" font-size="9" fill="#1f2937" font-weight="600">Coahuila</text>
+          <!-- Yucatán -->
+          <circle cx="265" cy="125" r="6" fill="#2e7d32"/>
+          <text x="245" y="145" font-size="9" fill="#1f2937" font-weight="600">Yucatán</text>
+          <!-- Sonora -->
+          <circle cx="80" cy="100" r="6" fill="#2e7d32"/>
+          <text x="50" y="125" font-size="9" fill="#1f2937" font-weight="600">Sonora</text>
+        </svg>
+        <div class="space-y-1 mt-2 text-[11px]">
+          <div class="flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:#c62828"></div><span class="text-gray-700">CDMX</span></div><span class="text-gray-500 font-mono">12 instrumentos</span></div>
+          <div class="flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:#c6972b"></div><span class="text-gray-700">Coahuila</span></div><span class="text-gray-500 font-mono">7 instrumentos</span></div>
+          <div class="flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:#2e7d32"></div><span class="text-gray-700">Yucatán</span></div><span class="text-gray-500 font-mono">4 instrumentos</span></div>
+          <div class="flex items-center justify-between"><div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:#2e7d32"></div><span class="text-gray-700">Sonora</span></div><span class="text-gray-500 font-mono">3 instrumentos</span></div>
         </div>
       </div>
+    </div>
 
-      <!-- Widget: Mis temas -->
-      <div class="glass rounded-xl p-5">
-        <div class="flex items-center justify-between mb-3">
-          <div>
-            <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">🎯 MIS TEMAS</div>
-            <div class="text-sm font-bold text-gray-800">3 categorías</div>
-          </div>
-          <button class="text-xs text-purple-700 font-semibold hover:underline">Editar</button>
+    <!-- ROW 2: Mis legisladores (cards estilo Radar) -->
+    <div class="glass rounded-xl p-5">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Mis legisladores</div>
+          <div class="text-sm font-semibold text-gray-800 mt-0.5">5 monitoreados · ordenados por actividad reciente</div>
         </div>
-        <div class="space-y-3">
-          <div class="flex items-center gap-3">
-            <div class="text-2xl">🚓</div>
-            <div class="flex-1">
-              <div class="text-sm font-semibold text-gray-800">Seguridad y justicia</div>
-              <div class="text-[11px] text-gray-500">Score 87 · ▲ +12 esta semana</div>
-            </div>
-            <div class="text-2xl font-black font-mono text-rose-700">87</div>
-          </div>
-          <div class="flex items-center gap-3">
-            <div class="text-2xl">📚</div>
-            <div class="flex-1">
-              <div class="text-sm font-semibold text-gray-800">Educación</div>
-              <div class="text-[11px] text-gray-500">Score 71 · ▼ -5 esta semana</div>
-            </div>
-            <div class="text-2xl font-black font-mono text-amber-700">71</div>
-          </div>
-          <div class="flex items-center gap-3">
-            <div class="text-2xl">⚖️</div>
-            <div class="flex-1">
-              <div class="text-sm font-semibold text-gray-800">Anticorrupción</div>
-              <div class="text-[11px] text-gray-500">Score 68 · → estable</div>
-            </div>
-            <div class="text-2xl font-black font-mono text-amber-700">68</div>
-          </div>
-        </div>
+        <button onclick="setVista('legisladores')" class="text-[11px] text-white font-semibold px-3 py-1.5 rounded-full" style="background:#1a365d">Configurar</button>
       </div>
-
-      <!-- Widget: Terminal IA quick -->
-      <div class="glass rounded-xl p-5 bg-gradient-to-br from-purple-50 to-white border-purple-200">
-        <div class="flex items-center justify-between mb-3">
-          <div>
-            <div class="text-[10px] uppercase tracking-widest text-purple-700 font-bold">🤖 PREGUNTA RÁPIDA</div>
-            <div class="text-sm font-bold text-gray-800">FIAT Brain</div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <!-- Card legislador estilo Radar -->
+        <div class="border border-gray-200 rounded-xl p-4 hover:shadow-md transition cursor-pointer">
+          <div class="flex items-start gap-3">
+            <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-gray-700 flex-shrink-0">RM</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-bold text-gray-900 truncate">Rubén Moreira</div>
+              <div class="text-[10px] text-gray-500 font-mono">PRI · Diputados · Coahuila</div>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold" style="background:#fef2f2; color:#c62828">▲ ACTIVO</span>
+                <span class="text-[10px] text-gray-500 font-mono">Hit rate 78%</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold font-mono text-gray-800">A</div>
+              <div class="text-[9px] uppercase text-gray-400 tracking-wider">Grade</div>
+            </div>
           </div>
-          <div class="text-[10px] text-gray-500">187/200</div>
+          <div class="mt-3 pt-3 border-t border-gray-100">
+            <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Últimos 7 días</div>
+            <div class="text-xs text-gray-700">2 PA en Justicia · 1 iniciativa</div>
+          </div>
         </div>
-        <div class="space-y-2">
-          <button onclick="setVista('terminal')" class="w-full text-left px-3 py-2 bg-white border border-gray-200 hover:border-purple-300 rounded-lg text-xs text-gray-700 transition">
-            "¿Qué pasó hoy en Justicia?"
-          </button>
-          <button onclick="setVista('terminal')" class="w-full text-left px-3 py-2 bg-white border border-gray-200 hover:border-purple-300 rounded-lg text-xs text-gray-700 transition">
-            "Compara productividad de Moreira vs Monreal"
-          </button>
-          <button onclick="setVista('terminal')" class="w-full text-left px-3 py-2 bg-white border border-gray-200 hover:border-purple-300 rounded-lg text-xs text-gray-700 transition">
-            "Resumen semanal de mis temas"
-          </button>
+
+        <div class="border border-gray-200 rounded-xl p-4 hover:shadow-md transition cursor-pointer">
+          <div class="flex items-start gap-3">
+            <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-gray-700 flex-shrink-0">MA</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-bold text-gray-900 truncate">Manuel Añorve</div>
+              <div class="text-[10px] text-gray-500 font-mono">PRI · Senado · Guerrero</div>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold" style="background:#f8faf8; color:#2e7d32">→ NORMAL</span>
+                <span class="text-[10px] text-gray-500 font-mono">Hit rate 65%</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold font-mono text-gray-800">B+</div>
+              <div class="text-[9px] uppercase text-gray-400 tracking-wider">Grade</div>
+            </div>
+          </div>
+          <div class="mt-3 pt-3 border-t border-gray-100">
+            <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Últimos 7 días</div>
+            <div class="text-xs text-gray-700">Sesión 4/22 · sin presentaciones</div>
+          </div>
         </div>
-        <button onclick="setVista('terminal')" class="w-full mt-3 bg-gradient-to-r from-premium-600 to-premium-700 text-white font-bold py-2 rounded-lg text-xs">
-          ✦ Abrir Terminal IA
+
+        <div class="border border-gray-200 rounded-xl p-4 hover:shadow-md transition cursor-pointer">
+          <div class="flex items-start gap-3">
+            <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-gray-700 flex-shrink-0">RM</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-bold text-gray-900 truncate">Ricardo Monreal</div>
+              <div class="text-[10px] text-gray-500 font-mono">Morena · Diputados · Zacatecas</div>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-[10px] px-1.5 py-0.5 rounded font-mono font-bold" style="background:#fffbeb; color:#c6972b">COBERTURA</span>
+                <span class="text-[10px] text-gray-500 font-mono">Hit rate 92%</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold font-mono text-gray-800">A+</div>
+              <div class="text-[9px] uppercase text-gray-400 tracking-wider">Grade</div>
+            </div>
+          </div>
+          <div class="mt-3 pt-3 border-t border-gray-100">
+            <div class="text-[10px] uppercase tracking-wider text-gray-500 font-bold mb-1">Últimos 7 días</div>
+            <div class="text-xs text-gray-700">3 menciones El Universal</div>
+          </div>
+        </div>
+
+        <div class="border border-gray-200 rounded-xl p-4 hover:shadow-md transition cursor-pointer opacity-75">
+          <div class="flex items-start gap-3">
+            <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-gray-700 flex-shrink-0">LT</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-bold text-gray-900 truncate">Lilly Téllez</div>
+              <div class="text-[10px] text-gray-500 font-mono">PAN · Senado · Sonora</div>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-[10px] text-gray-500 font-mono">Sin actividad</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold font-mono text-gray-400">C</div>
+              <div class="text-[9px] uppercase text-gray-400 tracking-wider">Grade</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border border-gray-200 rounded-xl p-4 hover:shadow-md transition cursor-pointer opacity-75">
+          <div class="flex items-start gap-3">
+            <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-gray-700 flex-shrink-0">IO</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-bold text-gray-900 truncate">Ivonne Ortega</div>
+              <div class="text-[10px] text-gray-500 font-mono">MC · Diputados · Yucatán</div>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-[10px] text-gray-500 font-mono">Sin actividad</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold font-mono text-gray-400">B</div>
+              <div class="text-[9px] uppercase text-gray-400 tracking-wider">Grade</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slot vacío "Agregar" -->
+        <button onclick="setVista('legisladores')" class="border-2 border-dashed border-gray-300 rounded-xl p-4 hover:border-gray-500 hover:bg-gray-50 transition flex items-center justify-center text-gray-500">
+          <div class="text-center">
+            <div class="text-2xl font-light leading-none">+</div>
+            <div class="text-[10px] uppercase tracking-widest font-bold mt-1">Agregar legislador</div>
+            <div class="text-[10px] text-gray-400 mt-0.5">15 slots disponibles</div>
+          </div>
         </button>
       </div>
     </div>
 
-    <!-- FAB IA -->
-    <button onclick="setVista('terminal')" class="fab-ai fixed bottom-6 right-6 w-14 h-14 rounded-full text-white text-xl flex items-center justify-center hover:scale-110 transition-transform z-40">
-      <span class="font-black">✦</span>
+    <!-- ROW 3: Mis alertas + Actividad reciente -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Alertas -->
+      <div class="glass rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Mis alertas</div>
+            <div class="text-sm font-semibold text-gray-800 mt-0.5">2 activas · 1 disparada hoy</div>
+          </div>
+          <button class="text-[11px] font-semibold" style="color:#1a365d">+ Crear alerta</button>
+        </div>
+        <div class="space-y-2.5">
+          <div class="border-l-2 rounded-r-lg p-3" style="background:#fef2f2; border-color:#c62828">
+            <div class="flex items-center justify-between mb-1">
+              <div class="text-xs font-bold text-gray-900">Reforma electoral score &gt; 75</div>
+              <div class="text-[9px] text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-widest" style="background:#c62828">DISPARADA</div>
+            </div>
+            <div class="text-[11px] text-gray-700 font-mono">Hoy 09:14 · Score subió a 87</div>
+          </div>
+          <div class="border-l-2 rounded-r-lg p-3" style="background:#f9fafb; border-color:#9ca3af">
+            <div class="flex items-center justify-between mb-1">
+              <div class="text-xs font-bold text-gray-900">Ricardo Monreal presenta en seguridad</div>
+              <div class="text-[9px] text-gray-600 font-bold px-2 py-0.5 rounded-full uppercase tracking-widest border border-gray-300">ACTIVA</div>
+            </div>
+            <div class="text-[11px] text-gray-500 font-mono">Sin disparar este mes</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actividad reciente del feed -->
+      <div class="glass rounded-xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Actividad reciente</div>
+            <div class="text-sm font-semibold text-gray-800 mt-0.5">Tus legisladores y temas · últimas 24h</div>
+          </div>
+        </div>
+        <div class="space-y-2.5 text-xs">
+          <div class="flex items-start gap-3 p-2 hover:bg-gray-50 -mx-2 rounded">
+            <div class="text-[10px] text-gray-400 font-mono w-12 flex-shrink-0 mt-0.5">14:22</div>
+            <div class="flex-1">
+              <div class="text-gray-800"><span class="font-semibold">R. Moreira</span> presentó PA: <em>"Exhorto a SSPC sobre extorsiones a sector pesquero"</em></div>
+              <div class="text-[10px] text-gray-500 mt-0.5">Justicia · Cámara de Diputados</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-2 hover:bg-gray-50 -mx-2 rounded">
+            <div class="text-[10px] text-gray-400 font-mono w-12 flex-shrink-0 mt-0.5">11:08</div>
+            <div class="flex-1">
+              <div class="text-gray-800">Tema <span class="font-semibold">Seguridad</span> alcanzó score 87 (+12)</div>
+              <div class="text-[10px] text-gray-500 mt-0.5">Picos en El Universal (5 notas) y Reforma (3)</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-2 hover:bg-gray-50 -mx-2 rounded">
+            <div class="text-[10px] text-gray-400 font-mono w-12 flex-shrink-0 mt-0.5">09:50</div>
+            <div class="flex-1">
+              <div class="text-gray-800"><span class="font-semibold">R. Monreal</span> mencionado 3× en El Universal</div>
+              <div class="text-[10px] text-gray-500 mt-0.5">Tema dominante: Reforma judicial</div>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-2 hover:bg-gray-50 -mx-2 rounded">
+            <div class="text-[10px] text-gray-400 font-mono w-12 flex-shrink-0 mt-0.5">07:20</div>
+            <div class="flex-1">
+              <div class="text-gray-800">Mañanera: <em>"Paquete económico 2026 sin nuevos impuestos"</em></div>
+              <div class="text-[10px] text-gray-500 mt-0.5">Posible impacto en tema Hacienda</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAB Terminal IA -->
+    <button onclick="setVista('terminal')" class="fab-terminal fixed bottom-6 right-6 px-5 py-3 rounded-full font-semibold text-sm flex items-center gap-2 z-40">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+      Terminal IA
     </button>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════ -->
-<!-- VISTA 8: MIS LEGISLADORES (pick)                        -->
+<!-- VISTA 8: MIS LEGISLADORES                               -->
 <!-- ═══════════════════════════════════════════════════════ -->
 <div id="vista-legisladores" class="vista">
   <div class="max-w-5xl mx-auto px-4 pt-4 pb-6 space-y-4">
     <header class="sticky top-12 z-50 py-2">
       <div class="nav-pill rounded-full px-3 py-2 flex items-center gap-2">
-        <div class="text-2xl font-black text-acento">FIAT</div>
+        <img src="fiat-logo-transparent.png" alt="FIAT" style="height: 32px; max-width: 100px;">
         <div class="hidden md:block w-px h-5 bg-gray-200 mx-1"></div>
         <button onclick="setVista('console')" class="nav-pill-tab">← Console</button>
         <button class="nav-pill-tab nav-pill-tab-active">Mis legisladores</button>
         <div class="flex-1"></div>
-        <div class="premium-badge px-3 py-1.5 rounded-full font-bold text-[11px]">✦ Premium</div>
+        <div class="badge-premium">PREMIUM</div>
       </div>
     </header>
 
     <div>
-      <div class="text-xs uppercase tracking-widest text-purple-700 font-bold">CONFIGURAR MONITOREO</div>
-      <h1 class="text-3xl font-black text-gray-900 mt-1">Mis legisladores</h1>
-      <p class="text-sm text-gray-500 mt-1">Selecciona hasta 20 legisladores. Recibirás alertas cuando presenten algo nuevo o cuando haya menciones en medios.</p>
+      <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold">CONFIGURAR MONITOREO</div>
+      <h1 class="text-2xl font-black text-gray-900 mt-1">Mis legisladores</h1>
+      <p class="text-xs text-gray-500 mt-1">Selecciona hasta 20 legisladores. Recibirás alertas cuando presenten algo o sean mencionados en medios.</p>
     </div>
 
-    <!-- Counter + filtros -->
     <div class="glass rounded-xl p-4">
       <div class="flex items-center gap-3 flex-wrap">
-        <div class="text-sm font-bold text-gray-800">5 / 20 seleccionados</div>
+        <div class="text-sm font-bold text-gray-800 font-mono">5 / 20 seleccionados</div>
         <div class="flex-1 max-w-md">
-          <input type="text" placeholder="Buscar legislador..." class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm">
+          <input type="text" placeholder="Buscar legislador..." class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white">
         </div>
-        <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-          <option>Todas las cámaras</option>
-          <option>Diputados</option>
-          <option>Senado</option>
+        <select class="px-3 py-2 border border-gray-200 rounded-full text-sm bg-white">
+          <option>Todas las cámaras</option><option>Diputados</option><option>Senado</option>
         </select>
-        <select class="px-3 py-2 border border-gray-300 rounded-lg text-sm">
-          <option>Todos los partidos</option>
-          <option>Morena</option><option>PAN</option><option>PRI</option><option>MC</option><option>PVEM</option><option>PT</option>
+        <select class="px-3 py-2 border border-gray-200 rounded-full text-sm bg-white">
+          <option>Todos los partidos</option><option>Morena</option><option>PAN</option><option>PRI</option><option>MC</option><option>PVEM</option><option>PT</option>
         </select>
       </div>
     </div>
 
-    <!-- Seleccionados -->
     <div class="glass rounded-xl p-5">
       <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-3">SELECCIONADOS · 5</div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-        <div class="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-lg p-3">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-rose-600 to-red-700 text-white font-bold text-sm flex items-center justify-center">RM</div>
-          <div class="flex-1">
+        <div class="flex items-center gap-3 border-l-2 rounded-r-lg p-3" style="background:#f8faf8; border-color:#1a365d">
+          <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-gray-700">RM</div>
+          <div class="flex-1 min-w-0">
             <div class="text-sm font-bold text-gray-800">Rubén Moreira</div>
-            <div class="text-[11px] text-gray-500">PRI · Diputados · Coahuila</div>
+            <div class="text-[10px] text-gray-500 font-mono">PRI · Diputados · Coahuila</div>
           </div>
-          <button class="text-rose-600 hover:bg-rose-50 w-8 h-8 rounded-full">✕</button>
+          <button class="text-gray-400 hover:text-rose-600 hover:bg-rose-50 w-8 h-8 rounded-full text-lg leading-none">×</button>
         </div>
-        <div class="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-lg p-3">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-rose-600 to-red-700 text-white font-bold text-sm flex items-center justify-center">MA</div>
-          <div class="flex-1">
+        <div class="flex items-center gap-3 border-l-2 rounded-r-lg p-3" style="background:#f8faf8; border-color:#1a365d">
+          <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-gray-700">MA</div>
+          <div class="flex-1 min-w-0">
             <div class="text-sm font-bold text-gray-800">Manuel Añorve</div>
-            <div class="text-[11px] text-gray-500">PRI · Senado · Guerrero</div>
+            <div class="text-[10px] text-gray-500 font-mono">PRI · Senado · Guerrero</div>
           </div>
-          <button class="text-rose-600 hover:bg-rose-50 w-8 h-8 rounded-full">✕</button>
+          <button class="text-gray-400 hover:text-rose-600 hover:bg-rose-50 w-8 h-8 rounded-full text-lg leading-none">×</button>
         </div>
-        <div class="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-lg p-3">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-rose-700 to-red-900 text-white font-bold text-sm flex items-center justify-center">RM</div>
-          <div class="flex-1">
+        <div class="flex items-center gap-3 border-l-2 rounded-r-lg p-3" style="background:#f8faf8; border-color:#1a365d">
+          <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-gray-700">RM</div>
+          <div class="flex-1 min-w-0">
             <div class="text-sm font-bold text-gray-800">Ricardo Monreal</div>
-            <div class="text-[11px] text-gray-500">Morena · Diputados · Zacatecas</div>
+            <div class="text-[10px] text-gray-500 font-mono">Morena · Diputados · Zacatecas</div>
           </div>
-          <button class="text-rose-600 hover:bg-rose-50 w-8 h-8 rounded-full">✕</button>
+          <button class="text-gray-400 hover:text-rose-600 hover:bg-rose-50 w-8 h-8 rounded-full text-lg leading-none">×</button>
         </div>
-        <div class="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-lg p-3">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 text-white font-bold text-sm flex items-center justify-center">LT</div>
-          <div class="flex-1">
+        <div class="flex items-center gap-3 border-l-2 rounded-r-lg p-3" style="background:#f8faf8; border-color:#1a365d">
+          <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-gray-700">LT</div>
+          <div class="flex-1 min-w-0">
             <div class="text-sm font-bold text-gray-800">Lilly Téllez</div>
-            <div class="text-[11px] text-gray-500">PAN · Senado · Sonora</div>
+            <div class="text-[10px] text-gray-500 font-mono">PAN · Senado · Sonora</div>
           </div>
-          <button class="text-rose-600 hover:bg-rose-50 w-8 h-8 rounded-full">✕</button>
+          <button class="text-gray-400 hover:text-rose-600 hover:bg-rose-50 w-8 h-8 rounded-full text-lg leading-none">×</button>
         </div>
-        <div class="flex items-center gap-3 bg-purple-50 border border-purple-200 rounded-lg p-3">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-orange-500 to-orange-700 text-white font-bold text-sm flex items-center justify-center">IO</div>
-          <div class="flex-1">
+        <div class="flex items-center gap-3 border-l-2 rounded-r-lg p-3" style="background:#f8faf8; border-color:#1a365d">
+          <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-gray-700">IO</div>
+          <div class="flex-1 min-w-0">
             <div class="text-sm font-bold text-gray-800">Ivonne Ortega</div>
-            <div class="text-[11px] text-gray-500">MC · Diputados · Yucatán</div>
+            <div class="text-[10px] text-gray-500 font-mono">MC · Diputados · Yucatán</div>
           </div>
-          <button class="text-rose-600 hover:bg-rose-50 w-8 h-8 rounded-full">✕</button>
+          <button class="text-gray-400 hover:text-rose-600 hover:bg-rose-50 w-8 h-8 rounded-full text-lg leading-none">×</button>
         </div>
       </div>
     </div>
 
-    <!-- Resultados de búsqueda -->
     <div class="glass rounded-xl p-5">
       <div class="text-[10px] uppercase tracking-widest text-gray-500 font-bold mb-3">DISPONIBLES · mostrando 6 de 677</div>
       <div class="space-y-2">
         <div class="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2.5 cursor-pointer">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-rose-600 to-red-700 text-white font-bold text-sm flex items-center justify-center">AM</div>
+          <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-gray-700">AM</div>
           <div class="flex-1">
             <div class="text-sm font-semibold text-gray-800">Alejandro Moreno Cárdenas</div>
-            <div class="text-[11px] text-gray-500">PRI · Senado · Campeche · ✦ Reelecto Activo en LXV</div>
+            <div class="text-[10px] text-gray-500 font-mono">PRI · Senado · Campeche · Reelecto LXV</div>
           </div>
-          <button class="text-purple-700 hover:bg-purple-50 px-3 py-1.5 rounded-lg text-xs font-bold">+ Agregar</button>
+          <button class="text-white px-3 py-1.5 rounded-full text-[11px] font-semibold" style="background:#1a365d">+ Agregar</button>
         </div>
         <div class="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2.5 cursor-pointer">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-rose-600 to-red-700 text-white font-bold text-sm flex items-center justify-center">CV</div>
+          <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-gray-700">CV</div>
           <div class="flex-1">
             <div class="text-sm font-semibold text-gray-800">Carolina Viggiano Austria</div>
-            <div class="text-[11px] text-gray-500">PRI · Senado · Hidalgo · ✦ Cambio Diputados→Senado</div>
+            <div class="text-[10px] text-gray-500 font-mono">PRI · Senado · Hidalgo · Cambio Diputados→Senado</div>
           </div>
-          <button class="text-purple-700 hover:bg-purple-50 px-3 py-1.5 rounded-lg text-xs font-bold">+ Agregar</button>
+          <button class="text-white px-3 py-1.5 rounded-full text-[11px] font-semibold" style="background:#1a365d">+ Agregar</button>
         </div>
         <div class="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2.5 cursor-pointer">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-rose-700 to-red-900 text-white font-bold text-sm flex items-center justify-center">HM</div>
+          <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-gray-700">HM</div>
           <div class="flex-1">
             <div class="text-sm font-semibold text-gray-800">Higinio Martínez Miranda</div>
-            <div class="text-[11px] text-gray-500">Morena · Senado · Edomex · ✦ Activo en LXIV y LXV</div>
+            <div class="text-[10px] text-gray-500 font-mono">Morena · Senado · Edomex · Activo en LXIV y LXV</div>
           </div>
-          <button class="text-purple-700 hover:bg-purple-50 px-3 py-1.5 rounded-lg text-xs font-bold">+ Agregar</button>
+          <button class="text-white px-3 py-1.5 rounded-full text-[11px] font-semibold" style="background:#1a365d">+ Agregar</button>
         </div>
         <div class="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2.5 cursor-pointer">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 text-white font-bold text-sm flex items-center justify-center">KL</div>
+          <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-gray-700">KL</div>
           <div class="flex-1">
             <div class="text-sm font-semibold text-gray-800">Kenia López Rabadán</div>
-            <div class="text-[11px] text-gray-500">PAN · Diputados · CDMX</div>
+            <div class="text-[10px] text-gray-500 font-mono">PAN · Diputados · CDMX</div>
           </div>
-          <button class="text-purple-700 hover:bg-purple-50 px-3 py-1.5 rounded-lg text-xs font-bold">+ Agregar</button>
+          <button class="text-white px-3 py-1.5 rounded-full text-[11px] font-semibold" style="background:#1a365d">+ Agregar</button>
         </div>
         <div class="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2.5 cursor-pointer">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-rose-700 to-red-900 text-white font-bold text-sm flex items-center justify-center">EJ</div>
+          <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-gray-700">EJ</div>
           <div class="flex-1">
             <div class="text-sm font-semibold text-gray-800">Éctor Jaime Ramírez Barba</div>
-            <div class="text-[11px] text-gray-500">PAN · Diputados · Guanajuato · ✦ Activo en LXIV y LXV</div>
+            <div class="text-[10px] text-gray-500 font-mono">PAN · Diputados · Guanajuato · Activo en LXIV y LXV</div>
           </div>
-          <button class="text-purple-700 hover:bg-purple-50 px-3 py-1.5 rounded-lg text-xs font-bold">+ Agregar</button>
+          <button class="text-white px-3 py-1.5 rounded-full text-[11px] font-semibold" style="background:#1a365d">+ Agregar</button>
         </div>
         <div class="flex items-center gap-3 hover:bg-gray-50 rounded-lg p-2.5 cursor-pointer">
-          <div class="w-10 h-10 rounded-full bg-gradient-to-br from-rose-700 to-red-900 text-white font-bold text-sm flex items-center justify-center">YA</div>
+          <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center font-bold text-sm text-gray-700">YA</div>
           <div class="flex-1">
             <div class="text-sm font-semibold text-gray-800">Yerico Abramo Masso</div>
-            <div class="text-[11px] text-gray-500">PRI · Diputados · Coahuila · ✦ Activo en LXV</div>
+            <div class="text-[10px] text-gray-500 font-mono">PRI · Diputados · Coahuila · Activo en LXV</div>
           </div>
-          <button class="text-purple-700 hover:bg-purple-50 px-3 py-1.5 rounded-lg text-xs font-bold">+ Agregar</button>
+          <button class="text-white px-3 py-1.5 rounded-full text-[11px] font-semibold" style="background:#1a365d">+ Agregar</button>
         </div>
       </div>
-
-      <button class="w-full mt-4 text-sm text-gray-500 hover:text-gray-800 py-3">Ver más legisladores ↓</button>
+      <button class="w-full mt-4 text-xs text-gray-500 hover:text-gray-800 py-3 font-medium">Ver más legisladores ↓</button>
     </div>
   </div>
 </div>
 
 
-<!-- ─── JS del switcher ─── -->
 <script>
   function setVista(nombre) {
     document.querySelectorAll('.vista').forEach(v => v.classList.remove('active'));
     document.getElementById('vista-' + nombre).classList.add('active');
-    document.querySelectorAll('.vista-btn').forEach(b => {
-      b.classList.remove('bg-white/30', 'font-bold');
-    });
-    // Highlight botón actual
+    document.querySelectorAll('.vista-btn').forEach(b => b.classList.remove('bg-white/20', 'font-bold'));
     document.querySelectorAll('.vista-btn').forEach(b => {
       if (b.getAttribute('onclick')?.includes(`'${nombre}'`)) {
-        b.classList.add('bg-white/30', 'font-bold');
+        b.classList.add('bg-white/20', 'font-bold');
       }
     });
     window.scrollTo({top: 0, behavior: 'smooth'});
   }
-  // Vista inicial
   setVista('publica');
 </script>
 
