@@ -361,6 +361,7 @@ async function handleRadar(request, env) {
       matchup_comision: r.matchup_comision_target,
       matchup_tasa: r.matchup_tasa_dictamen,
       comisiones_cargo: r.comisiones_cargo || '',
+      marcador_continuidad: r.marcador_continuidad || '',
       narrativa: r.narrativa || '',
       elo_rating: r.elo_rating,
       elo_partidas: r.elo_partidas,
