@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generado": "2026-04-26T05:37:15.615628+00:00",
+    "generado": "2026-04-26T06:40:28.993565+00:00",
     "version": "3.2",
     "formula": "SCORE = (0.20*Media) + (0.15*Trends) + (0.25*Congreso) + (0.10*Mañanera) + (0.15*Urgencia) + (0.15*Dominancia)",
     "umbrales": {
@@ -8,18 +8,18 @@
       "amarillo": 40,
       "rojo": 0
     },
-    "sil_docs": 16628
+    "sil_docs": 16639
   },
   "semaforo": [
     {
       "categoria": "infraestructura",
       "nombre": "Infraestructura",
-      "score_total": 75.3,
+      "score_total": 75.32,
       "score_media": 100.0,
       "score_trends": 22.6,
       "score_congreso": 100.0,
       "score_mananera": 26.59,
-      "score_urgencia": 61.69,
+      "score_urgencia": 61.78,
       "score_dominancia": 100.0,
       "color": "verde",
       "fecha": "2026-04-26",
@@ -38,27 +38,22 @@
         {
           "clave": "proteccion_civil",
           "nombre": "Protección civil y desastres",
-          "peso": 0.6
+          "peso": 0.57
         },
         {
           "clave": "megaproyectos",
           "nombre": "Megaproyectos federales",
-          "peso": 0.46
+          "peso": 0.49
         },
         {
-          "clave": "vivienda_urbano",
-          "nombre": "Vivienda y desarrollo urbano",
-          "peso": 0.08
+          "clave": "obra_publica",
+          "nombre": "Obra pública",
+          "peso": 0.06
         },
         {
           "clave": "agua_saneamiento",
           "nombre": "Agua y saneamiento",
           "peso": 0.06
-        },
-        {
-          "clave": "obra_publica",
-          "nombre": "Obra pública",
-          "peso": 0.03
         },
         {
           "clave": "telecomunicaciones",
@@ -76,14 +71,78 @@
       }
     },
     {
+      "categoria": "seguridad_justicia",
+      "nombre": "Seguridad y Justicia",
+      "score_total": 75.0,
+      "score_media": 100.0,
+      "score_trends": 22.47,
+      "score_congreso": 100.0,
+      "score_mananera": 40.13,
+      "score_urgencia": 50.79,
+      "score_dominancia": 100.0,
+      "color": "verde",
+      "fecha": "2026-04-26",
+      "momentum": {
+        "dias_consecutivos": 30,
+        "semanas_en_agenda": 4,
+        "tendencia": "stable",
+        "etiqueta": "Semana 4 en agenda"
+      },
+      "subcategorias_activas": [
+        {
+          "clave": "violencia_victimas",
+          "nombre": "Violencia y víctimas",
+          "peso": 1.0
+        },
+        {
+          "clave": "seguridad_publica",
+          "nombre": "Seguridad pública y policía",
+          "peso": 0.79
+        },
+        {
+          "clave": "crimen_organizado",
+          "nombre": "Crimen organizado",
+          "peso": 0.55
+        },
+        {
+          "clave": "fuerzas_armadas",
+          "nombre": "Fuerzas armadas y defensa",
+          "peso": 0.29
+        },
+        {
+          "clave": "justicia_penal",
+          "nombre": "Justicia penal y reforma judicial",
+          "peso": 0.16
+        },
+        {
+          "clave": "sistema_penitenciario",
+          "nombre": "Sistema penitenciario",
+          "peso": 0.08
+        },
+        {
+          "clave": "justicia_constitucional",
+          "nombre": "Justicia constitucional",
+          "peso": 0.02
+        }
+      ],
+      "divergencia": {
+        "indice": 0.151,
+        "patron_id": "rebalanceo_tecnico",
+        "patron_label": "Rebalanceo del modelo",
+        "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
+        "sobre_representada": "Dominancia",
+        "sub_representada": "Urgencia"
+      }
+    },
+    {
       "categoria": "relaciones_exteriores",
       "nombre": "Relaciones Exteriores",
-      "score_total": 74.26,
+      "score_total": 74.1,
       "score_media": 100.0,
       "score_trends": 11.0,
       "score_congreso": 100.0,
       "score_mananera": 42.66,
-      "score_urgencia": 55.63,
+      "score_urgencia": 54.54,
       "score_dominancia": 100.0,
       "color": "verde",
       "fecha": "2026-04-26",
@@ -111,7 +170,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.092,
+        "indice": 0.093,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -120,78 +179,14 @@
       }
     },
     {
-      "categoria": "seguridad_justicia",
-      "nombre": "Seguridad y Justicia",
-      "score_total": 74.09,
-      "score_media": 100.0,
-      "score_trends": 22.47,
-      "score_congreso": 100.0,
-      "score_mananera": 40.13,
-      "score_urgencia": 44.73,
-      "score_dominancia": 100.0,
-      "color": "verde",
-      "fecha": "2026-04-26",
-      "momentum": {
-        "dias_consecutivos": 30,
-        "semanas_en_agenda": 4,
-        "tendencia": "stable",
-        "etiqueta": "Semana 4 en agenda"
-      },
-      "subcategorias_activas": [
-        {
-          "clave": "violencia_victimas",
-          "nombre": "Violencia y víctimas",
-          "peso": 1.0
-        },
-        {
-          "clave": "seguridad_publica",
-          "nombre": "Seguridad pública y policía",
-          "peso": 0.87
-        },
-        {
-          "clave": "crimen_organizado",
-          "nombre": "Crimen organizado",
-          "peso": 0.57
-        },
-        {
-          "clave": "fuerzas_armadas",
-          "nombre": "Fuerzas armadas y defensa",
-          "peso": 0.32
-        },
-        {
-          "clave": "justicia_penal",
-          "nombre": "Justicia penal y reforma judicial",
-          "peso": 0.16
-        },
-        {
-          "clave": "sistema_penitenciario",
-          "nombre": "Sistema penitenciario",
-          "peso": 0.09
-        },
-        {
-          "clave": "justicia_constitucional",
-          "nombre": "Justicia constitucional",
-          "peso": 0.02
-        }
-      ],
-      "divergencia": {
-        "indice": 0.163,
-        "patron_id": "rebalanceo_tecnico",
-        "patron_label": "Rebalanceo del modelo",
-        "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
-        "sobre_representada": "Dominancia",
-        "sub_representada": "Urgencia"
-      }
-    },
-    {
       "categoria": "electoral_politico",
       "nombre": "Electoral y Político",
-      "score_total": 72.02,
+      "score_total": 73.02,
       "score_media": 100.0,
       "score_trends": 12.6,
       "score_congreso": 100.0,
       "score_mananera": 14.79,
-      "score_urgencia": 57.7,
+      "score_urgencia": 64.33,
       "score_dominancia": 100.0,
       "color": "verde",
       "fecha": "2026-04-26",
@@ -210,21 +205,21 @@
         {
           "clave": "gobernabilidad",
           "nombre": "Gobernabilidad",
-          "peso": 0.3
+          "peso": 0.33
         },
         {
           "clave": "partidos_coaliciones",
           "nombre": "Partidos y coaliciones",
-          "peso": 0.28
+          "peso": 0.3
         },
         {
           "clave": "participacion_ciudadana",
           "nombre": "Participación ciudadana",
-          "peso": 0.23
+          "peso": 0.28
         }
       ],
       "divergencia": {
-        "indice": 0.177,
+        "indice": 0.169,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -235,12 +230,12 @@
     {
       "categoria": "economia_hacienda",
       "nombre": "Economía y Hacienda",
-      "score_total": 71.29,
+      "score_total": 71.57,
       "score_media": 100.0,
       "score_trends": 20.47,
       "score_congreso": 100.0,
       "score_mananera": 36.06,
-      "score_urgencia": 30.76,
+      "score_urgencia": 32.6,
       "score_dominancia": 100.0,
       "color": "verde",
       "fecha": "2026-04-26",
@@ -278,7 +273,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.208,
+        "indice": 0.202,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -289,12 +284,12 @@
     {
       "categoria": "derechos_humanos",
       "nombre": "Derechos Humanos",
-      "score_total": 70.09,
-      "score_media": 90.96,
+      "score_total": 71.27,
+      "score_media": 90.91,
       "score_trends": 20.7,
       "score_congreso": 100.0,
       "score_mananera": 19.81,
-      "score_urgencia": 45.4,
+      "score_urgencia": 53.37,
       "score_dominancia": 100.0,
       "color": "verde",
       "fecha": "2026-04-26",
@@ -332,23 +327,23 @@
         }
       ],
       "divergencia": {
-        "indice": 0.163,
+        "indice": 0.15,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
         "sobre_representada": "Dominancia",
-        "sub_representada": "Urgencia"
+        "sub_representada": "Congreso"
       }
     },
     {
       "categoria": "agro_rural",
       "nombre": "Agro y Desarrollo Rural",
-      "score_total": 64.82,
-      "score_media": 72.49,
+      "score_total": 65.26,
+      "score_media": 72.46,
       "score_trends": 19.2,
       "score_congreso": 98.08999999999999,
       "score_mananera": 19.36,
-      "score_urgencia": 39.88,
+      "score_urgencia": 42.89,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-04-26",
@@ -381,7 +376,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.163,
+        "indice": 0.155,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -390,14 +385,68 @@
       }
     },
     {
+      "categoria": "medio_ambiente",
+      "nombre": "Medio Ambiente y Cambio Climático",
+      "score_total": 58.07,
+      "score_media": 89.62,
+      "score_trends": 13.17,
+      "score_congreso": 72.4,
+      "score_mananera": 15.72,
+      "score_urgencia": 23.32,
+      "score_dominancia": 100.0,
+      "color": "amarillo",
+      "fecha": "2026-04-26",
+      "momentum": {
+        "dias_consecutivos": 17,
+        "semanas_en_agenda": 2,
+        "tendencia": "down",
+        "etiqueta": "Semana 2 en agenda"
+      },
+      "subcategorias_activas": [
+        {
+          "clave": "contaminacion_residuos",
+          "nombre": "Contaminación y residuos",
+          "peso": 1.0
+        },
+        {
+          "clave": "recursos_forestales",
+          "nombre": "Recursos forestales",
+          "peso": 0.91
+        },
+        {
+          "clave": "conservacion_biodiversidad",
+          "nombre": "Conservación y biodiversidad",
+          "peso": 0.21
+        },
+        {
+          "clave": "fenomenos_naturales",
+          "nombre": "Fenómenos naturales",
+          "peso": 0.08
+        },
+        {
+          "clave": "cambio_climatico",
+          "nombre": "Cambio climático",
+          "peso": 0.04
+        }
+      ],
+      "divergencia": {
+        "indice": 0.309,
+        "patron_id": "interes_ciudadano_elevado",
+        "patron_label": "Interés ciudadano elevado",
+        "explicacion": "Las búsquedas concentran el peso del score.",
+        "sobre_representada": "Trends",
+        "sub_representada": "Urgencia"
+      }
+    },
+    {
       "categoria": "educacion",
       "nombre": "Educación",
-      "score_total": 58.84,
-      "score_media": 91.54,
+      "score_total": 57.65,
+      "score_media": 91.55,
       "score_trends": 12.93,
       "score_congreso": 50.589999999999996,
       "score_mananera": 36.29,
-      "score_urgencia": 48.79,
+      "score_urgencia": 40.86,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-04-26",
@@ -430,7 +479,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.277,
+        "indice": 0.298,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -441,12 +490,12 @@
     {
       "categoria": "anticorrupcion",
       "nombre": "Anticorrupción",
-      "score_total": 58.28,
-      "score_media": 85.64,
+      "score_total": 56.36,
+      "score_media": 85.6,
       "score_trends": 13.03,
       "score_congreso": 68.77,
       "score_mananera": 9.09,
-      "score_urgencia": 40.65,
+      "score_urgencia": 27.9,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-04-26",
@@ -479,7 +528,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.238,
+        "indice": 0.282,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -488,68 +537,63 @@
       }
     },
     {
-      "categoria": "medio_ambiente",
-      "nombre": "Medio Ambiente y Cambio Climático",
-      "score_total": 58.12,
-      "score_media": 89.62,
-      "score_trends": 13.17,
-      "score_congreso": 72.4,
-      "score_mananera": 15.72,
-      "score_urgencia": 23.64,
-      "score_dominancia": 100.0,
+      "categoria": "energia",
+      "nombre": "Energía",
+      "score_total": 55.17,
+      "score_media": 85.34,
+      "score_trends": 15.3,
+      "score_congreso": 38.199999999999996,
+      "score_mananera": 38.17,
+      "score_urgencia": 53.59,
+      "score_dominancia": 96.0,
       "color": "amarillo",
       "fecha": "2026-04-26",
       "momentum": {
         "dias_consecutivos": 17,
         "semanas_en_agenda": 2,
-        "tendencia": "down",
+        "tendencia": "stable",
         "etiqueta": "Semana 2 en agenda"
       },
       "subcategorias_activas": [
         {
-          "clave": "contaminacion_residuos",
-          "nombre": "Contaminación y residuos",
+          "clave": "pemex_petroleo",
+          "nombre": "Pemex y petróleo",
           "peso": 1.0
         },
         {
-          "clave": "recursos_forestales",
-          "nombre": "Recursos forestales",
-          "peso": 0.84
+          "clave": "cfe_electricidad",
+          "nombre": "CFE y electricidad",
+          "peso": 0.3
         },
         {
-          "clave": "conservacion_biodiversidad",
-          "nombre": "Conservación y biodiversidad",
-          "peso": 0.21
+          "clave": "mineria_recursos",
+          "nombre": "Minería y recursos",
+          "peso": 0.11
         },
         {
-          "clave": "fenomenos_naturales",
-          "nombre": "Fenómenos naturales",
-          "peso": 0.08
-        },
-        {
-          "clave": "cambio_climatico",
-          "nombre": "Cambio climático",
-          "peso": 0.05
+          "clave": "energias_renovables",
+          "nombre": "Energías renovables",
+          "peso": 0.01
         }
       ],
       "divergencia": {
-        "indice": 0.307,
-        "patron_id": "interes_ciudadano_elevado",
-        "patron_label": "Interés ciudadano elevado",
-        "explicacion": "Las búsquedas concentran el peso del score.",
-        "sobre_representada": "Trends",
-        "sub_representada": "Urgencia"
+        "indice": 0.138,
+        "patron_id": "rebalanceo_tecnico",
+        "patron_label": "Rebalanceo del modelo",
+        "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
+        "sobre_representada": "Dominancia",
+        "sub_representada": "Congreso"
       }
     },
     {
       "categoria": "salud",
       "nombre": "Salud",
-      "score_total": 56.53,
-      "score_media": 92.76,
+      "score_total": 54.88,
+      "score_media": 92.8,
       "score_trends": 13.3,
       "score_congreso": 51.87,
       "score_mananera": 15.58,
-      "score_urgencia": 43.07,
+      "score_urgencia": 31.98,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-04-26",
@@ -568,12 +612,12 @@
         {
           "clave": "salud_mental_adicciones",
           "nombre": "Salud mental y adicciones",
-          "peso": 0.46
+          "peso": 0.42
         },
         {
           "clave": "epidemiologia",
           "nombre": "Epidemiología",
-          "peso": 0.23
+          "peso": 0.26
         },
         {
           "clave": "medicamentos_abasto",
@@ -582,7 +626,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.234,
+        "indice": 0.262,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -593,12 +637,12 @@
     {
       "categoria": "trabajo",
       "nombre": "Trabajo",
-      "score_total": 54.74,
-      "score_media": 84.04,
+      "score_total": 54.75,
+      "score_media": 83.99,
       "score_trends": 20.2,
       "score_congreso": 59.62,
       "score_mananera": 1.27,
-      "score_urgencia": 32.46,
+      "score_urgencia": 32.61,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-04-26",
@@ -642,12 +686,12 @@
     {
       "categoria": "igualdad_genero",
       "nombre": "Igualdad de género",
-      "score_total": 52.79,
-      "score_media": 85.15,
+      "score_total": 52.91,
+      "score_media": 85.11,
       "score_trends": 13.03,
       "score_congreso": 55.84,
       "score_mananera": 0.0,
-      "score_urgencia": 32.28,
+      "score_urgencia": 33.18,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-04-26",
@@ -690,7 +734,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.16,
+        "indice": 0.158,
         "patron_id": "interes_ciudadano_elevado",
         "patron_label": "Interés ciudadano elevado",
         "explicacion": "Las búsquedas concentran el peso del score.",
@@ -699,64 +743,15 @@
       }
     },
     {
-      "categoria": "energia",
-      "nombre": "Energía",
-      "score_total": 52.76,
-      "score_media": 85.33,
-      "score_trends": 15.3,
-      "score_congreso": 38.199999999999996,
-      "score_mananera": 38.17,
-      "score_urgencia": 37.57,
-      "score_dominancia": 96.0,
-      "color": "amarillo",
-      "fecha": "2026-04-26",
-      "momentum": {
-        "dias_consecutivos": 17,
-        "semanas_en_agenda": 2,
-        "tendencia": "stable",
-        "etiqueta": "Semana 2 en agenda"
-      },
-      "subcategorias_activas": [
-        {
-          "clave": "pemex_petroleo",
-          "nombre": "Pemex y petróleo",
-          "peso": 1.0
-        },
-        {
-          "clave": "cfe_electricidad",
-          "nombre": "CFE y electricidad",
-          "peso": 0.3
-        },
-        {
-          "clave": "mineria_recursos",
-          "nombre": "Minería y recursos",
-          "peso": 0.11
-        },
-        {
-          "clave": "energias_renovables",
-          "nombre": "Energías renovables",
-          "peso": 0.01
-        }
-      ],
-      "divergencia": {
-        "indice": 0.174,
-        "patron_id": "rebalanceo_tecnico",
-        "patron_label": "Rebalanceo del modelo",
-        "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
-        "sobre_representada": "Dominancia",
-        "sub_representada": "Urgencia"
-      }
-    },
-    {
       "categoria": "turismo",
       "nombre": "Turismo",
-      "score_total": 40.68,
-      "score_media": 81.98,
+      "score_total": 40.74,
+      "score_media": 81.95,
       "score_trends": 9.03,
       "score_congreso": 35.03000000000001,
       "score_mananera": 4.91,
-      "score_urgencia": 22.8,
-      "score_dominancia": 68.42,
+      "score_urgencia": 22.79,
+      "score_dominancia": 68.85,
       "color": "amarillo",
       "fecha": "2026-04-26",
       "momentum": {
@@ -774,7 +769,7 @@
         {
           "clave": "economia_turistica",
           "nombre": "Economía turística",
-          "peso": 0.55
+          "peso": 0.57
         },
         {
           "clave": "destinos_programas",
@@ -788,7 +783,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.423,
+        "indice": 0.426,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -799,13 +794,13 @@
     {
       "categoria": "inteligencia_artificial",
       "nombre": "Inteligencia Artificial",
-      "score_total": 37.46,
-      "score_media": 68.2,
+      "score_total": 37.54,
+      "score_media": 68.19,
       "score_trends": 14.5,
       "score_congreso": 21.99,
       "score_mananera": 0.0,
-      "score_urgencia": 44.63,
-      "score_dominancia": 63.0,
+      "score_urgencia": 44.62,
+      "score_dominancia": 63.6,
       "color": "rojo",
       "fecha": "2026-04-26",
       "momentum": {
@@ -828,7 +823,7 @@
         {
           "clave": "gobernanza_digital",
           "nombre": "Gobernanza digital",
-          "peso": 0.18
+          "peso": 0.2
         },
         {
           "clave": "contenido_digital",
@@ -837,12 +832,61 @@
         }
       ],
       "divergencia": {
-        "indice": 0.302,
+        "indice": 0.305,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
         "sobre_representada": "Dominancia",
         "sub_representada": "Mañanera"
+      }
+    },
+    {
+      "categoria": "politica_social",
+      "nombre": "Política Social",
+      "score_total": 36.32,
+      "score_media": 65.61,
+      "score_trends": 9.83,
+      "score_congreso": 15.68,
+      "score_mananera": 15.9,
+      "score_urgencia": 28.1,
+      "score_dominancia": 80.0,
+      "color": "rojo",
+      "fecha": "2026-04-26",
+      "momentum": {
+        "dias_consecutivos": 0,
+        "semanas_en_agenda": 0,
+        "tendencia": "stable",
+        "etiqueta": ""
+      },
+      "subcategorias_activas": [
+        {
+          "clave": "bienestar_desarrollo",
+          "nombre": "Bienestar y desarrollo social",
+          "peso": 1.0
+        },
+        {
+          "clave": "grupos_vulnerables",
+          "nombre": "Grupos vulnerables",
+          "peso": 0.89
+        },
+        {
+          "clave": "programas_federales",
+          "nombre": "Programas federales",
+          "peso": 0.82
+        },
+        {
+          "clave": "pobreza_desigualdad",
+          "nombre": "Pobreza y desigualdad",
+          "peso": 0.45
+        }
+      ],
+      "divergencia": {
+        "indice": 0.339,
+        "patron_id": "rebalanceo_tecnico",
+        "patron_label": "Rebalanceo del modelo",
+        "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
+        "sobre_representada": "Dominancia",
+        "sub_representada": "Congreso"
       }
     },
     {
@@ -893,64 +937,15 @@
       "divergencia": null
     },
     {
-      "categoria": "politica_social",
-      "nombre": "Política Social",
-      "score_total": 35.78,
-      "score_media": 65.62,
-      "score_trends": 9.83,
-      "score_congreso": 15.68,
-      "score_mananera": 15.9,
-      "score_urgencia": 24.46,
-      "score_dominancia": 80.0,
-      "color": "rojo",
-      "fecha": "2026-04-26",
-      "momentum": {
-        "dias_consecutivos": 0,
-        "semanas_en_agenda": 0,
-        "tendencia": "stable",
-        "etiqueta": ""
-      },
-      "subcategorias_activas": [
-        {
-          "clave": "bienestar_desarrollo",
-          "nombre": "Bienestar y desarrollo social",
-          "peso": 1.0
-        },
-        {
-          "clave": "grupos_vulnerables",
-          "nombre": "Grupos vulnerables",
-          "peso": 0.89
-        },
-        {
-          "clave": "programas_federales",
-          "nombre": "Programas federales",
-          "peso": 0.82
-        },
-        {
-          "clave": "pobreza_desigualdad",
-          "nombre": "Pobreza y desigualdad",
-          "peso": 0.45
-        }
-      ],
-      "divergencia": {
-        "indice": 0.362,
-        "patron_id": "rebalanceo_tecnico",
-        "patron_label": "Rebalanceo del modelo",
-        "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
-        "sobre_representada": "Dominancia",
-        "sub_representada": "Congreso"
-      }
-    },
-    {
       "categoria": "medios_comunicacion",
       "nombre": "Medios de Comunicación",
       "score_total": 33.52,
-      "score_media": 63.66,
+      "score_media": 64.37,
       "score_trends": 14.2,
       "score_congreso": 14.44,
       "score_mananera": 0.0,
-      "score_urgencia": 40.89,
-      "score_dominancia": 59.4,
+      "score_urgencia": 39.06,
+      "score_dominancia": 60.3,
       "color": "rojo",
       "fecha": "2026-04-26",
       "momentum": {
@@ -968,7 +963,7 @@
         {
           "clave": "libertad_prensa",
           "nombre": "Libertad de prensa",
-          "peso": 0.08
+          "peso": 0.09
         },
         {
           "clave": "television_radio",
@@ -982,7 +977,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.336,
+        "indice": 0.35,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -992,6 +987,60 @@
     }
   ],
   "alertas": [
+    {
+      "id": 1282,
+      "categoria": "relaciones_exteriores",
+      "tipo_alerta": "score_alto",
+      "score": 74.1,
+      "color": "verde",
+      "mensaje": "ALERTA: Relaciones Exteriores con score 74.1 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-04-26T06:40:21.292177"
+    },
+    {
+      "id": 1281,
+      "categoria": "infraestructura",
+      "tipo_alerta": "score_alto",
+      "score": 75.32,
+      "color": "verde",
+      "mensaje": "ALERTA: Infraestructura con score 75.3 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-04-26T06:40:20.217792"
+    },
+    {
+      "id": 1280,
+      "categoria": "derechos_humanos",
+      "tipo_alerta": "score_alto",
+      "score": 71.27,
+      "color": "verde",
+      "mensaje": "ALERTA: Derechos Humanos con score 71.3 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-04-26T06:40:19.225771"
+    },
+    {
+      "id": 1279,
+      "categoria": "electoral_politico",
+      "tipo_alerta": "score_alto",
+      "score": 73.02,
+      "color": "verde",
+      "mensaje": "ALERTA: Electoral y Político con score 73.0 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-04-26T06:40:18.667487"
+    },
+    {
+      "id": 1278,
+      "categoria": "economia_hacienda",
+      "tipo_alerta": "score_alto",
+      "score": 71.57,
+      "color": "verde",
+      "mensaje": "ALERTA: Economía y Hacienda con score 71.6 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-04-26T06:40:15.635205"
+    },
+    {
+      "id": 1277,
+      "categoria": "seguridad_justicia",
+      "tipo_alerta": "score_alto",
+      "score": 75.0,
+      "color": "verde",
+      "mensaje": "ALERTA: Seguridad y Justicia con score 75.0 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-04-26T06:40:14.466989"
+    },
     {
       "id": 1276,
       "categoria": "relaciones_exteriores",
@@ -1387,82 +1436,28 @@
       "color": "verde",
       "mensaje": "ALERTA: Infraestructura con score 74.6 - Alta probabilidad de actividad legislativa",
       "fecha": "2026-04-23T21:45:42.926226"
-    },
-    {
-      "id": 1232,
-      "categoria": "electoral_politico",
-      "tipo_alerta": "score_alto",
-      "score": 72.31,
-      "color": "verde",
-      "mensaje": "ALERTA: Electoral y Político con score 72.3 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-04-23T21:45:41.086853"
-    },
-    {
-      "id": 1231,
-      "categoria": "educacion",
-      "tipo_alerta": "score_alto",
-      "score": 74.75,
-      "color": "verde",
-      "mensaje": "ALERTA: Educación con score 74.8 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-04-23T21:45:39.464735"
-    },
-    {
-      "id": 1230,
-      "categoria": "economia_hacienda",
-      "tipo_alerta": "score_alto",
-      "score": 77.44,
-      "color": "verde",
-      "mensaje": "ALERTA: Economía y Hacienda con score 77.4 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-04-23T21:45:37.461694"
-    },
-    {
-      "id": 1229,
-      "categoria": "seguridad_justicia",
-      "tipo_alerta": "score_alto",
-      "score": 73.22,
-      "color": "verde",
-      "mensaje": "ALERTA: Seguridad y Justicia con score 73.2 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-04-23T21:45:36.009840"
-    },
-    {
-      "id": 1228,
-      "categoria": "relaciones_exteriores",
-      "tipo_alerta": "score_alto",
-      "score": 72.63,
-      "color": "verde",
-      "mensaje": "ALERTA: Relaciones Exteriores con score 72.6 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-04-23T18:16:12.209252"
-    },
-    {
-      "id": 1227,
-      "categoria": "infraestructura",
-      "tipo_alerta": "score_alto",
-      "score": 74.56,
-      "color": "verde",
-      "mensaje": "ALERTA: Infraestructura con score 74.6 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-04-23T18:16:11.078822"
     }
   ],
   "distribucion_categorias": {
-    "infraestructura": 634,
+    "infraestructura": 636,
     "relaciones_exteriores": 626,
-    "medios_comunicacion": 49,
-    "inteligencia_artificial": 46,
-    "seguridad_justicia": 895,
-    "medio_ambiente": 145,
+    "medios_comunicacion": 52,
+    "inteligencia_artificial": 48,
+    "seguridad_justicia": 902,
+    "medio_ambiente": 146,
     "trabajo": 125,
     "educacion": 248,
-    "energia": 138,
-    "salud": 204,
+    "energia": 139,
+    "salud": 205,
     "igualdad_genero": 218,
     "agro_rural": 44,
-    "derechos_humanos": 183,
+    "derechos_humanos": 184,
     "politica_social": 74,
     "economia_hacienda": 186,
-    "electoral_politico": 322,
+    "electoral_politico": 324,
     "administracion": 43,
-    "anticorrupcion": 77,
-    "turismo": 104
+    "anticorrupcion": 78,
+    "turismo": 105
   },
   "predicciones": {
     "seguridad_justicia": {
@@ -1548,12 +1543,12 @@
     "infraestructura": {
       "categoria": "infraestructura",
       "nombre": "Infraestructura",
-      "lag_historico_dias": 7,
-      "correlacion": 0.44,
+      "lag_historico_dias": 6,
+      "correlacion": 0.2696,
       "significativo": true,
-      "confianza": 44.0,
-      "dias_estimados": 7,
-      "prediccion": "Basado en patrones históricos, la actividad legislativa ocurre ~7 días después de picos mediáticos (r=0.44, significativo)."
+      "confianza": 27.0,
+      "dias_estimados": 6,
+      "prediccion": "Basado en patrones históricos, la actividad legislativa ocurre ~6 días después de picos mediáticos (r=0.27, significativo)."
     },
     "agro_rural": {
       "categoria": "agro_rural",
@@ -1708,6 +1703,12 @@
           "fecha": "2026-04-26"
         },
         {
+          "fuente": "el_universal",
+          "titulo": "Detienen en el Estado de México a presunto feminicida de Keyla Chantal; es trasladado a Sonora",
+          "url": "https://www.eluniversal.com.mx/estados/detienen-en-el-estado-de-mexico-a-presunto-feminicida-de-keyla-chantal-es-trasladado-a-sonora/",
+          "fecha": "2026-04-26"
+        },
+        {
           "fuente": "el_financiero",
           "titulo": "‘Qué bueno que el presidente Trump está bien’: Sheinbaum manda mensaje tras tiroteo en EU",
           "url": "https://www.elfinanciero.com.mx/nacional/2026/04/25/que-bueno-que-el-presidente-trump-esta-bien-sheinbaum-manda-mensaje-tras-tiroteo-en-eu/",
@@ -1741,12 +1742,6 @@
           "fuente": "el_universal",
           "titulo": "Sheinbaum se pronuncia ante incidente de seguridad en cena de Trump en EU; \"la violencia no debe ser nunca el camino\", dice",
           "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-se-pronuncia-ante-incidente-de-seguridad-en-cena-de-trump-en-eu-la-violencia-no-debe-ser-nunca-el-camino-dice/",
-          "fecha": "2026-04-26"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Vinculan a proceso a 8 policías municipales de Manzanillo; filtraban información a una organización criminal",
-          "url": "https://www.eluniversal.com.mx/estados/vinculan-a-proceso-a-8-policias-municipales-de-manzanillo-filtraban-informacion-a-una-organizacion-criminal/",
           "fecha": "2026-04-26"
         }
       ],
@@ -3371,6 +3366,12 @@
       "articulos_medios": [
         {
           "fuente": "el_pais",
+          "titulo": "Incendios, derrames y cinco trabajadores muertos: el mes ‘horribilis’ de las refinerías de Pemex",
+          "url": "https://elpais.com/mexico/2026-04-26/incendios-derrames-y-cinco-trabajadores-muertos-el-mes-horribilis-de-las-refinerias-de-pemex.html",
+          "fecha": "2026-04-26"
+        },
+        {
+          "fuente": "el_pais",
           "titulo": "Sheinbaum se reúne con la presidenta de Petrobras para establecer un plan de colaboración con Pemex",
           "url": "https://elpais.com/mexico/economia/2026-04-24/sheinbaum-se-reune-con-la-presidenta-de-petrobras-para-establecer-un-plan-de-colaboracion-con-pemex.html",
           "fecha": "2026-04-26"
@@ -3451,12 +3452,6 @@
           "fuente": "el_financiero",
           "titulo": "Un contrato de gas natural… naturalmente corrupto",
           "url": "https://www.elfinanciero.com.mx/opinion/atzayaelh-torres/2026/04/24/un-contrato-de-gas-natural-naturalmente-corrupto/",
-          "fecha": "2026-04-24"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Solicitan Plan DNIII por derrame de gasolina en Huixquilucan",
-          "url": "https://www.jornada.com.mx/2026/04/24/estados/024n3est?partner=rss",
           "fecha": "2026-04-24"
         }
       ],
@@ -3702,6 +3697,12 @@
     "salud": {
       "articulos_medios": [
         {
+          "fuente": "talla_diputados",
+          "titulo": "Proponen reformas para la prevención, detección y atención integral del cáncer de mama y próstata",
+          "url": "https://www.tallapolitica.com.mx/proponen-reformas-para-la-prevencion-deteccion-y-atencion-integral-del-cancer-de-mama-y-prostata/",
+          "fecha": "2026-04-26"
+        },
+        {
           "fuente": "el_universal",
           "titulo": "Arranca Semana Nacional de Vacunación 2026; Secretaría de Salud prevé aplicar 1.7 millones de dosis",
           "url": "https://www.eluniversal.com.mx/nacion/arranca-semana-nacional-de-vacunacion-2026-secretaria-de-salud-espera-aplicar-17-millones-de-dosis/",
@@ -3783,12 +3784,6 @@
           "fuente": "la_jornada",
           "titulo": "Netanyahu anuncia que se trató contra cáncer de próstata y está sano",
           "url": "https://www.jornada.com.mx/2026/04/25/mundo/017n2mun?partner=rss",
-          "fecha": "2026-04-25"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Encinas rechaza informe de la CIDH: México no viola los derechos de médicos cubanos",
-          "url": "https://www.jornada.com.mx/2026/04/25/politica/009n3pol?partner=rss",
           "fecha": "2026-04-25"
         }
       ],
@@ -5286,6 +5281,18 @@
     "electoral_politico": {
       "articulos_medios": [
         {
+          "fuente": "talla_diputados",
+          "titulo": "López Rabadán afirma que la Cámara de Diputados ha tenido debates de alto nivel deliberando a propósito de la nación",
+          "url": "https://www.tallapolitica.com.mx/lopez-rabadan-afirma-que-la-camara-de-diputados-ha-tenido-debates-de-alto-nivel-deliberando-a-proposito-de-la-nacion/",
+          "fecha": "2026-04-26"
+        },
+        {
+          "fuente": "24_horas",
+          "titulo": "Morena define candidatos a diputados locales en Coahuila",
+          "url": "https://24-horas.mx/estados/morena-define-candidatos-a-diputados-locales-en-coahuila/",
+          "fecha": "2026-04-26"
+        },
+        {
           "fuente": "24_horas",
           "titulo": "Sheinbaum resalta la soberanía de México desde Hidalgo",
           "url": "https://24-horas.mx/mexico/sheinbaum-resalta-la-soberania-de-mexico-desde-hidalgo/",
@@ -5361,18 +5368,6 @@
           "fuente": "politico_mx",
           "titulo": "Nueva consejera del INE bajo la lupa por presunta transferencia de votos en Puebla",
           "url": "https://www.politico.mx/2026/04/24/nueva-consejera-del-ine-bajo-la-lupa-por-presunta-transferencia-de-votos-en-puebla/",
-          "fecha": "2026-04-24"
-        },
-        {
-          "fuente": "el_financiero",
-          "titulo": "Consejera del INE niega ahorro con elección del Poder Judicial en 2027",
-          "url": "https://www.elfinanciero.com.mx/nacional/2026/04/24/consejera-del-ine-niega-ahorro-con-eleccion-del-poder-judicial-en-2027/",
-          "fecha": "2026-04-24"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "INE: costará 6 mil mdp la elección judicial",
-          "url": "https://www.eluniversal.com.mx/nacion/ine-costara-6-mil-mdp-la-eleccion-judicial/",
           "fecha": "2026-04-24"
         }
       ],
@@ -8862,6 +8857,18 @@
     "infraestructura": {
       "articulos_medios": [
         {
+          "fuente": "la_razon",
+          "titulo": "Banobras aclara contrataciones para el tren Felipe Ángeles Buenavista–AIFA",
+          "url": "https://www.razon.com.mx/negocios/2026/04/25/banobras-aclara-contrataciones-para-el-tren-felipe-angeles-buenavistaaifa/",
+          "fecha": "2026-04-26"
+        },
+        {
+          "fuente": "24_horas",
+          "titulo": "Invierten más de 41 mmdp en obras en Hidalgo, presume Sheinbaum",
+          "url": "https://24-horas.mx/mexico/invierten-mas-de-41-mmdp-en-obras-en-hidalgo-presume-sheinbaum/",
+          "fecha": "2026-04-26"
+        },
+        {
           "fuente": "el_pais",
           "titulo": "El Tren Suburbano llegará al AIFA este 26 de abril: ruta, estaciones, tiempo de viaje y tarifas",
           "url": "https://elpais.com/mexico/2026-04-24/el-tren-suburbano-llegara-al-aifa-este-26-de-abril-ruta-estaciones-tiempo-de-viaje-y-tarifas.html",
@@ -8931,18 +8938,6 @@
           "fuente": "la_jornada",
           "titulo": "Absuelven de ocho cargos a activista indígena; sigue presa por otros delitos",
           "url": "https://www.jornada.com.mx/2026/04/25/estados/022n4est?partner=rss",
-          "fecha": "2026-04-25"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Paro de emergencia en escalera eléctrica del Metro deja 11 heridos",
-          "url": "https://www.jornada.com.mx/2026/04/25/capital/025n1cap?partner=rss",
-          "fecha": "2026-04-25"
-        },
-        {
-          "fuente": "talla_secretarias",
-          "titulo": "Tren “Felipe Ángeles”, en su tramo AIFA-Pachuca, transportará diariamente a 107 mil pasajeros",
-          "url": "https://www.tallapolitica.com.mx/tren-felipe-angeles-en-su-tramo-aifa-pachuca-transportara-diariamente-a-107-mil-pasajeros/",
           "fecha": "2026-04-25"
         }
       ],
@@ -11039,6 +11034,12 @@
         },
         {
           "fuente": "el_pais",
+          "titulo": "Incendios, derrames y cinco trabajadores muertos: el mes ‘horribilis’ de las refinerías de Pemex",
+          "url": "https://elpais.com/mexico/2026-04-26/incendios-derrames-y-cinco-trabajadores-muertos-el-mes-horribilis-de-las-refinerias-de-pemex.html",
+          "fecha": "2026-04-26"
+        },
+        {
+          "fuente": "el_pais",
           "titulo": "Activada la contingencia ambiental en el Valle de México por alta concentración de ozono",
           "url": "https://elpais.com/mexico/2026-04-25/activada-la-contingencia-ambiental-en-el-valle-de-mexico-por-alta-concentracion-de-ozono.html",
           "fecha": "2026-04-26"
@@ -11095,12 +11096,6 @@
           "fuente": "la_razon",
           "titulo": "CDMX registra MALA calidad del aire hoy 25 de abril: ¿qué pasa con la Contingencia Ambiental?",
           "url": "https://www.razon.com.mx/ciudad/2026/04/25/calidad-del-aire-en-cdmx-hoy-sabado-25-de-abril-de-2026-que-pasa-con-la-contingencia-ambiental/",
-          "fecha": "2026-04-25"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Por Fase I de Contingencia Ambiental, suspenden actividades en Zocalito de las Infancias; Brugada pide evitar actividades físicas al exterior",
-          "url": "https://www.eluniversal.com.mx/metropoli/por-fase-i-de-contingencia-ambiental-suspenden-actividades-en-zocalito-de-las-infancias-brugada-pide-evitar-actividades-fisicas-al-exterior/",
           "fecha": "2026-04-25"
         }
       ],
@@ -12046,9 +12041,27 @@
     "medios_comunicacion": {
       "articulos_medios": [
         {
+          "fuente": "el_universal",
+          "titulo": "\"Querida Fátima\" gana tres premios en FICG; Lorena Gutiérrez grita \"ni una más, ni una asesinada más\" en la premiación",
+          "url": "https://www.eluniversal.com.mx/espectaculos/querida-fatima-gana-tres-premios-en-ficg-lorena-gutierrez-grita-ni-una-mas-ni-una-asesinada-mas-en-la-premiacion/",
+          "fecha": "2026-04-26"
+        },
+        {
           "fuente": "la_razon",
           "titulo": "Furor mundial por el estreno de Michael: espectadores celebran bailando en las salas de cine",
           "url": "https://www.razon.com.mx/entretenimiento/2026/04/25/furor-mundial-por-el-estreno-de-michael-espectadores-celebran-bailando-en-las-salas-de-cine/",
+          "fecha": "2026-04-26"
+        },
+        {
+          "fuente": "el_pais",
+          "titulo": "Fernando Eimbcke: “Los niños nos enseñan que hacer cine puede ser un juego muy intenso y muy serio”",
+          "url": "https://elpais.com/mexico/2026-04-26/fernando-eimbcke-los-ninos-nos-ensenan-que-hacer-cine-puede-ser-un-juego-muy-intenso-y-muy-serio.html",
+          "fecha": "2026-04-26"
+        },
+        {
+          "fuente": "el_pais",
+          "titulo": "‘Querida Fátima’, un documental sobre el terror machista en México, se corona en el Festival de Cine en Guadalajara",
+          "url": "https://elpais.com/mexico/2026-04-26/querida-fatima-un-documental-sobre-el-terror-machista-en-mexico-se-corona-en-el-festival-de-cine-en-guadalajara.html",
           "fecha": "2026-04-26"
         },
         {
@@ -12115,24 +12128,6 @@
           "fuente": "el_universal",
           "titulo": "Michael Jackson: Niño desata euforia al bailar como el Rey del Pop en sala de cine; video se viraliza",
           "url": "https://www.eluniversal.com.mx/tendencias/michael-jackson-nino-desata-euforia-al-bailar-como-el-rey-del-pop-en-sala-de-cine-video-se-viraliza/",
-          "fecha": "2026-04-23"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "‘EPIC’: The Musical, adaptación viral de ‘La Odisea’ será llevado a la pantalla grande como película animada",
-          "url": "https://www.cronica.com.mx/tendencias/2026/04/23/epic-the-musical-adaptacion-viral-de-la-odisea-sera-llevado-a-la-pantalla-grande-como-pelicula-animada/",
-          "fecha": "2026-04-23"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "¿Qué ver en cines este fin de semana? Entre música y futbol con \"Michael\" y \"La familia del barrio\"",
-          "url": "https://www.eluniversal.com.mx/espectaculos/que-ver-en-cines-este-fin-de-semana-entre-musica-y-futbol-con-michael-y-la-familia-del-barrio/",
-          "fecha": "2026-04-23"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "De la nota roja a la pantalla: Metinides inspira la nueva cinta de Cravioto",
-          "url": "https://www.eluniversal.com.mx/espectaculos/de-la-nota-roja-a-la-pantalla-metinides-inspira-la-nueva-cinta-de-cravioto/",
           "fecha": "2026-04-23"
         }
       ],
@@ -12265,6 +12260,12 @@
     "turismo": {
       "articulos_medios": [
         {
+          "fuente": "ovaciones",
+          "titulo": "Impulsa Tulum Air Show inversión aeroespacial",
+          "url": "https://ovaciones.com/impulsa-tulum-air-show-inversion-aeroespacial/?utm_source=rss&utm_medium=rss&utm_campaign=impulsa-tulum-air-show-inversion-aeroespacial",
+          "fecha": "2026-04-26"
+        },
+        {
           "fuente": "la_razon",
           "titulo": "Puebla se posiciona a nivel nacional como líder en marcas de mezcal con 91 medallas",
           "url": "https://www.razon.com.mx/estados/2026/04/25/puebla-se-posiciona-a-nivel-nacional-como-lider-en-marcas-de-mezcal-con-91-medallas/",
@@ -12346,12 +12347,6 @@
           "fuente": "cronica",
           "titulo": "Jalisco fortalece su agenda internacional en turismo LGBTQ+",
           "url": "https://www.cronica.com.mx/jalisco/innovacion/2026/04/24/jalisco-fortalece-su-agenda-internacional-en-turismo-lgbtq/",
-          "fecha": "2026-04-24"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "Primer bimestre de 2026, la llegada de turistas a México creció un 9.3%",
-          "url": "https://www.cronica.com.mx/nacional/2026/04/24/primer-bimestre-de-2026-la-llegada-de-turistas-a-mexico-crecio-un-93/",
           "fecha": "2026-04-24"
         }
       ],
@@ -13451,7 +13446,7 @@
           74.8,
           73.2,
           74.4,
-          74.1
+          75.0
         ],
         "colores": [
           "rojo",
@@ -13624,7 +13619,7 @@
           74.9,
           77.4,
           71.6,
-          71.3
+          71.6
         ],
         "colores": [
           "rojo",
@@ -13797,7 +13792,7 @@
           61.0,
           60.3,
           57.2,
-          52.8
+          55.2
         ],
         "colores": [
           "rojo",
@@ -13970,7 +13965,7 @@
           62.9,
           58.0,
           59.3,
-          56.5
+          54.9
         ],
         "colores": [
           "rojo",
@@ -14143,7 +14138,7 @@
           74.6,
           74.8,
           76.2,
-          58.8
+          57.6
         ],
         "colores": [
           "rojo",
@@ -14316,7 +14311,7 @@
           61.1,
           52.5,
           57.8,
-          54.7
+          54.8
         ],
         "colores": [
           "rojo",
@@ -14489,7 +14484,7 @@
           68.2,
           72.3,
           71.6,
-          72.0
+          73.0
         ],
         "colores": [
           "rojo",
@@ -14662,7 +14657,7 @@
           68.1,
           66.2,
           69.5,
-          70.1
+          71.3
         ],
         "colores": [
           "rojo",
@@ -15008,7 +15003,7 @@
           62.1,
           65.1,
           65.8,
-          64.8
+          65.3
         ],
         "colores": [
           "rojo",
@@ -15181,7 +15176,7 @@
           73.8,
           73.8,
           74.7,
-          74.3
+          74.1
         ],
         "colores": [
           "rojo",
@@ -15354,7 +15349,7 @@
           59.2,
           58.2,
           60.0,
-          58.3
+          56.4
         ],
         "colores": [
           "rojo",
@@ -15873,7 +15868,7 @@
           41.5,
           36.8,
           37.7,
-          35.8
+          36.3
         ],
         "colores": [
           "rojo",
@@ -16392,7 +16387,7 @@
           65.5,
           59.4,
           57.0,
-          52.8
+          52.9
         ],
         "colores": [
           "rojo",
@@ -18659,7 +18654,7 @@
       },
       {
         "fecha": "2026-03-18",
-        "count": 39
+        "count": 40
       },
       {
         "fecha": "2026-03-19",
@@ -18739,7 +18734,7 @@
       },
       {
         "fecha": "2026-04-07",
-        "count": 28
+        "count": 29
       },
       {
         "fecha": "2026-04-08",
@@ -18795,11 +18790,11 @@
       },
       {
         "fecha": "2026-04-21",
-        "count": 59
+        "count": 60
       },
       {
         "fecha": "2026-04-22",
-        "count": 31
+        "count": 32
       },
       {
         "fecha": "2026-04-23",
@@ -20961,7 +20956,7 @@
       },
       {
         "fecha": "2026-04-22",
-        "count": 15
+        "count": 16
       },
       {
         "fecha": "2026-04-23",
@@ -27195,7 +27190,7 @@
       },
       {
         "fecha": "2026-02-18",
-        "count": 32
+        "count": 33
       },
       {
         "fecha": "2026-02-19",
@@ -27443,11 +27438,11 @@
       },
       {
         "fecha": "2026-04-21",
-        "count": 13
+        "count": 14
       },
       {
         "fecha": "2026-04-22",
-        "count": 8
+        "count": 9
       },
       {
         "fecha": "2026-04-23",
@@ -31767,7 +31762,7 @@
       },
       {
         "fecha": "2026-04-21",
-        "count": 72
+        "count": 73
       },
       {
         "fecha": "2026-04-22",
@@ -35955,7 +35950,7 @@
       },
       {
         "fecha": "2026-03-18",
-        "count": 23
+        "count": 24
       },
       {
         "fecha": "2026-03-19",
@@ -36091,7 +36086,7 @@
       },
       {
         "fecha": "2026-04-21",
-        "count": 36
+        "count": 37
       },
       {
         "fecha": "2026-04-22",
@@ -57831,7 +57826,7 @@
       },
       {
         "fecha": "2026-04-20",
-        "count": 35
+        "count": 36
       },
       {
         "fecha": "2026-04-21",
@@ -57855,7 +57850,7 @@
       },
       {
         "fecha": "2026-04-26",
-        "count": 17
+        "count": 18
       }
     ],
     "economia_hacienda": [
@@ -58099,7 +58094,7 @@
       },
       {
         "fecha": "2026-04-26",
-        "count": 2
+        "count": 3
       }
     ],
     "salud": [
@@ -59173,7 +59168,7 @@
       },
       {
         "fecha": "2026-04-20",
-        "count": 3
+        "count": 4
       },
       {
         "fecha": "2026-04-21",
@@ -59319,7 +59314,7 @@
       },
       {
         "fecha": "2026-04-26",
-        "count": 9
+        "count": 10
       }
     ],
     "inteligencia_artificial": [
@@ -59417,7 +59412,7 @@
       },
       {
         "fecha": "2026-04-20",
-        "count": 5
+        "count": 6
       },
       {
         "fecha": "2026-04-21",
@@ -59685,7 +59680,7 @@
       },
       {
         "fecha": "2026-04-26",
-        "count": 1
+        "count": 3
       }
     ],
     "turismo": [
@@ -60059,7 +60054,7 @@
     "MORENA": {
       "nombre": "Morena",
       "color": "#8B1A2B",
-      "total": 3757,
+      "total": 3758,
       "por_categoria": {
         "seguridad_justicia": {
           "nombre": "Seguridad y Justicia",
@@ -60075,7 +60070,7 @@
         },
         "educacion": {
           "nombre": "Educación",
-          "count": 131
+          "count": 132
         },
         "economia_hacienda": {
           "nombre": "Economía y Hacienda",
@@ -66799,7 +66794,7 @@
         }
       },
       "por_tipo": {
-        "Iniciativa": 2425,
+        "Iniciativa": 2426,
         "Proposición con punto de acuerdo": 937,
         "Asunto": 191,
         "Otro:comunicación": 99,
@@ -66871,7 +66866,7 @@
         "2026-W04": 25,
         "2026-W05": 50,
         "2026-W06": 93,
-        "2026-W07": 82,
+        "2026-W07": 83,
         "2026-W08": 45,
         "2026-W09": 50,
         "2026-W10": 50,
@@ -71363,11 +71358,11 @@
     "PRI": {
       "nombre": "PRI",
       "color": "#C4161C",
-      "total": 1792,
+      "total": 1795,
       "por_categoria": {
         "seguridad_justicia": {
           "nombre": "Seguridad y Justicia",
-          "count": 156
+          "count": 157
         },
         "economia_hacienda": {
           "nombre": "Economía y Hacienda",
@@ -71375,7 +71370,7 @@
         },
         "infraestructura": {
           "nombre": "Infraestructura",
-          "count": 83
+          "count": 84
         },
         "salud": {
           "nombre": "Salud",
@@ -71387,7 +71382,7 @@
         },
         "educacion": {
           "nombre": "Educación",
-          "count": 56
+          "count": 57
         },
         "economia_hacienda:0.75": {
           "nombre": "economia_hacienda:0.75",
@@ -74459,7 +74454,7 @@
         }
       },
       "por_tipo": {
-        "Iniciativa": 907,
+        "Iniciativa": 910,
         "Proposición con punto de acuerdo": 767,
         "Asunto": 56,
         "Otro:intervencion_parlamentaria": 18,
@@ -74537,24 +74532,24 @@
         "2026-W10": 33,
         "2026-W11": 32,
         "2026-W12": 42,
-        "2026-W14": 21,
+        "2026-W14": 22,
         "2026-W15": 33,
-        "2026-W16": 17
+        "2026-W16": 19
       },
       "top_categoria": {
         "categoria": "seguridad_justicia",
         "nombre": "Seguridad y Justicia",
-        "count": 156
+        "count": 157
       }
     },
     "PVEM": {
       "nombre": "PVEM",
       "color": "#00813E",
-      "total": 1486,
+      "total": 1487,
       "por_categoria": {
         "seguridad_justicia": {
           "nombre": "Seguridad y Justicia",
-          "count": 107
+          "count": 108
         },
         "salud": {
           "nombre": "Salud",
@@ -77170,7 +77165,7 @@
         }
       },
       "por_tipo": {
-        "Iniciativa": 918,
+        "Iniciativa": 919,
         "Proposición con punto de acuerdo": 461,
         "Asunto": 54,
         "Otro:comunicación": 22,
@@ -77243,7 +77238,7 @@
         "2026-W08": 26,
         "2026-W09": 16,
         "2026-W10": 17,
-        "2026-W11": 62,
+        "2026-W11": 63,
         "2026-W12": 49,
         "2026-W14": 9,
         "2026-W15": 46,
@@ -77252,13 +77247,13 @@
       "top_categoria": {
         "categoria": "seguridad_justicia",
         "nombre": "Seguridad y Justicia",
-        "count": 107
+        "count": 108
       }
     },
     "MC": {
       "nombre": "Movimiento Ciudadano",
       "color": "#FF6600",
-      "total": 1130,
+      "total": 1131,
       "por_categoria": {
         "seguridad_justicia": {
           "nombre": "Seguridad y Justicia",
@@ -77294,7 +77289,7 @@
         },
         "infraestructura": {
           "nombre": "Infraestructura",
-          "count": 29
+          "count": 30
         },
         "derechos_humanos": {
           "nombre": "Derechos Humanos",
@@ -79372,7 +79367,8 @@
         "Otro:comunicación": 20,
         "Otro:intervencion_parlamentaria": 13,
         "Otro:retiro": 6,
-        "Iniciativa de inicio en cámara de diputados": 4
+        "Iniciativa de inicio en cámara de diputados": 4,
+        "Proposición con Punto de Acuerdo": 1
       },
       "serie_semanal": {
         "2024-W45": 21,
@@ -79437,7 +79433,7 @@
         "2026-W08": 11,
         "2026-W09": 40,
         "2026-W10": 28,
-        "2026-W11": 28,
+        "2026-W11": 29,
         "2026-W12": 18,
         "2026-W14": 18,
         "2026-W15": 35,
@@ -79452,11 +79448,11 @@
     "PT": {
       "nombre": "PT",
       "color": "#CC0000",
-      "total": 868,
+      "total": 869,
       "por_categoria": {
         "seguridad_justicia": {
           "nombre": "Seguridad y Justicia",
-          "count": 62
+          "count": 63
         },
         "electoral_politico": {
           "nombre": "Electoral y Político",
@@ -81120,7 +81116,7 @@
         }
       },
       "por_tipo": {
-        "Iniciativa": 462,
+        "Iniciativa": 463,
         "Proposición con punto de acuerdo": 272,
         "Asunto": 73,
         "Otro:comunicación": 12,
@@ -81196,12 +81192,12 @@
         "2026-W12": 19,
         "2026-W14": 7,
         "2026-W15": 22,
-        "2026-W16": 9
+        "2026-W16": 10
       },
       "top_categoria": {
         "categoria": "seguridad_justicia",
         "nombre": "Seguridad y Justicia",
-        "count": 62
+        "count": 63
       }
     }
   },
@@ -82172,6 +82168,61 @@
     ],
     "educacion": [
       {
+        "nombre": "Ana Isabel González González",
+        "partido": "PRI",
+        "camara": "Cámara de Diputados",
+        "estado": "Nuevo León",
+        "score": 62.84,
+        "docs_categoria": 10,
+        "comisiones_afines": [
+          "Educación"
+        ],
+        "desglose": {
+          "correlacion_reactiva": 76.2,
+          "especializacion_tematica": 11.1,
+          "comision_agenda": 78.0,
+          "patron_instrumento": 77.8,
+          "penalizacion_inactividad": 100
+        },
+        "instrumentos": [
+          {
+            "titulo": "Que adiciona los artículos 9° y 114 de la Ley General de Educación, en materia de becas de la excelencia académica.",
+            "tipo": "Iniciativa",
+            "fecha": "2026-04-21",
+            "estatus": "Pendiente en comisión(es) de origenPendiente21/04/2026",
+            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=5080413&Asunto=5074476"
+          },
+          {
+            "titulo": "Que reforma y adiciona diversas disposiciones de la Ley General de Educación, en materia de salud bucal.",
+            "tipo": "Iniciativa",
+            "fecha": "2026-04-15",
+            "estatus": "Pendiente en comisión(es) de origenPendiente15/04/2026",
+            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=5072068&Asunto=5070107"
+          },
+          {
+            "titulo": "Que adiciona diversas disposiciones a la Ley General para la Prevención y Gestión Integral de los Residuos, en materia de retorno social para la niñez, juventud y el deporte.",
+            "tipo": "Asunto",
+            "fecha": "2026-03-18",
+            "estatus": "Pendiente en comisión(es) de origenPendiente18/03/2026",
+            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=5045530&Asunto=5039394"
+          },
+          {
+            "titulo": "Que adiciona diversas disposiciones a la Ley General de Educación, para atender el bullying como responsabilidad compartida.",
+            "tipo": "Iniciativa",
+            "fecha": "2025-12-02",
+            "estatus": "Pendiente en comisión(es) de origenPendiente02/12/2025",
+            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=4995273&Asunto=4989449"
+          },
+          {
+            "titulo": "Que adiciona el artículo 30 de la Ley General de Cultura Física y Deporte, en materia de actividades deportivas regulares y adaptadas.",
+            "tipo": "Iniciativa",
+            "fecha": "2025-10-14",
+            "estatus": "Pendiente en comisión(es) de origenPendiente14/10/2025",
+            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=4952295&Asunto=4948075"
+          }
+        ]
+      },
+      {
         "nombre": "María Graciela Gaitán Díaz",
         "partido": "",
         "camara": "Cámara de Diputados",
@@ -82278,61 +82329,6 @@
             "fecha": "2025-04-30",
             "estatus": "Pendiente en comisión(es) de origenPendiente30/04/2025",
             "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=4900411&Asunto=4896504"
-          }
-        ]
-      },
-      {
-        "nombre": "Ana Isabel González González",
-        "partido": "PRI",
-        "camara": "Cámara de Diputados",
-        "estado": "Nuevo León",
-        "score": 59.69,
-        "docs_categoria": 9,
-        "comisiones_afines": [
-          "Educación"
-        ],
-        "desglose": {
-          "correlacion_reactiva": 68.8,
-          "especializacion_tematica": 10.1,
-          "comision_agenda": 78.0,
-          "patron_instrumento": 75.0,
-          "penalizacion_inactividad": 100
-        },
-        "instrumentos": [
-          {
-            "titulo": "Que reforma y adiciona diversas disposiciones de la Ley General de Educación, en materia de salud bucal.",
-            "tipo": "Iniciativa",
-            "fecha": "2026-04-15",
-            "estatus": "Pendiente en comisión(es) de origenPendiente15/04/2026",
-            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=5072068&Asunto=5070107"
-          },
-          {
-            "titulo": "Que adiciona diversas disposiciones a la Ley General para la Prevención y Gestión Integral de los Residuos, en materia de retorno social para la niñez, juventud y el deporte.",
-            "tipo": "Asunto",
-            "fecha": "2026-03-18",
-            "estatus": "Pendiente en comisión(es) de origenPendiente18/03/2026",
-            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=5045530&Asunto=5039394"
-          },
-          {
-            "titulo": "Que adiciona diversas disposiciones a la Ley General de Educación, para atender el bullying como responsabilidad compartida.",
-            "tipo": "Iniciativa",
-            "fecha": "2025-12-02",
-            "estatus": "Pendiente en comisión(es) de origenPendiente02/12/2025",
-            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=4995273&Asunto=4989449"
-          },
-          {
-            "titulo": "Que adiciona el artículo 30 de la Ley General de Cultura Física y Deporte, en materia de actividades deportivas regulares y adaptadas.",
-            "tipo": "Iniciativa",
-            "fecha": "2025-10-14",
-            "estatus": "Pendiente en comisión(es) de origenPendiente14/10/2025",
-            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=4952295&Asunto=4948075"
-          },
-          {
-            "titulo": "Que reforma el artículo 99 de la Ley General de Educación, en materia de infraestructura educativa.",
-            "tipo": "Iniciativa",
-            "fecha": "2025-10-08",
-            "estatus": "Pendiente en comisión(es) de origenPendiente08/10/2025",
-            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=4946458&Asunto=4945545"
           }
         ]
       },
@@ -83381,36 +83377,58 @@
         ]
       },
       {
-        "nombre": "Javier Taja Ramírez",
-        "partido": "MORENA",
+        "nombre": "Mónica Elizabeth Sandoval Hernández",
+        "partido": "PRI",
         "camara": "Cámara de Diputados",
-        "estado": "Guerrero",
-        "score": 59.68,
-        "docs_categoria": 2,
+        "estado": "Ciudad de México",
+        "score": 60.39,
+        "docs_categoria": 7,
         "comisiones_afines": [
-          "Infraestructura"
+          "Comunicaciones",
+          "Transportes"
         ],
         "desglose": {
-          "correlacion_reactiva": 32.4,
-          "especializacion_tematica": 33.3,
-          "comision_agenda": 100,
-          "patron_instrumento": 100.0,
+          "correlacion_reactiva": 70.3,
+          "especializacion_tematica": 10.8,
+          "comision_agenda": 78.0,
+          "patron_instrumento": 75.0,
           "penalizacion_inactividad": 100
         },
         "instrumentos": [
           {
-            "titulo": "Que reforma y adiciona el artículo 75 de la Ley General de Protección Civil y adiciona el artículo 102 de la Ley en Materia de Telecomunicaciones y Radiodifusión, en materia de conectividad digital ante situaciones de emergencia o desastre.",
+            "titulo": "Por el que solicita el retiro de iniciativa.",
+            "tipo": "Proposición con punto de acuerdo",
+            "fecha": "2026-04-21",
+            "estatus": "Resuelto / AprobadoAprobado21/04/2026",
+            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=5074396&Asunto=5072170"
+          },
+          {
+            "titulo": "Que reforma el artículo 5º de la Ley de Caminos, Puentes y Autotransporte Federal, en materia de casetas gratuitas durante periodos de vacaciones y fines de semana feriados.",
             "tipo": "Iniciativa",
             "fecha": "2026-04-21",
             "estatus": "Pendiente en comisión(es) de origenPendiente21/04/2026",
-            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=5080423&Asunto=5074288"
+            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=5080408&Asunto=5074478"
           },
           {
-            "titulo": "Que reforma los artículos 22, 23, 34, 64 y 69 de la Ley General de Asentamientos Humanos, Ordenamiento Territorial y Desarrollo Urbano.",
+            "titulo": "Que adiciona el artículo 60 de la Ley General de Movilidad y Seguridad Vial, en materia de renovación vehicular.",
             "tipo": "Iniciativa",
-            "fecha": "2025-02-12",
-            "estatus": "RetiradaRetirada23/06/2025",
-            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=4834959&Asunto=4834484"
+            "fecha": "2026-03-24",
+            "estatus": "Pendiente en comisión(es) de origenPendiente24/03/2026",
+            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=5055317&Asunto=5049912"
+          },
+          {
+            "titulo": "Que adiciona el artículo 10 de la Ley General de Asentamientos Humanos, Ordenamiento Territorial y Desarrollo Urbano, en materia de creación de estacionamientos verdes.",
+            "tipo": "Asunto",
+            "fecha": "2026-03-18",
+            "estatus": "Pendiente en comisión(es) de origenPendiente18/03/2026",
+            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=5045605&Asunto=5040761"
+          },
+          {
+            "titulo": "Que reforma y adiciona el artículo 11 de la Ley General de Asentamientos Humanos, Ordenamiento Territorial y Desarrollo Urbano, en materia de creación de espacios públicos bajo los principios de sustentabilidad.",
+            "tipo": "Iniciativa",
+            "fecha": "2025-10-21",
+            "estatus": "Pendiente en comisión(es) de origenPendiente21/10/2025",
+            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=4958485&Asunto=4954515"
           }
         ]
       }
@@ -84458,7 +84476,7 @@
         "partido": "MORENA",
         "camara": "Senado",
         "estado": "",
-        "score": 33.12,
+        "score": 33.11,
         "docs_categoria": 4,
         "comisiones_afines": [],
         "desglose": {
@@ -85111,6 +85129,35 @@
         ]
       },
       {
+        "nombre": "Xitlalic Ceja García",
+        "partido": "PRI",
+        "camara": "Cámara de Diputados",
+        "estado": "Puebla",
+        "score": 41.73,
+        "docs_categoria": 1,
+        "comisiones_afines": [
+          "Igualdad de Género",
+          "Igualdad",
+          "Género"
+        ],
+        "desglose": {
+          "correlacion_reactiva": 3.4,
+          "especializacion_tematica": 2.1,
+          "comision_agenda": 100,
+          "patron_instrumento": 100.0,
+          "penalizacion_inactividad": 100
+        },
+        "instrumentos": [
+          {
+            "titulo": "Por el que exhorta a la Presidenta de la República a adoptar el Convenio del Consejo de Europa sobre prevención y lucha contra la violencia contra la mujer y la violencia doméstica, conocido como el Convenio de Estambul.",
+            "tipo": "Proposición con punto de acuerdo",
+            "fecha": "2025-09-23",
+            "estatus": "DesechadoDesechado30/01/2026",
+            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=4934888&Asunto=4931390"
+          }
+        ]
+      },
+      {
         "nombre": "Julieta Kristal Vences Valencia",
         "partido": "MORENA",
         "camara": "Cámara de Diputados",
@@ -85136,35 +85183,6 @@
             "fecha": "2025-02-18",
             "estatus": "De primera lectura en origenPendiente11/11/2025",
             "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=4972497&Asunto=4837429"
-          }
-        ]
-      },
-      {
-        "nombre": "Pablo Guillermo Angulo Briceño",
-        "partido": "PRI",
-        "camara": "Senado",
-        "estado": "",
-        "score": 38.11,
-        "docs_categoria": 1,
-        "comisiones_afines": [
-          "Igualdad de Género",
-          "Igualdad",
-          "Género"
-        ],
-        "desglose": {
-          "correlacion_reactiva": 6.9,
-          "especializacion_tematica": 0.4,
-          "comision_agenda": 78.0,
-          "patron_instrumento": 100.0,
-          "penalizacion_inactividad": 100
-        },
-        "instrumentos": [
-          {
-            "titulo": "Que reforma el artículo 35, primer párrafo, de la Ley General de Acceso de las Mujeres a una Vida Libre de Violencias",
-            "tipo": "Iniciativa",
-            "fecha": "2026-02-03",
-            "estatus": "Pendiente en comisión(es) de origenPendiente03/02/2026",
-            "url": "http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?SID=&Seguimiento=5010285&Asunto=5008848"
           }
         ]
       }
@@ -85300,8 +85318,8 @@
   "autoria_stats": {
     "total_legisladores": 684,
     "con_actividad": 583,
-    "total_actividad": 12265,
-    "reacciones_historicas": 52633,
+    "total_actividad": 12280,
+    "reacciones_historicas": 53028,
     "picos_por_categoria": {
       "seguridad_justicia": 73,
       "economia_hacienda": 74,
@@ -85326,7 +85344,7 @@
     "por_partido": [
       {
         "partido": "MORENA",
-        "total": 3942
+        "total": 3943
       },
       {
         "partido": "PAN",
@@ -85334,19 +85352,19 @@
       },
       {
         "partido": "PRI",
-        "total": 1926
+        "total": 1936
       },
       {
         "partido": "MC",
-        "total": 1245
+        "total": 1246
       },
       {
         "partido": "PVEM",
-        "total": 1003
+        "total": 1004
       },
       {
         "partido": "PT",
-        "total": 856
+        "total": 857
       }
     ]
   },
@@ -85811,7 +85829,7 @@
     "chihuahua": {
       "nombre": "Chihuahua",
       "abreviatura": "CHH",
-      "total_articulos": 277,
+      "total_articulos": 278,
       "categorias": [
         "administracion:0.5238",
         "anticorrupcion:0.4141",
@@ -85974,6 +85992,12 @@
           "categorias": "seguridad_justicia:0.4429"
         },
         {
+          "titulo": "La Torre Centinela, a escrutinio el “guardián de Chihuahua”",
+          "fecha": "2026-04-26",
+          "url": "https://elpais.com/mexico/2026-04-26/la-torre-centinela-a-escrutinio-el-guardian-de-chihuahua.html",
+          "categorias": ""
+        },
+        {
           "titulo": "2 C.I.A. Officers Killed in Mexico Crash Lacked Proper Authorization",
           "fecha": "2026-04-25 21:29:17",
           "url": "https://www.nytimes.com/2026/04/25/world/americas/2-cia-officers-killed-in-mexico-crash-lacked-proper-authorization.html",
@@ -86002,19 +86026,13 @@
           "fecha": "2026-04-25 16:18:26",
           "url": "https://www.politico.mx/2026/04/25/caso-cia-en-chihuahua-desata-encontronazo-citlalli-acusa-y-america-rangel-contraataca/",
           "categorias": ""
-        },
-        {
-          "titulo": "Agentes de la CIA operaban de manera clandestina, indica el Gabinete de Seguridad",
-          "fecha": "2026-04-25 14:24:22",
-          "url": "https://24-horas.mx/mexico/agentes-de-la-cia-fallecidos-en-chihuahua-carecian-de-permiso-para-operar/",
-          "categorias": ""
         }
       ]
     },
     "ciudad_de_mexico": {
       "nombre": "Ciudad de Mexico",
       "abreviatura": "CMX",
-      "total_articulos": 580,
+      "total_articulos": 581,
       "categorias": [
         "administracion:0.4158",
         "administracion:1.0693",
@@ -86286,6 +86304,12 @@
       ],
       "articulos": [
         {
+          "titulo": "Así celebraron los Pumas el liderato del Clausura 2026 tras empate de Chivas",
+          "fecha": "2026-04-26 05:34:04",
+          "url": "https://www.eluniversal.com.mx/deportes/asi-celebraron-los-pumas-el-liderato-del-clausura-2026-tras-empate-de-chivas/",
+          "categorias": ""
+        },
+        {
           "titulo": "Enfrentamiento armado deja cinco fallecidos en Venustiano Carranza, Chiapas",
           "fecha": "2026-04-26 03:12:05",
           "url": "https://24-horas.mx/estados/enfrentamiento-armado-deja-cinco-fallecidos-en-venustiano-carranza-chiapas/",
@@ -86338,28 +86362,29 @@
           "fecha": "2026-04-26 00:28:42",
           "url": "https://www.eluniversal.com.mx/espectaculos/star-trek-strange-new-worlds-revelo-su-fecha-de-estreno-y-presento-un-adelanto-en-la-ccxp-mexico-2026/",
           "categorias": ""
-        },
-        {
-          "titulo": "CNHJ de Morena separa de consejería estatal a ex directora de gobierno de Azcapotzalco tras ri...",
-          "fecha": "2026-04-26",
-          "url": "https://www.milenio.com/politica/morena-separa-a-consejera-estatal-tras-rina-con-vecinos-en-cdmx",
-          "categorias": ""
         }
       ]
     },
     "coahuila": {
       "nombre": "Coahuila",
       "abreviatura": "COA",
-      "total_articulos": 16,
+      "total_articulos": 17,
       "categorias": [
         "economia_hacienda:0.6394",
         "electoral_politico:0.4487",
+        "electoral_politico:0.75",
         "electoral_politico:0.9401",
         "infraestructura:0.5512",
         "infraestructura:0.6034",
         "seguridad_justicia:0.4867"
       ],
       "articulos": [
+        {
+          "titulo": "Morena define candidatos a diputados locales en Coahuila",
+          "fecha": "2026-04-26 05:06:46",
+          "url": "https://24-horas.mx/estados/morena-define-candidatos-a-diputados-locales-en-coahuila/",
+          "categorias": "electoral_politico:0.75"
+        },
         {
           "titulo": "Coahuila se posiciona como el estado más seguro de México, según ENSU",
           "fecha": "2026-04-25 19:14:30",
@@ -86413,12 +86438,6 @@
           "fecha": "2026-04-22 09:23:54",
           "url": "https://www.razon.com.mx/estados/2026/04/22/aumentan-quejas-por-violaciones-a-dh-en-coahuila/",
           "categorias": ""
-        },
-        {
-          "titulo": "Congreso de Coahuila aprueba exhorto a Profeco para vigilar precios de canasta básica",
-          "fecha": "2026-04-22",
-          "url": "https://www.milenio.com/politica/congreso-coahuila-aprueba-profeco-vigile-precios-canasta-basica",
-          "categorias": "economia_hacienda:0.6394"
         }
       ]
     },
@@ -86534,7 +86553,7 @@
     "estado_de_mexico": {
       "nombre": "Estado de Mexico",
       "abreviatura": "MEX",
-      "total_articulos": 233,
+      "total_articulos": 234,
       "categorias": [
         "administracion:0.4489",
         "administracion:0.6207",
@@ -86644,6 +86663,7 @@
         "seguridad_justicia:0.6739",
         "seguridad_justicia:0.6931",
         "seguridad_justicia:0.7348",
+        "seguridad_justicia:0.75",
         "seguridad_justicia:0.798",
         "seguridad_justicia:0.8029",
         "seguridad_justicia:0.876",
@@ -86652,10 +86672,16 @@
       ],
       "articulos": [
         {
+          "titulo": "Toluca golea y elimina al León en cierre del Clausura 2026",
+          "fecha": "2026-04-26 05:07:54",
+          "url": "https://www.eluniversal.com.mx/deportes/toluca-golea-y-elimina-al-leon-en-cierre-del-clausura-2026/",
+          "categorias": ""
+        },
+        {
           "titulo": "Detienen en el Estado de México a presunto feminicida de Keyla Chantal; es trasladado a Sonora",
           "fecha": "2026-04-26 02:39:16",
           "url": "https://www.eluniversal.com.mx/estados/detienen-en-el-estado-de-mexico-a-presunto-feminicida-de-keyla-chantal-es-trasladado-a-sonora/",
-          "categorias": ""
+          "categorias": "seguridad_justicia:0.75"
         },
         {
           "titulo": "Bomberos sofocan incendio en vivienda de Tultitlán, Estado de México; no se reportan heridos",
@@ -86704,12 +86730,6 @@
           "fecha": "2026-04-26",
           "url": "https://www.eleconomista.com.mx/politica/activan-contingencia-ambiental-cdmx-edomex-ozono-aplicara-doble-hoy-circula-domingo-20260425-810505.html",
           "categorias": "medio_ambiente:1.1319"
-        },
-        {
-          "titulo": "Entregan tinacos a familias de El Tenayo en Tlalnepantla",
-          "fecha": "2026-04-25 21:52:48",
-          "url": "https://www.cronica.com.mx/metropoli/2026/04/25/entregan-tinacos-a-familias-de-el-tenayo-en-tlalnepantla/",
-          "categorias": ""
         }
       ]
     },
@@ -86917,7 +86937,7 @@
     "hidalgo": {
       "nombre": "Hidalgo",
       "abreviatura": "HID",
-      "total_articulos": 114,
+      "total_articulos": 118,
       "categorias": [
         "administracion:0.4489",
         "administracion:0.6207",
@@ -86954,6 +86974,7 @@
         "infraestructura:0.6184",
         "infraestructura:0.6413",
         "infraestructura:0.6838",
+        "infraestructura:0.75",
         "infraestructura:0.7755",
         "infraestructura:0.9313",
         "infraestructura:1.2355",
@@ -86992,6 +87013,24 @@
         "turismo:1.2795"
       ],
       "articulos": [
+        {
+          "titulo": "Autopista México-Pachuca HOY: cierres, bloqueos e incidentes este 26 de abril",
+          "fecha": "2026-04-26 06:00:00",
+          "url": "https://www.razon.com.mx/mexico/2026/04/26/autopista-mexico-pachuca-hoy-cierres-bloqueos-e-incidentes-este-26-de-abril/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Pumas amarra el liderato en última jornada del Clausura, América y Tigres clasifican",
+          "fecha": "2026-04-26 05:53:45",
+          "url": "https://24-horas.mx/dxt/pumas-amarra-el-liderato-en-ultima-jornada-del-clausura-america-y-tigres-clasifican/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Invierten más de 41 mmdp en obras en Hidalgo, presume Sheinbaum",
+          "fecha": "2026-04-26 05:19:58",
+          "url": "https://24-horas.mx/mexico/invierten-mas-de-41-mmdp-en-obras-en-hidalgo-presume-sheinbaum/",
+          "categorias": "infraestructura:0.75"
+        },
         {
           "titulo": "Sheinbaum resalta la soberanía de México desde Hidalgo",
           "fecha": "2026-04-26 04:52:23",
@@ -87033,31 +87072,13 @@
           "fecha": "2026-04-26 01:20:48",
           "url": "https://www.razon.com.mx/deportes/2026/04/25/pumas-derrota-a-pachuca-de-visita-y-pone-en-riesgo-el-liderato-de-chivas-resumen-y-goles/",
           "categorias": ""
-        },
-        {
-          "titulo": "Sheinbaum supervisa hospital ante reclamos de la población en Hidalgo",
-          "fecha": "2026-04-26 01:08:31",
-          "url": "https://24-horas.mx/mexico/sheinbaum-supervisa-hospital-ante-reclamos-de-la-poblacion-en-hidalgo/",
-          "categorias": "salud:0.4244"
-        },
-        {
-          "titulo": "Montiel destaca apoyo a damnificados por lluvias en Hidalgo; inversión suma 7 mil 426 mdp",
-          "fecha": "2026-04-26 00:29:38",
-          "url": "https://www.eluniversal.com.mx/nacion/montiel-destaca-apoyo-a-damnificados-por-lluvias-en-hidalgo-asciende-a-7-mil-426-millones-de-pesos/",
-          "categorias": "infraestructura:0.445"
-        },
-        {
-          "titulo": "Sheinbaum: en Hidalgo se invertirán 41 mil 865 mdp en infraestructura durante el sexenio",
-          "fecha": "2026-04-26 00:26:53",
-          "url": "https://www.razon.com.mx/mexico/2026/04/25/sheinbaum-en-hidalgo-se-invertiran-41-mil-865-mdp-en-infraestructura-durante-el-sexenio/",
-          "categorias": ""
         }
       ]
     },
     "jalisco": {
       "nombre": "Jalisco",
       "abreviatura": "JAL",
-      "total_articulos": 116,
+      "total_articulos": 118,
       "categorias": [
         "administracion:0.4656",
         "administracion:0.5819",
@@ -87082,6 +87103,8 @@
         "medios_comunicacion:0.3034",
         "medios_comunicacion:0.4076",
         "medios_comunicacion:0.6981",
+        "medios_comunicacion:0.75",
+        "medios_comunicacion:0.8462",
         "medios_comunicacion:0.9107",
         "medios_comunicacion:1.8746",
         "salud:0.4271",
@@ -87112,6 +87135,12 @@
       ],
       "articulos": [
         {
+          "titulo": "\"Querida Fátima\" gana tres premios en FICG; Lorena Gutiérrez grita \"ni una más, ni una asesinada más\" en la premiación",
+          "fecha": "2026-04-26 05:09:46",
+          "url": "https://www.eluniversal.com.mx/espectaculos/querida-fatima-gana-tres-premios-en-ficg-lorena-gutierrez-grita-ni-una-mas-ni-una-asesinada-mas-en-la-premiacion/",
+          "categorias": "medios_comunicacion:0.75"
+        },
+        {
           "titulo": "Aquí el PAN y Morena SÍ son vecinos: Fraccionamiento Ayamonte tiene las casas más caras de México",
           "fecha": "2026-04-26 02:40:52",
           "url": "https://www.elfinanciero.com.mx/estados/2026/04/25/aqui-el-pan-y-morena-si-son-vecinos-fraccionamiento-ayamonte-tiene-las-casas-mas-caras-de-mexico/",
@@ -87128,6 +87157,12 @@
           "fecha": "2026-04-26",
           "url": "https://www.milenio.com/politica/piden-videograbar-nueva-consulta-en-bolanos-jalisco",
           "categorias": ""
+        },
+        {
+          "titulo": "‘Querida Fátima’, un documental sobre el terror machista en México, se corona en el Festival de Cine en Guadalajara",
+          "fecha": "2026-04-26",
+          "url": "https://elpais.com/mexico/2026-04-26/querida-fatima-un-documental-sobre-el-terror-machista-en-mexico-se-corona-en-el-festival-de-cine-en-guadalajara.html",
+          "categorias": "medios_comunicacion:0.8462"
         },
         {
           "titulo": "Es vecino de los Vergara: ¿Quién es el senador de Morena que vive en el fraccionamiento más caro de México?",
@@ -87158,18 +87193,6 @@
           "fecha": "2026-04-25 12:00:01",
           "url": "https://www.cronica.com.mx/jalisco/innovacion/2026/04/25/jalisco-arranca-la-primera-red-de-hospitalesescuela-en-mexico-modelo-unico-apuesta-por-salud-y-formacion-regional/",
           "categorias": "salud:0.5905,educacion:0.5384"
-        },
-        {
-          "titulo": "El Museo Cabañas ofrecerá un viaje por la identidad en la muestra Travesías por México",
-          "fecha": "2026-04-25 07:47:38",
-          "url": "https://www.jornada.com.mx/2026/04/25/cultura/a05n1cul?partner=rss",
-          "categorias": ""
-        },
-        {
-          "titulo": "Presunto vendedor de droga, el individuo que disparó contra auto e hirió de gravedad a niña de 5 años",
-          "fecha": "2026-04-25 01:01:56",
-          "url": "https://www.cronica.com.mx/jalisco/guadalajara/2026/04/24/presunto-vendedor-de-droga-el-individuo-que-disparo-contra-auto-e-hirio-de-gravedad-a-nina-de-5-anos/",
-          "categorias": ""
         }
       ]
     },
@@ -87284,7 +87307,7 @@
     "morelos": {
       "nombre": "Morelos",
       "abreviatura": "MOR",
-      "total_articulos": 56,
+      "total_articulos": 57,
       "categorias": [
         "derechos_humanos:1.1372",
         "educacion:0.5188",
@@ -87357,6 +87380,12 @@
           "categorias": ""
         },
         {
+          "titulo": "Localizan con vida en Veracruz a Sandra, menor de 15 años que fue reportada como desaparecida en Morelos",
+          "fecha": "2026-04-26",
+          "url": "https://heraldodemexico.com.mx/nacional/2026/4/25/localizan-con-vida-en-veracruz-sandra-menor-de-15-anos-que-fue-reportada-como-desaparecida-en-morelos-802124.html",
+          "categorias": ""
+        },
+        {
           "titulo": "Alumnos de Telesecundaria de Morelos toman clases con cascos de protección ante daños estructurales; padres exigen rehabilitación de plantel",
           "fecha": "2026-04-25 23:35:27",
           "url": "https://www.eluniversal.com.mx/estados/alumnos-de-telesecundaria-de-morelos-toman-clases-con-cascos-de-proteccion-ante-danos-estructurales-padres-exigen-rehabilitacion-de-plantel/",
@@ -87385,12 +87414,6 @@
           "fecha": "2026-04-24 19:46:49",
           "url": "https://www.eluniversal.com.mx/estados/fiscal-de-morelos-firma-acuerdo-de-cooperacion-con-embajada-de-eu-para-reforzar-investigacion-forense-y-pericial/",
           "categorias": "relaciones_exteriores:0.5449,educacion:0.5188"
-        },
-        {
-          "titulo": "Gabinete de Seguridad del Gobierno de México informa acciones relevantes del 23 de abril de 2026",
-          "fecha": "2026-04-24 19:40:00",
-          "url": "https://www.tallapolitica.com.mx/gabinete-de-seguridad-del-gobierno-de-mexico-informa-acciones-relevantes-del-23-de-abril-de-2026/",
-          "categorias": "seguridad_justicia:0.3324"
         }
       ]
     },
@@ -87556,6 +87579,7 @@
         "seguridad_justicia:0.6709",
         "seguridad_justicia:0.6736",
         "seguridad_justicia:0.746",
+        "seguridad_justicia:0.75",
         "seguridad_justicia:0.8051",
         "seguridad_justicia:0.8354",
         "seguridad_justicia:0.9382",
@@ -87570,7 +87594,7 @@
           "titulo": "Detienen en el Estado de México a presunto feminicida de Keyla Chantal; es trasladado a Sonora",
           "fecha": "2026-04-26 02:39:16",
           "url": "https://www.eluniversal.com.mx/estados/detienen-en-el-estado-de-mexico-a-presunto-feminicida-de-keyla-chantal-es-trasladado-a-sonora/",
-          "categorias": ""
+          "categorias": "seguridad_justicia:0.75"
         },
         {
           "titulo": "¿Gilberto Mora al Monterrey? Esto se sabe AL MOMENTO sobre la llegada de la joya mexicana a Rayados",
@@ -87732,7 +87756,7 @@
     "puebla": {
       "nombre": "Puebla",
       "abreviatura": "PUE",
-      "total_articulos": 86,
+      "total_articulos": 87,
       "categorias": [
         "administracion:0.5238",
         "anticorrupcion:0.4201",
@@ -87785,6 +87809,12 @@
       ],
       "articulos": [
         {
+          "titulo": "Autopista México-Puebla HOY: cierres, bloqueos e incidentes este 26 de abril",
+          "fecha": "2026-04-26 06:00:00",
+          "url": "https://www.razon.com.mx/mexico/2026/04/26/autopista-mexico-puebla-hoy-cierres-bloqueos-e-incidentes-este-26-de-abril/",
+          "categorias": ""
+        },
+        {
           "titulo": "Puebla se posiciona a nivel nacional como líder en marcas de mezcal con 91 medallas",
           "fecha": "2026-04-26 05:00:56",
           "url": "https://www.razon.com.mx/estados/2026/04/25/puebla-se-posiciona-a-nivel-nacional-como-lider-en-marcas-de-mezcal-con-91-medallas/",
@@ -87836,12 +87866,6 @@
           "titulo": "¡Que no se te pase! Tlalpan y la GAM anuncian ley seca durante abril y mayo; estos serán los días",
           "fecha": "2026-04-24 20:02:08",
           "url": "https://www.eluniversal.com.mx/metropoli/que-no-se-te-pase-tlalpan-y-la-gam-anuncian-ley-seca-durante-abril-y-mayo-estos-seran-los-dias/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Con inversión histórica, buscan rescatar el Río Atoyac en Puebla",
-          "fecha": "2026-04-24 19:22:13",
-          "url": "https://www.cronica.com.mx/estados/2026/04/24/con-inversion-historica-buscan-rescatar-el-rio-atoyac-en-puebla/",
           "categorias": ""
         }
       ]
@@ -87927,7 +87951,7 @@
     "quintana_roo": {
       "nombre": "Quintana Roo",
       "abreviatura": "ROO",
-      "total_articulos": 25,
+      "total_articulos": 26,
       "categorias": [
         "economia_hacienda:0.3147",
         "electoral_politico:0.6357",
@@ -87940,9 +87964,16 @@
         "seguridad_justicia:0.4836",
         "turismo:0.5084",
         "turismo:0.6367",
+        "turismo:0.75",
         "turismo:0.7958"
       ],
       "articulos": [
+        {
+          "titulo": "Impulsa Tulum Air Show inversión aeroespacial",
+          "fecha": "2026-04-26 06:01:16",
+          "url": "https://ovaciones.com/impulsa-tulum-air-show-inversion-aeroespacial/?utm_source=rss&utm_medium=rss&utm_campaign=impulsa-tulum-air-show-inversion-aeroespacial",
+          "categorias": "turismo:0.75"
+        },
         {
           "titulo": "Buscan a poblano desaparecido en Bacalar; activan ficha de búsqueda en Quintana Roo",
           "fecha": "2026-04-26",
@@ -87995,12 +88026,6 @@
           "titulo": "Buzos extranjeros destruyen restos milenarios en cenote de Tulum",
           "fecha": "2026-04-24",
           "url": "https://www.excelsior.com.mx/nacional/buzos-extranjeros-destruyen-restos-milenarios-cenote-tulum-quintana-roo",
-          "categorias": ""
-        },
-        {
-          "titulo": "Con Tulum Air Show 2026 impulsan la industria aeronáutica en Quintana Roo",
-          "fecha": "2026-04-24",
-          "url": "https://www.excelsior.com.mx/nacional/mara-lezama-proyeccion-caribe",
           "categorias": ""
         }
       ]
@@ -88297,6 +88322,7 @@
         "seguridad_justicia:0.5385",
         "seguridad_justicia:0.559",
         "seguridad_justicia:0.6966",
+        "seguridad_justicia:0.75",
         "seguridad_justicia:0.776",
         "seguridad_justicia:0.8776"
       ],
@@ -88305,7 +88331,7 @@
           "titulo": "Detienen en el Estado de México a presunto feminicida de Keyla Chantal; es trasladado a Sonora",
           "fecha": "2026-04-26 02:39:16",
           "url": "https://www.eluniversal.com.mx/estados/detienen-en-el-estado-de-mexico-a-presunto-feminicida-de-keyla-chantal-es-trasladado-a-sonora/",
-          "categorias": ""
+          "categorias": "seguridad_justicia:0.75"
         },
         {
           "titulo": "Desaparecen seis jóvenes en menos de 72 horas en Sonora; colectivo de madres buscadoras pide apoyo ciudadano",
@@ -88629,7 +88655,7 @@
     "veracruz": {
       "nombre": "Veracruz",
       "abreviatura": "VER",
-      "total_articulos": 70,
+      "total_articulos": 71,
       "categorias": [
         "administracion:0.5587",
         "anticorrupcion:0.5468",
@@ -88691,6 +88717,12 @@
           "categorias": "seguridad_justicia:0.4652"
         },
         {
+          "titulo": "Localizan con vida en Veracruz a Sandra, menor de 15 años que fue reportada como desaparecida en Morelos",
+          "fecha": "2026-04-26",
+          "url": "https://heraldodemexico.com.mx/nacional/2026/4/25/localizan-con-vida-en-veracruz-sandra-menor-de-15-anos-que-fue-reportada-como-desaparecida-en-morelos-802124.html",
+          "categorias": ""
+        },
+        {
           "titulo": "Reportan sensaciones térmicas de hasta 47 grados en Veracruz; ola de calor y surada, generan aumento de temperaturas",
           "fecha": "2026-04-25 23:47:30",
           "url": "https://www.eluniversal.com.mx/estados/reportan-sensaciones-termicas-de-hasta-47-grados-en-veracruz-ola-de-calor-y-surada-generan-aumento-de-temperaturas/",
@@ -88737,12 +88769,6 @@
           "fecha": "2026-04-24 20:10:02",
           "url": "https://www.eluniversal.com.mx/estados/dan-70-anos-de-prision-a-integrantes-de-grupo-armado-que-mato-a-12-personas-en-2021-en-veracruz/",
           "categorias": "seguridad_justicia:1.3547"
-        },
-        {
-          "titulo": "PVEM en el Senado pide comparecencia de Alicia Bárcena por derrame petrolero; busca transparencia en impacto ambiental",
-          "fecha": "2026-04-24 19:54:13",
-          "url": "https://www.eluniversal.com.mx/nacion/pvem-en-el-senado-pide-comparecencia-de-alicia-barcena-por-derrame-petrolero-busca-transparencia-en-impacto-ambiental/",
-          "categorias": "medio_ambiente:1.51,relaciones_exteriores:0.7397,anticorrupcion:0.5468"
         }
       ]
     },
@@ -91155,7 +91181,7 @@
           {
             "categoria": "relaciones_exteriores",
             "nombre": "Relaciones Exteriores",
-            "score_promedio": 73.9,
+            "score_promedio": 73.87,
             "color": "verde",
             "docs_reales": 0,
             "promedio_historico": 5.94,
@@ -91165,7 +91191,7 @@
           {
             "categoria": "seguridad_justicia",
             "nombre": "Seguridad y Justicia",
-            "score_promedio": 73.55,
+            "score_promedio": 73.71,
             "color": "verde",
             "docs_reales": 0,
             "promedio_historico": 17.37,
@@ -91175,7 +91201,7 @@
           {
             "categoria": "economia_hacienda",
             "nombre": "Economía y Hacienda",
-            "score_promedio": 73.45,
+            "score_promedio": 73.49,
             "color": "verde",
             "docs_reales": 0,
             "promedio_historico": 12.23,
@@ -91185,7 +91211,7 @@
           {
             "categoria": "educacion",
             "nombre": "Educación",
-            "score_promedio": 71.78,
+            "score_promedio": 71.58,
             "color": "verde",
             "docs_reales": 0,
             "promedio_historico": 13.49,
@@ -91195,7 +91221,7 @@
           {
             "categoria": "electoral_politico",
             "nombre": "Electoral y Político",
-            "score_promedio": 70.71,
+            "score_promedio": 70.88,
             "color": "verde",
             "docs_reales": 0,
             "promedio_historico": 7.94,
@@ -91205,7 +91231,7 @@
           {
             "categoria": "derechos_humanos",
             "nombre": "Derechos Humanos",
-            "score_promedio": 68.02,
+            "score_promedio": 68.21,
             "color": "amarillo",
             "docs_reales": 0,
             "promedio_historico": 8.55,
@@ -91225,7 +91251,7 @@
           {
             "categoria": "agro_rural",
             "nombre": "Agro y Desarrollo Rural",
-            "score_promedio": 61.72,
+            "score_promedio": 61.79,
             "color": "amarillo",
             "docs_reales": 0,
             "promedio_historico": 4.47,
@@ -91235,7 +91261,7 @@
           {
             "categoria": "anticorrupcion",
             "nombre": "Anticorrupción",
-            "score_promedio": 60.8,
+            "score_promedio": 60.48,
             "color": "amarillo",
             "docs_reales": 0,
             "promedio_historico": 3.0,
@@ -91245,7 +91271,7 @@
           {
             "categoria": "igualdad_genero",
             "nombre": "Igualdad de género",
-            "score_promedio": 59.51,
+            "score_promedio": 59.53,
             "color": "amarillo",
             "docs_reales": 0,
             "promedio_historico": 3.26,
@@ -91255,7 +91281,7 @@
           {
             "categoria": "salud",
             "nombre": "Salud",
-            "score_promedio": 59.12,
+            "score_promedio": 58.84,
             "color": "amarillo",
             "docs_reales": 0,
             "promedio_historico": 10.35,
@@ -91265,7 +91291,7 @@
           {
             "categoria": "energia",
             "nombre": "Energía",
-            "score_promedio": 57.34,
+            "score_promedio": 57.75,
             "color": "amarillo",
             "docs_reales": 0,
             "promedio_historico": 3.1,
@@ -91285,7 +91311,7 @@
           {
             "categoria": "inteligencia_artificial",
             "nombre": "Inteligencia Artificial",
-            "score_promedio": 41.53,
+            "score_promedio": 41.54,
             "color": "amarillo",
             "docs_reales": 0,
             "promedio_historico": 1.93,
@@ -91305,7 +91331,7 @@
           {
             "categoria": "politica_social",
             "nombre": "Política Social",
-            "score_promedio": 37.93,
+            "score_promedio": 38.02,
             "color": "rojo",
             "docs_reales": 0,
             "promedio_historico": 5.31,
@@ -91315,7 +91341,7 @@
           {
             "categoria": "turismo",
             "nombre": "Turismo",
-            "score_promedio": 37.8,
+            "score_promedio": 37.81,
             "color": "rojo",
             "docs_reales": 0,
             "promedio_historico": 2.78,
