@@ -5528,6 +5528,7 @@
           const [paginaEstado, setPaginaEstado] = useState(1);
           const [ordenTemas, setOrdenTemas] = useState('todos'); // todos | score | urgencia
           const [vistaMapa, setVistaMapa] = useState('calor'); // calor | red | sat
+          const [ordenLeg, setOrdenLeg] = useState({ col: 'efectividad', dir: 'desc' });
 
           /* Reset paginación cuando cambia estado o periodo */
           useEffect(() => { setPaginaEstado(1); }, [estadoSeleccionado, periodoEstado]);
@@ -5870,28 +5871,107 @@
                 </div>
               )}
 
-              {/* Mis legisladores: usa RadarRow REAL con onClick → onLegSelect */}
-              {legisladoresEnConfig.length > 0 && (
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Mis legisladores · {legisladoresEnConfig.length}/20</div>
-                  </div>
-                  <div className="glass border border-borde rounded-xl divide-y divide-gray-100">
-                    {/* Header de columnas estilo Radar */}
-                    <div className="hidden md:grid md:grid-cols-[minmax(0,2.1fr)_0.85fr_0.85fr_0.85fr_0.85fr_0.8fr_0.75fr_0.85fr] gap-2 px-3 py-2 bg-gray-50 text-[9px] uppercase tracking-widest text-gray-500 font-bold">
-                      <div>Legislador</div>
-                      <div className="text-center">Tema dom.</div>
-                      <div className="text-center">Hit rate</div>
-                      <div className="text-center">Ini 15d</div>
-                      <div className="text-center">Prop 15d</div>
-                      <div className="text-center">L3P</div>
-                      <div className="text-center">Match</div>
-                      <div className="text-center">Efect.</div>
+              {/* Mis legisladores con orden + agregar + export CSV */}
+              {legisladoresEnConfig.length > 0 && (() => {
+                /* Sort accessor por columna */
+                const accessors = {
+                  nombre: l => formatNombreLegislador(l).toLowerCase(),
+                  tema: l => (l.categoria_dominante || 'zzz').toLowerCase(),
+                  hit_rate: l => (l.hit_rate != null ? l.hit_rate : -1),
+                  ini: l => (l.iniciativas_proy_15d ?? -1),
+                  prop: l => (l.proposiciones_proy_15d ?? -1),
+                  l3p: l => ((l.l3p_iniciativas ?? 0) + (l.l3p_proposiciones ?? 0)),
+                  match: l => ({A:5, B:4, C:3, D:2, F:1}[l.matchup_grade] || 0),
+                  efectividad: l => (l.elo_indice ?? -1),
+                };
+                const ordenado = [...legisladoresEnConfig].sort((a, b) => {
+                  const av = accessors[ordenLeg.col](a);
+                  const bv = accessors[ordenLeg.col](b);
+                  if (av < bv) return ordenLeg.dir === 'asc' ? -1 : 1;
+                  if (av > bv) return ordenLeg.dir === 'asc' ? 1 : -1;
+                  return 0;
+                });
+
+                const toggleSort = (col) => {
+                  setOrdenLeg(prev => prev.col === col
+                    ? { col, dir: prev.dir === 'asc' ? 'desc' : 'asc' }
+                    : { col, dir: col === 'nombre' || col === 'tema' ? 'asc' : 'desc' });
+                };
+                const arrow = (col) => ordenLeg.col === col ? (ordenLeg.dir === 'asc' ? '↑' : '↓') : '';
+                const HeaderBtn = ({col, label, align='center'}) => (
+                  <button onClick={() => toggleSort(col)}
+                    className={`text-[9px] uppercase tracking-widest font-bold transition hover:text-acento ${ordenLeg.col === col ? 'text-acento' : 'text-gray-500'} text-${align} flex items-center gap-0.5 ${align === 'center' ? 'justify-center' : ''}`}>
+                    {label}{arrow(col) && <span className="text-[10px]">{arrow(col)}</span>}
+                  </button>
+                );
+
+                const exportCSV = () => {
+                  const headers = ['Nombre', 'Cámara', 'Partido', 'Estado', 'Tema dominante', 'Hit rate', 'Iniciativas 15d', 'Proposiciones 15d', 'L3P total', 'Matchup grade', 'Efectividad ELO', 'Marcador continuidad'];
+                  const rows = ordenado.map(l => [
+                    formatNombreLegislador(l),
+                    (l.camara || '').replace('Cámara de ', ''),
+                    l.partido || '',
+                    l.estado || '',
+                    l.categoria_dominante ? _catLabel(l.categoria_dominante) : '',
+                    l.hit_rate != null ? Math.round(l.hit_rate * 100) + '%' : '',
+                    l.iniciativas_proy_15d != null ? Number(l.iniciativas_proy_15d).toFixed(1) : '',
+                    l.proposiciones_proy_15d != null ? Number(l.proposiciones_proy_15d).toFixed(1) : '',
+                    (l.l3p_iniciativas ?? 0) + (l.l3p_proposiciones ?? 0),
+                    l.matchup_grade || '',
+                    l.elo_indice != null ? Math.round(l.elo_indice) : '',
+                    l.marcador_continuidad || '',
+                  ]);
+                  const escape = v => {
+                    const s = String(v ?? '');
+                    return s.includes(',') || s.includes('"') || s.includes('\n')
+                      ? '"' + s.replace(/"/g, '""') + '"' : s;
+                  };
+                  const csv = [headers, ...rows].map(r => r.map(escape).join(',')).join('\n');
+                  const bom = '﻿'; /* Para acentos en Excel */
+                  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `fiat-mis-legisladores-${new Date().toISOString().slice(0,10)}.csv`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                };
+
+                return (
+                  <div>
+                    <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                      <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Mis legisladores · {legisladoresEnConfig.length}/20</div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={exportCSV}
+                          className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition border bg-white border-gray-200 text-gray-700 hover:border-gray-400 inline-flex items-center gap-1.5">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                          Exportar CSV
+                        </button>
+                        <button onClick={onConfigClick}
+                          className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition border bg-white border-gray-300 text-gray-700 hover:border-gray-500">
+                          + Agregar
+                        </button>
+                      </div>
                     </div>
-                    {legisladoresEnConfig.map(l => <RadarRow key={l.id} leg={l} onClick={() => onLegSelect(l)} />)}
+                    <div className="glass border border-borde rounded-xl divide-y divide-gray-100 overflow-hidden">
+                      {/* Header de columnas clickables (sort) */}
+                      <div className="hidden md:grid md:grid-cols-[minmax(0,2.1fr)_0.85fr_0.85fr_0.85fr_0.85fr_0.8fr_0.75fr_0.85fr] gap-2 px-3 py-2 bg-gray-50">
+                        <HeaderBtn col="nombre" label="Legislador" align="left" />
+                        <HeaderBtn col="tema" label="Tema dom." />
+                        <HeaderBtn col="hit_rate" label="Hit rate" />
+                        <HeaderBtn col="ini" label="Ini 15d" />
+                        <HeaderBtn col="prop" label="Prop 15d" />
+                        <HeaderBtn col="l3p" label="L3P" />
+                        <HeaderBtn col="match" label="Match" />
+                        <HeaderBtn col="efectividad" label="Efect." />
+                      </div>
+                      {ordenado.map(l => <RadarRow key={l.id} leg={l} onClick={() => onLegSelect(l)} />)}
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* ROW: Actividad reciente | Mis alertas */}
               {configCount > 0 && (
