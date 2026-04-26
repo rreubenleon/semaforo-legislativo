@@ -100,6 +100,26 @@
           0%, 100% { box-shadow: 0 0 0 0 rgba(46,125,50,0.7), 0 0 8px rgba(46,125,50,0.5); }
           50% { box-shadow: 0 0 0 6px rgba(46,125,50,0), 0 0 16px rgba(46,125,50,0.8); }
         }
+        /* Ticker bar — scroll continuo de los 18 temas */
+        @keyframes ticker-scroll {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+        .ticker-track { animation: ticker-scroll 80s linear infinite; }
+        .ticker-track:hover { animation-play-state: paused; }
+        /* Map intel — corners decorativos */
+        .map-intel-frame { position: relative; }
+        .map-intel-corner { position: absolute; width: 16px; height: 16px; border: 1.5px solid currentColor; }
+        .map-intel-corner.tl { top: 0; left: 0; border-right: none; border-bottom: none; }
+        .map-intel-corner.tr { top: 0; right: 0; border-left: none; border-bottom: none; }
+        .map-intel-corner.bl { bottom: 0; left: 0; border-right: none; border-top: none; }
+        .map-intel-corner.br { bottom: 0; right: 0; border-left: none; border-top: none; }
+        @keyframes intel-ping {
+          0% { transform: scale(0.4); opacity: 0.85; }
+          70% { opacity: 0.18; }
+          100% { transform: scale(1); opacity: 0; }
+        }
+        .intel-ring { animation: intel-ping 2.5s cubic-bezier(0,0,0.2,1) infinite; transform-origin: center; }
         /* Mobile responsive */
         @media (max-width: 768px) {
             .nav-pill-tab { padding: 5px 8px; font-size: 11px; }
@@ -5456,6 +5476,43 @@
           );
         }
 
+        /* TickerBar — scroll continuo de los 18 temas con delta + color */
+        function TickerBar({ semaforo, historial }) {
+          if (!semaforo || semaforo.length === 0) return null;
+          /* Calcular delta vs hace 7 días */
+          const items = semaforo.map(s => {
+            let delta = 0;
+            try {
+              const ser = historial?.categorias?.[s.categoria]?.scores || [];
+              const last = ser[ser.length - 1];
+              const prev = ser[Math.max(0, ser.length - 8)];
+              if (last != null && prev != null) delta = last - prev;
+            } catch(e) {}
+            return { ...s, delta };
+          });
+          const colorTxt = c => c === 'verde' ? '#2e7d32' : c === 'amarillo' ? '#c6972b' : '#c62828';
+          const arrow = d => d > 0.5 ? '▲' : d < -0.5 ? '▼' : '→';
+          const renderItem = (s, key) => (
+            <span key={key} className="inline-flex items-center gap-1.5 mx-3 whitespace-nowrap">
+              <span className="w-1.5 h-1.5 rounded-full" style={{background: colorTxt(s.color)}}></span>
+              <span className="text-[11px] text-gray-700 font-mono uppercase tracking-wider">{s.nombre}</span>
+              <span className="text-[11px] font-bold font-mono" style={{color: colorTxt(s.color)}}>{Math.round(s.score_total)}</span>
+              <span className="text-[10px] font-mono" style={{color: s.delta > 0.5 ? '#2e7d32' : s.delta < -0.5 ? '#c62828' : '#9ca3af'}}>{arrow(s.delta)}{Math.abs(s.delta) > 0.1 ? Math.abs(s.delta).toFixed(1) : ''}</span>
+              <span className="text-gray-300 ml-2">┃</span>
+            </span>
+          );
+          return (
+            <div className="border-y border-gray-200 bg-white overflow-hidden py-1.5" style={{maskImage: 'linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)'}}>
+              <div className="flex items-center">
+                <span className="text-[9px] uppercase tracking-widest text-gray-400 font-bold font-mono px-3 border-r border-gray-200 mr-2 flex-shrink-0">FIAT · LIVE FEED</span>
+                <div className="ticker-track flex">
+                  {[...items, ...items].map((s, i) => renderItem(s, i))}
+                </div>
+              </div>
+            </div>
+          );
+        }
+
         function PageConsolePro({ data, setSelected, onConfigClick, onLegSelect, allLegisladores, config, setConfig }) {
           const [estadoSeleccionado, setEstadoSeleccionado] = useState(null);
           const [filtroCSP, setFiltroCSP] = useState(null);
@@ -5469,6 +5526,8 @@
           /* Filtros para detalle de estado seleccionado */
           const [periodoEstado, setPeriodoEstado] = useState('1w'); // 1w, 2w, 1m
           const [paginaEstado, setPaginaEstado] = useState(1);
+          const [ordenTemas, setOrdenTemas] = useState('todos'); // todos | score | urgencia
+          const [vistaMapa, setVistaMapa] = useState('calor'); // calor | red | sat
 
           /* Reset paginación cuando cambia estado o periodo */
           useEffect(() => { setPaginaEstado(1); }, [estadoSeleccionado, periodoEstado]);
@@ -5568,6 +5627,8 @@
             return (
               <div className="space-y-4">
                 <div className="text-[10px] text-gray-400 font-mono ml-1">Última actualización: {new Date(data.metadata?.generado || '').toLocaleString('es-MX', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'})}</div>
+
+              <TickerBar semaforo={semaforo} historial={data.historial_scores} />
                 <div className="glass border border-borde rounded-2xl p-12 text-center">
                   <div className="text-3xl font-black text-gray-900">Bienvenido a Console Pro</div>
                   <p className="text-sm text-gray-600 mt-2 max-w-md mx-auto">
@@ -5589,6 +5650,8 @@
               {/* Última actualización sutil */}
               <div className="text-[10px] text-gray-400 font-mono ml-1">Última actualización: {new Date(data.metadata?.generado || '').toLocaleString('es-MX', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'})}</div>
 
+              <TickerBar semaforo={semaforo} historial={data.historial_scores} />
+
               {/* ROW 1: Tendencia 50% + Terminal IA 50% */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                 {temasSelectos.size > 0 && historialFiltrado ? (
@@ -5602,33 +5665,124 @@
                 <TerminalIAMockup />
               </div>
 
-              {/* Mis temas: SemaforoCard real con click → DetalleModal real */}
-              {temasEnConfig.length > 0 && (
-                <div>
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Mis temas · {temasEnConfig.length}/8</div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {temasEnConfig.map(t => <SemaforoCard key={t.categoria} data={t} onClick={setSelected} />)}
-                  </div>
-                </div>
-              )}
-
-              {/* ROW: Mapa (real Leaflet) | Menciones CSP */}
-              {(estadosSelectos.size > 0 || temasSelectos.size > 0) && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                  {estadosSelectos.size > 0 ? (
-                    <div className="glass border border-borde rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Mis estados</div>
-                          <div className="text-[10px] text-gray-400 mt-0.5">Click en un estado para ver detalle</div>
-                        </div>
-                        <div className="text-[10px] text-gray-400 font-mono">{estadosFiltradosArr.length}/12</div>
+              {/* Mis temas con filtros + agregar */}
+              {temasEnConfig.length > 0 && (() => {
+                const ordenado = [...temasEnConfig];
+                if (ordenTemas === 'score') ordenado.sort((a,b) => b.score_total - a.score_total);
+                else if (ordenTemas === 'urgencia') ordenado.sort((a,b) => (b.score_urgencia || 0) - (a.score_urgencia || 0));
+                return (
+                  <div>
+                    <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                      <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Mis temas · {temasEnConfig.length}/8</div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase tracking-widest text-gray-400 font-mono mr-1">Filtrar</span>
+                        {[['todos','Todos'],['score','Score'],['urgencia','Urgencia']].map(([k,label]) => (
+                          <button key={k} onClick={() => setOrdenTemas(k)}
+                            className={`text-[11px] font-semibold px-2.5 py-1 rounded-full transition border ${ordenTemas===k ? 'border-acento text-white' : 'border-gray-200 text-gray-600 hover:border-gray-400 bg-white'}`}
+                            style={ordenTemas===k ? {background:'#1a365d'} : {}}>
+                            {label}
+                          </button>
+                        ))}
+                        <button onClick={onConfigClick}
+                          className="text-[11px] font-semibold px-3 py-1 rounded-full transition ml-1"
+                          style={{background:'linear-gradient(135deg,#2e7d32 0%,#388e3c 100%)', color:'white'}}>
+                          + Agregar
+                        </button>
                       </div>
-                      <MapaMexico estados={estadosFiltradosArr} maxArts={maxArtsConfig}
-                        onSelectEstado={(key) => setEstadoSeleccionado(estadoSeleccionado === key ? null : key)}
-                        estadoSeleccionado={estadoSeleccionado} />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {ordenado.map(t => <SemaforoCard key={t.categoria} data={t} onClick={setSelected} />)}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* ROW: Mapa (intel) | Menciones CSP */}
+              {(estadosSelectos.size > 0 || temasSelectos.size > 0) && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 items-start">
+                  {estadosSelectos.size > 0 ? (
+                    <div className="glass border border-borde rounded-xl overflow-hidden">
+                      {/* Header tipo terminal scope */}
+                      <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-gray-50">
+                        <div className="flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                          <span className="text-[11px] uppercase tracking-widest text-gray-700 font-mono font-bold">MIS·ESTADOS · GEO·OPS</span>
+                          <span className="text-[10px] text-gray-400 font-mono">/{String(estadosFiltradosArr.length).padStart(2,'0')}</span>
+                        </div>
+                        <div className="flex gap-1">
+                          {['CALOR','RED','SAT'].map(v => (
+                            <button key={v} onClick={() => setVistaMapa(v.toLowerCase())}
+                              className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded border transition ${vistaMapa === v.toLowerCase() ? 'border-acento bg-gray-900 text-white' : 'border-gray-300 text-gray-500 hover:border-gray-500'}`}>
+                              {v}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                      {/* Frame con corners */}
+                      <div className="map-intel-frame relative bg-gray-50 mx-3 my-3" style={{aspectRatio: '4/3', color: '#9ca3af'}}>
+                        <div className="map-intel-corner tl"></div>
+                        <div className="map-intel-corner tr"></div>
+                        <div className="map-intel-corner bl"></div>
+                        <div className="map-intel-corner br"></div>
+                        <div className="absolute top-2 left-3 text-[10px] font-mono text-gray-400">23°38'N · 102°33'W</div>
+                        {/* Crosshair y mapa SVG */}
+                        <svg viewBox="0 0 320 240" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
+                          {/* Crosshair sutil */}
+                          <line x1="160" y1="0" x2="160" y2="240" stroke="#d1d5db" strokeWidth="0.5" strokeDasharray="2 4"/>
+                          <line x1="0" y1="120" x2="320" y2="120" stroke="#d1d5db" strokeWidth="0.5" strokeDasharray="2 4"/>
+                          {/* Polígono dashed con silueta MX simplificado */}
+                          <path d="M 30 90 Q 60 75 100 80 L 150 75 Q 200 70 235 80 L 270 95 L 285 115 L 280 145 L 270 165 L 240 180 L 200 195 L 150 200 L 100 185 L 70 165 L 50 140 L 35 115 Z"
+                            fill="rgba(46,125,50,0.04)" stroke="#2e7d32" strokeWidth="1" strokeDasharray="3 4" opacity="0.7"/>
+                          {/* Dots con coords reales */}
+                          {estadosFiltradosArr.map(([key, info]) => {
+                            const coords = ESTADO_COORDS[key];
+                            if (!coords) return null;
+                            /* Convertir lat/lon a x/y del viewBox */
+                            const lonMin = -118, lonMax = -86, latMin = 14, latMax = 33;
+                            const x = ((coords[1] - lonMin) / (lonMax - lonMin)) * 320;
+                            const y = ((latMax - coords[0]) / (latMax - latMin)) * 240;
+                            const intensity = (info.total_articulos || 0) / maxArtsConfig;
+                            const color = intensity > 0.5 ? '#c62828' : intensity > 0.2 ? '#c6972b' : '#2e7d32';
+                            const isSel = estadoSeleccionado === key;
+                            const numRings = intensity > 0.5 ? 3 : intensity > 0.2 ? 2 : 1;
+                            return (
+                              <g key={key} style={{cursor: 'pointer'}} onClick={() => setEstadoSeleccionado(estadoSeleccionado === key ? null : key)}>
+                                {[...Array(numRings)].map((_, r) => (
+                                  <circle key={r} cx={x} cy={y} r={isSel ? 18 : 14} fill="none" stroke={color} strokeWidth="1" className="intel-ring"
+                                    style={{animationDelay: `${(r * 0.8).toFixed(1)}s`, opacity: 0}}>
+                                    <animate attributeName="r" from={isSel ? 6 : 4} to={isSel ? 22 : 16} dur="2.5s" repeatCount="indefinite" begin={`${(r * 0.8).toFixed(1)}s`}/>
+                                    <animate attributeName="opacity" from="0.7" to="0" dur="2.5s" repeatCount="indefinite" begin={`${(r * 0.8).toFixed(1)}s`}/>
+                                  </circle>
+                                ))}
+                                <circle cx={x} cy={y} r={isSel ? 6 : 4.5} fill={color} stroke="#fff" strokeWidth="1.5"/>
+                                {(isSel || intensity > 0.4) && (
+                                  <g>
+                                    <text x={x + 8} y={y - 2} fontSize="9" fontFamily="JetBrains Mono, monospace" fontWeight="700" fill="#1f2937">{(info.abreviatura || key).toUpperCase().slice(0,3)}</text>
+                                    <text x={x + 8} y={y + 9} fontSize="8" fontFamily="JetBrains Mono, monospace" fill="#6b7280">{info.total_articulos || 0} · {intensity > 0.5 ? 'ALTA' : intensity > 0.2 ? 'MOD' : 'BAJA'}</text>
+                                  </g>
+                                )}
+                              </g>
+                            );
+                          })}
+                        </svg>
+                      </div>
+                      {/* Footer con stats tipo terminal */}
+                      <div className="px-4 py-2 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2 text-[10px] font-mono">
+                        <div className="flex items-center gap-3">
+                          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span className="text-gray-600">ALTA</span></span>
+                          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span><span className="text-gray-600">MOD</span></span>
+                          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span><span className="text-gray-600">BAJA</span></span>
+                        </div>
+                        <div className="text-gray-400">SCOPE: MX · 32 ESTADOS</div>
+                      </div>
+                      <div className="px-4 py-2 border-t border-gray-200 bg-white flex items-center justify-between flex-wrap gap-2 text-[10px] font-mono">
+                        <div className="flex items-center gap-3 text-gray-500">
+                          <span>ENTIDADES <span className="text-gray-800 font-bold">{estadosFiltradosArr.length}/32</span></span>
+                          {estadosFiltradosArr[0] && <span>HOTSPOT <span className="text-gray-800 font-bold">{(estadosFiltradosArr[0][1].abreviatura || '').toUpperCase().slice(0,3)}</span></span>}
+                          <span className="text-acento">Δ24H +{estadosFiltradosArr.filter(([,v]) => (v.total_articulos||0)>0).length} estados</span>
+                        </div>
+                        <a href="/" className="text-acento font-bold hover:underline">ABRIR MAPA·FULL ▸</a>
+                      </div>
                       {selectedEstadoData && (() => {
                         /* Filtrar artículos del estado por periodo */
                         const ahora = Date.now();
@@ -5779,76 +5933,9 @@
                     )}
                   </div>
 
-                  {/* Mis alertas */}
-                  <div className="glass border border-borde rounded-xl p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div>
-                        <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Mis alertas</div>
-                        <div className="text-[10px] text-gray-400 mt-0.5">{alertas.length} configuradas · email automático en V2</div>
-                      </div>
-                      <button onClick={() => setShowAlertaForm(!showAlertaForm)}
-                        className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition" style={{color: '#1a365d', background: '#f8faf8', border: '1px solid #e0e7e0'}}>
-                        {showAlertaForm ? 'Cancelar' : '+ Crear alerta'}
-                      </button>
-                    </div>
-                    {showAlertaForm && (
-                      <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2.5">
-                        <div>
-                          <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Tipo de regla</label>
-                          <select value={alertaTipo} onChange={e => setAlertaTipo(e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white">
-                            <option value="tema_score">Score de tema sube de un umbral</option>
-                            <option value="legislador_actividad">Legislador presenta nuevo instrumento</option>
-                          </select>
-                        </div>
-                        {alertaTipo === 'tema_score' && (
-                          <>
-                            <div>
-                              <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Tema</label>
-                              <select value={alertaTema} onChange={e => setAlertaTema(e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white">
-                                <option value="">Elige tema...</option>
-                                {semaforo.map(s => <option key={s.categoria} value={s.categoria}>{s.nombre}</option>)}
-                              </select>
-                            </div>
-                            <div>
-                              <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Umbral · {alertaUmbral}</label>
-                              <input type="range" min="40" max="95" value={alertaUmbral} onChange={e => setAlertaUmbral(Number(e.target.value))} className="w-full mt-1" />
-                            </div>
-                          </>
-                        )}
-                        {alertaTipo === 'legislador_actividad' && (
-                          <div>
-                            <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Legislador</label>
-                            <select value={alertaLeg} onChange={e => setAlertaLeg(e.target.value)} className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white">
-                              <option value="">Elige legislador...</option>
-                              {allLegisladores.map(l => <option key={l.id} value={l.id}>{formatNombreLegislador(l)}</option>)}
-                            </select>
-                          </div>
-                        )}
-                        <button onClick={submitAlerta}
-                          className="w-full mt-1 text-white font-semibold py-2 rounded-full text-xs"
-                          style={{background: 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)'}}>Guardar regla</button>
-                      </div>
-                    )}
-                    {alertas.length === 0 && !showAlertaForm && (
-                      <div className="text-xs text-gray-500 italic text-center py-6">Aún no has creado reglas de alerta</div>
-                    )}
-                    <div className="space-y-2">
-                      {alertas.map(a => (
-                        <div key={a.id} className="border border-gray-200 rounded-lg p-2.5 flex items-center justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs font-semibold text-gray-800 truncate">{a.nombre}</div>
-                            <div className="text-[10px] text-gray-500 font-mono">
-                              {a.activa ? 'Activa' : 'Pausada'} · creada {new Date(a.fecha_creada).toLocaleDateString('es-MX', {day:'2-digit', month:'short'})}
-                            </div>
-                          </div>
-                          <button onClick={() => setConfig({...config, alertas: alertas.map(x => x.id === a.id ? {...x, activa: !x.activa} : x)})} className={`text-[10px] px-2 py-1 rounded font-bold ${a.activa ? 'text-amber-700 bg-amber-50' : 'text-emerald-700 bg-emerald-50'}`}>
-                            {a.activa ? 'Pausar' : 'Activar'}
-                          </button>
-                          <button onClick={() => setConfig({...config, alertas: alertas.filter(x => x.id !== a.id)})} className="text-gray-300 hover:text-rose-600 w-6 h-6 text-base leading-none">×</button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+                  {/* Trigger Desk: alertas con reglas combinables */}
+                  <TriggerDesk alertas={alertas} semaforo={semaforo} allLegisladores={allLegisladores}
+                    setConfig={setConfig} config={config} />
                 </div>
               )}
             </div>
@@ -5984,6 +6071,278 @@
                 <div className="text-[10px] text-gray-400 font-mono">{temasSelectos.size}/8</div>
               </div>
               <div className="flex-1" style={{minHeight: 260}}><canvas ref={chartRef}></canvas></div>
+            </div>
+          );
+        }
+
+        /* TriggerDesk — Alertas con reglas combinables AND/OR estilo terminal */
+        function TriggerDesk({ alertas, semaforo, allLegisladores, setConfig, config }) {
+          const [showForm, setShowForm] = useState(false);
+          const [logica, setLogica] = useState('AND');
+          const [condiciones, setCondiciones] = useState([
+            { tipo: 'tema_score', tema: '', operador: '>=', valor: 75 }
+          ]);
+          const [canales, setCanales] = useState({ email: true, push: false });
+
+          const addCondicion = () => {
+            setCondiciones([...condiciones, { tipo: 'tema_score', tema: '', operador: '>=', valor: 75 }]);
+          };
+          const removeCondicion = (i) => {
+            setCondiciones(condiciones.filter((_, idx) => idx !== i));
+          };
+          const updateCondicion = (i, patch) => {
+            setCondiciones(condiciones.map((c, idx) => idx === i ? { ...c, ...patch } : c));
+          };
+
+          const generarNombre = () => {
+            const partes = condiciones.map(c => {
+              if (c.tipo === 'tema_score') {
+                const cat = semaforo.find(s => s.categoria === c.tema);
+                return `${cat ? cat.nombre : 'tema'} ${c.operador} ${c.valor}`;
+              } else if (c.tipo === 'legislador_actividad') {
+                const leg = allLegisladores.find(l => l.id === Number(c.legislador_id));
+                return `${leg ? formatNombreLegislador(leg) : 'legislador'} presenta`;
+              }
+              return '?';
+            });
+            return partes.join(` ${logica} `);
+          };
+
+          const submit = () => {
+            /* Validar */
+            const validas = condiciones.every(c => {
+              if (c.tipo === 'tema_score') return c.tema && c.valor != null;
+              if (c.tipo === 'legislador_actividad') return c.legislador_id;
+              return false;
+            });
+            if (!validas) return;
+            const nueva = {
+              id: Date.now(),
+              nombre: generarNombre(),
+              condiciones: [...condiciones],
+              logica,
+              canales: Object.entries(canales).filter(([,v]) => v).map(([k]) => k),
+              estado: 'esperando',
+              fecha_creada: new Date().toISOString(),
+              disparos_total: 0,
+              ultima_disparada: null,
+            };
+            setConfig({ ...config, alertas: [...alertas, nueva] });
+            setShowForm(false);
+            setCondiciones([{ tipo: 'tema_score', tema: '', operador: '>=', valor: 75 }]);
+            setLogica('AND');
+          };
+
+          const togglePausar = (id) => {
+            setConfig({ ...config, alertas: alertas.map(a => a.id === id ? { ...a, estado: a.estado === 'pausada' ? 'esperando' : 'pausada' } : a) });
+          };
+          const eliminar = (id) => {
+            setConfig({ ...config, alertas: alertas.filter(a => a.id !== id) });
+          };
+
+          /* Renderizado de una condición individual en card */
+          const renderCondicion = (c, i, leyenda) => {
+            if (c.tipo === 'tema_score') {
+              const cat = semaforo.find(s => s.categoria === c.tema);
+              return (
+                <span key={i} className="font-mono">
+                  {leyenda && <span className="text-gray-400 mr-1.5">{leyenda}</span>}
+                  <span className="text-gray-800">{cat ? cat.nombre : '—'}</span>
+                  <span className="text-gray-500 mx-1.5">{c.operador}</span>
+                  <span className="text-gray-800 font-bold">{c.valor}</span>
+                </span>
+              );
+            } else if (c.tipo === 'legislador_actividad') {
+              const leg = allLegisladores.find(l => l.id === Number(c.legislador_id));
+              return (
+                <span key={i} className="font-mono">
+                  {leyenda && <span className="text-gray-400 mr-1.5">{leyenda}</span>}
+                  <span className="text-gray-800">{leg ? formatNombreLegislador(leg) : '—'}</span>
+                  <span className="text-gray-500 mx-1.5">presenta instrumento</span>
+                </span>
+              );
+            }
+            return null;
+          };
+
+          return (
+            <div className="glass border border-borde rounded-xl">
+              {/* Header tipo terminal */}
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-gray-50">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                  <span className="text-[11px] uppercase tracking-widest text-gray-700 font-mono font-bold">TRIGGER·DESK · MIS·ALERTAS</span>
+                  <span className="text-[10px] text-gray-400 font-mono">/{String(alertas.length).padStart(2,'0')}</span>
+                </div>
+                <button onClick={() => setShowForm(!showForm)}
+                  className="text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded transition border"
+                  style={showForm ? {background:'#f3f4f6', color:'#6b7280', borderColor:'#d1d5db'} : {background:'#1a365d', color:'white', borderColor:'#1a365d'}}>
+                  {showForm ? 'Cancelar' : '+ Nueva regla'}
+                </button>
+              </div>
+
+              <div className="p-4 space-y-3">
+                {/* Form de nueva regla */}
+                {showForm && (
+                  <div className="border border-acento/20 bg-gray-50 rounded-lg p-3 space-y-3">
+                    <div className="text-[10px] uppercase tracking-widest text-acento font-bold font-mono">▸ NUEVA REGLA · CONDICIONES → ACCIÓN</div>
+
+                    {/* Lista de condiciones */}
+                    <div className="space-y-2">
+                      {condiciones.map((c, i) => (
+                        <div key={i} className="bg-white rounded-lg border border-gray-200 p-2.5">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-[10px] uppercase tracking-widest text-gray-400 font-mono font-bold">
+                              {i === 0 ? 'SI' : logica}
+                            </span>
+                            <select value={c.tipo}
+                              onChange={e => updateCondicion(i, { tipo: e.target.value, tema: '', legislador_id: '' })}
+                              className="text-xs px-2 py-1 border border-gray-200 rounded bg-white flex-1">
+                              <option value="tema_score">Score de tema</option>
+                              <option value="legislador_actividad">Legislador presenta</option>
+                            </select>
+                            {condiciones.length > 1 && (
+                              <button onClick={() => removeCondicion(i)} className="text-gray-400 hover:text-rose-600 w-6 h-6 text-base leading-none">×</button>
+                            )}
+                          </div>
+                          {c.tipo === 'tema_score' && (
+                            <div className="flex items-center gap-2">
+                              <select value={c.tema} onChange={e => updateCondicion(i, { tema: e.target.value })}
+                                className="text-xs px-2 py-1.5 border border-gray-200 rounded bg-white flex-1">
+                                <option value="">Elige tema...</option>
+                                {semaforo.map(s => <option key={s.categoria} value={s.categoria}>{s.nombre}</option>)}
+                              </select>
+                              <select value={c.operador} onChange={e => updateCondicion(i, { operador: e.target.value })}
+                                className="text-xs px-2 py-1.5 border border-gray-200 rounded bg-white font-mono w-16">
+                                <option value=">=">≥</option>
+                                <option value=">">&gt;</option>
+                                <option value="<=">≤</option>
+                                <option value="<">&lt;</option>
+                              </select>
+                              <input type="number" value={c.valor} onChange={e => updateCondicion(i, { valor: Number(e.target.value) })}
+                                min="0" max="100" className="text-xs px-2 py-1.5 border border-gray-200 rounded bg-white font-mono w-16" />
+                            </div>
+                          )}
+                          {c.tipo === 'legislador_actividad' && (
+                            <select value={c.legislador_id || ''} onChange={e => updateCondicion(i, { legislador_id: e.target.value })}
+                              className="w-full text-xs px-2 py-1.5 border border-gray-200 rounded bg-white">
+                              <option value="">Elige legislador...</option>
+                              {allLegisladores.map(l => <option key={l.id} value={l.id}>{formatNombreLegislador(l)}</option>)}
+                            </select>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Lógica AND/OR + agregar condición */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] uppercase tracking-widest text-gray-500 font-mono font-bold">Lógica:</span>
+                        <button onClick={() => setLogica('AND')}
+                          className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded border transition ${logica==='AND' ? 'border-acento bg-acento text-white' : 'border-gray-300 text-gray-600 hover:border-gray-500'}`}>AND</button>
+                        <button onClick={() => setLogica('OR')}
+                          className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded border transition ${logica==='OR' ? 'border-acento bg-acento text-white' : 'border-gray-300 text-gray-600 hover:border-gray-500'}`}>OR</button>
+                      </div>
+                      <button onClick={addCondicion}
+                        className="text-[10px] font-bold uppercase tracking-widest text-acento hover:underline">+ Condición</button>
+                    </div>
+
+                    {/* Canales */}
+                    <div>
+                      <div className="text-[10px] uppercase tracking-widest text-gray-500 font-mono font-bold mb-1.5">Canales</div>
+                      <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-1.5 text-xs cursor-pointer">
+                          <input type="checkbox" checked={canales.email} onChange={e => setCanales({...canales, email: e.target.checked})} />
+                          <span className="font-mono text-gray-700">email</span>
+                        </label>
+                        <label className="flex items-center gap-1.5 text-xs cursor-pointer opacity-60">
+                          <input type="checkbox" checked={canales.push} onChange={e => setCanales({...canales, push: e.target.checked})} disabled />
+                          <span className="font-mono text-gray-700">push <span className="text-[9px] text-gray-400">(V2)</span></span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                      <div className="text-[10px] text-gray-400 font-mono italic truncate flex-1 mr-3" title={generarNombre()}>{generarNombre() || 'Configura las condiciones'}</div>
+                      <button onClick={submit}
+                        className="text-[10px] font-bold uppercase tracking-widest text-white px-3 py-1.5 rounded"
+                        style={{background:'linear-gradient(135deg,#2e7d32 0%,#388e3c 100%)'}}>
+                        Guardar regla
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Lista de reglas */}
+                {alertas.length === 0 && !showForm ? (
+                  <div className="text-center py-8">
+                    <div className="text-xs uppercase tracking-widest text-gray-400 font-mono">SIN REGLAS CONFIGURADAS</div>
+                    <div className="text-[11px] text-gray-500 mt-2">Crea tu primera regla con condiciones combinables (AND/OR)</div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {alertas.map((a, idx) => {
+                      const isDisparada = a.estado === 'disparado';
+                      const isPausada = a.estado === 'pausada';
+                      const borderColor = isDisparada ? '#2e7d32' : isPausada ? '#9ca3af' : '#c6972b';
+                      const bgColor = isDisparada ? '#f0f9f1' : isPausada ? '#f9fafb' : '#fffbeb';
+                      const stateLabel = isDisparada ? '▲ TRIGGER·ACTIVO' : isPausada ? '◼ PAUSADA' : '◆ ESPERANDO';
+                      const stateColor = isDisparada ? '#2e7d32' : isPausada ? '#6b7280' : '#c6972b';
+                      const diasCreada = Math.floor((Date.now() - new Date(a.fecha_creada).getTime()) / (1000*60*60*24));
+                      return (
+                        <div key={a.id} className="rounded-lg border-l-4 p-3" style={{borderLeftColor: borderColor, background: bgColor}}>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] uppercase tracking-widest font-mono font-bold" style={{color: stateColor}}>{stateLabel}</span>
+                              <span className="text-[10px] text-gray-400 font-mono">· #{String(idx+1).padStart(3,'0')}</span>
+                            </div>
+                            <span className="text-[10px] text-gray-500 font-mono">creada hace {diasCreada}d</span>
+                          </div>
+                          <div className="text-sm text-gray-900 font-bold mb-2 leading-tight">{a.nombre}</div>
+                          <div className="grid grid-cols-3 gap-3 text-[10px] mb-2">
+                            <div>
+                              <div className="uppercase tracking-widest text-gray-400 font-bold mb-0.5">Condición</div>
+                              <div className="text-gray-800 font-mono">{a.condiciones?.length || 1} regla{(a.condiciones?.length || 1) > 1 ? `s · ${a.logica}` : ''}</div>
+                            </div>
+                            <div>
+                              <div className="uppercase tracking-widest text-gray-400 font-bold mb-0.5">Estado</div>
+                              <div className="font-mono font-bold" style={{color: stateColor}}>
+                                {isDisparada ? '▲ DISPARADO' : isPausada ? 'PAUSADA' : 'ESPERANDO'}
+                              </div>
+                            </div>
+                            <div>
+                              <div className="uppercase tracking-widest text-gray-400 font-bold mb-0.5">Canal</div>
+                              <div className="text-gray-800 font-mono">{(a.canales || ['email']).join(' + ')}</div>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                            <div className="flex items-center gap-3 text-[11px] font-mono">
+                              <button onClick={() => togglePausar(a.id)} className="text-acento hover:underline">▸ {isPausada ? 'activar' : 'pausar'}</button>
+                              <button className="text-acento hover:underline opacity-50">▸ editar</button>
+                              <button className="text-acento hover:underline opacity-50">▸ historial</button>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-gray-500 font-mono">· {a.disparos_total || 0} disparos</span>
+                              <button onClick={() => eliminar(a.id)} className="text-gray-300 hover:text-rose-600 w-6 h-6 text-base leading-none">×</button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {/* CTA crear nueva al final */}
+                    {!showForm && (
+                      <button onClick={() => setShowForm(true)}
+                        className="w-full border-2 border-dashed border-gray-300 hover:border-acento hover:bg-gray-50 transition py-3 rounded-lg text-[11px] uppercase tracking-widest text-gray-500 hover:text-acento font-mono font-bold">
+                        + Crear regla · COND → ACCIÓN
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                <div className="text-[9px] text-gray-400 font-mono italic mt-2 leading-snug">
+                  Las reglas se guardan en este navegador. Email automático y push activos en V2.
+                </div>
+              </div>
             </div>
           );
         }
