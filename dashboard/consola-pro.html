@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FIAT · Console Pro</title>
+<link rel="icon" href="favicon.ico">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: { extend: {
+      fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'], mono: ['JetBrains Mono', 'ui-monospace', 'monospace'] },
+      colors: {
+        semaforo: { verde: '#2e7d32', amarillo: '#c6972b', rojo: '#c62828' },
+        fondo: '#fafafa', tarjeta: '#ffffff', borde: '#d1d5db', acento: '#1a365d',
+      }
+    }}
+  };
+</script>
+<style>
+  body { background: #fafafa; font-family: 'Inter', system-ui, sans-serif; }
+  .glass { background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+  .glass:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .nav-pill { background: rgba(255,255,255,0.85); backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 2px 16px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.03); }
+  .nav-pill-tab { padding: 6px 14px; font-size: 13px; font-weight: 500; color: #9ca3af; border-radius: 9999px; transition: all 0.2s; cursor: pointer; letter-spacing: 0.01em; white-space: nowrap; position: relative; }
+  .nav-pill-tab:hover { color: #000; font-weight: 600; }
+  .nav-pill-tab-active { color: #000; font-weight: 700; }
+  .nav-pill-tab-active::after { content: ''; position: absolute; bottom: 0; left: 20%; right: 20%; height: 1.5px; background: #d1d5db; border-radius: 1px; }
+  .badge-alpha { background: #1a365d; color: white; font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 10px; border-radius: 9999px; }
+  .score-ring { transition: stroke-dashoffset 1s ease-in-out; }
+  @keyframes pulse-verde { 0%,100% { box-shadow: 0 1px 3px rgba(0,0,0,0.06); } 50% { box-shadow: 0 0 0 3px rgba(46,125,50,0.15); } }
+  @keyframes pulse-amarillo { 0%,100% { box-shadow: 0 1px 3px rgba(0,0,0,0.06); } 50% { box-shadow: 0 0 0 3px rgba(198,151,43,0.15); } }
+  .pulse-verde { animation: pulse-verde 2.5s infinite; }
+  .pulse-amarillo { animation: pulse-amarillo 2.5s infinite; }
+  .modal-backdrop { animation: fadeIn 0.2s ease-out; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal-card { animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .spinner { border: 2px solid #e5e7eb; border-top-color: #1a365d; border-radius: 50%; width: 14px; height: 14px; animation: spin 0.8s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .fab-config { background: #1a365d; color: white; box-shadow: 0 4px 16px rgba(26, 54, 93, 0.25); transition: all 0.2s; }
+  .fab-config:hover { background: #0f2747; box-shadow: 0 6px 20px rgba(26, 54, 93, 0.35); transform: translateY(-1px); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useMemo } = React;
+
+const WORKER_URL = 'https://fiat-busqueda.rreubenleon.workers.dev';
+const PASSWORD_HASH = '395cfe53020be66359941d3dd6cba28c5108cc7b66e1b8507492dfe1b602ac28'; // SHA-256("fiatpro")
+const STORAGE_KEY = 'fiat_consola_pro_config_v1';
+const SESSION_KEY = 'fiat_consola_pro_session';
+
+// Paleta para gráficas (idéntica al index.html actual)
+const CATEGORY_COLORS = [
+  '#2563eb', '#dc2626', '#059669', '#d97706', '#7c3aed',
+  '#db2777', '#0891b2', '#65a30d', '#ea580c', '#4f46e5',
+  '#0d9488', '#b91c1c', '#1d4ed8', '#9333ea',
+];
+
+// SHA-256 helper
+async function sha256(text) {
+  const buf = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ─── ScoreRing (idéntico al index.html) ───
+function ScoreRing({ score, color, size = 80 }) {
+  const radius = (size - 8) / 2;
+  const half = size / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (score / 100) * circumference;
+  const gradientColors = {
+    verde: ['#66bb6a', '#2e7d32'],
+    amarillo: ['#e0a82b', '#c6972b'],
+    rojo: ['#ef5350', '#c62828'],
+  };
+  const [c1, c2] = gradientColors[color] || ['#bdbdbd', '#9ca3af'];
+  const gradId = `grad-${color}-${size}`;
+  const fontSize = size > 70 ? '16px' : size > 50 ? '13px' : '11px';
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+      <defs>
+        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor={c1} />
+          <stop offset="100%" stopColor={c2} />
+        </linearGradient>
+      </defs>
+      <circle cx={half} cy={half} r={radius} stroke="#e5e7eb" strokeWidth="6" fill="none" />
+      <circle cx={half} cy={half} r={radius} stroke={`url(#${gradId})`} strokeWidth="6" fill="none"
+        strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round"
+        className="score-ring" transform={`rotate(-90 ${half} ${half})`} />
+      <text x={half} y={half} textAnchor="middle" dominantBaseline="central"
+        style={{fontSize}} fill="#1a365d" fontWeight="bold">{score.toFixed(0)}%</text>
+    </svg>
+  );
+}
+
+// ─── PasswordGate ───
+function PasswordGate({ onAuth }) {
+  const [pwd, setPwd] = useState('');
+  const [err, setErr] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const tryLogin = async () => {
+    setLoading(true);
+    setErr(false);
+    const hash = await sha256(pwd);
+    if (hash === PASSWORD_HASH) {
+      sessionStorage.setItem(SESSION_KEY, '1');
+      onAuth();
+    } else {
+      setErr(true);
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="bg-white rounded-2xl border border-gray-200 p-8 max-w-sm w-full" style={{boxShadow: '0 20px 60px rgba(0,0,0,0.06)'}}>
+        <img src="fiat-logo-transparent.png" alt="FIAT" style={{height: 32, maxWidth: 100, objectFit: 'contain', display: 'block'}} className="mb-2" />
+        <div className="badge-alpha inline-block mt-4 mb-1">CONSOLE PRO · ALPHA</div>
+        <h1 className="text-xl font-black text-gray-900 mt-3">Acceso restringido</h1>
+        <p className="text-xs text-gray-500 mt-1 mb-5">Introduce la contraseña para continuar.</p>
+        <input
+          type="password"
+          value={pwd}
+          onChange={e => setPwd(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && tryLogin()}
+          placeholder="Contraseña"
+          autoFocus
+          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white transition"
+        />
+        {err && <div className="text-xs text-rose-600 mt-2 font-mono">Contraseña incorrecta</div>}
+        <button
+          onClick={tryLogin}
+          disabled={loading || !pwd}
+          className="w-full mt-4 text-white font-semibold py-2.5 rounded-full text-sm transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{background: loading ? '#9ca3af' : 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)'}}>
+          {loading ? <span className="spinner"></span> : 'Entrar'}
+        </button>
+        <p className="text-[10px] text-gray-400 mt-4 text-center font-mono">FIAT México · Console Pro v1.0</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Header (idéntico al actual) ───
+function Header({ onConfigClick, configCount }) {
+  return (
+    <header className="sticky top-0 z-40 py-2">
+      <div className="nav-pill rounded-2xl md:rounded-full px-3 py-2 flex items-center gap-2 flex-wrap md:flex-nowrap">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <a href="/" title="Volver a FIAT principal">
+            <img src="fiat-logo-transparent.png" alt="FIAT" style={{height: 32, maxWidth: 100, objectFit: 'contain', objectPosition: 'left', display: 'block'}} />
+          </a>
+          <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span className="text-[10px] text-emerald-700 font-semibold tracking-wide">EN VIVO</span>
+          </div>
+        </div>
+        <div className="hidden md:block w-px h-5 bg-gray-200 mx-1"></div>
+        <div className="nav-tabs-scroll flex items-center gap-0.5 flex-shrink-0">
+          <button className="nav-pill-tab nav-pill-tab-active">Console Pro</button>
+          <a href="/" className="nav-pill-tab no-underline">Dashboard público</a>
+        </div>
+        <div className="hidden md:block flex-1"></div>
+        <div className="badge-alpha flex-shrink-0">ALPHA</div>
+        <button onClick={onConfigClick}
+          className="text-[12px] text-white font-semibold px-3 py-1.5 rounded-full transition-all shadow-sm whitespace-nowrap"
+          style={{background: 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)'}}>
+          {configCount > 0 ? 'Configurar' : 'Empezar configuración'}
+        </button>
+        <button onClick={() => { sessionStorage.removeItem(SESSION_KEY); location.reload(); }}
+          className="text-[11px] text-gray-500 hover:text-gray-800 font-medium px-2 py-1" title="Cerrar sesión">
+          Salir
+        </button>
+      </div>
+    </header>
+  );
+}
+
+// ─── Tendencia de scores (Chart.js, idéntico al actual) ───
+function TendenciaTemas({ historial, semaforo, temasSelectos }) {
+  const chartRef = useRef(null);
+  const chartInstance = useRef(null);
+
+  useEffect(() => {
+    if (!chartRef.current || !historial || temasSelectos.size === 0) return;
+    if (chartInstance.current) chartInstance.current.destroy();
+
+    const INICIO_PERIODO = '2026-02-01';
+    const rawFechas = historial.fechas;
+    const rawCategorias = historial.categorias;
+    const idxInicio = rawFechas.findIndex(f => f >= INICIO_PERIODO);
+    const fechas = idxInicio >= 0 ? rawFechas.slice(idxInicio) : rawFechas;
+    const categorias = {};
+    for (const cat of Object.keys(rawCategorias)) {
+      categorias[cat] = { ...rawCategorias[cat], scores: idxInicio >= 0 ? rawCategorias[cat].scores.slice(idxInicio) : rawCategorias[cat].scores };
+    }
+    const catKeys = Object.keys(categorias).filter(c => temasSelectos.has(c));
+
+    const labels = fechas.map(f => {
+      const d = new Date(f + 'T12:00:00');
+      return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+    });
+
+    const datasets = catKeys.map((cat, idx) => {
+      const catData = categorias[cat];
+      const colorIdx = Object.keys(rawCategorias).indexOf(cat);
+      const color = CATEGORY_COLORS[colorIdx % CATEGORY_COLORS.length];
+      const scores = catData.scores.map(s => s === null ? undefined : s);
+      const lastIdx = scores.length - 1;
+      return {
+        label: catData.nombre,
+        data: scores,
+        borderColor: color,
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        fill: false,
+        stepped: 'before',
+        tension: 0,
+        pointRadius: scores.map((_, i) => i === lastIdx ? 5 : 0),
+        pointHitRadius: 10,
+        pointHoverRadius: 6,
+        pointBackgroundColor: color,
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        spanGaps: true,
+      };
+    });
+
+    const thresholdPlugin = {
+      id: 'thresholds',
+      beforeDraw(chart) {
+        const { ctx, chartArea, scales } = chart;
+        if (!chartArea) return;
+        const yScale = scales.y;
+        const thresholds = [
+          { value: 65, color: 'rgba(46,125,50,0.15)' },
+          { value: 40, color: 'rgba(198,40,40,0.15)' },
+        ];
+        ctx.save();
+        ctx.setLineDash([2, 6]);
+        ctx.lineWidth = 0.8;
+        thresholds.forEach(t => {
+          const y = yScale.getPixelForValue(t.value);
+          ctx.beginPath();
+          ctx.strokeStyle = t.color;
+          ctx.moveTo(chartArea.left, y);
+          ctx.lineTo(chartArea.right, y);
+          ctx.stroke();
+        });
+        ctx.restore();
+      }
+    };
+
+    chartInstance.current = new Chart(chartRef.current, {
+      type: 'line',
+      plugins: [thresholdPlugin],
+      data: { labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 600, easing: 'easeOutQuad' },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(15,23,42,0.92)',
+            titleColor: '#f1f5f9',
+            bodyColor: '#cbd5e1',
+            borderColor: 'rgba(255,255,255,0.08)',
+            borderWidth: 1,
+            padding: { top: 10, bottom: 10, left: 14, right: 14 },
+            cornerRadius: 10,
+            displayColors: true,
+            boxWidth: 8, boxHeight: 8, boxPadding: 6,
+            titleFont: { size: 12, weight: '600', family: 'JetBrains Mono, monospace' },
+            bodyFont: { size: 11, family: 'JetBrains Mono, monospace' },
+            callbacks: { label: (item) => ` ${item.dataset.label}: ${item.raw?.toFixed(1)}%` },
+            itemSort: (a, b) => (b.raw || 0) - (a.raw || 0),
+          }
+        },
+        scales: {
+          y: {
+            min: 0, max: 100, position: 'right',
+            ticks: { color: '#b0b8c4', font: { size: 10 }, stepSize: 25, padding: 12, callback: v => v + '%' },
+            grid: { color: (ctx) => ctx.tick.value === 0 ? 'transparent' : 'rgba(0,0,0,0.04)', lineWidth: 0.5, drawBorder: false, drawTicks: false },
+            border: { display: false },
+          },
+          x: {
+            ticks: { color: '#b0b8c4', font: { size: 10 }, maxRotation: 0, maxTicksLimit: 8, padding: 8 },
+            grid: { display: false },
+            border: { display: false },
+          }
+        },
+      }
+    });
+
+    return () => { if (chartInstance.current) try { chartInstance.current.destroy(); } catch (e) {} };
+  }, [historial, temasSelectos]);
+
+  if (temasSelectos.size === 0) {
+    return (
+      <div className="glass border border-borde rounded-xl p-8 text-center">
+        <div className="text-xs uppercase tracking-widest text-gray-400 font-bold">TENDENCIA DE MIS TEMAS</div>
+        <div className="text-sm text-gray-500 mt-2">Selecciona temas en Configurar para ver su evolución</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="glass border border-borde rounded-xl p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Tendencia de mis temas</div>
+          <div className="text-[10px] text-gray-400 mt-0.5">Evolución del score compuesto durante el actual periodo de sesiones</div>
+        </div>
+        <div className="text-[10px] text-gray-400 font-mono">{temasSelectos.size} {temasSelectos.size === 1 ? 'tema' : 'temas'}</div>
+      </div>
+      <div style={{height: '280px'}}><canvas ref={chartRef}></canvas></div>
+    </div>
+  );
+}
+
+// ─── Card de legislador (estilo Radar) ───
+function LegisladorCard({ leg, onRemove }) {
+  const elo = leg.elo_indice;
+  const grade = elo == null ? '—'
+    : elo >= 85 ? 'A+' : elo >= 75 ? 'A' : elo >= 65 ? 'B+' : elo >= 55 ? 'B' : elo >= 45 ? 'C+' : elo >= 35 ? 'C' : 'D';
+  const hitPct = leg.hit_total > 0 ? Math.round((leg.hit_respondio / leg.hit_total) * 100) : null;
+  const partido = leg.partido || '';
+  const camara = (leg.camara || '').replace('Cámara de ', '');
+  const initials = leg.nombre.split(/\s+/).filter(w => w.length > 2).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+
+  return (
+    <div className="glass border border-borde rounded-xl p-4 transition-all hover:shadow-md">
+      <div className="flex items-start gap-3">
+        <div className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-sm text-gray-700 flex-shrink-0">
+          {initials}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-bold text-gray-900 leading-tight truncate" title={leg.nombre}>{leg.nombre}</div>
+          <div className="text-[10px] text-gray-500 font-mono mt-0.5">{partido} · {camara}{leg.estado ? ` · ${leg.estado}` : ''}</div>
+          <div className="flex items-center gap-2 mt-1.5">
+            {leg.matchup_grade && (
+              <span className="text-[10px] font-bold font-mono px-1.5 py-0.5 rounded border" style={{borderColor: '#d1d5db', color: '#1a365d'}}>{leg.matchup_grade}</span>
+            )}
+            {hitPct != null && (
+              <span className="text-[10px] text-gray-600 font-mono">Hit {hitPct}%</span>
+            )}
+            {leg.marcador_continuidad && (
+              <span className="text-[10px] text-gray-500 font-mono italic truncate">{leg.marcador_continuidad}</span>
+            )}
+          </div>
+        </div>
+        <button onClick={() => onRemove(leg.id)} title="Quitar de mi monitoreo"
+          className="text-gray-300 hover:text-rose-600 hover:bg-rose-50 w-7 h-7 rounded-full flex items-center justify-center text-base leading-none transition flex-shrink-0">×</button>
+      </div>
+      <div className="mt-3 pt-3 border-t border-gray-100 grid grid-cols-3 gap-2 text-center">
+        <div>
+          <div className="text-base font-bold font-mono text-gray-800">{leg.elo_indice != null ? Math.round(leg.elo_indice) : '—'}</div>
+          <div className="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">ELO</div>
+        </div>
+        <div>
+          <div className="text-base font-bold font-mono text-gray-800">{leg.iniciativas_proy_15d != null ? leg.iniciativas_proy_15d : '—'}</div>
+          <div className="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">Ini 15d</div>
+        </div>
+        <div>
+          <div className="text-base font-bold font-mono text-gray-800">{leg.proposiciones_proy_15d != null ? Math.round(leg.proposiciones_proy_15d) : '—'}</div>
+          <div className="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">PA 15d</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Card de tema (estilo Semáforo simplificado) ───
+function TemaCard({ data, onRemove }) {
+  const colorClasses = {
+    verde: 'border-semaforo-verde/40',
+    amarillo: 'border-semaforo-amarillo/40',
+    rojo: 'border-semaforo-rojo/40',
+  };
+  const colorDot = { verde: 'bg-semaforo-verde', amarillo: 'bg-semaforo-amarillo', rojo: 'bg-semaforo-rojo' };
+  const momentum = data.momentum || {};
+  const trendArrow = momentum.tendencia === 'up' ? '↑' : momentum.tendencia === 'down' ? '↓' : '';
+  const trendColor = momentum.tendencia === 'up' ? 'text-green-600' : momentum.tendencia === 'down' ? 'text-red-500' : 'text-gray-400';
+
+  return (
+    <div className={`glass border ${colorClasses[data.color]} rounded-xl p-4 transition-all`}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className={`w-3 h-3 rounded-full ${colorDot[data.color]} flex-shrink-0`}></div>
+          <div className="min-w-0">
+            <h3 className="font-semibold text-sm text-gray-800 truncate">{data.nombre}</h3>
+            {momentum.etiqueta && (
+              <div className="flex items-center gap-1">
+                {trendArrow && <span className={`text-[10px] font-bold ${trendColor}`}>{trendArrow}</span>}
+                <span className="text-[10px] text-gray-400 font-mono">{momentum.etiqueta}</span>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <ScoreRing score={data.score_total} color={data.color} size={56} />
+          <button onClick={() => onRemove(data.categoria)} title="Quitar tema"
+            className="text-gray-300 hover:text-rose-600 hover:bg-rose-50 w-6 h-6 rounded-full flex items-center justify-center text-sm leading-none transition flex-shrink-0">×</button>
+        </div>
+      </div>
+      <div className="grid grid-cols-5 gap-2 text-xs text-gray-500">
+        {[
+          { label: 'Media', value: data.score_media },
+          { label: 'Trends', value: data.score_trends },
+          { label: 'Congreso', value: data.score_congreso },
+          { label: 'CSP', value: data.score_mananera || 0, danger: true },
+          { label: 'Urgencia', value: data.score_urgencia },
+        ].map(m => (
+          <div key={m.label}>
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <div className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full rounded-full" style={{ width: `${Math.min(Math.max(m.value, 0), 100)}%`, backgroundColor: m.danger ? '#c62828' : '#2e7d32' }} />
+              </div>
+              <span className={`text-[10px] font-mono font-medium ${m.danger ? 'text-rose-600' : 'text-gray-700'}`}>{m.value.toFixed(0)}%</span>
+            </div>
+            <div className="text-[9px] uppercase tracking-wider text-gray-400">{m.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Mis Estados (lista compacta v1, mapa Leaflet en v2) ───
+function MisEstados({ mapa, estadosSelectos, onRemove }) {
+  if (estadosSelectos.size === 0) {
+    return (
+      <div className="glass border border-borde rounded-xl p-6 text-center">
+        <div className="text-xs uppercase tracking-widest text-gray-400 font-bold">MIS ESTADOS</div>
+        <div className="text-xs text-gray-500 mt-2">Aún no has seleccionado estados</div>
+      </div>
+    );
+  }
+  const estados = Array.from(estadosSelectos)
+    .map(key => ({ key, info: mapa[key] }))
+    .filter(e => e.info)
+    .sort((a, b) => (b.info.total_articulos || 0) - (a.info.total_articulos || 0));
+  const maxArts = Math.max(...estados.map(e => e.info.total_articulos || 0), 1);
+
+  const getColor = (count) => {
+    const intensity = count / maxArts;
+    if (intensity > 0.5) return '#c62828';
+    if (intensity > 0.2) return '#c6972b';
+    return '#2e7d32';
+  };
+
+  return (
+    <div className="glass border border-borde rounded-xl p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Mis estados</div>
+          <div className="text-[10px] text-gray-400 mt-0.5">Cobertura mediática últimos 30 días</div>
+        </div>
+        <div className="text-[10px] text-gray-400 font-mono">{estados.length} {estados.length === 1 ? 'estado' : 'estados'}</div>
+      </div>
+      <div className="space-y-1.5">
+        {estados.map(({ key, info }) => (
+          <div key={key} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded transition group">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: getColor(info.total_articulos) }}></div>
+              <span className="text-sm text-gray-800 truncate">{info.nombre || info.abreviatura}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-gray-500 font-mono">{info.total_articulos || 0}</span>
+              <button onClick={() => onRemove(key)} className="text-gray-300 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition w-5 h-5 text-base leading-none">×</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Actividad reciente (últimos 7 días, filtrada a tu monitoreo) ───
+function ActividadReciente({ data, legisladoresIds, temasSelectos, estadosSelectos }) {
+  const items = useMemo(() => {
+    if (!data) return [];
+    const out = [];
+    // Alertas del data.json
+    (data.alertas || []).slice(0, 6).forEach(a => {
+      out.push({
+        tipo: 'alerta',
+        ts: a.fecha || '',
+        titulo: a.descripcion || a.tipo || 'Alerta',
+        sub: a.categoria || '',
+      });
+    });
+    // Articulos top recientes (por fuentes principales)
+    const fuentes = data.fuentes || {};
+    const tres_temas = Array.from(temasSelectos).slice(0, 5);
+    tres_temas.forEach(cat => {
+      const arts = (fuentes[cat]?.articulos_medios || []).slice(0, 3);
+      arts.forEach(a => {
+        out.push({
+          tipo: 'articulo',
+          ts: a.fecha || '',
+          titulo: a.titulo || '',
+          sub: a.fuente + ' · ' + (data.semaforo.find(s => s.categoria === cat)?.nombre || cat),
+          url: a.url,
+        });
+      });
+    });
+    return out.sort((a, b) => (b.ts || '').localeCompare(a.ts || '')).slice(0, 12);
+  }, [data, legisladoresIds, temasSelectos, estadosSelectos]);
+
+  if (items.length === 0) {
+    return (
+      <div className="glass border border-borde rounded-xl p-6 text-center">
+        <div className="text-xs uppercase tracking-widest text-gray-400 font-bold">ACTIVIDAD RECIENTE</div>
+        <div className="text-xs text-gray-500 mt-2">Configura legisladores y temas para ver actividad</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="glass border border-borde rounded-xl p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Actividad reciente</div>
+          <div className="text-[10px] text-gray-400 mt-0.5">De tus temas seguidos · últimos días</div>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {items.map((it, i) => (
+          <div key={i} className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded -mx-2">
+            <div className="text-[10px] text-gray-400 font-mono w-16 flex-shrink-0 mt-0.5">{(it.ts || '').slice(5, 10) || '—'}</div>
+            <div className="flex-1 min-w-0">
+              {it.url ? (
+                <a href={it.url} target="_blank" rel="noopener" className="text-xs text-gray-800 hover:underline block">{it.titulo}</a>
+              ) : (
+                <div className="text-xs text-gray-800">{it.titulo}</div>
+              )}
+              <div className="text-[10px] text-gray-500 mt-0.5">{it.sub}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Modal de Configuración con 3 tabs ───
+function ConfigModal({ data, allLegisladores, config, setConfig, onClose }) {
+  const [tab, setTab] = useState('legisladores');
+  const [search, setSearch] = useState('');
+  const [filtroCamara, setFiltroCamara] = useState('');
+  const [filtroPartido, setFiltroPartido] = useState('');
+
+  const legisladoresFiltrados = useMemo(() => {
+    let list = allLegisladores;
+    if (search.length >= 2) {
+      const q = search.toLowerCase();
+      list = list.filter(l => (l.nombre || '').toLowerCase().includes(q));
+    }
+    if (filtroCamara) list = list.filter(l => l.camara === filtroCamara);
+    if (filtroPartido) list = list.filter(l => l.partido === filtroPartido);
+    return list;
+  }, [allLegisladores, search, filtroCamara, filtroPartido]);
+
+  const partidosUnicos = useMemo(() =>
+    [...new Set(allLegisladores.map(l => l.partido).filter(Boolean))].sort(), [allLegisladores]
+  );
+
+  const toggleLeg = (id) => {
+    const set = new Set(config.legisladores);
+    if (set.has(id)) set.delete(id);
+    else if (set.size < 20) set.add(id);
+    setConfig({ ...config, legisladores: Array.from(set) });
+  };
+
+  const toggleTema = (cat) => {
+    const set = new Set(config.temas);
+    if (set.has(cat)) set.delete(cat);
+    else if (set.size < 8) set.add(cat);
+    setConfig({ ...config, temas: Array.from(set) });
+  };
+
+  const toggleEstado = (key) => {
+    const set = new Set(config.estados);
+    if (set.has(key)) set.delete(key);
+    else if (set.size < 12) set.add(key);
+    setConfig({ ...config, estados: Array.from(set) });
+  };
+
+  const semaforo = data?.semaforo || [];
+  const mapa = data?.mapa || {};
+  const estadosList = Object.entries(mapa).sort((a, b) => (b[1].total_articulos || 0) - (a[1].total_articulos || 0));
+
+  return (
+    <div className="fixed inset-0 z-50 modal-backdrop bg-black/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+      <div onClick={e => e.stopPropagation()}
+        className="modal-card bg-white rounded-2xl max-w-4xl w-full max-h-[88vh] flex flex-col" style={{boxShadow: '0 20px 60px rgba(0,0,0,0.15)'}}>
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">CONFIGURAR CONSOLE</div>
+            <h2 className="text-lg font-black text-gray-900 mt-0.5">Personaliza tu monitoreo</h2>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-2xl leading-none w-8 h-8 hover:bg-gray-100 rounded-full">×</button>
+        </div>
+
+        {/* Tabs */}
+        <div className="px-5 border-b border-gray-100 flex gap-1">
+          <button onClick={() => setTab('legisladores')}
+            className={`px-3 py-2.5 text-xs font-semibold transition border-b-2 ${tab === 'legisladores' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+            Legisladores · {config.legisladores.length}/20
+          </button>
+          <button onClick={() => setTab('temas')}
+            className={`px-3 py-2.5 text-xs font-semibold transition border-b-2 ${tab === 'temas' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+            Temas · {config.temas.length}/8
+          </button>
+          <button onClick={() => setTab('estados')}
+            className={`px-3 py-2.5 text-xs font-semibold transition border-b-2 ${tab === 'estados' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+            Estados · {config.estados.length}/12
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex-1 overflow-y-auto p-5">
+          {tab === 'legisladores' && (
+            <div>
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                <input type="text" placeholder="Buscar por nombre..." value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  className="flex-1 min-w-[200px] px-3 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white" />
+                <select value={filtroCamara} onChange={e => setFiltroCamara(e.target.value)}
+                  className="px-3 py-2 border border-gray-200 rounded-full text-xs bg-white">
+                  <option value="">Todas las cámaras</option>
+                  <option value="Cámara de Diputados">Diputados</option>
+                  <option value="Senado">Senado</option>
+                </select>
+                <select value={filtroPartido} onChange={e => setFiltroPartido(e.target.value)}
+                  className="px-3 py-2 border border-gray-200 rounded-full text-xs bg-white">
+                  <option value="">Todos los partidos</option>
+                  {partidosUnicos.map(p => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+              <div className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">
+                {legisladoresFiltrados.length} resultados
+              </div>
+              <div className="space-y-1">
+                {legisladoresFiltrados.slice(0, 100).map(l => {
+                  const sel = config.legisladores.includes(l.id);
+                  return (
+                    <button key={l.id} onClick={() => toggleLeg(l.id)}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition ${sel ? 'bg-emerald-50 border border-emerald-200' : 'hover:bg-gray-50 border border-transparent'}`}>
+                      <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-[11px] text-gray-700 flex-shrink-0">
+                        {l.nombre.split(/\s+/).filter(w => w.length > 2).slice(0, 2).map(w => w[0]).join('').toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-gray-800 truncate">{l.nombre}</div>
+                        <div className="text-[10px] text-gray-500 font-mono">{l.partido} · {(l.camara || '').replace('Cámara de ', '')}{l.estado ? ` · ${l.estado}` : ''}</div>
+                      </div>
+                      <div className={`text-[11px] font-bold px-2 py-1 rounded ${sel ? 'text-emerald-700' : 'text-gray-400'}`}>
+                        {sel ? 'Seleccionado' : '+ Agregar'}
+                      </div>
+                    </button>
+                  );
+                })}
+                {legisladoresFiltrados.length > 100 && (
+                  <div className="text-center text-xs text-gray-500 py-3">Mostrando 100 de {legisladoresFiltrados.length}. Refina con búsqueda.</div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {tab === 'temas' && (
+            <div>
+              <div className="text-xs text-gray-500 mb-3">Selecciona hasta 8 categorías para seguir su evolución y recibir actividad relacionada.</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {semaforo.map(s => {
+                  const sel = config.temas.includes(s.categoria);
+                  const colorDot = { verde: '#2e7d32', amarillo: '#c6972b', rojo: '#c62828' }[s.color];
+                  return (
+                    <button key={s.categoria} onClick={() => toggleTema(s.categoria)}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition ${sel ? 'bg-emerald-50 border border-emerald-200' : 'border border-gray-200 hover:bg-gray-50'}`}>
+                      <div className="w-3 h-3 rounded-full flex-shrink-0" style={{background: colorDot}}></div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-semibold text-gray-800 truncate">{s.nombre}</div>
+                        <div className="text-[10px] text-gray-500 font-mono">Score {s.score_total.toFixed(0)}</div>
+                      </div>
+                      <div className={`text-[11px] font-bold px-2 py-1 ${sel ? 'text-emerald-700' : 'text-gray-400'}`}>
+                        {sel ? 'Seleccionado' : '+ Agregar'}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {tab === 'estados' && (
+            <div>
+              <div className="text-xs text-gray-500 mb-3">Selecciona hasta 12 estados para vigilar su cobertura mediática.</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+                {estadosList.map(([key, info]) => {
+                  const sel = config.estados.includes(key);
+                  return (
+                    <button key={key} onClick={() => toggleEstado(key)}
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg text-left transition ${sel ? 'bg-emerald-50 border border-emerald-200' : 'border border-gray-200 hover:bg-gray-50'}`}>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span className="text-sm text-gray-800 truncate">{info.nombre || info.abreviatura}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] text-gray-500 font-mono">{info.total_articulos || 0}</span>
+                        <span className={`text-[11px] font-bold ${sel ? 'text-emerald-700' : 'text-gray-400'}`}>
+                          {sel ? '✓' : '+'}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between bg-gray-50 rounded-b-2xl">
+          <div className="text-[10px] text-gray-500 font-mono">
+            Cambios se guardan automáticamente en este navegador
+          </div>
+          <button onClick={onClose}
+            className="text-white font-semibold px-5 py-2 rounded-full text-xs"
+            style={{background: 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)'}}>
+            Listo
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── App principal ───
+function App() {
+  const [authed, setAuthed] = useState(() => sessionStorage.getItem(SESSION_KEY) === '1');
+  const [data, setData] = useState(null);
+  const [allLegisladores, setAllLegisladores] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showConfig, setShowConfig] = useState(false);
+  const [config, setConfigState] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { legisladores: [], temas: [], estados: [] };
+    } catch { return { legisladores: [], temas: [], estados: [] }; }
+  });
+
+  const setConfig = (next) => {
+    setConfigState(next);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  };
+
+  useEffect(() => {
+    if (!authed) return;
+    setLoading(true);
+    Promise.all([
+      fetch('./data.json?t=' + Date.now()).then(r => r.ok ? r.json() : Promise.reject()),
+      fetch(`${WORKER_URL}/radar?limite=100`).then(r => r.ok ? r.json() : { legisladores: [] }),
+    ]).then(([d, radar]) => {
+      setData(d);
+      setAllLegisladores(radar.legisladores || []);
+      // Cargar más páginas en background si hace falta
+      const total = radar.total || 0;
+      if (total > 100) {
+        const pages = Math.ceil(total / 100);
+        const promises = [];
+        for (let p = 2; p <= pages; p++) {
+          promises.push(fetch(`${WORKER_URL}/radar?limite=100&pagina=${p}`).then(r => r.ok ? r.json() : { legisladores: [] }));
+        }
+        Promise.all(promises).then(results => {
+          const todos = [...(radar.legisladores || [])];
+          results.forEach(r => todos.push(...(r.legisladores || [])));
+          setAllLegisladores(todos);
+        });
+      }
+      setLoading(false);
+    }).catch(() => setLoading(false));
+  }, [authed]);
+
+  if (!authed) return <PasswordGate onAuth={() => setAuthed(true)} />;
+  if (loading || !data) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="spinner inline-block"></div>
+          <div className="text-xs text-gray-500 mt-3 font-mono">Cargando tu console...</div>
+        </div>
+      </div>
+    );
+  }
+
+  const semaforo = data.semaforo || [];
+  const temasSelectos = new Set(config.temas);
+  const estadosSelectos = new Set(config.estados);
+  const legisladoresIds = new Set(config.legisladores);
+  const legisladoresEnConfig = allLegisladores.filter(l => legisladoresIds.has(l.id));
+  const temasEnConfig = semaforo.filter(s => temasSelectos.has(s.categoria));
+  const configCount = config.legisladores.length + config.temas.length + config.estados.length;
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 pt-4 pb-24 space-y-4">
+      <Header onConfigClick={() => setShowConfig(true)} configCount={configCount} />
+
+      {/* Empty state */}
+      {configCount === 0 && (
+        <div className="glass border border-borde rounded-2xl p-12 text-center">
+          <div className="text-3xl font-black text-gray-900">Bienvenido a Console Pro</div>
+          <p className="text-sm text-gray-600 mt-2 max-w-md mx-auto">
+            Empieza configurando los legisladores, temas y estados que quieres monitorear.
+            Tus selecciones se guardan en este navegador.
+          </p>
+          <button onClick={() => setShowConfig(true)}
+            className="mt-6 text-white font-semibold px-6 py-3 rounded-full text-sm shadow-sm"
+            style={{background: 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)'}}>
+            Empezar configuración
+          </button>
+          <div className="grid grid-cols-3 gap-3 mt-8 max-w-2xl mx-auto text-xs text-gray-600">
+            <div className="p-3 border border-gray-200 rounded-xl">
+              <div className="text-2xl font-black text-gray-900 font-mono">{allLegisladores.length || '—'}</div>
+              <div className="text-[10px] uppercase tracking-wider mt-1 font-bold text-gray-500">Legisladores disponibles</div>
+            </div>
+            <div className="p-3 border border-gray-200 rounded-xl">
+              <div className="text-2xl font-black text-gray-900 font-mono">{semaforo.length}</div>
+              <div className="text-[10px] uppercase tracking-wider mt-1 font-bold text-gray-500">Categorías temáticas</div>
+            </div>
+            <div className="p-3 border border-gray-200 rounded-xl">
+              <div className="text-2xl font-black text-gray-900 font-mono">32</div>
+              <div className="text-[10px] uppercase tracking-wider mt-1 font-bold text-gray-500">Estados monitoreables</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Stats overview */}
+      {configCount > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="glass border border-borde rounded-xl p-3">
+            <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">MIS LEGISLADORES</div>
+            <div className="text-2xl font-black mt-1 font-mono text-gray-900">{config.legisladores.length}<span className="text-base text-gray-400">/20</span></div>
+            <div className="text-[10px] text-gray-500 mt-0.5 font-mono">Monitoreados activos</div>
+          </div>
+          <div className="glass border border-borde rounded-xl p-3">
+            <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">MIS TEMAS</div>
+            <div className="text-2xl font-black mt-1 font-mono text-gray-900">{config.temas.length}<span className="text-base text-gray-400">/8</span></div>
+            <div className="text-[10px] text-gray-500 mt-0.5 font-mono">Categorías seguidas</div>
+          </div>
+          <div className="glass border border-borde rounded-xl p-3">
+            <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">MIS ESTADOS</div>
+            <div className="text-2xl font-black mt-1 font-mono text-gray-900">{config.estados.length}<span className="text-base text-gray-400">/12</span></div>
+            <div className="text-[10px] text-gray-500 mt-0.5 font-mono">Cobertura regional</div>
+          </div>
+          <div className="glass border border-borde rounded-xl p-3">
+            <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">ÚLTIMA ACTUALIZACIÓN</div>
+            <div className="text-base font-bold mt-1 font-mono text-gray-900">{new Date(data.metadata?.generado || '').toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
+            <div className="text-[10px] text-gray-500 mt-0.5 font-mono">{(data.metadata?.sil_docs || 0).toLocaleString()} instrumentos en BD</div>
+          </div>
+        </div>
+      )}
+
+      {/* Tendencia de mis temas */}
+      {(configCount > 0 || temasSelectos.size > 0) && (
+        <TendenciaTemas historial={data.historial_scores} semaforo={semaforo} temasSelectos={temasSelectos} />
+      )}
+
+      {/* Mis temas (cards) */}
+      {temasEnConfig.length > 0 && (
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">MIS TEMAS · {temasEnConfig.length}</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {temasEnConfig.map(t => (
+              <TemaCard key={t.categoria} data={t}
+                onRemove={(cat) => setConfig({ ...config, temas: config.temas.filter(c => c !== cat) })} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Row: Estados | Alertas */}
+      {(estadosSelectos.size > 0 || legisladoresEnConfig.length > 0) && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <MisEstados mapa={data.mapa || {}} estadosSelectos={estadosSelectos}
+            onRemove={(key) => setConfig({ ...config, estados: config.estados.filter(e => e !== key) })} />
+          <ActividadReciente data={data} legisladoresIds={legisladoresIds}
+            temasSelectos={temasSelectos} estadosSelectos={estadosSelectos} />
+        </div>
+      )}
+
+      {/* Mis legisladores */}
+      {legisladoresEnConfig.length > 0 && (
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">MIS LEGISLADORES · {legisladoresEnConfig.length}</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {legisladoresEnConfig.map(l => (
+              <LegisladorCard key={l.id} leg={l}
+                onRemove={(id) => setConfig({ ...config, legisladores: config.legisladores.filter(x => x !== id) })} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Footer */}
+      <div className="text-center text-[10px] text-gray-400 font-mono pt-6">
+        FIAT Console Pro · v1.0 ALPHA · Datos actualizados cada 4 horas
+      </div>
+
+      {/* FAB Configurar (siempre visible) */}
+      <button onClick={() => setShowConfig(true)}
+        className="fab-config fixed bottom-6 right-6 px-5 py-3 rounded-full font-semibold text-sm flex items-center gap-2 z-30">
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        Configurar
+      </button>
+
+      {/* Modal Config */}
+      {showConfig && (
+        <ConfigModal data={data} allLegisladores={allLegisladores}
+          config={config} setConfig={setConfig} onClose={() => setShowConfig(false)} />
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
