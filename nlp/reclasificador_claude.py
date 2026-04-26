@@ -43,6 +43,40 @@ except ImportError:
 MODEL = "claude-haiku-4-5"
 MAX_TOKENS_OUT = 25  # slug corto ("seguridad_justicia" = 18 chars, ~6 tokens)
 
+# ──────────────────────────────────────────────────────────────────────
+# CIRCUIT BREAKERS — tres capas de protección tras incidente abr 25 2026
+# (loop catastrófico de runs cancelados, ~$2.6 USD quemados en 24h).
+#
+# Capa 1: cap por corrida (process-local counter)
+# Capa 2: cap mensual hard (SQLite counter, persistente)
+# Capa 3: rate limiting suave (sleep entre llamadas en colas grandes)
+#
+# Defaults pensados para mantener gasto ≤ $7.50/mes en peor caso absoluto.
+# Override con env vars si hace falta. Cuando un cap dispara, _llamar_haiku
+# devuelve None (fallback silencioso al keyword classifier) y se loguea
+# WARNING una sola vez por run.
+# ──────────────────────────────────────────────────────────────────────
+HAIKU_MAX_CALLS_PER_RUN = int(os.getenv("HAIKU_MAX_CALLS_PER_RUN", "40"))
+HAIKU_MAX_429_PER_RUN = int(os.getenv("HAIKU_MAX_429_PER_RUN", "10"))
+HAIKU_MONTHLY_CAP_USD = float(os.getenv("HAIKU_MONTHLY_CAP_USD", "7.50"))
+HAIKU_SLEEP_AFTER_N = int(os.getenv("HAIKU_SLEEP_AFTER_N", "20"))
+HAIKU_SLEEP_SECS = float(os.getenv("HAIKU_SLEEP_SECS", "0.5"))
+
+# Costos por llamada (Haiku 4.5, abr 2026):
+#   - Cache READ:    $0.10/M tokens × 6000 sys + $1/M × 200 input + $5/M × 10 out ≈ $0.0008
+#   - Cache WRITE:   $1.25/M tokens × 6000 sys + ... ≈ $0.008 (primera llamada)
+#   - Sin caching:   $1/M × 6200 + $5/M × 10 ≈ $0.0062
+# Detectamos cache hit/miss vía response.usage.cache_read_input_tokens
+COSTO_CACHE_HIT_USD = 0.0008
+COSTO_CACHE_WRITE_USD = 0.008
+COSTO_SIN_CACHE_USD = 0.0062
+
+# Process-local state (resetea por run)
+_call_count = 0
+_429_count = 0
+_breaker_warned = False
+_monthly_cap_warned = False
+
 # Slugs válidos. El clasificador solo acepta estos como respuesta;
 # cualquier otra cosa se trata como "ninguna".
 CATEGORIAS_VALIDAS = frozenset([
@@ -307,7 +341,7 @@ Responde SOLO el slug. Sin markdown, sin explicación, sin prefacio. Un slug exa
 """
 
 # ──────────────────────────────────────────────────────────────────────
-# Cache SQLite
+# Cache SQLite + counter mensual
 # ──────────────────────────────────────────────────────────────────────
 def crear_tabla_cache(conn: sqlite3.Connection) -> None:
     """Crea la tabla de caché si no existe. Idempotente."""
@@ -323,7 +357,120 @@ def crear_tabla_cache(conn: sqlite3.Connection) -> None:
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_reclasif_modelo ON reclasificacion_cache(modelo)"
     )
+    # Counter mensual de uso de Haiku (presupuesto)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS haiku_uso_mensual (
+            year_month TEXT PRIMARY KEY,        -- '2026-04'
+            calls_total INTEGER DEFAULT 0,
+            calls_cache_hit INTEGER DEFAULT 0,
+            calls_cache_miss INTEGER DEFAULT 0,
+            costo_usd REAL DEFAULT 0.0,
+            ultima_actualizacion TEXT
+        )
+    """)
     conn.commit()
+
+
+def _year_month() -> str:
+    return datetime.now().strftime("%Y-%m")
+
+
+def obtener_uso_mensual(conn: sqlite3.Connection) -> dict:
+    """Devuelve {calls, costo_usd, cap_usd, dias_restantes_estimado}
+    para el mes corriente. Si no hay datos, todo en cero."""
+    crear_tabla_cache(conn)
+    row = conn.execute(
+        "SELECT calls_total, costo_usd FROM haiku_uso_mensual WHERE year_month = ?",
+        (_year_month(),),
+    ).fetchone()
+    calls = row[0] if row else 0
+    costo = row[1] if row else 0.0
+
+    # Estimar días restantes basado en burn rate del mes corriente
+    from datetime import date
+    hoy = date.today()
+    dias_transcurridos = hoy.day
+    # Días en el mes actual
+    if hoy.month == 12:
+        dias_mes = 31
+    else:
+        from calendar import monthrange
+        dias_mes = monthrange(hoy.year, hoy.month)[1]
+    dias_restantes_mes = dias_mes - dias_transcurridos
+
+    if costo > 0 and dias_transcurridos > 0:
+        burn_rate_diario = costo / dias_transcurridos
+        if burn_rate_diario > 0:
+            presupuesto_restante = max(0.0, HAIKU_MONTHLY_CAP_USD - costo)
+            dias_restantes_estim = int(presupuesto_restante / burn_rate_diario)
+            dias_restantes_estim = min(dias_restantes_estim, dias_restantes_mes)
+        else:
+            dias_restantes_estim = dias_restantes_mes
+    else:
+        dias_restantes_estim = dias_restantes_mes
+
+    return {
+        "year_month": _year_month(),
+        "calls": calls,
+        "costo_usd": round(costo, 4),
+        "cap_usd": HAIKU_MONTHLY_CAP_USD,
+        "porcentaje_usado": round(100 * costo / HAIKU_MONTHLY_CAP_USD, 1) if HAIKU_MONTHLY_CAP_USD else 0,
+        "dias_restantes_estimado": dias_restantes_estim,
+        "dias_restantes_mes": dias_restantes_mes,
+        "alerta": costo >= HAIKU_MONTHLY_CAP_USD * 0.75,  # ≥75% usado
+        "agotado": costo >= HAIKU_MONTHLY_CAP_USD,
+    }
+
+
+def _verificar_presupuesto_mensual(conn: sqlite3.Connection) -> bool:
+    """Returns True si AÚN hay presupuesto. False si se agotó.
+    Logs WARNING una sola vez cuando se agota."""
+    global _monthly_cap_warned
+    try:
+        row = conn.execute(
+            "SELECT costo_usd FROM haiku_uso_mensual WHERE year_month = ?",
+            (_year_month(),),
+        ).fetchone()
+        costo = row[0] if row else 0.0
+        if costo >= HAIKU_MONTHLY_CAP_USD:
+            if not _monthly_cap_warned:
+                logger.warning(
+                    "Haiku CAP MENSUAL alcanzado: $%.2f / $%.2f. Fallback a "
+                    "keyword-only hasta el día 1 del próximo mes.",
+                    costo, HAIKU_MONTHLY_CAP_USD,
+                )
+                _monthly_cap_warned = True
+            return False
+        return True
+    except sqlite3.Error as e:
+        logger.warning("Error leyendo presupuesto mensual (continúo conservador): %s", e)
+        return True  # En caso de error de lectura, no bloqueamos
+
+
+def _registrar_uso(conn: sqlite3.Connection, costo_call: float, cache_hit: bool) -> None:
+    """Incrementa el counter mensual. Commit inmediato para que persista
+    aunque el run se cancele después."""
+    try:
+        ym = _year_month()
+        conn.execute(
+            """INSERT INTO haiku_uso_mensual
+               (year_month, calls_total, calls_cache_hit, calls_cache_miss,
+                costo_usd, ultima_actualizacion)
+               VALUES (?, 1, ?, ?, ?, ?)
+               ON CONFLICT(year_month) DO UPDATE SET
+                 calls_total = calls_total + 1,
+                 calls_cache_hit = calls_cache_hit + ?,
+                 calls_cache_miss = calls_cache_miss + ?,
+                 costo_usd = costo_usd + ?,
+                 ultima_actualizacion = ?""",
+            (ym, 1 if cache_hit else 0, 0 if cache_hit else 1,
+             costo_call, datetime.now().isoformat(),
+             1 if cache_hit else 0, 0 if cache_hit else 1,
+             costo_call, datetime.now().isoformat()),
+        )
+        conn.commit()  # IMPORTANTE: commit inmediato para sobrevivir cancelación
+    except sqlite3.Error as e:
+        logger.warning("Error registrando uso de Haiku: %s", e)
 
 
 def _hash_input(titulo: str, resumen: str) -> str:
@@ -382,9 +529,44 @@ def _get_client() -> "anthropic.Anthropic":
     return _client_singleton
 
 
-def _llamar_haiku(titulo: str, resumen: str) -> Optional[str]:
-    """Llama a Haiku 4.5 con prompt caching. Devuelve slug válido o None
-    si la API falla o la respuesta no es reconocible."""
+def _llamar_haiku(
+    titulo: str,
+    resumen: str,
+    conn: Optional[sqlite3.Connection] = None,
+) -> Optional[str]:
+    """Llama a Haiku 4.5 con prompt caching y todos los safeguards.
+    Devuelve slug válido o None (rate limit, cap alcanzado, error)."""
+    global _call_count, _429_count, _breaker_warned
+    import time as _time
+
+    # ─── CAPA 1: cap por corrida ───
+    if _call_count >= HAIKU_MAX_CALLS_PER_RUN:
+        if not _breaker_warned:
+            logger.warning(
+                "Haiku CAP POR CORRIDA alcanzado: %d llamadas. "
+                "Fallback a keyword-only por el resto del run.",
+                HAIKU_MAX_CALLS_PER_RUN,
+            )
+            _breaker_warned = True
+        return None
+
+    if _429_count >= HAIKU_MAX_429_PER_RUN:
+        if not _breaker_warned:
+            logger.warning(
+                "Haiku CAP DE 429s alcanzado: %d. Fallback por el resto del run.",
+                HAIKU_MAX_429_PER_RUN,
+            )
+            _breaker_warned = True
+        return None
+
+    # ─── CAPA 2: cap mensual (SQLite) ───
+    if conn is not None and not _verificar_presupuesto_mensual(conn):
+        return None
+
+    # ─── CAPA 3: rate limiting suave ───
+    if _call_count >= HAIKU_SLEEP_AFTER_N:
+        _time.sleep(HAIKU_SLEEP_SECS)
+
     client = _get_client()
     user_content = f"Título: {titulo.strip()}\n\nResumen: {(resumen or '').strip()[:1500]}"
 
@@ -395,40 +577,46 @@ def _llamar_haiku(titulo: str, resumen: str) -> Optional[str]:
             system=[{
                 "type": "text",
                 "text": SYSTEM_PROMPT,
-                # Cache el system prompt completo. En Haiku 4.5 el mínimo
-                # para cachear es 4096 tokens; el prompt está diseñado
-                # para superarlo (categorías + ejemplos + reglas).
                 "cache_control": {"type": "ephemeral"},
             }],
             messages=[{"role": "user", "content": user_content}],
         )
 
-        # Extraer texto de la respuesta
+        _call_count += 1
+
+        # Extraer slug
         text = ""
         for block in response.content:
             if block.type == "text":
                 text += block.text
         slug = text.strip().lower()
-        # Limpiar posible markdown/prefijos
         slug = slug.split()[0] if slug else ""
         slug = slug.strip(" .`*\"'")
 
-        # Log de caching para debug / costo tracking
+        # ─── Detectar cache hit/miss y calcular costo real ───
         u = response.usage
-        if u.cache_read_input_tokens > 0:
+        cache_hit = u.cache_read_input_tokens > 0
+        if cache_hit:
+            costo_call = COSTO_CACHE_HIT_USD
+        elif u.cache_creation_input_tokens > 0:
+            costo_call = COSTO_CACHE_WRITE_USD
+        else:
+            costo_call = COSTO_SIN_CACHE_USD
+
+        # Registrar uso (commit inmediato, sobrevive cancelación)
+        if conn is not None:
+            _registrar_uso(conn, costo_call, cache_hit)
+
+        if cache_hit:
             logger.debug(
-                "Haiku cache HIT: read=%d write=%d input=%d output=%d",
-                u.cache_read_input_tokens, u.cache_creation_input_tokens,
+                "Haiku cache HIT call#%d: $%.4f (read=%d input=%d output=%d)",
+                _call_count, costo_call, u.cache_read_input_tokens,
                 u.input_tokens, u.output_tokens,
             )
-        elif u.cache_creation_input_tokens > 0:
-            logger.info(
-                "Haiku cache WRITE (prefijo nuevo): %d tokens (pagados a 1.25x)",
-                u.cache_creation_input_tokens,
-            )
         else:
-            logger.debug(
-                "Haiku sin caching (prefijo < 4096 tokens?): input=%d output=%d",
+            logger.info(
+                "Haiku cache MISS call#%d: $%.4f (write=%d input=%d output=%d)",
+                _call_count, costo_call, u.cache_creation_input_tokens,
                 u.input_tokens, u.output_tokens,
             )
 
@@ -438,10 +626,13 @@ def _llamar_haiku(titulo: str, resumen: str) -> Optional[str]:
         return None
 
     except anthropic.RateLimitError:
-        logger.warning("Haiku rate limit hit, skipping reclasificación")
+        _429_count += 1
+        logger.warning("Haiku 429 #%d/%d", _429_count, HAIKU_MAX_429_PER_RUN)
         return None
     except anthropic.APIStatusError as e:
-        logger.warning("Haiku API error %d: %s", e.status_code, e.message[:200])
+        if e.status_code == 429:
+            _429_count += 1
+        logger.warning("Haiku API error %d: %s", e.status_code, str(e.message)[:200])
         return None
     except anthropic.APIConnectionError as e:
         logger.warning("Haiku connection error: %s", str(e)[:200])
@@ -487,8 +678,8 @@ def reclasificar(
         except sqlite3.Error as e:
             logger.warning("SQLite cache error (continúo sin caché): %s", e)
 
-    # Llamada a Haiku
-    slug = _llamar_haiku(titulo, resumen)
+    # Llamada a Haiku (pasa conn para cap mensual + tracking de costo)
+    slug = _llamar_haiku(titulo, resumen, conn)
     if slug is None:
         return None
 

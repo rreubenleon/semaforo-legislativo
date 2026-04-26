@@ -23,7 +23,10 @@ concurrency:
 jobs:
   pipeline:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 60  # bajado de 90 → 60 tras incidente abr 25 2026.
+                         # Pipeline normal tarda 25-35 min; deja 25 min de margen.
+                         # Si Haiku se cuelga, el cap por run de 40 calls + sleep
+                         # 0.5s = max +20s. Si excede 60min, cancelar es lo correcto.
 
     steps:
       # 1. Descargar el código
@@ -45,14 +48,19 @@ jobs:
           path: ~/.cache/pip
           key: pip-${{ hashFiles('requirements.txt') }}
 
-      # 3b. Restaurar SQLite DB del cache más reciente
+      # 3b. Restaurar SQLite DB del cache más reciente.
+      # Prioridad: post-NLP del run actual > final del run actual > cualquier
+      # post-NLP previo > cualquier cache previo. Esto asegura que el counter
+      # mensual de Haiku (haiku_uso_mensual) se acumule entre runs.
       - name: Restaurar SQLite DB
         id: cache-db
         uses: actions/cache/restore@v4
         with:
           path: semaforo.db
-          key: semaforo-db-${{ github.run_id }}
+          key: semaforo-db-${{ github.run_id }}-postnlp
           restore-keys: |
+            semaforo-db-${{ github.run_id }}
+            semaforo-db-
             semaforo-db-
 
       # 3c. Si no se restauró ninguna DB del cache, descargar seed
@@ -83,16 +91,30 @@ jobs:
           TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           # Haiku 4.5 como segunda pasada del clasificador (ambiguos).
-          # ⛔ DESACTIVADO 25-abr-2026 tras incidente de runs cancelados en loop
-          # (timeout 90min + 429 rate limit + cache no commiteado = sangría
-          # de créditos sin progreso). Reactivar SOLO con cap por run y
-          # commit intermedio del cache. Ver MEMORY.md "POLÍTICA FIRME".
-          # ANTHROPIC_API_KEY: ${{ secrets.FIAT_CLAUDE_API_KEY }}
+          # Reactivado 25-abr-2026 con safeguards triples:
+          #   1. HAIKU_MAX_CALLS_PER_RUN=40 (cap por corrida)
+          #   2. HAIKU_MONTHLY_CAP_USD=7.50 (cap mensual SQLite)
+          #   3. Cache save `if: always()` post-NLP para persistir counter
+          # Ver nlp/reclasificador_claude.py y MEMORY.md.
+          ANTHROPIC_API_KEY: ${{ secrets.FIAT_CLAUDE_API_KEY }}
+          HAIKU_MAX_CALLS_PER_RUN: '40'
+          HAIKU_MONTHLY_CAP_USD: '7.50'
           SEMAFORO_DB_MODE: local
           # Solo setea reset cuando el workflow_dispatch lo pide; el
           # cron programado pasa '' y main.py lo interpreta como 0.
           FIAT_FORCE_NLP_RESET_DAYS: ${{ inputs.force_nlp_reset_days || '0' }}
         continue-on-error: false
+
+      # 5a-pre. Save intermedio del DB tras pipeline — captura counter de
+      # haiku_uso_mensual y reclasificacion_cache aunque pasos siguientes fallen.
+      # `if: always()` ejecuta el step incluso si el pipeline falla (no si el
+      # job es cancelado por timeout, eso es otro caso).
+      - name: Persistir SQLite post-pipeline (counter Haiku, cache reclasif)
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-${{ github.run_id }}-postnlp
 
       # 5a. Health check — advierte si algún scraper no produjo datos en 24h
       #      No bloquea el pipeline; solo genera warning en GitHub Actions

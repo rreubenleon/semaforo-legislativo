@@ -5063,6 +5063,21 @@
                         </div>
                     </header>
 
+                    {/* Banner de presupuesto Haiku — solo cuando ≥75% usado */}
+                    {data.haiku_status && data.haiku_status.disponible && data.haiku_status.alerta && (
+                        <div className={`rounded-lg px-4 py-2 text-sm flex items-center justify-between gap-3 ${data.haiku_status.agotado ? 'bg-rose-50 border border-rose-200 text-rose-800' : 'bg-amber-50 border border-amber-200 text-amber-800'}`}>
+                            <div className="flex items-center gap-2">
+                                <span className="text-base">{data.haiku_status.agotado ? '⛔' : '⚠️'}</span>
+                                <span className="font-medium">
+                                    {data.haiku_status.agotado
+                                        ? `Presupuesto Haiku agotado este mes ($${data.haiku_status.costo_usd.toFixed(2)} de $${data.haiku_status.cap_usd.toFixed(2)}). Reclasificación pausada hasta el 1 del próximo mes.`
+                                        : `Presupuesto Haiku al ${data.haiku_status.porcentaje_usado}% ($${data.haiku_status.costo_usd.toFixed(2)} de $${data.haiku_status.cap_usd.toFixed(2)}). Quedan ~${data.haiku_status.dias_restantes_estimado} días al ritmo actual.`
+                                    }
+                                </span>
+                            </div>
+                            <span className="text-xs opacity-70">{data.haiku_status.calls} llamadas</span>
+                        </div>
+                    )}
                     {/* Page content */}
                     {pagina === 'actividad' && <PageActividadLegislativa data={data} setSelected={setSelected} busqueda={busquedaGlobal} />}
                     {pagina === 'legisladores' && <PageLegisladores data={data} />}
