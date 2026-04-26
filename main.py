@@ -112,24 +112,6 @@ ROOT = Path(__file__).resolve().parent
 DASHBOARD_DATA = ROOT / "dashboard" / "data.json"
 
 
-def _obtener_haiku_status():
-    """
-    Devuelve el estado del presupuesto mensual de Haiku para el dashboard.
-    Si Haiku no está disponible (sin SDK o sin API key), devuelve dict
-    con `disponible: False` para que el dashboard no muestre banner.
-    """
-    try:
-        from db import get_connection
-        from nlp.reclasificador_claude import obtener_uso_mensual
-        conn = get_connection()
-        uso = obtener_uso_mensual(conn)
-        uso["disponible"] = True
-        return uso
-    except Exception as e:
-        logger.debug(f"No se pudo obtener haiku_status: {e}")
-        return {"disponible": False}
-
-
 def _obtener_tweets_fiat():
     """
     Obtiene los últimos tweets de @Fiat_MX via API v2 para mostrar en el dashboard.
@@ -951,8 +933,9 @@ def paso_7_exportar_dashboard():
         "resoluciones": obtener_resoluciones(semanas=12),
         "tweets_fiat": _obtener_tweets_fiat(),
         "convocatorias": obtener_convocatorias(),
-        "haiku_status": _obtener_haiku_status(),
         # comisiones_actividad: migrado a D1 (Worker /comisiones)
+        # haiku_status: NO se expone en data.json (visible públicamente).
+        # Se usa solo internamente en commit message + GitHub Actions warning.
     }
 
     # Construir datos del semáforo con nombres + momentum + subcategorías activas

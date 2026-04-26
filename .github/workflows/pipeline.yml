@@ -116,6 +116,32 @@ jobs:
           path: semaforo.db
           key: semaforo-db-${{ github.run_id }}-postnlp
 
+      # 5a-bis. Reportar status del presupuesto Haiku (privado: log de Actions
+      # + warning annotation que dispara email a propietario del repo).
+      # NO se expone en data.json para no leakearlo al dashboard público.
+      - name: Reportar status Haiku
+        if: always()
+        run: |
+          python -c "
+          import json, sys
+          sys.path.insert(0, '.')
+          try:
+              from db import get_connection
+              from nlp.reclasificador_claude import obtener_uso_mensual
+              s = obtener_uso_mensual(get_connection())
+              line = f\"Haiku {s['year_month']}: \${s['costo_usd']:.2f} / \${s['cap_usd']:.2f} ({s['porcentaje_usado']}% — {s['calls']} calls, ~{s['dias_restantes_estimado']}d restantes)\"
+              print(f'::notice::{line}')
+              if s['agotado']:
+                  print(f'::warning::Haiku CAP MENSUAL AGOTADO. Reclasificación pausada hasta {s[\"year_month\"]}-01 del mes siguiente.')
+              elif s['alerta']:
+                  print(f'::warning::Haiku al {s[\"porcentaje_usado\"]}% del cap mensual. Quedan ~{s[\"dias_restantes_estimado\"]} días al ritmo actual.')
+              # Guardar para commit message
+              with open('haiku_status.txt', 'w') as f:
+                  f.write(line)
+          except Exception as e:
+              print(f'::notice::Haiku status no disponible: {e}')
+          "
+
       # 5a. Health check — advierte si algún scraper no produjo datos en 24h
       #      No bloquea el pipeline; solo genera warning en GitHub Actions
       - name: Health check de scrapers
@@ -158,7 +184,12 @@ jobs:
           git config user.name "FIAT Bot"
           git config user.email "fiat-bot@users.noreply.github.com"
           git add dashboard/data.json
-          git diff --staged --quiet || git commit -m "🔄 Actualización automática $(date -u '+%Y-%m-%d %H:%M UTC')"
+          # Construir mensaje con status de Haiku al final (visible en git log)
+          HAIKU_STATUS=""
+          if [ -f haiku_status.txt ]; then
+            HAIKU_STATUS=" · $(cat haiku_status.txt)"
+          fi
+          git diff --staged --quiet || git commit -m "🔄 Actualización automática $(date -u '+%Y-%m-%d %H:%M UTC')${HAIKU_STATUS}"
           # Pull con rebase para resolver si alguien pusheó durante el pipeline
           git pull --rebase origin main || {
             # Si rebase falla, abortar y usar merge strategy
