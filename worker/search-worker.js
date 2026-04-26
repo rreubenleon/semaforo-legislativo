@@ -343,7 +343,15 @@ async function handleRadar(request, env) {
       partido: r.partido || '',
       estado: r.estado || '',
       distrito: r.distrito || '',
-      foto_url: r.foto_hd_url || r.foto_url || '',
+      foto_url: (() => {
+        // SIL devuelve 'fotoNoDisponible.jpg' como placeholder cuando no hay
+        // foto real; esa URL responde HTTP 200 pero con text/html → el browser
+        // no dispara onError. Detectamos y devolvemos '' para que el frontend
+        // use ui-avatars como fallback (que sí es una imagen real).
+        const f = r.foto_hd_url || r.foto_url || '';
+        if (!f || /noDisponible|nodisponible/i.test(f)) return '';
+        return f;
+      })(),
       anio_nacimiento: r.anio_nacimiento,
       profesion: r.profesion || '',
       estudios: r.estudios || '',
