@@ -304,6 +304,7 @@ async function handleRadar(request, env) {
         SELECT
           l.id, l.nombre, l.camara, l.partido, l.estado,
           l.distrito, l.foto_url, l.comisiones_cargo,
+          l.marcador_continuidad,
           p.biografia, p.anio_nacimiento, p.profesion, p.estudios,
           p.foto_hd_url, p.fuente_scraping,
           s.categoria_dominante, s.prob_reaccion_dominante,
@@ -682,22 +683,21 @@ async function handleRegistro(request, env) {
  *
  * Devuelve la trayectoria histórica (Iniciativas + Proposiciones con
  * punto de acuerdo) que un legislador presentó en legislaturas anteriores
- * cuando ya era diputado o senador. Útil para el Radar y para mostrar
- * "antes/después" cuando hay cambio de cámara.
+ * cuando ya era diputado o senador.
  *
  * Query params:
- *   legislador_id=<int>   (REQUERIDO) ID en tabla legisladores
- *   legislatura=LXIV|LXV  (opcional) filtrar por legislatura específica
- *   tipo=Iniciativa|...   (opcional) filtrar por tipo_asunto
- *   limite=50             (default 50, max 200)
- *   pagina=1              (default 1)
+ *   legislador_id=<int>     (REQUERIDO)
+ *   legislatura=LXIV|LXV    (opcional) filtrar
+ *   tipo=Iniciativa|...     (opcional) filtrar
+ *   agregados=1             (opcional) devuelve también breakdowns por
+ *                           tema, comisión, estatus (sin lista paginada)
+ *   limite=50               (default 50, max 200)
+ *   pagina=1
  *
- * Respuesta:
- *   {
- *     legislador_id, totales: {LXIV, LXV, iniciativas, proposiciones},
- *     instrumentos: [{tipo_asunto, denominacion, fecha_presentacion, ...}],
- *     pagina, total_paginas, total
- *   }
+ * Respuesta con agregados=1:
+ *   { totales, por_tema: [{tema, n}], por_comision: [{comision, n}],
+ *     por_estatus: {aprobado, desechado, pendiente, otros},
+ *     tasa_aprobacion: 0.42 }
  */
 async function handleHistoricos(request, env) {
   if (request.method !== 'GET') {
@@ -708,6 +708,7 @@ async function handleHistoricos(request, env) {
   const legisladorId = parseInt(url.searchParams.get('legislador_id') || '0');
   const legislatura = (url.searchParams.get('legislatura') || '').trim();
   const tipo = (url.searchParams.get('tipo') || '').trim();
+  const agregados = url.searchParams.get('agregados') === '1';
   const pagina = Math.max(1, parseInt(url.searchParams.get('pagina') || '1') || 1);
   const limite = Math.min(200, Math.max(1, parseInt(url.searchParams.get('limite') || '50') || 50));
   const offset = (pagina - 1) * limite;
@@ -760,6 +761,100 @@ async function handleHistoricos(request, env) {
         instrumentos: [],
         pagina: 1, total_paginas: 0, total: 0,
         mensaje: 'Este legislador no tiene instrumentos históricos cargados (puede no ser reelecto LXIV/LXV o no se encontró su perfil en SIL)',
+      }, 200, request);
+    }
+
+    // ─── Modo AGREGADOS: breakdowns por tema, comisión, estatus ───
+    if (agregados) {
+      // Por tema (campo `tema` del SIL viene en formato "1.-Salud2.-Trabajo")
+      // Lo parseamos en el server con un GROUP BY simple primero
+      const temasResult = await db
+        .prepare(`
+          SELECT tema, COUNT(*) as n
+          FROM sil_documentos_historicos
+          WHERE legislador_id = ? AND tema IS NOT NULL AND tema != ''
+          GROUP BY tema
+        `)
+        .bind(legisladorId)
+        .all();
+      // Aplanar los temas: cada row puede tener varios separados por números
+      const temaCounts = {};
+      for (const row of (temasResult.results || [])) {
+        // "1.-Salud2.-Trabajo" → ["Salud", "Trabajo"]
+        const partes = String(row.tema).split(/\d+\.-/).map(s => s.trim()).filter(Boolean);
+        for (const t of partes) {
+          temaCounts[t] = (temaCounts[t] || 0) + Number(row.n);
+        }
+      }
+      const por_tema = Object.entries(temaCounts)
+        .map(([tema, n]) => ({ tema, n }))
+        .sort((a, b) => b.n - a.n);
+
+      // Por comisión turnado (mismo patrón: "1.-Comisión X.-...2.-Comisión Y...")
+      const comResult = await db
+        .prepare(`
+          SELECT turnado_a, COUNT(*) as n
+          FROM sil_documentos_historicos
+          WHERE legislador_id = ? AND turnado_a IS NOT NULL AND turnado_a != ''
+          GROUP BY turnado_a
+        `)
+        .bind(legisladorId)
+        .all();
+      const comCounts = {};
+      for (const row of (comResult.results || [])) {
+        // "1.-Comisión Salud.-Para dictamen 2.-Comisión Trabajo.-Para opinión"
+        const partes = String(row.turnado_a).split(/\d+\.-/).map(s => s.trim()).filter(Boolean);
+        for (const c of partes) {
+          // Quitar sufijos como "Para dictamen", "Para opinión"
+          const limpio = c.split('.-')[0].trim();
+          if (limpio.length < 3) continue;
+          comCounts[limpio] = (comCounts[limpio] || 0) + Number(row.n);
+        }
+      }
+      const por_comision = Object.entries(comCounts)
+        .map(([comision, n]) => ({ comision, n }))
+        .sort((a, b) => b.n - a.n)
+        .slice(0, 30);  // top 30 para no saturar UI
+
+      // Por estatus (aprobado/desechado/pendiente)
+      const estResult = await db
+        .prepare(`
+          SELECT estatus, COUNT(*) as n
+          FROM sil_documentos_historicos
+          WHERE legislador_id = ?
+          GROUP BY estatus
+        `)
+        .bind(legisladorId)
+        .all();
+      const estCounts = { aprobado: 0, desechado: 0, pendiente: 0, otros: 0 };
+      for (const row of (estResult.results || [])) {
+        const e = String(row.estatus || '').toLowerCase();
+        const n = Number(row.n);
+        if (e.includes('aprobado') || e.includes('publicado en dof') || e.includes('atendid')) {
+          estCounts.aprobado += n;
+        } else if (e.includes('desechad')) {
+          estCounts.desechado += n;
+        } else if (e.includes('pendiente') || e.includes('en comisión') || e.includes('pendiente en comisi')) {
+          estCounts.pendiente += n;
+        } else {
+          estCounts.otros += n;
+        }
+      }
+      const total_resuelto = estCounts.aprobado + estCounts.desechado;
+      const tasa_aprobacion = total_resuelto > 0
+        ? +(estCounts.aprobado / total_resuelto).toFixed(3)
+        : null;
+
+      return corsResponse({
+        legislador_id: legisladorId,
+        totales,
+        por_tema,
+        por_comision,
+        por_estatus: estCounts,
+        tasa_aprobacion,
+        nota_tasa: tasa_aprobacion != null
+          ? `Aprobados / (Aprobados + Desechados) = ${estCounts.aprobado}/${total_resuelto}. Excluye pendientes.`
+          : 'Sin instrumentos resueltos para calcular tasa.',
       }, 200, request);
     }
 

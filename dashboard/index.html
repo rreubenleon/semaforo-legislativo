@@ -2290,6 +2290,8 @@
                 { k: 'hit_rate', label: 'Hit Rate' },
                 { k: 'predictor', label: 'Predictor' },
                 { k: 'perfil', label: 'Perfil' },
+                // Tab Trayectoria solo aparece si el legislador es reelecto LXIV/LXV
+                ...(leg.marcador_continuidad ? [{ k: 'trayectoria', label: 'Trayectoria' }] : []),
             ];
 
             return (
@@ -2370,6 +2372,7 @@
                             {tab === 'hit_rate' && <TabHitRate leg={leg} />}
                             {tab === 'predictor' && <TabPredictor leg={leg} predictor={legPredictor} />}
                             {tab === 'perfil' && <TabPerfil leg={leg} />}
+                            {tab === 'trayectoria' && <TabTrayectoria leg={leg} />}
                         </div>
                     </div>
                 </div>
@@ -3028,6 +3031,136 @@
                     {!leg.profesion && !leg.estudios && !leg.biografia && (
                         <div className="text-xs text-gray-500 italic">Perfil aún no scrapeado desde SIL.</div>
                     )}
+                </div>
+            );
+        }
+
+        /**
+         * Pestaña Trayectoria histórica — solo visible si el legislador es
+         * reelecto LXIV/LXV (`leg.marcador_continuidad` definido).
+         * Muestra: total instrumentos, tasa de aprobación histórica, breakdown
+         * por tema y por comisión. NO lista instrumentos individuales para no
+         * saturar (esa info está vía /historicos sin ?agregados).
+         */
+        function TabTrayectoria({ leg }) {
+            const [data, setData] = React.useState(null);
+            const [loading, setLoading] = React.useState(true);
+            const [err, setErr] = React.useState(null);
+
+            React.useEffect(() => {
+                setLoading(true); setErr(null);
+                fetch(`${WORKER_URL}/historicos?legislador_id=${leg.id}&agregados=1`)
+                    .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+                    .then(d => { setData(d); setLoading(false); })
+                    .catch(e => { setErr(e.message); setLoading(false); });
+            }, [leg.id]);
+
+            if (loading) return <div className="text-xs text-gray-500 italic py-4">Cargando trayectoria histórica…</div>;
+            if (err) return <div className="text-xs text-rose-600 py-4">Error cargando trayectoria: {err}</div>;
+            if (!data || data.totales.total === 0) {
+                return <div className="text-xs text-gray-500 italic py-4">Sin instrumentos históricos cargados para este legislador.</div>;
+            }
+
+            const t = data.totales;
+            const tasaPct = data.tasa_aprobacion != null ? `${Math.round(data.tasa_aprobacion * 100)}%` : '—';
+            const maxTema = Math.max(...data.por_tema.map(x => x.n), 1);
+            const maxCom = Math.max(...data.por_comision.map(x => x.n), 1);
+            const topTemas = data.por_tema.slice(0, 12);
+            const topCom = data.por_comision.slice(0, 10);
+
+            return (
+                <div className="space-y-5 text-sm">
+                    {/* Marcador */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+                        <div className="text-[10px] uppercase tracking-wider text-gray-500 font-bold">Continuidad legislativa</div>
+                        <div className="text-sm text-gray-800 font-semibold mt-0.5">{leg.marcador_continuidad}</div>
+                    </div>
+
+                    {/* Headline stats */}
+                    <div className="grid grid-cols-4 gap-2">
+                        <div className="bg-white border border-gray-200 rounded-lg p-2.5 text-center">
+                            <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold">Total</div>
+                            <div className="text-xl font-bold mt-0.5 font-mono">{t.total}</div>
+                            <div className="text-[10px] text-gray-500">instrumentos</div>
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded-lg p-2.5 text-center">
+                            <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold">LXIV</div>
+                            <div className="text-xl font-bold mt-0.5 font-mono text-gray-700">{t.LXIV}</div>
+                            <div className="text-[10px] text-gray-500">2018-2021</div>
+                        </div>
+                        <div className="bg-white border border-gray-200 rounded-lg p-2.5 text-center">
+                            <div className="text-[9px] uppercase tracking-wider text-gray-500 font-bold">LXV</div>
+                            <div className="text-xl font-bold mt-0.5 font-mono text-gray-700">{t.LXV}</div>
+                            <div className="text-[10px] text-gray-500">2021-2024</div>
+                        </div>
+                        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 text-center">
+                            <div className="text-[9px] uppercase tracking-wider text-emerald-700 font-bold">Aprobación</div>
+                            <div className="text-xl font-bold mt-0.5 font-mono text-emerald-700">{tasaPct}</div>
+                            <div className="text-[10px] text-emerald-600">{data.por_estatus.aprobado}/{data.por_estatus.aprobado + data.por_estatus.desechado}</div>
+                        </div>
+                    </div>
+
+                    {/* Breakdown por tipo + estatus */}
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                        <div>
+                            <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5">Por tipo</div>
+                            <div className="space-y-1">
+                                <div className="flex justify-between"><span className="text-gray-600">Iniciativas</span><span className="font-mono font-semibold">{t.iniciativas}</span></div>
+                                <div className="flex justify-between"><span className="text-gray-600">Proposiciones PA</span><span className="font-mono font-semibold">{t.proposiciones}</span></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-1.5">Por estatus</div>
+                            <div className="space-y-1">
+                                <div className="flex justify-between"><span className="text-emerald-700">Aprobados</span><span className="font-mono font-semibold">{data.por_estatus.aprobado}</span></div>
+                                <div className="flex justify-between"><span className="text-rose-700">Desechados</span><span className="font-mono font-semibold">{data.por_estatus.desechado}</span></div>
+                                <div className="flex justify-between"><span className="text-amber-700">Pendientes</span><span className="font-mono font-semibold">{data.por_estatus.pendiente}</span></div>
+                                {data.por_estatus.otros > 0 && <div className="flex justify-between"><span className="text-gray-500">Otros</span><span className="font-mono">{data.por_estatus.otros}</span></div>}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Por tema */}
+                    <div>
+                        <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-2">
+                            Por tema · top {topTemas.length} de {data.por_tema.length}
+                        </div>
+                        <div className="space-y-1.5">
+                            {topTemas.map(t => (
+                                <div key={t.tema} className="flex items-center gap-2">
+                                    <div className="text-xs text-gray-700 w-44 truncate" title={t.tema}>{t.tema}</div>
+                                    <div className="flex-1 h-2 bg-gray-100 rounded overflow-hidden">
+                                        <div className="h-full bg-gray-700 rounded" style={{width: `${(t.n / maxTema) * 100}%`}}></div>
+                                    </div>
+                                    <div className="text-xs font-mono font-semibold text-gray-700 w-10 text-right">{t.n}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Por comisión */}
+                    <div>
+                        <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-2">
+                            Por comisión turnado · top {topCom.length} de {data.por_comision.length}
+                        </div>
+                        <div className="space-y-1.5">
+                            {topCom.map(c => (
+                                <div key={c.comision} className="flex items-center gap-2">
+                                    <div className="text-xs text-gray-700 w-44 truncate" title={c.comision}>{c.comision}</div>
+                                    <div className="flex-1 h-2 bg-gray-100 rounded overflow-hidden">
+                                        <div className="h-full bg-blue-500 rounded" style={{width: `${(c.n / maxCom) * 100}%`}}></div>
+                                    </div>
+                                    <div className="text-xs font-mono font-semibold text-gray-700 w-10 text-right">{c.n}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Footer nota */}
+                    <div className="pt-3 border-t border-gray-100 text-[10px] text-gray-400 leading-relaxed">
+                        Fuente: SIL Gobernación. Solo Iniciativas y Proposiciones con punto de acuerdo presentadas en LXIV (2018-2021) y/o LXV (2021-2024).
+                        {data.nota_tasa && <> {data.nota_tasa}</>}
+                    </div>
                 </div>
             );
         }
