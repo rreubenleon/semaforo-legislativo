@@ -48,6 +48,36 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .fab-config { background: #1a365d; color: white; box-shadow: 0 4px 16px rgba(26, 54, 93, 0.25); transition: all 0.2s; }
   .fab-config:hover { background: #0f2747; box-shadow: 0 6px 20px rgba(26, 54, 93, 0.35); transform: translateY(-1px); }
+
+  /* Terminal IA mockup style */
+  .terminal-bg {
+    background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+    color: #e2e8f0;
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+  }
+  .terminal-prompt::before { content: '> '; color: #4ade80; font-weight: 600; }
+  .terminal-cursor { display: inline-block; width: 7px; height: 14px; background: #4ade80; margin-left: 2px; vertical-align: middle; animation: cursor-blink 1.1s step-end infinite; }
+  @keyframes cursor-blink { 50% { opacity: 0; } }
+  @keyframes scan-line { 0%,100% { opacity: 0.04; } 50% { opacity: 0.08; } }
+  .terminal-bg::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: 12px;
+    background: repeating-linear-gradient(180deg, rgba(255,255,255,0.02) 0px, transparent 1px, transparent 3px);
+    animation: scan-line 6s ease-in-out infinite;
+  }
+
+  /* Map dots animation */
+  @keyframes map-ring-ping {
+    0% { transform: scale(0.4); opacity: 0.85; border-width: 2px; }
+    70% { opacity: 0.18; }
+    100% { transform: scale(1); opacity: 0; border-width: 1px; }
+  }
+  .map-ring { position: absolute; left: 50%; top: 50%; border-radius: 50%; border-style: solid; pointer-events: none; transform-origin: center; animation: map-ring-ping 2.5s cubic-bezier(0,0,0.2,1) infinite; transform: translate(-50%,-50%) scale(0.4); }
+
+  /* Scrollbar fina */
+  .scroll-fina::-webkit-scrollbar { width: 6px; }
+  .scroll-fina::-webkit-scrollbar-track { background: transparent; }
+  .scroll-fina::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  .scroll-fina::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 </style>
 </head>
 <body>
@@ -57,25 +87,64 @@
 const { useState, useEffect, useRef, useMemo } = React;
 
 const WORKER_URL = 'https://fiat-busqueda.rreubenleon.workers.dev';
-const PASSWORD_HASH = '395cfe53020be66359941d3dd6cba28c5108cc7b66e1b8507492dfe1b602ac28'; // SHA-256("fiatpro")
-const STORAGE_KEY = 'fiat_consola_pro_config_v1';
+const PASSWORD_HASH = '395cfe53020be66359941d3dd6cba28c5108cc7b66e1b8507492dfe1b602ac28';
+const STORAGE_KEY = 'fiat_consola_pro_config_v2';
 const SESSION_KEY = 'fiat_consola_pro_session';
 
-// Paleta para gráficas (idéntica al index.html actual)
 const CATEGORY_COLORS = [
   '#2563eb', '#dc2626', '#059669', '#d97706', '#7c3aed',
   '#db2777', '#0891b2', '#65a30d', '#ea580c', '#4f46e5',
   '#0d9488', '#b91c1c', '#1d4ed8', '#9333ea',
 ];
 
-// SHA-256 helper
+// ─── Helpers nombres (idéntico al index.html) ───
+const _PARTICULAS = new Set(['de','del','la','las','los','van','von','da','di','du','y']);
+
+function flipNombreDiputado(nombre) {
+  if (!nombre) return nombre;
+  const tokens = nombre.trim().split(/\s+/);
+  if (tokens.length < 3) return nombre;
+  let cutIdx = 2;
+  let sawParticle = false;
+  while (cutIdx < tokens.length) {
+    const cur = tokens[cutIdx].toLowerCase().replace(/\./g, '');
+    if (_PARTICULAS.has(cur)) {
+      cutIdx++; sawParticle = true;
+    } else if (sawParticle) {
+      cutIdx++; sawParticle = false;
+      if (cutIdx >= tokens.length || !_PARTICULAS.has(tokens[cutIdx].toLowerCase().replace(/\./g, ''))) break;
+    } else { break; }
+  }
+  if (cutIdx >= tokens.length) return nombre;
+  const apellidos = tokens.slice(0, cutIdx).join(' ');
+  const nombres = tokens.slice(cutIdx).join(' ');
+  return `${nombres} ${apellidos}`;
+}
+
+function formatNombreLegislador(leg) {
+  if (!leg) return '';
+  if (leg.camara === 'Cámara de Diputados') return flipNombreDiputado(leg.nombre);
+  return leg.nombre;
+}
+
+function getInitials(nombreFmt) {
+  const tokens = (nombreFmt || '').split(/\s+/).filter(t => t.length > 2 && !_PARTICULAS.has(t.toLowerCase()));
+  return tokens.slice(0, 2).map(t => t[0]).join('').toUpperCase();
+}
+
+function _catLabel(catKey, semaforo) {
+  if (!catKey) return '';
+  const found = (semaforo || []).find(s => s.categoria === catKey);
+  return found ? found.nombre : catKey;
+}
+
 async function sha256(text) {
   const buf = new TextEncoder().encode(text);
   const hash = await crypto.subtle.digest('SHA-256', buf);
   return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-// ─── ScoreRing (idéntico al index.html) ───
+// ─── ScoreRing ───
 function ScoreRing({ score, color, size = 80 }) {
   const radius = (size - 8) / 2;
   const half = size / 2;
@@ -87,14 +156,13 @@ function ScoreRing({ score, color, size = 80 }) {
     rojo: ['#ef5350', '#c62828'],
   };
   const [c1, c2] = gradientColors[color] || ['#bdbdbd', '#9ca3af'];
-  const gradId = `grad-${color}-${size}`;
+  const gradId = `grad-${color}-${size}-${Math.random().toString(36).slice(2,6)}`;
   const fontSize = size > 70 ? '16px' : size > 50 ? '13px' : '11px';
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       <defs>
         <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={c1} />
-          <stop offset="100%" stopColor={c2} />
+          <stop offset="0%" stopColor={c1} /><stop offset="100%" stopColor={c2} />
         </linearGradient>
       </defs>
       <circle cx={half} cy={half} r={radius} stroke="#e5e7eb" strokeWidth="6" fill="none" />
@@ -107,25 +175,19 @@ function ScoreRing({ score, color, size = 80 }) {
   );
 }
 
-// ─── PasswordGate ───
+// ─── Password Gate ───
 function PasswordGate({ onAuth }) {
   const [pwd, setPwd] = useState('');
   const [err, setErr] = useState(false);
   const [loading, setLoading] = useState(false);
-
   const tryLogin = async () => {
-    setLoading(true);
-    setErr(false);
+    setLoading(true); setErr(false);
     const hash = await sha256(pwd);
     if (hash === PASSWORD_HASH) {
       sessionStorage.setItem(SESSION_KEY, '1');
       onAuth();
-    } else {
-      setErr(true);
-      setLoading(false);
-    }
+    } else { setErr(true); setLoading(false); }
   };
-
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="bg-white rounded-2xl border border-gray-200 p-8 max-w-sm w-full" style={{boxShadow: '0 20px 60px rgba(0,0,0,0.06)'}}>
@@ -133,20 +195,13 @@ function PasswordGate({ onAuth }) {
         <div className="badge-alpha inline-block mt-4 mb-1">CONSOLE PRO · ALPHA</div>
         <h1 className="text-xl font-black text-gray-900 mt-3">Acceso restringido</h1>
         <p className="text-xs text-gray-500 mt-1 mb-5">Introduce la contraseña para continuar.</p>
-        <input
-          type="password"
-          value={pwd}
-          onChange={e => setPwd(e.target.value)}
+        <input type="password" value={pwd} onChange={e => setPwd(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && tryLogin()}
-          placeholder="Contraseña"
-          autoFocus
-          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white transition"
-        />
+          placeholder="Contraseña" autoFocus
+          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white transition" />
         {err && <div className="text-xs text-rose-600 mt-2 font-mono">Contraseña incorrecta</div>}
-        <button
-          onClick={tryLogin}
-          disabled={loading || !pwd}
-          className="w-full mt-4 text-white font-semibold py-2.5 rounded-full text-sm transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+        <button onClick={tryLogin} disabled={loading || !pwd}
+          className="w-full mt-4 text-white font-semibold py-2.5 rounded-full text-sm transition shadow-sm disabled:opacity-50"
           style={{background: loading ? '#9ca3af' : 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)'}}>
           {loading ? <span className="spinner"></span> : 'Entrar'}
         </button>
@@ -156,42 +211,47 @@ function PasswordGate({ onAuth }) {
   );
 }
 
-// ─── Header (idéntico al actual) ───
-function Header({ onConfigClick, configCount }) {
+// ─── Header ───
+function Header({ onConfigClick, configCount, ultimaActualizacion }) {
   return (
-    <header className="sticky top-0 z-40 py-2">
-      <div className="nav-pill rounded-2xl md:rounded-full px-3 py-2 flex items-center gap-2 flex-wrap md:flex-nowrap">
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <a href="/" title="Volver a FIAT principal">
-            <img src="fiat-logo-transparent.png" alt="FIAT" style={{height: 32, maxWidth: 100, objectFit: 'contain', objectPosition: 'left', display: 'block'}} />
-          </a>
-          <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span className="text-[10px] text-emerald-700 font-semibold tracking-wide">EN VIVO</span>
+    <div>
+      <header className="sticky top-0 z-40 py-2">
+        <div className="nav-pill rounded-2xl md:rounded-full px-3 py-2 flex items-center gap-2 flex-wrap md:flex-nowrap">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <a href="/" title="Volver a FIAT principal">
+              <img src="fiat-logo-transparent.png" alt="FIAT" style={{height: 32, maxWidth: 100, objectFit: 'contain', objectPosition: 'left', display: 'block'}} />
+            </a>
+            <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+              <span className="text-[10px] text-emerald-700 font-semibold tracking-wide">EN VIVO</span>
+            </div>
           </div>
+          <div className="hidden md:block w-px h-5 bg-gray-200 mx-1"></div>
+          <div className="flex items-center gap-0.5 flex-shrink-0">
+            <button className="nav-pill-tab nav-pill-tab-active">Console Pro</button>
+            <a href="/" className="nav-pill-tab no-underline">Dashboard público</a>
+          </div>
+          <div className="hidden md:block flex-1"></div>
+          <div className="badge-alpha flex-shrink-0">ALPHA</div>
+          <button onClick={onConfigClick}
+            className="text-[12px] text-white font-semibold px-3 py-1.5 rounded-full transition-all shadow-sm whitespace-nowrap"
+            style={{background: 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)'}}>
+            {configCount > 0 ? 'Configurar' : 'Empezar configuración'}
+          </button>
+          <button onClick={() => { sessionStorage.removeItem(SESSION_KEY); location.reload(); }}
+            className="text-[11px] text-gray-500 hover:text-gray-800 font-medium px-2 py-1">Salir</button>
         </div>
-        <div className="hidden md:block w-px h-5 bg-gray-200 mx-1"></div>
-        <div className="nav-tabs-scroll flex items-center gap-0.5 flex-shrink-0">
-          <button className="nav-pill-tab nav-pill-tab-active">Console Pro</button>
-          <a href="/" className="nav-pill-tab no-underline">Dashboard público</a>
+      </header>
+      {ultimaActualizacion && (
+        <div className="text-[10px] text-gray-400 font-mono mt-2 ml-2">
+          Última actualización: {new Date(ultimaActualizacion).toLocaleString('es-MX', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
         </div>
-        <div className="hidden md:block flex-1"></div>
-        <div className="badge-alpha flex-shrink-0">ALPHA</div>
-        <button onClick={onConfigClick}
-          className="text-[12px] text-white font-semibold px-3 py-1.5 rounded-full transition-all shadow-sm whitespace-nowrap"
-          style={{background: 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)'}}>
-          {configCount > 0 ? 'Configurar' : 'Empezar configuración'}
-        </button>
-        <button onClick={() => { sessionStorage.removeItem(SESSION_KEY); location.reload(); }}
-          className="text-[11px] text-gray-500 hover:text-gray-800 font-medium px-2 py-1" title="Cerrar sesión">
-          Salir
-        </button>
-      </div>
-    </header>
+      )}
+    </div>
   );
 }
 
-// ─── Tendencia de scores (Chart.js, idéntico al actual) ───
+// ─── Tendencia Chart (idéntico HistorialScoresChart) ───
 function TendenciaTemas({ historial, semaforo, temasSelectos }) {
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
@@ -216,27 +276,19 @@ function TendenciaTemas({ historial, semaforo, temasSelectos }) {
       return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
     });
 
-    const datasets = catKeys.map((cat, idx) => {
+    const datasets = catKeys.map((cat) => {
       const catData = categorias[cat];
       const colorIdx = Object.keys(rawCategorias).indexOf(cat);
       const color = CATEGORY_COLORS[colorIdx % CATEGORY_COLORS.length];
       const scores = catData.scores.map(s => s === null ? undefined : s);
       const lastIdx = scores.length - 1;
       return {
-        label: catData.nombre,
-        data: scores,
-        borderColor: color,
-        backgroundColor: 'transparent',
-        borderWidth: 2,
-        fill: false,
-        stepped: 'before',
-        tension: 0,
+        label: catData.nombre, data: scores,
+        borderColor: color, backgroundColor: 'transparent',
+        borderWidth: 2, fill: false, stepped: 'before', tension: 0,
         pointRadius: scores.map((_, i) => i === lastIdx ? 5 : 0),
-        pointHitRadius: 10,
-        pointHoverRadius: 6,
-        pointBackgroundColor: color,
-        pointBorderColor: '#fff',
-        pointBorderWidth: 2,
+        pointHitRadius: 10, pointHoverRadius: 6,
+        pointBackgroundColor: color, pointBorderColor: '#fff', pointBorderWidth: 2,
         spanGaps: true,
       };
     });
@@ -247,46 +299,30 @@ function TendenciaTemas({ historial, semaforo, temasSelectos }) {
         const { ctx, chartArea, scales } = chart;
         if (!chartArea) return;
         const yScale = scales.y;
-        const thresholds = [
-          { value: 65, color: 'rgba(46,125,50,0.15)' },
-          { value: 40, color: 'rgba(198,40,40,0.15)' },
-        ];
         ctx.save();
-        ctx.setLineDash([2, 6]);
-        ctx.lineWidth = 0.8;
-        thresholds.forEach(t => {
+        ctx.setLineDash([2, 6]); ctx.lineWidth = 0.8;
+        [{value: 65, color: 'rgba(46,125,50,0.15)'}, {value: 40, color: 'rgba(198,40,40,0.15)'}].forEach(t => {
           const y = yScale.getPixelForValue(t.value);
-          ctx.beginPath();
-          ctx.strokeStyle = t.color;
-          ctx.moveTo(chartArea.left, y);
-          ctx.lineTo(chartArea.right, y);
-          ctx.stroke();
+          ctx.beginPath(); ctx.strokeStyle = t.color;
+          ctx.moveTo(chartArea.left, y); ctx.lineTo(chartArea.right, y); ctx.stroke();
         });
         ctx.restore();
       }
     };
 
     chartInstance.current = new Chart(chartRef.current, {
-      type: 'line',
-      plugins: [thresholdPlugin],
-      data: { labels, datasets },
+      type: 'line', plugins: [thresholdPlugin], data: { labels, datasets },
       options: {
-        responsive: true,
-        maintainAspectRatio: false,
+        responsive: true, maintainAspectRatio: false,
         animation: { duration: 600, easing: 'easeOutQuad' },
         interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: { display: false },
           tooltip: {
-            backgroundColor: 'rgba(15,23,42,0.92)',
-            titleColor: '#f1f5f9',
-            bodyColor: '#cbd5e1',
-            borderColor: 'rgba(255,255,255,0.08)',
-            borderWidth: 1,
-            padding: { top: 10, bottom: 10, left: 14, right: 14 },
-            cornerRadius: 10,
-            displayColors: true,
-            boxWidth: 8, boxHeight: 8, boxPadding: 6,
+            backgroundColor: 'rgba(15,23,42,0.92)', titleColor: '#f1f5f9', bodyColor: '#cbd5e1',
+            borderColor: 'rgba(255,255,255,0.08)', borderWidth: 1,
+            padding: { top: 10, bottom: 10, left: 14, right: 14 }, cornerRadius: 10,
+            displayColors: true, boxWidth: 8, boxHeight: 8, boxPadding: 6,
             titleFont: { size: 12, weight: '600', family: 'JetBrains Mono, monospace' },
             bodyFont: { size: 11, family: 'JetBrains Mono, monospace' },
             callbacks: { label: (item) => ` ${item.dataset.label}: ${item.raw?.toFixed(1)}%` },
@@ -294,105 +330,100 @@ function TendenciaTemas({ historial, semaforo, temasSelectos }) {
           }
         },
         scales: {
-          y: {
-            min: 0, max: 100, position: 'right',
+          y: { min: 0, max: 100, position: 'right',
             ticks: { color: '#b0b8c4', font: { size: 10 }, stepSize: 25, padding: 12, callback: v => v + '%' },
             grid: { color: (ctx) => ctx.tick.value === 0 ? 'transparent' : 'rgba(0,0,0,0.04)', lineWidth: 0.5, drawBorder: false, drawTicks: false },
             border: { display: false },
           },
-          x: {
-            ticks: { color: '#b0b8c4', font: { size: 10 }, maxRotation: 0, maxTicksLimit: 8, padding: 8 },
-            grid: { display: false },
-            border: { display: false },
-          }
+          x: { ticks: { color: '#b0b8c4', font: { size: 10 }, maxRotation: 0, maxTicksLimit: 8, padding: 8 },
+            grid: { display: false }, border: { display: false } }
         },
       }
     });
-
     return () => { if (chartInstance.current) try { chartInstance.current.destroy(); } catch (e) {} };
   }, [historial, temasSelectos]);
 
   if (temasSelectos.size === 0) {
     return (
-      <div className="glass border border-borde rounded-xl p-8 text-center">
+      <div className="glass border border-borde rounded-xl p-8 text-center h-full flex flex-col items-center justify-center">
         <div className="text-xs uppercase tracking-widest text-gray-400 font-bold">TENDENCIA DE MIS TEMAS</div>
-        <div className="text-sm text-gray-500 mt-2">Selecciona temas en Configurar para ver su evolución</div>
+        <div className="text-sm text-gray-500 mt-2">Selecciona temas en Configurar</div>
       </div>
     );
   }
 
   return (
-    <div className="glass border border-borde rounded-xl p-4">
+    <div className="glass border border-borde rounded-xl p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-3">
         <div>
           <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Tendencia de mis temas</div>
-          <div className="text-[10px] text-gray-400 mt-0.5">Evolución del score compuesto durante el actual periodo de sesiones</div>
+          <div className="text-[10px] text-gray-400 mt-0.5">Evolución del score compuesto</div>
         </div>
-        <div className="text-[10px] text-gray-400 font-mono">{temasSelectos.size} {temasSelectos.size === 1 ? 'tema' : 'temas'}</div>
+        <div className="text-[10px] text-gray-400 font-mono">{temasSelectos.size}/8</div>
       </div>
-      <div style={{height: '280px'}}><canvas ref={chartRef}></canvas></div>
+      <div className="flex-1" style={{minHeight: '260px'}}><canvas ref={chartRef}></canvas></div>
     </div>
   );
 }
 
-// ─── Card de legislador (estilo Radar) ───
-function LegisladorCard({ leg, onRemove }) {
-  const elo = leg.elo_indice;
-  const grade = elo == null ? '—'
-    : elo >= 85 ? 'A+' : elo >= 75 ? 'A' : elo >= 65 ? 'B+' : elo >= 55 ? 'B' : elo >= 45 ? 'C+' : elo >= 35 ? 'C' : 'D';
-  const hitPct = leg.hit_total > 0 ? Math.round((leg.hit_respondio / leg.hit_total) * 100) : null;
-  const partido = leg.partido || '';
-  const camara = (leg.camara || '').replace('Cámara de ', '');
-  const initials = leg.nombre.split(/\s+/).filter(w => w.length > 2).slice(0, 2).map(w => w[0]).join('').toUpperCase();
-
+// ─── Terminal IA Mockup (gris oscuro, JetBrains Mono, verde FIAT) ───
+function TerminalIAMockup() {
   return (
-    <div className="glass border border-borde rounded-xl p-4 transition-all hover:shadow-md">
-      <div className="flex items-start gap-3">
-        <div className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-sm text-gray-700 flex-shrink-0">
-          {initials}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-sm font-bold text-gray-900 leading-tight truncate" title={leg.nombre}>{leg.nombre}</div>
-          <div className="text-[10px] text-gray-500 font-mono mt-0.5">{partido} · {camara}{leg.estado ? ` · ${leg.estado}` : ''}</div>
-          <div className="flex items-center gap-2 mt-1.5">
-            {leg.matchup_grade && (
-              <span className="text-[10px] font-bold font-mono px-1.5 py-0.5 rounded border" style={{borderColor: '#d1d5db', color: '#1a365d'}}>{leg.matchup_grade}</span>
-            )}
-            {hitPct != null && (
-              <span className="text-[10px] text-gray-600 font-mono">Hit {hitPct}%</span>
-            )}
-            {leg.marcador_continuidad && (
-              <span className="text-[10px] text-gray-500 font-mono italic truncate">{leg.marcador_continuidad}</span>
-            )}
+    <div className="terminal-bg relative rounded-xl p-5 h-full flex flex-col overflow-hidden border border-slate-700">
+      <div className="flex items-center justify-between mb-4 relative z-10">
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-rose-500/70"></div>
+            <div className="w-2.5 h-2.5 rounded-full bg-amber-500/70"></div>
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/70"></div>
           </div>
+          <div className="text-[10px] uppercase tracking-widest text-slate-400 ml-2 font-mono font-semibold">FIAT_BRAIN.exe</div>
         </div>
-        <button onClick={() => onRemove(leg.id)} title="Quitar de mi monitoreo"
-          className="text-gray-300 hover:text-rose-600 hover:bg-rose-50 w-7 h-7 rounded-full flex items-center justify-center text-base leading-none transition flex-shrink-0">×</button>
+        <div className="text-[9px] uppercase tracking-widest text-emerald-400 font-mono font-bold">v2 PRÓXIMAMENTE</div>
       </div>
-      <div className="mt-3 pt-3 border-t border-gray-100 grid grid-cols-3 gap-2 text-center">
-        <div>
-          <div className="text-base font-bold font-mono text-gray-800">{leg.elo_indice != null ? Math.round(leg.elo_indice) : '—'}</div>
-          <div className="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">ELO</div>
+
+      <div className="flex-1 text-[12px] leading-relaxed space-y-2 relative z-10 overflow-hidden" style={{minHeight: '240px'}}>
+        <div className="text-emerald-400">FIAT BRAIN · Terminal IA</div>
+        <div className="text-slate-500">Modelo: Claude Haiku 4.5 + Sonnet 4.5</div>
+        <div className="text-slate-500">Datos: 16,352 instrumentos · 66,052 notas · 682 legisladores</div>
+        <div className="border-t border-slate-700/50 my-3"></div>
+
+        <div className="terminal-prompt text-slate-200">¿Cuál es la constante de Rubén Moreira?</div>
+        <div className="text-emerald-400">[procesando...] análisis de trayectoria LXIV+LXV+LXVI</div>
+        <div className="text-slate-300">Tema dominante: <span className="text-emerald-300">Justicia</span> · 71 instrumentos · tasa aprobación 44.5%</div>
+        <div className="text-slate-300">Patrón: 87% de PA en LXV son exhortos al Ejecutivo en materia federal.</div>
+
+        <div className="border-t border-slate-700/50 my-3"></div>
+
+        <div className="terminal-prompt text-slate-500/70">Cuando hay incendios forestales, ¿quién presenta PA?</div>
+        <div className="text-slate-500/70">Próximamente:</div>
+        <div className="text-slate-500/70 pl-3">· Resúmenes semanales de tus temas</div>
+        <div className="text-slate-500/70 pl-3">· Constantes históricas de cada legislador</div>
+        <div className="text-slate-500/70 pl-3">· Patrones de respuesta a eventos</div>
+        <div className="text-slate-500/70 pl-3">· Comparativas entre legisladores</div>
+      </div>
+
+      <div className="mt-4 pt-3 border-t border-slate-700/50 relative z-10">
+        <div className="flex items-center gap-2 text-[11px] font-mono">
+          <span className="text-emerald-400 font-bold">{'>'}</span>
+          <span className="text-slate-500 italic">Pregunta lo que quieras sobre el Congreso...</span>
+          <span className="terminal-cursor"></span>
         </div>
-        <div>
-          <div className="text-base font-bold font-mono text-gray-800">{leg.iniciativas_proy_15d != null ? leg.iniciativas_proy_15d : '—'}</div>
-          <div className="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">Ini 15d</div>
-        </div>
-        <div>
-          <div className="text-base font-bold font-mono text-gray-800">{leg.proposiciones_proy_15d != null ? Math.round(leg.proposiciones_proy_15d) : '—'}</div>
-          <div className="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">PA 15d</div>
+        <div className="flex items-center justify-between mt-2 text-[9px] text-slate-500 font-mono uppercase tracking-widest">
+          <span>200 queries/mes incluidas</span>
+          <span className="text-emerald-400">DISPONIBLE EN V2</span>
         </div>
       </div>
     </div>
   );
 }
 
-// ─── Card de tema (estilo Semáforo simplificado) ───
-function TemaCard({ data, onRemove }) {
+// ─── Card de tema (clickable) ───
+function TemaCard({ data, onRemove, onClick }) {
   const colorClasses = {
-    verde: 'border-semaforo-verde/40',
-    amarillo: 'border-semaforo-amarillo/40',
-    rojo: 'border-semaforo-rojo/40',
+    verde: 'border-semaforo-verde/40 hover:border-semaforo-verde',
+    amarillo: 'border-semaforo-amarillo/40 hover:border-semaforo-amarillo',
+    rojo: 'border-semaforo-rojo/40 hover:border-semaforo-rojo',
   };
   const colorDot = { verde: 'bg-semaforo-verde', amarillo: 'bg-semaforo-amarillo', rojo: 'bg-semaforo-rojo' };
   const momentum = data.momentum || {};
@@ -400,9 +431,10 @@ function TemaCard({ data, onRemove }) {
   const trendColor = momentum.tendencia === 'up' ? 'text-green-600' : momentum.tendencia === 'down' ? 'text-red-500' : 'text-gray-400';
 
   return (
-    <div className={`glass border ${colorClasses[data.color]} rounded-xl p-4 transition-all`}>
+    <div className={`glass border ${colorClasses[data.color]} rounded-xl p-4 transition-all cursor-pointer`}
+      onClick={onClick}>
       <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
           <div className={`w-3 h-3 rounded-full ${colorDot[data.color]} flex-shrink-0`}></div>
           <div className="min-w-0">
             <h3 className="font-semibold text-sm text-gray-800 truncate">{data.nombre}</h3>
@@ -414,9 +446,9 @@ function TemaCard({ data, onRemove }) {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 flex-shrink-0">
           <ScoreRing score={data.score_total} color={data.color} size={56} />
-          <button onClick={() => onRemove(data.categoria)} title="Quitar tema"
+          <button onClick={e => { e.stopPropagation(); onRemove(data.categoria); }} title="Quitar tema"
             className="text-gray-300 hover:text-rose-600 hover:bg-rose-50 w-6 h-6 rounded-full flex items-center justify-center text-sm leading-none transition flex-shrink-0">×</button>
         </div>
       </div>
@@ -443,13 +475,288 @@ function TemaCard({ data, onRemove }) {
   );
 }
 
-// ─── Mis Estados (lista compacta v1, mapa Leaflet en v2) ───
-function MisEstados({ mapa, estadosSelectos, onRemove }) {
+// ─── Card legislador (clickable, datos clave) ───
+function LegisladorCard({ leg, semaforo, onRemove, onClick }) {
+  const nombreFmt = formatNombreLegislador(leg);
+  const elo = leg.elo_indice;
+  const hitPct = leg.hit_total > 0 ? Math.round((leg.hit_respondio / leg.hit_total) * 100) : null;
+  const partido = leg.partido || '';
+  const camara = (leg.camara || '').replace('Cámara de ', '');
+  const initials = getInitials(nombreFmt);
+  const tema = leg.categoria_dominante ? _catLabel(leg.categoria_dominante, semaforo) : null;
+  const repite = !!leg.marcador_continuidad;
+
+  return (
+    <div className="glass border border-borde rounded-xl p-4 transition-all hover:shadow-md cursor-pointer" onClick={onClick}>
+      <div className="flex items-start gap-3">
+        <div className="w-12 h-12 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-sm text-gray-700 flex-shrink-0">
+          {initials}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-bold text-gray-900 leading-tight truncate" title={nombreFmt}>{nombreFmt}</div>
+          <div className="text-[10px] text-gray-500 font-mono mt-0.5">{partido} · {camara}{leg.estado ? ` · ${leg.estado}` : ''}</div>
+          {repite && (
+            <div className="text-[10px] mt-1 inline-block px-1.5 py-0.5 rounded font-mono" style={{background:'#f8faf8', color:'#1a365d', border:'1px solid #e0e7e0'}}>
+              {leg.marcador_continuidad}
+            </div>
+          )}
+        </div>
+        <button onClick={e => { e.stopPropagation(); onRemove(leg.id); }} title="Quitar"
+          className="text-gray-300 hover:text-rose-600 hover:bg-rose-50 w-7 h-7 rounded-full flex items-center justify-center text-base leading-none transition flex-shrink-0">×</button>
+      </div>
+
+      <div className="mt-3 pt-3 border-t border-gray-100 grid grid-cols-3 gap-2 text-center">
+        <div>
+          <div className="text-base font-bold font-mono text-gray-800">{elo != null ? Math.round(elo) : '—'}</div>
+          <div className="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">Efectividad</div>
+        </div>
+        <div>
+          <div className="text-base font-bold font-mono text-gray-800">{hitPct != null ? `${hitPct}%` : '—'}</div>
+          <div className="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">Hit rate</div>
+        </div>
+        <div>
+          <div className="text-base font-bold font-mono text-gray-800 truncate" title={tema || ''}>{tema ? tema.split(' ')[0] : '—'}</div>
+          <div className="text-[9px] uppercase tracking-wider text-gray-400 mt-0.5">Tema dom.</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Modal Detalle Legislador (Key Insights) ───
+function LegisladorModal({ leg, semaforo, onClose }) {
+  if (!leg) return null;
+  const nombreFmt = formatNombreLegislador(leg);
+  const hitPct = leg.hit_total > 0 ? Math.round((leg.hit_respondio / leg.hit_total) * 100) : null;
+  const elo = leg.elo_indice;
+  const camara = (leg.camara || '').replace('Cámara de ', '');
+  const partido = leg.partido || '';
+  const tema = leg.categoria_dominante ? _catLabel(leg.categoria_dominante, semaforo) : null;
+  const l3pIni = leg.l3p_iniciativas ?? 0;
+  const l3pProp = leg.l3p_proposiciones ?? 0;
+  const iniProy = leg.iniciativas_proy_15d;
+
+  const insights = [];
+  if (hitPct != null && hitPct >= 50 && tema) {
+    insights.push(`Reacciona rápido a picos mediáticos en ${tema}: ${hitPct}% de los últimos ${leg.hit_total} picos relevantes.`);
+  } else if (hitPct === 0 && leg.hit_total > 0) {
+    insights.push(`No ha presentado instrumentos dentro de los 7 días de los picos en ${tema || 'su tema dominante'}. Bajo oportunismo informativo.`);
+  }
+  if (iniProy != null && iniProy > 1.5) {
+    insights.push(`Proyección agresiva de iniciativas: ${Number(iniProy).toFixed(1)} en los próximos 15 días (acelerando vs baseline LXVI).`);
+  }
+  if (leg.matchup_grade === 'A' || leg.matchup_grade === 'B' || leg.matchup_grade === 'A+') {
+    insights.push(`Su comisión ${leg.matchup_comision || 'dominante'} dictamina activamente: ${Math.round((leg.matchup_tasa || 0) * 100)}% de los asuntos salen con decisión formal.`);
+  } else if (leg.matchup_grade === 'F') {
+    insights.push(`Matchup difícil: en ${leg.matchup_comision || 'su comisión dominante'} solo ${Math.round((leg.matchup_tasa || 0) * 100)}% de los asuntos se dictaminan.`);
+  }
+  if (l3pIni + l3pProp === 0) {
+    insights.push('Sin actividad legislativa registrada en la LXVI. Posible legislador suplente, reciente, o nombre no enlazado.');
+  }
+  if (leg.marcador_continuidad) {
+    insights.push(`Trayectoria: ${leg.marcador_continuidad}. Reelecto con experiencia previa.`);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 modal-backdrop bg-black/50 backdrop-blur-sm flex items-start md:items-center justify-center p-0 md:p-4" onClick={onClose}>
+      <div onClick={e => e.stopPropagation()}
+        className="modal-card bg-white w-full md:max-w-2xl md:rounded-2xl overflow-hidden flex flex-col max-h-screen md:max-h-[90vh]">
+        <div className="relative bg-gradient-to-br from-black to-gray-900 text-white p-5">
+          <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 text-xl leading-none">×</button>
+          <div className="flex items-start gap-4">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-white/10 border-2 border-white/20 flex items-center justify-center font-black text-xl text-white flex-shrink-0">
+              {getInitials(nombreFmt)}
+            </div>
+            <div className="flex-1 min-w-0 pr-8">
+              <div className="text-xl md:text-2xl font-bold leading-tight">{nombreFmt}</div>
+              <div className="flex items-center gap-2 mt-1.5 flex-wrap text-xs">
+                <span className="px-2 py-0.5 bg-white/15 rounded-full text-white/90 font-semibold">{partido}</span>
+                <span className="text-white/80">{camara}</span>
+                {leg.estado && <span className="text-white/60">· {leg.estado}</span>}
+              </div>
+              {leg.marcador_continuidad && (
+                <div className="mt-2 inline-block px-2 py-0.5 text-[11px] rounded bg-emerald-500/20 text-emerald-200 font-medium">
+                  {leg.marcador_continuidad}
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="grid grid-cols-4 gap-2 mt-4">
+            <div className="bg-white/10 rounded-lg p-2.5 text-center">
+              <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Efectividad</div>
+              <div className="text-xl font-bold mt-0.5 font-mono">{elo != null ? Math.round(elo) : '—'}{elo != null && <span className="text-xs text-white/50">/100</span>}</div>
+            </div>
+            <div className="bg-white/10 rounded-lg p-2.5 text-center">
+              <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Hit rate</div>
+              <div className="text-xl font-bold mt-0.5 font-mono">{hitPct != null ? `${hitPct}%` : '—'}</div>
+              <div className="text-[10px] text-white/60 font-mono">{leg.hit_respondio ?? 0}/{leg.hit_total ?? 0}</div>
+            </div>
+            <div className="bg-white/10 rounded-lg p-2.5 text-center">
+              <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Ini 15d</div>
+              <div className="text-xl font-bold mt-0.5 font-mono">{iniProy != null ? iniProy : '—'}</div>
+              <div className="text-[10px] text-white/60 font-mono">L3P · {l3pIni}</div>
+            </div>
+            <div className="bg-white/10 rounded-lg p-2.5 text-center">
+              <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Prop 15d</div>
+              <div className="text-xl font-bold mt-0.5 font-mono">{leg.proposiciones_proy_15d != null ? Math.round(leg.proposiciones_proy_15d) : '—'}</div>
+              <div className="text-[10px] text-white/60 font-mono">L3P · {l3pProp}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-4 text-sm scroll-fina">
+          {leg.narrativa && (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5">
+              <div className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold mb-1.5">Descripción IA</div>
+              <p className="text-sm text-gray-700 leading-relaxed">{leg.narrativa}</p>
+            </div>
+          )}
+
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-2">Key Insights</div>
+            {insights.length > 0 ? (
+              <ul className="space-y-2">
+                {insights.map((it, i) => (
+                  <li key={i} className="flex gap-2 text-sm text-gray-700"><span className="text-acento font-bold">▸</span><span>{it}</span></li>
+                ))}
+              </ul>
+            ) : <div className="text-xs text-gray-500 italic">Sin insights destacados todavía.</div>}
+          </div>
+
+          {tema && (
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-2">Tema dominante</div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-sm font-semibold text-gray-800">{tema}</div>
+                <div className="text-xs text-gray-500 mt-1">Probabilidad de reacción: {leg.hit_rate != null ? Math.round(leg.hit_rate * 100) : 0}%</div>
+              </div>
+            </div>
+          )}
+
+          {leg.matchup_grade && (
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-2">Matchup</div>
+              <div className="bg-gray-50 rounded-lg p-3 flex items-center gap-3">
+                <div className="text-3xl font-black text-acento font-mono">{leg.matchup_grade}</div>
+                <div className="flex-1">
+                  <div className="text-sm font-semibold text-gray-800">{leg.matchup_comision || '—'}</div>
+                  <div className="text-xs text-gray-500">Tasa de dictamen: {Math.round((leg.matchup_tasa || 0) * 100)}%</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-2">Totales LXVI</div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-[10px] text-gray-500 uppercase tracking-wider">Iniciativas presentadas</div>
+                <div className="text-xl font-bold text-gray-800 font-mono">{l3pIni}</div>
+              </div>
+              <div className="bg-gray-50 rounded-lg p-3">
+                <div className="text-[10px] text-gray-500 uppercase tracking-wider">Proposiciones presentadas</div>
+                <div className="text-xl font-bold text-gray-800 font-mono">{l3pProp}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Modal Detalle Tema ───
+function TemaModal({ tema, fuentes, onClose }) {
+  if (!tema) return null;
+  const colorClasses = { verde: '#2e7d32', amarillo: '#c6972b', rojo: '#c62828' };
+  const fcat = fuentes?.[tema.categoria] || {};
+  const subcats = (tema.subcategorias_activas || []).slice(0, 6);
+
+  return (
+    <div className="fixed inset-0 z-50 modal-backdrop bg-black/50 backdrop-blur-sm flex items-start md:items-center justify-center p-0 md:p-4" onClick={onClose}>
+      <div onClick={e => e.stopPropagation()}
+        className="modal-card bg-white w-full md:max-w-2xl md:rounded-2xl overflow-hidden flex flex-col max-h-screen md:max-h-[90vh]">
+        <div className="relative p-5 text-white" style={{background: `linear-gradient(135deg, ${colorClasses[tema.color]} 0%, ${tema.color === 'verde' ? '#1f5f24' : tema.color === 'amarillo' ? '#9a7820' : '#9c1e1e'} 100%)`}}>
+          <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 text-xl leading-none">×</button>
+          <div className="text-[10px] uppercase tracking-widest opacity-80 font-bold">CATEGORÍA</div>
+          <div className="text-2xl font-black mt-1">{tema.nombre}</div>
+          <div className="flex items-baseline gap-2 mt-3">
+            <div className="text-5xl font-black font-mono">{Math.round(tema.score_total)}</div>
+            <div className="text-xs opacity-80">score total</div>
+          </div>
+          <div className="grid grid-cols-5 gap-2 mt-5">
+            {[
+              { label: 'Media', value: tema.score_media },
+              { label: 'Trends', value: tema.score_trends },
+              { label: 'Congreso', value: tema.score_congreso },
+              { label: 'CSP', value: tema.score_mananera || 0 },
+              { label: 'Urgencia', value: tema.score_urgencia },
+            ].map(m => (
+              <div key={m.label} className="bg-white/10 rounded-lg p-2 text-center">
+                <div className="text-[9px] uppercase tracking-wider opacity-70 font-bold">{m.label}</div>
+                <div className="text-lg font-bold mt-0.5 font-mono">{m.value.toFixed(0)}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-4 text-sm scroll-fina">
+          {subcats.length > 0 && (
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-2">Subcategorías activas</div>
+              <div className="flex flex-wrap gap-1.5">
+                {subcats.map(s => (
+                  <span key={s.clave} className="inline-flex items-center px-2 py-1 rounded text-xs bg-gray-100 text-gray-700 border border-gray-200">
+                    {s.nombre}
+                    <span className="ml-1.5 text-[10px] text-gray-500 font-mono">{Math.round((s.peso || 0) * 100)}%</span>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {fcat.articulos_medios && fcat.articulos_medios.length > 0 && (
+            <div>
+              <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-2">Notas en medios · últimas {Math.min(8, fcat.articulos_medios.length)}</div>
+              <div className="space-y-2">
+                {fcat.articulos_medios.slice(0, 8).map((a, i) => (
+                  <div key={i} className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
+                    <a href={a.url} target="_blank" rel="noopener" className="text-sm text-blue-700 hover:underline leading-tight block">{a.titulo}</a>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
+                      <span className="bg-gray-200 px-1.5 py-0.5 rounded text-gray-600 font-mono">{a.fuente}</span>
+                      <span className="font-mono">{a.fecha}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Mapa de México (SVG simple con dots animados) ───
+const MEX_COORDS = {
+  // proyección simplificada del mapa (x: 0-320, y: 0-220)
+  aguascalientes: [148, 122], baja_california: [25, 60], baja_california_sur: [55, 120],
+  campeche: [240, 145], chiapas: [240, 175], chihuahua: [110, 70], ciudad_de_mexico: [165, 145],
+  coahuila: [135, 80], colima: [140, 145], durango: [125, 100], estado_de_mexico: [160, 140],
+  guanajuato: [155, 130], guerrero: [170, 165], hidalgo: [170, 135], jalisco: [135, 135],
+  michoacan: [145, 150], morelos: [165, 150], nayarit: [115, 120], nuevo_leon: [150, 80],
+  oaxaca: [200, 175], puebla: [185, 150], queretaro: [165, 130], quintana_roo: [265, 135],
+  san_luis_potosi: [155, 110], sinaloa: [95, 95], sonora: [70, 75], tabasco: [225, 165],
+  tamaulipas: [165, 95], tlaxcala: [180, 145], veracruz: [195, 150], yucatan: [255, 130],
+  zacatecas: [140, 110],
+};
+
+function MapaMexico({ mapa, estadosSelectos, onRemove }) {
   if (estadosSelectos.size === 0) {
     return (
-      <div className="glass border border-borde rounded-xl p-6 text-center">
+      <div className="glass border border-borde rounded-xl p-8 text-center">
         <div className="text-xs uppercase tracking-widest text-gray-400 font-bold">MIS ESTADOS</div>
-        <div className="text-xs text-gray-500 mt-2">Aún no has seleccionado estados</div>
+        <div className="text-sm text-gray-500 mt-2">Selecciona estados en Configurar</div>
       </div>
     );
   }
@@ -461,9 +768,9 @@ function MisEstados({ mapa, estadosSelectos, onRemove }) {
 
   const getColor = (count) => {
     const intensity = count / maxArts;
-    if (intensity > 0.5) return '#c62828';
-    if (intensity > 0.2) return '#c6972b';
-    return '#2e7d32';
+    if (intensity > 0.5) return { fill: '#c62828', label: 'Alto' };
+    if (intensity > 0.2) return { fill: '#c6972b', label: 'Medio' };
+    return { fill: '#2e7d32', label: 'Bajo' };
   };
 
   return (
@@ -471,97 +778,363 @@ function MisEstados({ mapa, estadosSelectos, onRemove }) {
       <div className="flex items-center justify-between mb-3">
         <div>
           <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Mis estados</div>
-          <div className="text-[10px] text-gray-400 mt-0.5">Cobertura mediática últimos 30 días</div>
+          <div className="text-[10px] text-gray-400 mt-0.5">Cobertura mediática · últimos 30 días</div>
         </div>
-        <div className="text-[10px] text-gray-400 font-mono">{estados.length} {estados.length === 1 ? 'estado' : 'estados'}</div>
+        <div className="text-[10px] text-gray-400 font-mono">{estados.length}/12</div>
       </div>
-      <div className="space-y-1.5">
-        {estados.map(({ key, info }) => (
-          <div key={key} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded transition group">
-            <div className="flex items-center gap-2 min-w-0">
-              <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: getColor(info.total_articulos) }}></div>
-              <span className="text-sm text-gray-800 truncate">{info.nombre || info.abreviatura}</span>
+      <div className="relative w-full" style={{aspectRatio: '320/220', background: '#f8faf8', borderRadius: '8px', overflow: 'hidden'}}>
+        <svg viewBox="0 0 320 220" className="w-full h-full">
+          {/* México silhouette estilizado */}
+          <path d="M 25 60 Q 50 50 80 70 L 110 70 Q 140 60 165 65 L 200 55 Q 230 60 250 70 L 280 90 L 290 110 L 280 125 L 270 135 L 280 150 L 270 165 L 250 175 L 230 180 L 210 185 L 190 188 L 170 192 L 150 188 L 130 180 L 110 165 L 95 150 L 80 135 L 65 120 L 50 105 L 35 90 Z"
+                fill="#e5e7eb" stroke="#cbd5e1" strokeWidth="1" opacity="0.6" />
+          <text x="160" y="30" fontSize="10" fontFamily="Inter" fontWeight="600" fill="#9ca3af" textAnchor="middle" letterSpacing="0.1em">MÉXICO</text>
+        </svg>
+        {/* Dots de los estados */}
+        {estados.map(({ key, info }) => {
+          const coords = MEX_COORDS[key];
+          if (!coords) return null;
+          const { fill, label } = getColor(info.total_articulos || 0);
+          const intensity = (info.total_articulos || 0) / maxArts;
+          const coreSize = Math.max(6, Math.min(14, 6 + intensity * 8));
+          const ringMax = coreSize + 18 + intensity * 10;
+          const numRings = intensity > 0.5 ? 3 : intensity > 0.2 ? 2 : 1;
+          const xPct = (coords[0] / 320) * 100;
+          const yPct = (coords[1] / 220) * 100;
+          return (
+            <div key={key} style={{ position: 'absolute', left: `${xPct}%`, top: `${yPct}%`, transform: 'translate(-50%,-50%)' }} title={`${info.nombre || info.abreviatura}: ${info.total_articulos || 0} notas`}>
+              {[...Array(numRings)].map((_, r) => (
+                <div key={r} className="map-ring" style={{
+                  width: ringMax, height: ringMax, borderColor: fill,
+                  animationDelay: `${(r * 2 / numRings).toFixed(2)}s`
+                }}></div>
+              ))}
+              <div style={{
+                position: 'relative', width: coreSize, height: coreSize,
+                borderRadius: '50%', background: fill,
+                boxShadow: `0 0 0 1.5px white, 0 1px 4px rgba(0,0,0,0.2)`,
+              }}></div>
+              <div style={{
+                position: 'absolute', top: coreSize / 2 + 4, left: '50%', transform: 'translateX(-50%)',
+                fontSize: 9, fontFamily: 'Inter', fontWeight: 600, color: '#1f2937',
+                whiteSpace: 'nowrap', background: 'rgba(255,255,255,0.92)',
+                padding: '1px 5px', borderRadius: 3, marginTop: 2,
+              }}>{(info.abreviatura || key).toUpperCase().slice(0, 5)}</div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-500 font-mono">{info.total_articulos || 0}</span>
-              <button onClick={() => onRemove(key)} className="text-gray-300 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition w-5 h-5 text-base leading-none">×</button>
+          );
+        })}
+      </div>
+      <div className="mt-3 space-y-1 text-xs">
+        {estados.map(({ key, info }) => {
+          const { fill } = getColor(info.total_articulos || 0);
+          return (
+            <div key={key} className="flex items-center justify-between p-1.5 hover:bg-gray-50 rounded group">
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: fill }}></div>
+                <span className="text-gray-800 truncate">{info.nombre || info.abreviatura}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 font-mono">{info.total_articulos || 0}</span>
+                <button onClick={() => onRemove(key)} className="text-gray-300 hover:text-rose-600 opacity-0 group-hover:opacity-100 w-5 h-5 text-base leading-none">×</button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 }
 
-// ─── Actividad reciente (últimos 7 días, filtrada a tu monitoreo) ───
-function ActividadReciente({ data, legisladoresIds, temasSelectos, estadosSelectos }) {
-  const items = useMemo(() => {
-    if (!data) return [];
-    const out = [];
-    // Alertas del data.json
-    (data.alertas || []).slice(0, 6).forEach(a => {
-      out.push({
-        tipo: 'alerta',
-        ts: a.fecha || '',
-        titulo: a.descripcion || a.tipo || 'Alerta',
-        sub: a.categoria || '',
-      });
-    });
-    // Articulos top recientes (por fuentes principales)
-    const fuentes = data.fuentes || {};
-    const tres_temas = Array.from(temasSelectos).slice(0, 5);
-    tres_temas.forEach(cat => {
-      const arts = (fuentes[cat]?.articulos_medios || []).slice(0, 3);
-      arts.forEach(a => {
-        out.push({
-          tipo: 'articulo',
-          ts: a.fecha || '',
-          titulo: a.titulo || '',
-          sub: a.fuente + ' · ' + (data.semaforo.find(s => s.categoria === cat)?.nombre || cat),
-          url: a.url,
-        });
-      });
-    });
-    return out.sort((a, b) => (b.ts || '').localeCompare(a.ts || '')).slice(0, 12);
-  }, [data, legisladoresIds, temasSelectos, estadosSelectos]);
+// ─── Menciones CSP (Mañanera filtrada por tema) ───
+function MencionesCSP({ data, semaforo, temasSelectos, filtroTema, setFiltroTema }) {
+  // El data.json tiene 'fuentes' con menciones_csp por categoría
+  const allTemas = Array.from(temasSelectos);
+  const tema = filtroTema || allTemas[0] || null;
 
-  if (items.length === 0) {
+  if (!tema || !data?.fuentes?.[tema]) {
     return (
-      <div className="glass border border-borde rounded-xl p-6 text-center">
-        <div className="text-xs uppercase tracking-widest text-gray-400 font-bold">ACTIVIDAD RECIENTE</div>
-        <div className="text-xs text-gray-500 mt-2">Configura legisladores y temas para ver actividad</div>
+      <div className="glass border border-borde rounded-xl p-6">
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Menciones CSP</div>
+            <div className="text-[10px] text-gray-400 mt-0.5">Mañaneras de Claudia Sheinbaum</div>
+          </div>
+        </div>
+        <div className="text-xs text-gray-500 italic text-center py-6">Selecciona temas para ver menciones de la presidenta</div>
       </div>
     );
   }
+
+  const menciones = (data.fuentes[tema]?.menciones_csp || []).slice(0, 8);
+  const temaNombre = _catLabel(tema, semaforo);
+
+  return (
+    <div className="glass border border-borde rounded-xl p-4">
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Menciones CSP</div>
+          <div className="text-[10px] text-gray-400 mt-0.5">Mañaneras de Claudia Sheinbaum · {temaNombre}</div>
+        </div>
+        <select value={tema} onChange={e => setFiltroTema(e.target.value)}
+          className="text-xs px-2 py-1 border border-gray-200 rounded-lg bg-white">
+          {allTemas.map(t => <option key={t} value={t}>{_catLabel(t, semaforo)}</option>)}
+        </select>
+      </div>
+      {menciones.length > 0 ? (
+        <div className="space-y-2 max-h-72 overflow-y-auto scroll-fina pr-1">
+          {menciones.map((m, i) => (
+            <div key={i} className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
+              <div className="text-xs text-gray-700 leading-snug">{m.cita || m.frase || m.titulo || '—'}</div>
+              <div className="text-[10px] text-gray-400 mt-1 font-mono">{m.fecha || ''}</div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-xs text-gray-500 italic text-center py-4">Sin menciones recientes en {temaNombre}</div>
+      )}
+    </div>
+  );
+}
+
+// ─── Actividad Reciente con tabs y scroll ───
+function ActividadReciente({ data, semaforo, legisladoresIds, temasSelectos, allLegisladores }) {
+  const [tab, setTab] = useState('todo');
+  const [search, setSearch] = useState('');
+
+  // Construir actividad de última semana (7 días)
+  const { porLegislador, porTema, porAlerta, todo } = useMemo(() => {
+    const out_leg = [];
+    const out_tema = [];
+    const out_alerta = [];
+    if (!data) return { porLegislador: [], porTema: [], porAlerta: [], todo: [] };
+
+    // Alertas del data.json (relevancia score)
+    const ahora = new Date();
+    const haceUnaSem = new Date(ahora.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    (data.alertas || []).forEach(a => {
+      const fecha = a.fecha || a.created_at || '';
+      if (!fecha || new Date(fecha) < haceUnaSem) return;
+      out_alerta.push({
+        tipo: 'alerta',
+        ts: fecha,
+        titulo: a.descripcion || a.titulo || 'Alerta del sistema',
+        sub: a.categoria ? _catLabel(a.categoria, semaforo) : '',
+        url: null,
+      });
+    });
+
+    // Artículos de mis temas
+    const fuentes = data.fuentes || {};
+    Array.from(temasSelectos).forEach(cat => {
+      const arts = (fuentes[cat]?.articulos_medios || []);
+      arts.forEach(a => {
+        const fecha = a.fecha || '';
+        if (!fecha || new Date(fecha) < haceUnaSem) return;
+        out_tema.push({
+          tipo: 'tema', ts: fecha, titulo: a.titulo,
+          sub: `${a.fuente} · ${_catLabel(cat, semaforo)}`,
+          url: a.url, categoria: cat,
+        });
+      });
+    });
+
+    // Para legisladores: como no tenemos endpoint con su actividad reciente,
+    // usamos la autoria si existe
+    const autoria = data.autoria || {};
+    Object.entries(autoria).forEach(([cat, items]) => {
+      (items || []).forEach(it => {
+        if (legisladoresIds.has(it.legislador_id)) {
+          (it.instrumentos || []).slice(0, 3).forEach(inst => {
+            const fecha = inst.fecha || '';
+            if (!fecha || new Date(fecha) < haceUnaSem) return;
+            out_leg.push({
+              tipo: 'legislador', ts: fecha,
+              titulo: inst.titulo || 'Instrumento legislativo',
+              sub: `${formatNombreLegislador({nombre: it.nombre, camara: it.camara || ''})} · ${_catLabel(cat, semaforo)}`,
+              url: inst.url, leg_id: it.legislador_id,
+            });
+          });
+        }
+      });
+    });
+
+    out_leg.sort((a,b) => (b.ts||'').localeCompare(a.ts||''));
+    out_tema.sort((a,b) => (b.ts||'').localeCompare(a.ts||''));
+    out_alerta.sort((a,b) => (b.ts||'').localeCompare(a.ts||''));
+    const todo = [...out_leg, ...out_tema, ...out_alerta]
+      .sort((a,b) => (b.ts||'').localeCompare(a.ts||''));
+
+    return { porLegislador: out_leg, porTema: out_tema, porAlerta: out_alerta, todo };
+  }, [data, legisladoresIds, temasSelectos, semaforo]);
+
+  const fuente = tab === 'legisladores' ? porLegislador : tab === 'temas' ? porTema : tab === 'alertas' ? porAlerta : todo;
+  const filtrada = search.length >= 2
+    ? fuente.filter(it => (it.titulo || '').toLowerCase().includes(search.toLowerCase()) || (it.sub || '').toLowerCase().includes(search.toLowerCase()))
+    : fuente;
+
+  return (
+    <div className="glass border border-borde rounded-xl p-4">
+      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+        <div>
+          <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Actividad reciente</div>
+          <div className="text-[10px] text-gray-400 mt-0.5">Tus legisladores y temas · última semana</div>
+        </div>
+        <input type="text" placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)}
+          className="text-xs px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 w-32 focus:outline-none focus:border-acento focus:bg-white" />
+      </div>
+      <div className="flex gap-1 mb-3 border-b border-gray-100">
+        <button onClick={() => setTab('todo')} className={`px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition ${tab === 'todo' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+          Todo · {todo.length}
+        </button>
+        <button onClick={() => setTab('legisladores')} className={`px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition ${tab === 'legisladores' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+          Mis legisladores · {porLegislador.length}
+        </button>
+        <button onClick={() => setTab('temas')} className={`px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition ${tab === 'temas' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+          Mis temas · {porTema.length}
+        </button>
+        <button onClick={() => setTab('alertas')} className={`px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition ${tab === 'alertas' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+          Alertas · {porAlerta.length}
+        </button>
+      </div>
+      {filtrada.length === 0 ? (
+        <div className="text-xs text-gray-500 italic text-center py-8">Sin actividad en este filtro</div>
+      ) : (
+        <div className="max-h-96 overflow-y-auto scroll-fina pr-1 space-y-1.5">
+          {filtrada.map((it, i) => (
+            <div key={i} className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded -mx-1 transition">
+              <div className="text-[10px] text-gray-400 font-mono w-16 flex-shrink-0 mt-0.5">{(it.ts || '').slice(5, 10) || '—'}</div>
+              <div className="w-1 self-stretch rounded-full mt-1 flex-shrink-0" style={{
+                background: it.tipo === 'legislador' ? '#2e7d32' : it.tipo === 'tema' ? '#1a365d' : '#c6972b'
+              }}></div>
+              <div className="flex-1 min-w-0">
+                {it.url ? (
+                  <a href={it.url} target="_blank" rel="noopener" className="text-xs text-gray-800 hover:underline block leading-snug">{it.titulo}</a>
+                ) : (
+                  <div className="text-xs text-gray-800 leading-snug">{it.titulo}</div>
+                )}
+                <div className="text-[10px] text-gray-500 mt-0.5">{it.sub}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Mis Alertas ───
+function MisAlertas({ alertas, semaforo, allLegisladores, onAdd, onRemove, onToggle }) {
+  const [showForm, setShowForm] = useState(false);
+  const [tipo, setTipo] = useState('tema_score');
+  const [tema, setTema] = useState('');
+  const [umbral, setUmbral] = useState(75);
+  const [legislador, setLegislador] = useState('');
+
+  const reset = () => { setTipo('tema_score'); setTema(''); setUmbral(75); setLegislador(''); setShowForm(false); };
+
+  const submit = () => {
+    let nombre = '';
+    let trigger = {};
+    if (tipo === 'tema_score') {
+      if (!tema) return;
+      nombre = `${_catLabel(tema, semaforo)} score > ${umbral}`;
+      trigger = { tipo, tema, umbral };
+    } else if (tipo === 'legislador_actividad') {
+      if (!legislador) return;
+      const leg = allLegisladores.find(l => l.id === Number(legislador));
+      nombre = `${formatNombreLegislador(leg)} presenta nuevo instrumento`;
+      trigger = { tipo, legislador_id: Number(legislador) };
+    }
+    onAdd({ id: Date.now(), nombre, trigger, activa: true, fecha_creada: new Date().toISOString() });
+    reset();
+  };
 
   return (
     <div className="glass border border-borde rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
         <div>
-          <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Actividad reciente</div>
-          <div className="text-[10px] text-gray-400 mt-0.5">De tus temas seguidos · últimos días</div>
+          <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Mis alertas</div>
+          <div className="text-[10px] text-gray-400 mt-0.5">{alertas.length} configuradas</div>
         </div>
+        <button onClick={() => setShowForm(!showForm)}
+          className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition" style={{color: '#1a365d', background: '#f8faf8', border: '1px solid #e0e7e0'}}>
+          {showForm ? 'Cancelar' : '+ Crear alerta'}
+        </button>
       </div>
-      <div className="space-y-2">
-        {items.map((it, i) => (
-          <div key={i} className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded -mx-2">
-            <div className="text-[10px] text-gray-400 font-mono w-16 flex-shrink-0 mt-0.5">{(it.ts || '').slice(5, 10) || '—'}</div>
-            <div className="flex-1 min-w-0">
-              {it.url ? (
-                <a href={it.url} target="_blank" rel="noopener" className="text-xs text-gray-800 hover:underline block">{it.titulo}</a>
-              ) : (
-                <div className="text-xs text-gray-800">{it.titulo}</div>
-              )}
-              <div className="text-[10px] text-gray-500 mt-0.5">{it.sub}</div>
+
+      {showForm && (
+        <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200 space-y-2.5">
+          <div>
+            <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Tipo</label>
+            <select value={tipo} onChange={e => setTipo(e.target.value)}
+              className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white">
+              <option value="tema_score">Score de tema sube de un umbral</option>
+              <option value="legislador_actividad">Legislador presenta nuevo instrumento</option>
+            </select>
+          </div>
+          {tipo === 'tema_score' && (
+            <>
+              <div>
+                <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Tema</label>
+                <select value={tema} onChange={e => setTema(e.target.value)}
+                  className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white">
+                  <option value="">Elige tema...</option>
+                  {semaforo.map(s => <option key={s.categoria} value={s.categoria}>{s.nombre}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Umbral · {umbral}</label>
+                <input type="range" min="40" max="95" value={umbral} onChange={e => setUmbral(Number(e.target.value))}
+                  className="w-full mt-1" />
+              </div>
+            </>
+          )}
+          {tipo === 'legislador_actividad' && (
+            <div>
+              <label className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">Legislador</label>
+              <select value={legislador} onChange={e => setLegislador(e.target.value)}
+                className="w-full mt-1 px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white">
+                <option value="">Elige legislador...</option>
+                {allLegisladores.map(l => <option key={l.id} value={l.id}>{formatNombreLegislador(l)}</option>)}
+              </select>
             </div>
+          )}
+          <button onClick={submit}
+            className="w-full mt-1 text-white font-semibold py-2 rounded-full text-xs"
+            style={{background: 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)'}}>
+            Guardar alerta
+          </button>
+        </div>
+      )}
+
+      {alertas.length === 0 && !showForm && (
+        <div className="text-xs text-gray-500 italic text-center py-6">Aún no has creado alertas</div>
+      )}
+
+      <div className="space-y-2">
+        {alertas.map(a => (
+          <div key={a.id} className="border border-gray-200 rounded-lg p-2.5 flex items-center justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <div className="text-xs font-semibold text-gray-800 truncate">{a.nombre}</div>
+              <div className="text-[10px] text-gray-500 font-mono">
+                {a.activa ? 'Activa' : 'Pausada'} · creada {new Date(a.fecha_creada).toLocaleDateString('es-MX', {day:'2-digit', month:'short'})}
+              </div>
+            </div>
+            <button onClick={() => onToggle(a.id)} className={`text-[10px] px-2 py-1 rounded font-bold ${a.activa ? 'text-amber-700 bg-amber-50' : 'text-emerald-700 bg-emerald-50'}`}>
+              {a.activa ? 'Pausar' : 'Activar'}
+            </button>
+            <button onClick={() => onRemove(a.id)} className="text-gray-300 hover:text-rose-600 w-6 h-6 text-base leading-none">×</button>
           </div>
         ))}
+      </div>
+      <div className="mt-3 text-[10px] text-gray-400 italic">
+        Las alertas se guardan en este navegador. Email automático disponible en V2.
       </div>
     </div>
   );
 }
 
-// ─── Modal de Configuración con 3 tabs ───
+// ─── Modal Configurar (sobrio, sin "bubbles") ───
 function ConfigModal({ data, allLegisladores, config, setConfig, onClose }) {
   const [tab, setTab] = useState('legisladores');
   const [search, setSearch] = useState('');
@@ -572,7 +1145,7 @@ function ConfigModal({ data, allLegisladores, config, setConfig, onClose }) {
     let list = allLegisladores;
     if (search.length >= 2) {
       const q = search.toLowerCase();
-      list = list.filter(l => (l.nombre || '').toLowerCase().includes(q));
+      list = list.filter(l => formatNombreLegislador(l).toLowerCase().includes(q));
     }
     if (filtroCamara) list = list.filter(l => l.camara === filtroCamara);
     if (filtroPartido) list = list.filter(l => l.partido === filtroPartido);
@@ -589,14 +1162,12 @@ function ConfigModal({ data, allLegisladores, config, setConfig, onClose }) {
     else if (set.size < 20) set.add(id);
     setConfig({ ...config, legisladores: Array.from(set) });
   };
-
   const toggleTema = (cat) => {
     const set = new Set(config.temas);
     if (set.has(cat)) set.delete(cat);
     else if (set.size < 8) set.add(cat);
     setConfig({ ...config, temas: Array.from(set) });
   };
-
   const toggleEstado = (key) => {
     const set = new Set(config.estados);
     if (set.has(key)) set.delete(key);
@@ -609,10 +1180,9 @@ function ConfigModal({ data, allLegisladores, config, setConfig, onClose }) {
   const estadosList = Object.entries(mapa).sort((a, b) => (b[1].total_articulos || 0) - (a[1].total_articulos || 0));
 
   return (
-    <div className="fixed inset-0 z-50 modal-backdrop bg-black/40 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 modal-backdrop bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
       <div onClick={e => e.stopPropagation()}
         className="modal-card bg-white rounded-2xl max-w-4xl w-full max-h-[88vh] flex flex-col" style={{boxShadow: '0 20px 60px rgba(0,0,0,0.15)'}}>
-        {/* Header */}
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
           <div>
             <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">CONFIGURAR CONSOLE</div>
@@ -621,24 +1191,22 @@ function ConfigModal({ data, allLegisladores, config, setConfig, onClose }) {
           <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-2xl leading-none w-8 h-8 hover:bg-gray-100 rounded-full">×</button>
         </div>
 
-        {/* Tabs */}
         <div className="px-5 border-b border-gray-100 flex gap-1">
           <button onClick={() => setTab('legisladores')}
-            className={`px-3 py-2.5 text-xs font-semibold transition border-b-2 ${tab === 'legisladores' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+            className={`px-3 py-2.5 text-xs font-semibold transition border-b-2 -mb-px ${tab === 'legisladores' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
             Legisladores · {config.legisladores.length}/20
           </button>
           <button onClick={() => setTab('temas')}
-            className={`px-3 py-2.5 text-xs font-semibold transition border-b-2 ${tab === 'temas' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+            className={`px-3 py-2.5 text-xs font-semibold transition border-b-2 -mb-px ${tab === 'temas' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
             Temas · {config.temas.length}/8
           </button>
           <button onClick={() => setTab('estados')}
-            className={`px-3 py-2.5 text-xs font-semibold transition border-b-2 ${tab === 'estados' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+            className={`px-3 py-2.5 text-xs font-semibold transition border-b-2 -mb-px ${tab === 'estados' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
             Estados · {config.estados.length}/12
           </button>
         </div>
 
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto p-5">
+        <div className="flex-1 overflow-y-auto p-5 scroll-fina">
           {tab === 'legisladores' && (
             <div>
               <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -660,21 +1228,22 @@ function ConfigModal({ data, allLegisladores, config, setConfig, onClose }) {
               <div className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">
                 {legisladoresFiltrados.length} resultados
               </div>
-              <div className="space-y-1">
+              <div className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
                 {legisladoresFiltrados.slice(0, 100).map(l => {
                   const sel = config.legisladores.includes(l.id);
+                  const nombreFmt = formatNombreLegislador(l);
                   return (
                     <button key={l.id} onClick={() => toggleLeg(l.id)}
-                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition ${sel ? 'bg-emerald-50 border border-emerald-200' : 'hover:bg-gray-50 border border-transparent'}`}>
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition ${sel ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}>
                       <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-[11px] text-gray-700 flex-shrink-0">
-                        {l.nombre.split(/\s+/).filter(w => w.length > 2).slice(0, 2).map(w => w[0]).join('').toUpperCase()}
+                        {getInitials(nombreFmt)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-gray-800 truncate">{l.nombre}</div>
+                        <div className="text-sm font-semibold text-gray-800 truncate">{nombreFmt}</div>
                         <div className="text-[10px] text-gray-500 font-mono">{l.partido} · {(l.camara || '').replace('Cámara de ', '')}{l.estado ? ` · ${l.estado}` : ''}</div>
                       </div>
-                      <div className={`text-[11px] font-bold px-2 py-1 rounded ${sel ? 'text-emerald-700' : 'text-gray-400'}`}>
-                        {sel ? 'Seleccionado' : '+ Agregar'}
+                      <div className={`text-[11px] font-bold ${sel ? 'text-emerald-700' : 'text-gray-400'}`}>
+                        {sel ? '✓ Sí' : '+ Agregar'}
                       </div>
                     </button>
                   );
@@ -688,21 +1257,21 @@ function ConfigModal({ data, allLegisladores, config, setConfig, onClose }) {
 
           {tab === 'temas' && (
             <div>
-              <div className="text-xs text-gray-500 mb-3">Selecciona hasta 8 categorías para seguir su evolución y recibir actividad relacionada.</div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              <div className="text-xs text-gray-500 mb-3">Selecciona hasta 8 categorías para seguir su evolución.</div>
+              <div className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
                 {semaforo.map(s => {
                   const sel = config.temas.includes(s.categoria);
                   const colorDot = { verde: '#2e7d32', amarillo: '#c6972b', rojo: '#c62828' }[s.color];
                   return (
                     <button key={s.categoria} onClick={() => toggleTema(s.categoria)}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition ${sel ? 'bg-emerald-50 border border-emerald-200' : 'border border-gray-200 hover:bg-gray-50'}`}>
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition ${sel ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}>
                       <div className="w-3 h-3 rounded-full flex-shrink-0" style={{background: colorDot}}></div>
                       <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-gray-800 truncate">{s.nombre}</div>
+                        <div className="text-sm font-semibold text-gray-800">{s.nombre}</div>
                         <div className="text-[10px] text-gray-500 font-mono">Score {s.score_total.toFixed(0)}</div>
                       </div>
-                      <div className={`text-[11px] font-bold px-2 py-1 ${sel ? 'text-emerald-700' : 'text-gray-400'}`}>
-                        {sel ? 'Seleccionado' : '+ Agregar'}
+                      <div className={`text-[11px] font-bold ${sel ? 'text-emerald-700' : 'text-gray-400'}`}>
+                        {sel ? '✓ Sí' : '+ Agregar'}
                       </div>
                     </button>
                   );
@@ -714,19 +1283,19 @@ function ConfigModal({ data, allLegisladores, config, setConfig, onClose }) {
           {tab === 'estados' && (
             <div>
               <div className="text-xs text-gray-500 mb-3">Selecciona hasta 12 estados para vigilar su cobertura mediática.</div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
+              <div className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
                 {estadosList.map(([key, info]) => {
                   const sel = config.estados.includes(key);
                   return (
                     <button key={key} onClick={() => toggleEstado(key)}
-                      className={`flex items-center justify-between px-3 py-2 rounded-lg text-left transition ${sel ? 'bg-emerald-50 border border-emerald-200' : 'border border-gray-200 hover:bg-gray-50'}`}>
+                      className={`w-full flex items-center justify-between px-3 py-2.5 text-left transition ${sel ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}>
                       <div className="flex items-center gap-3 min-w-0">
                         <span className="text-sm text-gray-800 truncate">{info.nombre || info.abreviatura}</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-gray-500 font-mono">{info.total_articulos || 0}</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] text-gray-500 font-mono">{info.total_articulos || 0} notas</span>
                         <span className={`text-[11px] font-bold ${sel ? 'text-emerald-700' : 'text-gray-400'}`}>
-                          {sel ? '✓' : '+'}
+                          {sel ? '✓ Sí' : '+ Agregar'}
                         </span>
                       </div>
                     </button>
@@ -737,7 +1306,6 @@ function ConfigModal({ data, allLegisladores, config, setConfig, onClose }) {
           )}
         </div>
 
-        {/* Footer */}
         <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between bg-gray-50 rounded-b-2xl">
           <div className="text-[10px] text-gray-500 font-mono">
             Cambios se guardan automáticamente en este navegador
@@ -753,17 +1321,20 @@ function ConfigModal({ data, allLegisladores, config, setConfig, onClose }) {
   );
 }
 
-// ─── App principal ───
+// ─── App ───
 function App() {
   const [authed, setAuthed] = useState(() => sessionStorage.getItem(SESSION_KEY) === '1');
   const [data, setData] = useState(null);
   const [allLegisladores, setAllLegisladores] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showConfig, setShowConfig] = useState(false);
+  const [legSel, setLegSel] = useState(null);
+  const [temaSel, setTemaSel] = useState(null);
+  const [filtroCSP, setFiltroCSP] = useState(null);
   const [config, setConfigState] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { legisladores: [], temas: [], estados: [] };
-    } catch { return { legisladores: [], temas: [], estados: [] }; }
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { legisladores: [], temas: [], estados: [], alertas: [] };
+    } catch { return { legisladores: [], temas: [], estados: [], alertas: [] }; }
   });
 
   const setConfig = (next) => {
@@ -780,7 +1351,6 @@ function App() {
     ]).then(([d, radar]) => {
       setData(d);
       setAllLegisladores(radar.legisladores || []);
-      // Cargar más páginas en background si hace falta
       const total = radar.total || 0;
       if (total > 100) {
         const pages = Math.ceil(total / 100);
@@ -817,12 +1387,12 @@ function App() {
   const legisladoresEnConfig = allLegisladores.filter(l => legisladoresIds.has(l.id));
   const temasEnConfig = semaforo.filter(s => temasSelectos.has(s.categoria));
   const configCount = config.legisladores.length + config.temas.length + config.estados.length;
+  const alertas = config.alertas || [];
 
   return (
     <div className="max-w-7xl mx-auto px-4 pt-4 pb-24 space-y-4">
-      <Header onConfigClick={() => setShowConfig(true)} configCount={configCount} />
+      <Header onConfigClick={() => setShowConfig(true)} configCount={configCount} ultimaActualizacion={data.metadata?.generado} />
 
-      {/* Empty state */}
       {configCount === 0 && (
         <div className="glass border border-borde rounded-2xl p-12 text-center">
           <div className="text-3xl font-black text-gray-900">Bienvenido a Console Pro</div>
@@ -838,104 +1408,97 @@ function App() {
           <div className="grid grid-cols-3 gap-3 mt-8 max-w-2xl mx-auto text-xs text-gray-600">
             <div className="p-3 border border-gray-200 rounded-xl">
               <div className="text-2xl font-black text-gray-900 font-mono">{allLegisladores.length || '—'}</div>
-              <div className="text-[10px] uppercase tracking-wider mt-1 font-bold text-gray-500">Legisladores disponibles</div>
+              <div className="text-[10px] uppercase tracking-wider mt-1 font-bold text-gray-500">Legisladores</div>
             </div>
             <div className="p-3 border border-gray-200 rounded-xl">
               <div className="text-2xl font-black text-gray-900 font-mono">{semaforo.length}</div>
-              <div className="text-[10px] uppercase tracking-wider mt-1 font-bold text-gray-500">Categorías temáticas</div>
+              <div className="text-[10px] uppercase tracking-wider mt-1 font-bold text-gray-500">Categorías</div>
             </div>
             <div className="p-3 border border-gray-200 rounded-xl">
               <div className="text-2xl font-black text-gray-900 font-mono">32</div>
-              <div className="text-[10px] uppercase tracking-wider mt-1 font-bold text-gray-500">Estados monitoreables</div>
+              <div className="text-[10px] uppercase tracking-wider mt-1 font-bold text-gray-500">Estados</div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Stats overview */}
+      {/* ROW 1: Tendencia 50% + Terminal IA mockup 50% */}
       {configCount > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <div className="glass border border-borde rounded-xl p-3">
-            <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">MIS LEGISLADORES</div>
-            <div className="text-2xl font-black mt-1 font-mono text-gray-900">{config.legisladores.length}<span className="text-base text-gray-400">/20</span></div>
-            <div className="text-[10px] text-gray-500 mt-0.5 font-mono">Monitoreados activos</div>
-          </div>
-          <div className="glass border border-borde rounded-xl p-3">
-            <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">MIS TEMAS</div>
-            <div className="text-2xl font-black mt-1 font-mono text-gray-900">{config.temas.length}<span className="text-base text-gray-400">/8</span></div>
-            <div className="text-[10px] text-gray-500 mt-0.5 font-mono">Categorías seguidas</div>
-          </div>
-          <div className="glass border border-borde rounded-xl p-3">
-            <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">MIS ESTADOS</div>
-            <div className="text-2xl font-black mt-1 font-mono text-gray-900">{config.estados.length}<span className="text-base text-gray-400">/12</span></div>
-            <div className="text-[10px] text-gray-500 mt-0.5 font-mono">Cobertura regional</div>
-          </div>
-          <div className="glass border border-borde rounded-xl p-3">
-            <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">ÚLTIMA ACTUALIZACIÓN</div>
-            <div className="text-base font-bold mt-1 font-mono text-gray-900">{new Date(data.metadata?.generado || '').toLocaleString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</div>
-            <div className="text-[10px] text-gray-500 mt-0.5 font-mono">{(data.metadata?.sil_docs || 0).toLocaleString()} instrumentos en BD</div>
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <TendenciaTemas historial={data.historial_scores} semaforo={semaforo} temasSelectos={temasSelectos} />
+          <TerminalIAMockup />
         </div>
       )}
 
-      {/* Tendencia de mis temas */}
-      {(configCount > 0 || temasSelectos.size > 0) && (
-        <TendenciaTemas historial={data.historial_scores} semaforo={semaforo} temasSelectos={temasSelectos} />
-      )}
-
-      {/* Mis temas (cards) */}
+      {/* Mis temas */}
       {temasEnConfig.length > 0 && (
         <div>
-          <div className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">MIS TEMAS · {temasEnConfig.length}</div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Mis temas · {temasEnConfig.length}/8</div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {temasEnConfig.map(t => (
               <TemaCard key={t.categoria} data={t}
-                onRemove={(cat) => setConfig({ ...config, temas: config.temas.filter(c => c !== cat) })} />
+                onRemove={(cat) => setConfig({ ...config, temas: config.temas.filter(c => c !== cat) })}
+                onClick={() => setTemaSel(t)} />
             ))}
           </div>
         </div>
       )}
 
-      {/* Row: Estados | Alertas */}
-      {(estadosSelectos.size > 0 || legisladoresEnConfig.length > 0) && (
+      {/* ROW: Mapa estados | Menciones CSP */}
+      {(estadosSelectos.size > 0 || temasSelectos.size > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          <MisEstados mapa={data.mapa || {}} estadosSelectos={estadosSelectos}
+          <MapaMexico mapa={data.mapa || {}} estadosSelectos={estadosSelectos}
             onRemove={(key) => setConfig({ ...config, estados: config.estados.filter(e => e !== key) })} />
-          <ActividadReciente data={data} legisladoresIds={legisladoresIds}
-            temasSelectos={temasSelectos} estadosSelectos={estadosSelectos} />
+          <MencionesCSP data={data} semaforo={semaforo} temasSelectos={temasSelectos}
+            filtroTema={filtroCSP} setFiltroTema={setFiltroCSP} />
         </div>
       )}
 
       {/* Mis legisladores */}
       {legisladoresEnConfig.length > 0 && (
         <div>
-          <div className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-2">MIS LEGISLADORES · {legisladoresEnConfig.length}</div>
+          <div className="flex items-center justify-between mb-2">
+            <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Mis legisladores · {legisladoresEnConfig.length}/20</div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {legisladoresEnConfig.map(l => (
-              <LegisladorCard key={l.id} leg={l}
-                onRemove={(id) => setConfig({ ...config, legisladores: config.legisladores.filter(x => x !== id) })} />
+              <LegisladorCard key={l.id} leg={l} semaforo={semaforo}
+                onRemove={(id) => setConfig({ ...config, legisladores: config.legisladores.filter(x => x !== id) })}
+                onClick={() => setLegSel(l)} />
             ))}
           </div>
         </div>
       )}
 
-      {/* Footer */}
+      {/* ROW: Actividad reciente | Mis alertas */}
+      {configCount > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <ActividadReciente data={data} semaforo={semaforo}
+            legisladoresIds={legisladoresIds} temasSelectos={temasSelectos}
+            allLegisladores={allLegisladores} />
+          <MisAlertas alertas={alertas} semaforo={semaforo} allLegisladores={allLegisladores}
+            onAdd={(a) => setConfig({ ...config, alertas: [...alertas, a] })}
+            onRemove={(id) => setConfig({ ...config, alertas: alertas.filter(x => x.id !== id) })}
+            onToggle={(id) => setConfig({ ...config, alertas: alertas.map(x => x.id === id ? { ...x, activa: !x.activa } : x) })} />
+        </div>
+      )}
+
       <div className="text-center text-[10px] text-gray-400 font-mono pt-6">
-        FIAT Console Pro · v1.0 ALPHA · Datos actualizados cada 4 horas
+        FIAT Console Pro · v1 ALPHA · Datos actualizados cada 4 horas
       </div>
 
-      {/* FAB Configurar (siempre visible) */}
+      {/* FAB Configurar */}
       <button onClick={() => setShowConfig(true)}
         className="fab-config fixed bottom-6 right-6 px-5 py-3 rounded-full font-semibold text-sm flex items-center gap-2 z-30">
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         Configurar
       </button>
 
-      {/* Modal Config */}
-      {showConfig && (
-        <ConfigModal data={data} allLegisladores={allLegisladores}
-          config={config} setConfig={setConfig} onClose={() => setShowConfig(false)} />
-      )}
+      {showConfig && <ConfigModal data={data} allLegisladores={allLegisladores} config={config} setConfig={setConfig} onClose={() => setShowConfig(false)} />}
+      {legSel && <LegisladorModal leg={legSel} semaforo={semaforo} onClose={() => setLegSel(null)} />}
+      {temaSel && <TemaModal tema={temaSel} fuentes={data.fuentes} onClose={() => setTemaSel(null)} />}
     </div>
   );
 }
