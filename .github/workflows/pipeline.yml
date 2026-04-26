@@ -83,11 +83,11 @@ jobs:
           TWITTER_ACCESS_SECRET: ${{ secrets.TWITTER_ACCESS_SECRET }}
           SERPAPI_KEY: ${{ secrets.SERPAPI_KEY }}
           # Haiku 4.5 como segunda pasada del clasificador (ambiguos).
-          # El secret se llama FIAT_CLAUDE_API_KEY en GitHub para no chocar
-          # con otras keys de Anthropic que el usuario tenga. El SDK de
-          # anthropic lee ANTHROPIC_API_KEY del entorno, así que hacemos el
-          # mapping aquí. Si el secret no está, el clasificador usa keyword-only.
-          ANTHROPIC_API_KEY: ${{ secrets.FIAT_CLAUDE_API_KEY }}
+          # ⛔ DESACTIVADO 25-abr-2026 tras incidente de runs cancelados en loop
+          # (timeout 90min + 429 rate limit + cache no commiteado = sangría
+          # de créditos sin progreso). Reactivar SOLO con cap por run y
+          # commit intermedio del cache. Ver MEMORY.md "POLÍTICA FIRME".
+          # ANTHROPIC_API_KEY: ${{ secrets.FIAT_CLAUDE_API_KEY }}
           SEMAFORO_DB_MODE: local
           # Solo setea reset cuando el workflow_dispatch lo pide; el
           # cron programado pasa '' y main.py lo interpreta como 0.
