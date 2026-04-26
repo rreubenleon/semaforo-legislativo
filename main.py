@@ -112,6 +112,33 @@ ROOT = Path(__file__).resolve().parent
 DASHBOARD_DATA = ROOT / "dashboard" / "data.json"
 
 
+def _obtener_actividad_legisladores_reciente():
+    """
+    Devuelve los instrumentos presentados por TODOS los legisladores en los
+    últimos 14 días. Para Console Pro (filtra a sus legisladores monitoreados).
+    Cap 500 rows para no inflar data.json.
+    """
+    try:
+        import sqlite3
+        from db import get_connection
+        conn = get_connection()
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute("""
+            SELECT a.legislador_id, a.nombre_presentador, a.tipo_instrumento,
+                   a.categoria, a.fecha_presentacion, a.titulo,
+                   a.comision_turno, a.estatus, a.sil_documento_id
+            FROM actividad_legislador a
+            WHERE a.fecha_presentacion >= date('now', '-14 days')
+              AND a.legislador_id IS NOT NULL
+            ORDER BY a.fecha_presentacion DESC
+            LIMIT 500
+        """).fetchall()
+        return [dict(r) for r in rows]
+    except Exception as e:
+        logger.warning(f"No se pudo obtener actividad_legisladores_reciente: {e}")
+        return []
+
+
 def _obtener_tweets_fiat():
     """
     Obtiene los últimos tweets de @Fiat_MX via API v2 para mostrar en el dashboard.
@@ -933,6 +960,7 @@ def paso_7_exportar_dashboard():
         "resoluciones": obtener_resoluciones(semanas=12),
         "tweets_fiat": _obtener_tweets_fiat(),
         "convocatorias": obtener_convocatorias(),
+        "actividad_legisladores_reciente": _obtener_actividad_legisladores_reciente(),
         # comisiones_actividad: migrado a D1 (Worker /comisiones)
         # haiku_status: NO se expone en data.json (visible públicamente).
         # Se usa solo internamente en commit message + GitHub Actions warning.

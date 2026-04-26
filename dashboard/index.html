@@ -1066,6 +1066,45 @@
                     }
                 };
 
+                /* Plugin: anillo pulsante (sonar) en el último punto del dataset
+                   con score más alto. Identifica el "líder" actual y le pone un
+                   ping animado para que destaque visualmente. */
+                const topPulsePlugin = {
+                    id: 'topPulse',
+                    afterDatasetsDraw(chart) {
+                        let topIdx = -1, topValue = -Infinity;
+                        chart.data.datasets.forEach((ds, i) => {
+                            const data = ds.data || [];
+                            for (let j = data.length - 1; j >= 0; j--) {
+                                const v = data[j];
+                                if (v != null && v !== undefined) {
+                                    if (v > topValue) { topValue = v; topIdx = i; }
+                                    break;
+                                }
+                            }
+                        });
+                        if (topIdx === -1) return;
+                        const meta = chart.getDatasetMeta(topIdx);
+                        const points = meta.data || [];
+                        if (points.length === 0) return;
+                        const lastPoint = points[points.length - 1];
+                        if (!lastPoint) return;
+                        const x = lastPoint.x, y = lastPoint.y;
+                        const color = chart.data.datasets[topIdx].borderColor;
+                        const t = ((Date.now() % 1500) / 1500);
+                        const radius = 5 + t * 14;
+                        const opacity = (1 - t) * 0.65;
+                        const ctx = chart.ctx;
+                        ctx.save();
+                        ctx.beginPath(); ctx.arc(x, y, radius, 0, 2 * Math.PI);
+                        ctx.strokeStyle = color; ctx.globalAlpha = opacity; ctx.lineWidth = 2; ctx.stroke();
+                        ctx.beginPath(); ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                        ctx.globalAlpha = 1; ctx.fillStyle = color; ctx.fill();
+                        ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+                        ctx.restore();
+                    }
+                };
+
                 /* Animación progressive line drawing (patrón canónico de Chart.js):
                    cada punto se dibuja después del anterior, de izquierda a derecha,
                    trazando la línea. El y.from toma la Y del punto previo, así nunca
@@ -1084,7 +1123,7 @@
 
                 chartInstance.current = new Chart(chartRef.current, {
                     type: 'line',
-                    plugins: [thresholdPlugin],
+                    plugins: [thresholdPlugin, topPulsePlugin],
                     data: { labels, datasets },
                     options: {
                         responsive: true,
@@ -1156,7 +1195,15 @@
                     }
                 });
 
+                /* Animación del top pulse: redraw cada 60ms (~16fps suave) */
+                const pulseInterval = setInterval(() => {
+                    if (chartInstance.current) {
+                        try { chartInstance.current.draw(); } catch(e) {}
+                    }
+                }, 60);
+
                 return () => {
+                    clearInterval(pulseInterval);
                     if (chartInstance.current) {
                         try { chartInstance.current.destroy(); } catch (e) {}
                         chartInstance.current = null;

@@ -92,7 +92,14 @@
         .nav-pill-tab-active::after { content: ''; position: absolute; bottom: 0px; left: 20%; right: 20%; height: 1.5px; background: #d1d5db; border-radius: 1px; }
         .leaflet-tooltip-fiat { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .leaflet-tooltip-fiat::before { border-top-color: #e5e7eb; }
-        .leaflet-container { font-family: 'Inter', sans-serif; }
+        .leaflet-container { font-family: 'Inter', sans-serif; z-index: 0 !important; }
+        .leaflet-pane, .leaflet-control { z-index: 1 !important; }
+        .leaflet-top, .leaflet-bottom { z-index: 1 !important; }
+        /* Animación punto parpadeante para el top score en Tendencia */
+        @keyframes top-score-pulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(46,125,50,0.7), 0 0 8px rgba(46,125,50,0.5); }
+          50% { box-shadow: 0 0 0 6px rgba(46,125,50,0), 0 0 16px rgba(46,125,50,0.8); }
+        }
         /* Mobile responsive */
         @media (max-width: 768px) {
             .nav-pill-tab { padding: 5px 8px; font-size: 11px; }
@@ -1066,6 +1073,54 @@
                     }
                 };
 
+                /* Plugin: anillo pulsante en el último punto del dataset con score más alto.
+                   Identifica el "líder" actual y le pone un sonar/ping animado. */
+                const topPulsePlugin = {
+                    id: 'topPulse',
+                    afterDatasetsDraw(chart) {
+                        let topIdx = -1, topValue = -Infinity;
+                        chart.data.datasets.forEach((ds, i) => {
+                            const data = ds.data || [];
+                            for (let j = data.length - 1; j >= 0; j--) {
+                                const v = data[j];
+                                if (v != null && v !== undefined) {
+                                    if (v > topValue) { topValue = v; topIdx = i; }
+                                    break;
+                                }
+                            }
+                        });
+                        if (topIdx === -1) return;
+                        const meta = chart.getDatasetMeta(topIdx);
+                        const points = meta.data || [];
+                        if (points.length === 0) return;
+                        const lastPoint = points[points.length - 1];
+                        if (!lastPoint) return;
+                        const x = lastPoint.x, y = lastPoint.y;
+                        const color = chart.data.datasets[topIdx].borderColor;
+                        const t = ((Date.now() % 1500) / 1500);
+                        const radius = 5 + t * 14;
+                        const opacity = (1 - t) * 0.65;
+                        const ctx = chart.ctx;
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.arc(x, y, radius, 0, 2 * Math.PI);
+                        ctx.strokeStyle = color;
+                        ctx.globalAlpha = opacity;
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                        /* Punto sólido encima del último punto */
+                        ctx.beginPath();
+                        ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                        ctx.globalAlpha = 1;
+                        ctx.fillStyle = color;
+                        ctx.fill();
+                        ctx.lineWidth = 2;
+                        ctx.strokeStyle = '#fff';
+                        ctx.stroke();
+                        ctx.restore();
+                    }
+                };
+
                 /* Animación progressive line drawing (patrón canónico de Chart.js):
                    cada punto se dibuja después del anterior, de izquierda a derecha,
                    trazando la línea. El y.from toma la Y del punto previo, así nunca
@@ -1084,7 +1139,7 @@
 
                 chartInstance.current = new Chart(chartRef.current, {
                     type: 'line',
-                    plugins: [thresholdPlugin],
+                    plugins: [thresholdPlugin, topPulsePlugin],
                     data: { labels, datasets },
                     options: {
                         responsive: true,
@@ -1156,7 +1211,15 @@
                     }
                 });
 
+                /* Animación del top pulse: redraw cada 60ms (~16fps suave) */
+                const pulseInterval = setInterval(() => {
+                    if (chartInstance.current) {
+                        try { chartInstance.current.draw(); } catch(e) {}
+                    }
+                }, 60);
+
                 return () => {
+                    clearInterval(pulseInterval);
                     if (chartInstance.current) {
                         try { chartInstance.current.destroy(); } catch (e) {}
                         chartInstance.current = null;
@@ -5403,6 +5466,12 @@
           const [alertaTema, setAlertaTema] = useState('');
           const [alertaUmbral, setAlertaUmbral] = useState(75);
           const [alertaLeg, setAlertaLeg] = useState('');
+          /* Filtros para detalle de estado seleccionado */
+          const [periodoEstado, setPeriodoEstado] = useState('1w'); // 1w, 2w, 1m
+          const [paginaEstado, setPaginaEstado] = useState(1);
+
+          /* Reset paginación cuando cambia estado o periodo */
+          useEffect(() => { setPaginaEstado(1); }, [estadoSeleccionado, periodoEstado]);
 
           const semaforo = data.semaforo || [];
           const mapa = data.mapa || {};
@@ -5432,7 +5501,8 @@
             return { fechas: data.historial_scores.fechas, categorias: cats };
           }, [data.historial_scores, config.temas]);
 
-          /* Actividad reciente: solo notas de medios y autoria de mis legisladores, última semana */
+          /* Actividad reciente: notas de medios + instrumentos REALES de mis legisladores
+             (jala data.actividad_legisladores_reciente que viene del pipeline). Última semana. */
           const actividad = useMemo(() => {
             const ahora = new Date();
             const haceUnaSem = new Date(ahora.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -5445,18 +5515,20 @@
                 out_tema.push({ tipo: 'tema', ts: a.fecha, titulo: a.titulo, sub: `${a.fuente} · ${_catLabel(cat)}`, url: a.url });
               });
             });
-            /* Mis legisladores: actividad de autoria */
-            const autoria = data.autoria || {};
-            Object.entries(autoria).forEach(([cat, items]) => {
-              (items || []).forEach(it => {
-                if (!legisladoresIds.has(it.legislador_id)) return;
-                (it.instrumentos || []).slice(0, 5).forEach(inst => {
-                  if (!inst.fecha || new Date(inst.fecha) < haceUnaSem) return;
-                  out_leg.push({ tipo: 'legislador', ts: inst.fecha,
-                    titulo: inst.titulo || 'Instrumento legislativo',
-                    sub: `${formatNombreLegislador({nombre: it.nombre, camara: it.camara || ''})} · ${_catLabel(cat)}`,
-                    url: inst.url });
-                });
+            /* Mis legisladores: actividad real de tabla actividad_legislador */
+            const actLegisladores = data.actividad_legisladores_reciente || [];
+            actLegisladores.forEach(act => {
+              if (!legisladoresIds.has(act.legislador_id)) return;
+              if (!act.fecha_presentacion || new Date(act.fecha_presentacion) < haceUnaSem) return;
+              const nombreFmt = formatNombreLegislador({ nombre: act.nombre_presentador, camara: '' });
+              const catNombre = act.categoria ? _catLabel(act.categoria) : (act.tipo_instrumento || '');
+              out_leg.push({
+                tipo: 'legislador',
+                ts: act.fecha_presentacion,
+                titulo: act.titulo || act.tipo_instrumento || 'Instrumento legislativo',
+                sub: `${nombreFmt}${act.tipo_instrumento ? ' · ' + act.tipo_instrumento : ''}${catNombre ? ' · ' + catNombre : ''}`,
+                url: null,
+                estatus: act.estatus,
               });
             });
             const sortFn = (a,b) => (b.ts||'').localeCompare(a.ts||'');
@@ -5557,24 +5629,66 @@
                       <MapaMexico estados={estadosFiltradosArr} maxArts={maxArtsConfig}
                         onSelectEstado={(key) => setEstadoSeleccionado(estadoSeleccionado === key ? null : key)}
                         estadoSeleccionado={estadoSeleccionado} />
-                      {selectedEstadoData && (
-                        <div className="mt-3 border-t border-gray-100 pt-3">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="font-bold text-gray-800 text-base">{selectedEstadoData.nombre}</div>
-                            <button onClick={() => setEstadoSeleccionado(null)} className="text-gray-400 hover:text-gray-700 text-lg leading-none">×</button>
-                          </div>
-                          <div className="flex items-center gap-3 mb-3">
-                            <span className="bg-acento text-white text-sm font-bold px-3 py-1 rounded-lg font-mono">{selectedEstadoData.total_articulos}</span>
-                            <span className="text-sm text-gray-500 font-mono">noticias rastreadas</span>
-                          </div>
-                          {(selectedEstadoData.articulos || []).slice(0, 5).map((art, i) => (
-                            <div key={i} className="bg-gray-50 rounded-lg p-2.5 mb-1.5 border border-gray-100">
-                              <a href={art.url} target="_blank" rel="noopener" className="text-xs text-blue-700 hover:underline block leading-snug">{art.titulo}</a>
-                              <div className="text-[10px] text-gray-400 font-mono mt-1">{art.fuente} · {art.fecha}</div>
+                      {selectedEstadoData && (() => {
+                        /* Filtrar artículos del estado por periodo */
+                        const ahora = Date.now();
+                        const dias = { '1w': 7, '2w': 14, '1m': 30 }[periodoEstado] || 7;
+                        const desde = ahora - dias * 24 * 60 * 60 * 1000;
+                        const todosArts = (selectedEstadoData.articulos || []);
+                        const filtrados = todosArts.filter(a => {
+                          if (!a.fecha) return false;
+                          const t = new Date(a.fecha).getTime();
+                          return !isNaN(t) && t >= desde;
+                        }).sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+                        const PER_PAGE = 10;
+                        const totalPag = Math.max(1, Math.ceil(filtrados.length / PER_PAGE));
+                        const pag = Math.min(paginaEstado, totalPag);
+                        const slice = filtrados.slice((pag - 1) * PER_PAGE, pag * PER_PAGE);
+                        return (
+                          <div className="mt-3 border-t border-gray-100 pt-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="font-bold text-gray-800 text-base">{selectedEstadoData.nombre}</div>
+                              <button onClick={() => setEstadoSeleccionado(null)} className="text-gray-400 hover:text-gray-700 text-lg leading-none">×</button>
                             </div>
-                          ))}
-                        </div>
-                      )}
+                            <div className="flex items-center gap-3 mb-3 flex-wrap">
+                              <span className="bg-acento text-white text-sm font-bold px-3 py-1 rounded-lg font-mono">{selectedEstadoData.total_articulos}</span>
+                              <span className="text-sm text-gray-500 font-mono">total · {filtrados.length} en filtro</span>
+                            </div>
+                            {/* Filtros de periodo */}
+                            <div className="flex items-center gap-1 mb-3">
+                              {[['1w', '1 semana'], ['2w', '2 semanas'], ['1m', '1 mes']].map(([k, label]) => (
+                                <button key={k} onClick={() => setPeriodoEstado(k)}
+                                  className={`text-[11px] font-semibold px-3 py-1.5 rounded-full transition border ${periodoEstado === k ? 'border-acento text-white' : 'border-gray-200 text-gray-600 hover:border-gray-400 bg-white'}`}
+                                  style={periodoEstado === k ? {background: '#1a365d'} : {}}>
+                                  {label}
+                                </button>
+                              ))}
+                            </div>
+                            {slice.length === 0 ? (
+                              <div className="text-xs text-gray-500 italic text-center py-4">Sin notas en este periodo</div>
+                            ) : (
+                              <div className="space-y-1.5">
+                                {slice.map((art, i) => (
+                                  <div key={i} className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
+                                    <a href={art.url} target="_blank" rel="noopener" className="text-xs text-blue-700 hover:underline block leading-snug">{art.titulo}</a>
+                                    <div className="text-[10px] text-gray-400 font-mono mt-1">{art.fuente} · {art.fecha}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {/* Paginación */}
+                            {totalPag > 1 && (
+                              <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
+                                <button onClick={() => setPaginaEstado(p => Math.max(1, p - 1))} disabled={pag === 1}
+                                  className="text-[11px] font-semibold px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 hover:border-gray-400 disabled:opacity-40 disabled:cursor-not-allowed">← Anterior</button>
+                                <div className="text-[11px] text-gray-500 font-mono">Página {pag} de {totalPag}</div>
+                                <button onClick={() => setPaginaEstado(p => Math.min(totalPag, p + 1))} disabled={pag === totalPag}
+                                  className="text-[11px] font-semibold px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 hover:border-gray-400 disabled:opacity-40 disabled:cursor-not-allowed">Siguiente →</button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   ) : (
                     <div className="glass border border-borde rounded-xl p-8 text-center h-full flex flex-col items-center justify-center">
@@ -5596,18 +5710,8 @@
                         </select>
                       )}
                     </div>
-                    {cspMenciones.length > 0 ? (
-                      <div className="space-y-2 max-h-72 overflow-y-auto pr-1" style={{scrollbarWidth: 'thin'}}>
-                        {cspMenciones.map((m, i) => (
-                          <div key={i} className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
-                            <div className="text-xs text-gray-700 leading-snug">{m.cita || m.frase || m.titulo || '—'}</div>
-                            <div className="text-[10px] text-gray-400 mt-1 font-mono">{m.fecha || ''}</div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-xs text-gray-500 italic text-center py-6">{cspTema ? `Sin menciones recientes en ${_catLabel(cspTema)}` : 'Selecciona un tema para ver menciones'}</div>
-                    )}
+                    {/* Reusa el componente FuentesMananera REAL del DetalleModal */}
+                    <FuentesMananera menciones={cspMenciones} />
                   </div>
                 </div>
               )}
@@ -5795,8 +5899,44 @@
                 ctx.restore();
               }
             };
+            /* Anillo pulsante en el último punto del top score (líder actual) */
+            const topPulsePlugin = {
+              id: 'topPulse',
+              afterDatasetsDraw(chart) {
+                let topIdx = -1, topValue = -Infinity;
+                chart.data.datasets.forEach((ds, i) => {
+                  const data = ds.data || [];
+                  for (let j = data.length - 1; j >= 0; j--) {
+                    const v = data[j];
+                    if (v != null && v !== undefined) {
+                      if (v > topValue) { topValue = v; topIdx = i; }
+                      break;
+                    }
+                  }
+                });
+                if (topIdx === -1) return;
+                const meta = chart.getDatasetMeta(topIdx);
+                const points = meta.data || [];
+                if (points.length === 0) return;
+                const lastPoint = points[points.length - 1];
+                if (!lastPoint) return;
+                const x = lastPoint.x, y = lastPoint.y;
+                const color = chart.data.datasets[topIdx].borderColor;
+                const t = ((Date.now() % 1500) / 1500);
+                const radius = 5 + t * 14;
+                const opacity = (1 - t) * 0.65;
+                const ctx = chart.ctx;
+                ctx.save();
+                ctx.beginPath(); ctx.arc(x, y, radius, 0, 2 * Math.PI);
+                ctx.strokeStyle = color; ctx.globalAlpha = opacity; ctx.lineWidth = 2; ctx.stroke();
+                ctx.beginPath(); ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                ctx.globalAlpha = 1; ctx.fillStyle = color; ctx.fill();
+                ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+                ctx.restore();
+              }
+            };
             chartInstance.current = new Chart(chartRef.current, {
-              type: 'line', plugins: [thresholdPlugin], data: { labels, datasets },
+              type: 'line', plugins: [thresholdPlugin, topPulsePlugin], data: { labels, datasets },
               options: {
                 responsive: true, maintainAspectRatio: false,
                 animation: { duration: 600, easing: 'easeOutQuad' },
@@ -5825,7 +5965,13 @@
                 }
               }
             });
-            return () => { if (chartInstance.current) try { chartInstance.current.destroy(); } catch(e) {} };
+            const pulseInterval = setInterval(() => {
+              if (chartInstance.current) try { chartInstance.current.draw(); } catch(e) {}
+            }, 60);
+            return () => {
+              clearInterval(pulseInterval);
+              if (chartInstance.current) try { chartInstance.current.destroy(); } catch(e) {}
+            };
           }, [historial]);
 
           return (
