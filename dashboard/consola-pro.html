@@ -105,8 +105,28 @@
           from { transform: translateX(0); }
           to   { transform: translateX(-50%); }
         }
-        .ticker-track { animation: ticker-scroll 80s linear infinite; }
+        .ticker-track { animation: ticker-scroll 180s linear infinite; }
         .ticker-track:hover { animation-play-state: paused; }
+        /* Aros del mapa intel — animación CSS pura (más confiable que SVG animate) */
+        @keyframes intel-ring-pulse {
+          0%   { transform: translate(-50%, -50%) scale(0.4); opacity: 0.85; }
+          70%  { opacity: 0.18; }
+          100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+        .intel-ring-css {
+          position: absolute; left: 50%; top: 50%;
+          border-radius: 50%; border: 1.5px solid currentColor;
+          pointer-events: none;
+          animation: intel-ring-pulse 2.5s cubic-bezier(0,0,0.2,1) infinite;
+        }
+        /* Override para FuentesMananera dentro del widget compacto */
+        .csp-compact .text-sm { font-size: 11px; line-height: 1.45; }
+        .csp-compact .text-xs { font-size: 10px; }
+        .csp-compact .max-h-56 { max-height: 16rem; }
+        .csp-compact .p-3 { padding: 0.5rem 0.625rem; }
+        .csp-compact .mb-1\.5 { margin-bottom: 0.25rem; }
+        .csp-compact .mt-1\.5 { margin-top: 0.25rem; }
+        .csp-compact .text-\[10px\] { font-size: 9px; }
         /* Map intel — corners decorativos */
         .map-intel-frame { position: relative; }
         .map-intel-corner { position: absolute; width: 16px; height: 16px; border: 1.5px solid currentColor; }
@@ -5502,10 +5522,18 @@
             </span>
           );
           return (
-            <div className="border-y border-gray-200 bg-white overflow-hidden py-1.5" style={{maskImage: 'linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%)'}}>
-              <div className="flex items-center">
-                <span className="text-[9px] uppercase tracking-widest text-gray-400 font-bold font-mono px-3 border-r border-gray-200 mr-2 flex-shrink-0">FIAT · LIVE FEED</span>
-                <div className="ticker-track flex">
+            <div className="border-y border-gray-200 bg-white overflow-hidden py-2 relative">
+              {/* Label fijo a la izquierda con su propio fondo blanco para tapar el ticker */}
+              <div className="absolute left-0 top-0 bottom-0 z-10 flex items-center pl-3 pr-4 bg-white" style={{boxShadow: '8px 0 12px -4px rgba(255,255,255,0.95)'}}>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span className="text-[11px] tracking-wide text-gray-500 italic">Live Scores</span>
+                  <span className="text-gray-300 ml-2">┃</span>
+                </span>
+              </div>
+              {/* Track con scroll */}
+              <div className="overflow-hidden" style={{maskImage: 'linear-gradient(to right, transparent 0%, black 12%, black 95%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 12%, black 95%, transparent 100%)'}}>
+                <div className="ticker-track flex" style={{paddingLeft: '120px'}}>
                   {[...items, ...items].map((s, i) => renderItem(s, i))}
                 </div>
               </div>
@@ -5719,53 +5747,68 @@
                           ))}
                         </div>
                       </div>
-                      {/* Frame con corners */}
+                      {/* Frame con corners + dots HTML/CSS (más confiable que SVG animate) */}
                       <div className="map-intel-frame relative bg-gray-50 mx-3 my-3" style={{aspectRatio: '4/3', color: '#9ca3af'}}>
                         <div className="map-intel-corner tl"></div>
                         <div className="map-intel-corner tr"></div>
                         <div className="map-intel-corner bl"></div>
                         <div className="map-intel-corner br"></div>
-                        <div className="absolute top-2 left-3 text-[10px] font-mono text-gray-400">23°38'N · 102°33'W</div>
-                        {/* Crosshair y mapa SVG */}
-                        <svg viewBox="0 0 320 240" className="w-full h-full" preserveAspectRatio="xMidYMid meet">
-                          {/* Crosshair sutil */}
+                        <div className="absolute top-2 left-3 text-[10px] font-mono text-gray-400 z-10">23°38'N · 102°33'W</div>
+                        {/* SVG: solo crosshair + silueta MX (sin dots) */}
+                        <svg viewBox="0 0 320 240" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet">
                           <line x1="160" y1="0" x2="160" y2="240" stroke="#d1d5db" strokeWidth="0.5" strokeDasharray="2 4"/>
                           <line x1="0" y1="120" x2="320" y2="120" stroke="#d1d5db" strokeWidth="0.5" strokeDasharray="2 4"/>
-                          {/* Polígono dashed con silueta MX simplificado */}
                           <path d="M 30 90 Q 60 75 100 80 L 150 75 Q 200 70 235 80 L 270 95 L 285 115 L 280 145 L 270 165 L 240 180 L 200 195 L 150 200 L 100 185 L 70 165 L 50 140 L 35 115 Z"
                             fill="rgba(46,125,50,0.04)" stroke="#2e7d32" strokeWidth="1" strokeDasharray="3 4" opacity="0.7"/>
-                          {/* Dots con coords reales */}
-                          {estadosFiltradosArr.map(([key, info]) => {
-                            const coords = ESTADO_COORDS[key];
-                            if (!coords) return null;
-                            /* Convertir lat/lon a x/y del viewBox */
-                            const lonMin = -118, lonMax = -86, latMin = 14, latMax = 33;
-                            const x = ((coords[1] - lonMin) / (lonMax - lonMin)) * 320;
-                            const y = ((latMax - coords[0]) / (latMax - latMin)) * 240;
-                            const intensity = (info.total_articulos || 0) / maxArtsConfig;
-                            const color = intensity > 0.5 ? '#c62828' : intensity > 0.2 ? '#c6972b' : '#2e7d32';
-                            const isSel = estadoSeleccionado === key;
-                            const numRings = intensity > 0.5 ? 3 : intensity > 0.2 ? 2 : 1;
-                            return (
-                              <g key={key} style={{cursor: 'pointer'}} onClick={() => setEstadoSeleccionado(estadoSeleccionado === key ? null : key)}>
-                                {[...Array(numRings)].map((_, r) => (
-                                  <circle key={r} cx={x} cy={y} r={isSel ? 18 : 14} fill="none" stroke={color} strokeWidth="1" className="intel-ring"
-                                    style={{animationDelay: `${(r * 0.8).toFixed(1)}s`, opacity: 0}}>
-                                    <animate attributeName="r" from={isSel ? 6 : 4} to={isSel ? 22 : 16} dur="2.5s" repeatCount="indefinite" begin={`${(r * 0.8).toFixed(1)}s`}/>
-                                    <animate attributeName="opacity" from="0.7" to="0" dur="2.5s" repeatCount="indefinite" begin={`${(r * 0.8).toFixed(1)}s`}/>
-                                  </circle>
-                                ))}
-                                <circle cx={x} cy={y} r={isSel ? 6 : 4.5} fill={color} stroke="#fff" strokeWidth="1.5"/>
-                                {(isSel || intensity > 0.4) && (
-                                  <g>
-                                    <text x={x + 8} y={y - 2} fontSize="9" fontFamily="JetBrains Mono, monospace" fontWeight="700" fill="#1f2937">{(info.abreviatura || key).toUpperCase().slice(0,3)}</text>
-                                    <text x={x + 8} y={y + 9} fontSize="8" fontFamily="JetBrains Mono, monospace" fill="#6b7280">{info.total_articulos || 0} · {intensity > 0.5 ? 'ALTA' : intensity > 0.2 ? 'MOD' : 'BAJA'}</text>
-                                  </g>
-                                )}
-                              </g>
-                            );
-                          })}
                         </svg>
+                        {/* Dots con HTML+CSS (animación CSS pura, sin SVG animate) */}
+                        {estadosFiltradosArr.map(([key, info]) => {
+                          const coords = ESTADO_COORDS[key];
+                          if (!coords) return null;
+                          const lonMin = -118, lonMax = -86, latMin = 14, latMax = 33;
+                          const xPct = ((coords[1] - lonMin) / (lonMax - lonMin)) * 100;
+                          const yPct = ((latMax - coords[0]) / (latMax - latMin)) * 100;
+                          const intensity = (info.total_articulos || 0) / maxArtsConfig;
+                          const color = intensity > 0.5 ? '#c62828' : intensity > 0.2 ? '#c6972b' : '#2e7d32';
+                          const isSel = estadoSeleccionado === key;
+                          const coreSize = isSel ? 12 : 8;
+                          const ringMax = coreSize + (intensity > 0.5 ? 28 : intensity > 0.2 ? 22 : 16);
+                          const numRings = intensity > 0.5 ? 3 : intensity > 0.2 ? 2 : 1;
+                          return (
+                            <div key={key}
+                              onClick={() => setEstadoSeleccionado(estadoSeleccionado === key ? null : key)}
+                              style={{position: 'absolute', left: `${xPct}%`, top: `${yPct}%`, transform: 'translate(-50%,-50%)', cursor: 'pointer', zIndex: 5, color}}
+                              title={`${info.nombre || info.abreviatura}: ${info.total_articulos || 0} notas`}>
+                              {[...Array(numRings)].map((_, r) => (
+                                <div key={r} className="intel-ring-css"
+                                  style={{
+                                    width: ringMax, height: ringMax,
+                                    marginLeft: -ringMax/2, marginTop: -ringMax/2,
+                                    animationDelay: `${(r * 2 / numRings).toFixed(2)}s`,
+                                    color
+                                  }}></div>
+                              ))}
+                              <div style={{
+                                position: 'relative', width: coreSize, height: coreSize,
+                                borderRadius: '50%', background: color,
+                                boxShadow: isSel ? `0 0 0 2px white, 0 0 0 3px ${color}` : `0 0 0 1.5px white, 0 1px 4px rgba(0,0,0,0.2)`,
+                              }}></div>
+                              {(isSel || intensity > 0.4) && (
+                                <div style={{
+                                  position: 'absolute', top: coreSize / 2 + 4, left: coreSize + 4,
+                                  whiteSpace: 'nowrap', fontFamily: 'JetBrains Mono, monospace',
+                                  fontSize: 9, fontWeight: 700, color: '#1f2937',
+                                  background: 'rgba(255,255,255,0.92)', padding: '1px 4px', borderRadius: 3,
+                                }}>
+                                  {(info.abreviatura || key).toUpperCase().slice(0,3)}
+                                  <span style={{color: '#6b7280', fontWeight: 500, marginLeft: 4}}>
+                                    {info.total_articulos || 0} · {intensity > 0.5 ? 'ALTA' : intensity > 0.2 ? 'MOD' : 'BAJA'}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
                       {/* Footer con stats tipo terminal */}
                       <div className="px-4 py-2 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2 text-[10px] font-mono">
@@ -5800,45 +5843,45 @@
                         const pag = Math.min(paginaEstado, totalPag);
                         const slice = filtrados.slice((pag - 1) * PER_PAGE, pag * PER_PAGE);
                         return (
-                          <div className="mt-3 border-t border-gray-100 pt-3">
+                          <div className="border-t border-gray-200 px-4 py-3 bg-gray-50">
                             <div className="flex items-center justify-between mb-2">
-                              <div className="font-bold text-gray-800 text-base">{selectedEstadoData.nombre}</div>
-                              <button onClick={() => setEstadoSeleccionado(null)} className="text-gray-400 hover:text-gray-700 text-lg leading-none">×</button>
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] uppercase tracking-widest text-gray-500 font-mono font-bold">DETALLE</span>
+                                <span className="text-xs text-gray-800 font-semibold">{selectedEstadoData.nombre}</span>
+                                <span className="text-[10px] text-gray-400 font-mono">{selectedEstadoData.total_articulos} total · {filtrados.length} en filtro</span>
+                              </div>
+                              <button onClick={() => setEstadoSeleccionado(null)} className="text-gray-400 hover:text-gray-700 text-base leading-none w-5 h-5">×</button>
                             </div>
-                            <div className="flex items-center gap-3 mb-3 flex-wrap">
-                              <span className="bg-acento text-white text-sm font-bold px-3 py-1 rounded-lg font-mono">{selectedEstadoData.total_articulos}</span>
-                              <span className="text-sm text-gray-500 font-mono">total · {filtrados.length} en filtro</span>
-                            </div>
-                            {/* Filtros de periodo */}
-                            <div className="flex items-center gap-1 mb-3">
-                              {[['1w', '1 semana'], ['2w', '2 semanas'], ['1m', '1 mes']].map(([k, label]) => (
+                            {/* Filtros de periodo compactos */}
+                            <div className="flex items-center gap-1 mb-2">
+                              {[['1w', '1 sem'], ['2w', '2 sem'], ['1m', '1 mes']].map(([k, label]) => (
                                 <button key={k} onClick={() => setPeriodoEstado(k)}
-                                  className={`text-[11px] font-semibold px-3 py-1.5 rounded-full transition border ${periodoEstado === k ? 'border-acento text-white' : 'border-gray-200 text-gray-600 hover:border-gray-400 bg-white'}`}
+                                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full transition border ${periodoEstado === k ? 'border-acento text-white' : 'border-gray-200 text-gray-600 hover:border-gray-400 bg-white'}`}
                                   style={periodoEstado === k ? {background: '#1a365d'} : {}}>
                                   {label}
                                 </button>
                               ))}
                             </div>
                             {slice.length === 0 ? (
-                              <div className="text-xs text-gray-500 italic text-center py-4">Sin notas en este periodo</div>
+                              <div className="text-[11px] text-gray-500 italic text-center py-3">Sin notas en este periodo</div>
                             ) : (
-                              <div className="space-y-1.5">
+                              <div className="space-y-1 max-h-72 overflow-y-auto pr-1" style={{scrollbarWidth: 'thin'}}>
                                 {slice.map((art, i) => (
-                                  <div key={i} className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
-                                    <a href={art.url} target="_blank" rel="noopener" className="text-xs text-blue-700 hover:underline block leading-snug">{art.titulo}</a>
-                                    <div className="text-[10px] text-gray-400 font-mono mt-1">{art.fuente} · {art.fecha}</div>
+                                  <div key={i} className="bg-white rounded p-1.5 border border-gray-100">
+                                    <a href={art.url} target="_blank" rel="noopener" className="text-[11px] text-blue-700 hover:underline block leading-snug">{art.titulo}</a>
+                                    <div className="text-[9px] text-gray-400 font-mono mt-0.5">{art.fuente} · {art.fecha}</div>
                                   </div>
                                 ))}
                               </div>
                             )}
-                            {/* Paginación */}
+                            {/* Paginación compacta */}
                             {totalPag > 1 && (
-                              <div className="flex items-center justify-between mt-3 pt-2 border-t border-gray-100">
+                              <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200">
                                 <button onClick={() => setPaginaEstado(p => Math.max(1, p - 1))} disabled={pag === 1}
-                                  className="text-[11px] font-semibold px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 hover:border-gray-400 disabled:opacity-40 disabled:cursor-not-allowed">← Anterior</button>
-                                <div className="text-[11px] text-gray-500 font-mono">Página {pag} de {totalPag}</div>
+                                  className="text-[10px] font-semibold px-2 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-gray-400 disabled:opacity-40">← Ant.</button>
+                                <div className="text-[10px] text-gray-500 font-mono">Pág. {pag}/{totalPag}</div>
                                 <button onClick={() => setPaginaEstado(p => Math.min(totalPag, p + 1))} disabled={pag === totalPag}
-                                  className="text-[11px] font-semibold px-3 py-1.5 rounded-full border border-gray-200 text-gray-600 hover:border-gray-400 disabled:opacity-40 disabled:cursor-not-allowed">Siguiente →</button>
+                                  className="text-[10px] font-semibold px-2 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-gray-400 disabled:opacity-40">Sig. →</button>
                               </div>
                             )}
                           </div>
@@ -5865,8 +5908,10 @@
                         </select>
                       )}
                     </div>
-                    {/* Reusa el componente FuentesMananera REAL del DetalleModal */}
-                    <FuentesMananera menciones={cspMenciones} />
+                    {/* Reusa el componente FuentesMananera REAL del DetalleModal con override compacto */}
+                    <div className="csp-compact">
+                      <FuentesMananera menciones={cspMenciones} />
+                    </div>
                   </div>
                 </div>
               )}
