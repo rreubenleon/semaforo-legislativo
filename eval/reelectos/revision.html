@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>FIAT — Revisión reelectos LXIV/LXV → LXVI</title>
+<style>
+  body { font-family: -apple-system, system-ui, sans-serif; max-width: 1400px; margin: 24px auto; padding: 0 20px; color: #1a1a1a; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .subtitle { color: #666; font-size: 14px; margin-bottom: 20px; }
+  .stats { display: flex; gap: 12px; margin: 20px 0; flex-wrap: wrap; }
+  .stat { background: #f4f4f5; border-radius: 8px; padding: 12px 16px; min-width: 140px; }
+  .stat .num { font-size: 22px; font-weight: 600; }
+  .stat .label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 0.5px; }
+  .filters { display: flex; gap: 8px; margin: 16px 0; align-items: center; flex-wrap: wrap; }
+  .filters input, .filters select { padding: 6px 10px; border: 1px solid #d4d4d8; border-radius: 6px; font-size: 13px; }
+  .filters .btn { padding: 6px 12px; border-radius: 6px; border: 1px solid #d4d4d8; background: white; cursor: pointer; font-size: 13px; }
+  .filters .btn.active { background: #18181b; color: white; border-color: #18181b; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { position: sticky; top: 0; background: white; box-shadow: 0 1px 0 #e4e4e7; }
+  th { text-align: left; padding: 10px 8px; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: #666; }
+  td { padding: 8px; border-bottom: 1px solid #f4f4f5; vertical-align: top; }
+  tr.missing { background: #fef2f2; }
+  tr.missing td:first-child::before { content: "⚠️ "; }
+  tr.partial { background: #fffbeb; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+  .badge.ok { background: #dcfce7; color: #166534; }
+  .badge.partial { background: #fef3c7; color: #92400e; }
+  .badge.missing { background: #fee2e2; color: #991b1b; }
+  .partido { font-size: 11px; color: #71717a; }
+  .total { font-weight: 600; text-align: right; }
+  .nota { font-size: 11px; color: #b91c1c; margin-top: 2px; }
+  .url { font-size: 11px; color: #2563eb; text-decoration: none; }
+  .url:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<h1>Reelectos LXVI con trayectoria LXIV/LXV</h1>
+<div class="subtitle">Fuente: SIL Gobernación. Solo Iniciativas + Proposiciones con punto de acuerdo.</div>
+
+<div class="stats" id="stats"></div>
+
+<div class="filters">
+  <input id="search" placeholder="Buscar nombre…" type="text">
+  <button class="btn active" data-filter="all">Todos</button>
+  <button class="btn" data-filter="missing">⚠️ Sin datos (14)</button>
+  <button class="btn" data-filter="ok">Completos</button>
+  <select id="camara">
+    <option value="">Todas las cámaras</option>
+    <option value="Diputados">Diputados</option>
+    <option value="Senado">Senado</option>
+  </select>
+  <select id="partido">
+    <option value="">Todos los partidos</option>
+  </select>
+</div>
+
+<table>
+<thead>
+<tr>
+  <th>Status</th>
+  <th>Nombre LXVI</th>
+  <th>Cámara</th>
+  <th>Partido</th>
+  <th>Entidad</th>
+  <th>Marcador</th>
+  <th>SIL ID LXIV</th>
+  <th>LXIV instr.</th>
+  <th>SIL ID LXV</th>
+  <th>LXV instr.</th>
+  <th>Total</th>
+</tr>
+</thead>
+<tbody id="tbody"></tbody>
+</table>
+
+<script>
+let data = [];
+
+fetch('report_data.json').then(r => r.json()).then(d => {
+  data = d;
+  renderStats();
+  populateFilters();
+  render();
+});
+
+function renderStats() {
+  const total = data.length;
+  const ok = data.filter(r => r.status === 'ok').length;
+  const partial = data.filter(r => r.status === 'partial').length;
+  const missing = data.filter(r => r.status === 'missing').length;
+  const inst = data.reduce((s, r) => s + r.total, 0);
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="num">${total}</div><div class="label">Reelectos</div></div>
+    <div class="stat"><div class="num" style="color:#166534">${ok}</div><div class="label">Con datos</div></div>
+    <div class="stat"><div class="num" style="color:#92400e">${partial}</div><div class="label">Parciales</div></div>
+    <div class="stat"><div class="num" style="color:#991b1b">${missing}</div><div class="label">Sin datos</div></div>
+    <div class="stat"><div class="num">${inst.toLocaleString()}</div><div class="label">Instrumentos</div></div>
+  `;
+}
+
+function populateFilters() {
+  const partidos = [...new Set(data.map(r => r.partido_actual))].sort();
+  const sel = document.getElementById('partido');
+  partidos.forEach(p => {
+    const o = document.createElement('option');
+    o.value = p; o.textContent = p;
+    sel.appendChild(o);
+  });
+}
+
+function render() {
+  const search = document.getElementById('search').value.toLowerCase();
+  const camara = document.getElementById('camara').value;
+  const partido = document.getElementById('partido').value;
+  const filter = document.querySelector('.btn.active').dataset.filter;
+
+  const filtered = data.filter(r => {
+    if (search && !r.nombre.toLowerCase().includes(search)) return false;
+    if (camara && r.camara_actual !== camara) return false;
+    if (partido && r.partido_actual !== partido) return false;
+    if (filter !== 'all' && r.status !== filter) return false;
+    return true;
+  });
+
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = filtered.map(r => {
+    const silUrl = (id) => id
+      ? `<a href="https://sil.gobernacion.gob.mx/Librerias/pp_PerfilLegislador.php?SID=&Referencia=${id}" target="_blank" class="url">${id}</a>`
+      : '<span style="color:#a1a1aa">—</span>';
+    const notesHtml = r.notes && r.notes.length > 0
+      ? `<div class="nota">${r.notes.join(' · ')}</div>` : '';
+    return `<tr class="${r.status}">
+      <td><span class="badge ${r.status}">${r.status === 'ok' ? '✓' : (r.status === 'partial' ? '◐' : '⚠')}</span></td>
+      <td><strong>${r.nombre}</strong>${notesHtml}</td>
+      <td>${r.camara_actual}</td>
+      <td><span class="partido">${r.partido_actual}</span></td>
+      <td>${r.entidad}</td>
+      <td>${r.marcador}</td>
+      <td>${silUrl(r.sil_lxiv)}</td>
+      <td class="total">${r.n_lxiv || '—'}</td>
+      <td>${silUrl(r.sil_lxv)}</td>
+      <td class="total">${r.n_lxv || '—'}</td>
+      <td class="total"><strong>${r.total || '—'}</strong></td>
+    </tr>`;
+  }).join('');
+}
+
+document.getElementById('search').addEventListener('input', render);
+document.getElementById('camara').addEventListener('change', render);
+document.getElementById('partido').addEventListener('change', render);
+document.querySelectorAll('.btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.btn').forEach(x => x.classList.remove('active'));
+  b.classList.add('active');
+  render();
+}));
+</script>
+</body>
+</html>

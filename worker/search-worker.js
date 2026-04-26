@@ -29,7 +29,7 @@ export default {
 
     if (url.pathname === '/') {
       return corsResponse(
-        { status: 'ok', endpoints: ['/buscar', '/registro', '/radar', '/comisiones', '/h2h'] },
+        { status: 'ok', endpoints: ['/buscar', '/registro', '/radar', '/comisiones', '/h2h', '/historicos'] },
         200,
         request
       );
@@ -53,6 +53,11 @@ export default {
     // ── H2H legislador × comisión ──
     if (url.pathname === '/h2h') {
       return handleH2H(request, env);
+    }
+
+    // ── Históricos LXIV/LXV de legislador reelecto ──
+    if (url.pathname === '/historicos') {
+      return handleHistoricos(request, env);
     }
 
     if (url.pathname !== '/buscar') {
@@ -672,6 +677,128 @@ async function handleRegistro(request, env) {
 }
 
 /** Limpia la query para FTS5 (elimina caracteres especiales) */
+/**
+ * GET /historicos — instrumentos LXIV/LXV de un legislador reelecto.
+ *
+ * Devuelve la trayectoria histórica (Iniciativas + Proposiciones con
+ * punto de acuerdo) que un legislador presentó en legislaturas anteriores
+ * cuando ya era diputado o senador. Útil para el Radar y para mostrar
+ * "antes/después" cuando hay cambio de cámara.
+ *
+ * Query params:
+ *   legislador_id=<int>   (REQUERIDO) ID en tabla legisladores
+ *   legislatura=LXIV|LXV  (opcional) filtrar por legislatura específica
+ *   tipo=Iniciativa|...   (opcional) filtrar por tipo_asunto
+ *   limite=50             (default 50, max 200)
+ *   pagina=1              (default 1)
+ *
+ * Respuesta:
+ *   {
+ *     legislador_id, totales: {LXIV, LXV, iniciativas, proposiciones},
+ *     instrumentos: [{tipo_asunto, denominacion, fecha_presentacion, ...}],
+ *     pagina, total_paginas, total
+ *   }
+ */
+async function handleHistoricos(request, env) {
+  if (request.method !== 'GET') {
+    return corsResponse({ error: 'Solo GET' }, 405, request);
+  }
+
+  const url = new URL(request.url);
+  const legisladorId = parseInt(url.searchParams.get('legislador_id') || '0');
+  const legislatura = (url.searchParams.get('legislatura') || '').trim();
+  const tipo = (url.searchParams.get('tipo') || '').trim();
+  const pagina = Math.max(1, parseInt(url.searchParams.get('pagina') || '1') || 1);
+  const limite = Math.min(200, Math.max(1, parseInt(url.searchParams.get('limite') || '50') || 50));
+  const offset = (pagina - 1) * limite;
+
+  if (!legisladorId) {
+    return corsResponse({ error: 'Falta parámetro legislador_id' }, 400, request);
+  }
+
+  const filters = ['legislador_id = ?'];
+  const params = [legisladorId];
+  if (legislatura && ['LXIV', 'LXV'].includes(legislatura)) {
+    filters.push('legislatura = ?');
+    params.push(legislatura);
+  }
+  if (tipo) {
+    filters.push('tipo_asunto = ?');
+    params.push(tipo);
+  }
+  const whereSql = 'WHERE ' + filters.join(' AND ');
+
+  try {
+    const db = env.DB;
+
+    // Totales agregados (siempre del legislador completo, no filtrado por legis/tipo)
+    const totalesResult = await db
+      .prepare(`
+        SELECT legislatura, tipo_asunto, COUNT(*) as n
+        FROM sil_documentos_historicos
+        WHERE legislador_id = ?
+        GROUP BY legislatura, tipo_asunto
+      `)
+      .bind(legisladorId)
+      .all();
+    const totales = {
+      LXIV: 0, LXV: 0,
+      iniciativas: 0, proposiciones: 0,
+      total: 0,
+    };
+    for (const row of (totalesResult.results || [])) {
+      totales[row.legislatura] = (totales[row.legislatura] || 0) + Number(row.n);
+      if (row.tipo_asunto === 'Iniciativa') totales.iniciativas += Number(row.n);
+      else if (row.tipo_asunto === 'Proposición con punto de acuerdo') totales.proposiciones += Number(row.n);
+      totales.total += Number(row.n);
+    }
+
+    if (totales.total === 0) {
+      return corsResponse({
+        legislador_id: legisladorId,
+        totales,
+        instrumentos: [],
+        pagina: 1, total_paginas: 0, total: 0,
+        mensaje: 'Este legislador no tiene instrumentos históricos cargados (puede no ser reelecto LXIV/LXV o no se encontró su perfil en SIL)',
+      }, 200, request);
+    }
+
+    // Lista paginada con filtros aplicados
+    const countResult = await db
+      .prepare(`SELECT COUNT(*) as n FROM sil_documentos_historicos ${whereSql}`)
+      .bind(...params)
+      .first();
+    const total = Number(countResult?.n || 0);
+
+    const listResult = await db
+      .prepare(`
+        SELECT id, sil_referencia, tipo_asunto, denominacion, sub_clasificacion,
+               camara, fecha_presentacion, presentador, partido, legislatura,
+               turnado_a, estatus, tema, url_detalle
+        FROM sil_documentos_historicos
+        ${whereSql}
+        ORDER BY fecha_presentacion DESC, id DESC
+        LIMIT ? OFFSET ?
+      `)
+      .bind(...params, limite, offset)
+      .all();
+
+    return corsResponse({
+      legislador_id: legisladorId,
+      totales,
+      filtros_aplicados: { legislatura: legislatura || null, tipo: tipo || null },
+      instrumentos: listResult.results || [],
+      pagina,
+      limite,
+      total,
+      total_paginas: Math.ceil(total / limite),
+    }, 200, request);
+  } catch (err) {
+    return corsResponse({ error: 'Error consultando históricos: ' + err.message }, 500, request);
+  }
+}
+
+
 function sanitizeFTS(q) {
   return q.replace(/['"()*{}[\]^~<>:]/g, ' ').replace(/\s+/g, ' ').trim();
 }

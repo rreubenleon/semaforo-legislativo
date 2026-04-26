@@ -4,6 +4,7 @@ Fase 1: Keyword matching con TF-IDF ponderado
 Fase 2 (futuro): Transformers fine-tuned
 """
 
+import os
 import re
 import math
 import logging
@@ -628,20 +629,42 @@ def clasificar_batch(articulos):
 def actualizar_categorias_en_db():
     """
     Recorre artículos sin categorizar en la BD y les asigna categorías.
+
+    Cap por run para evitar timeout en backlog grande (caso 25 abr 2026:
+    26,651 artículos acumulados → 40+ min sin progreso → cancel).
+    Override con env var NLP_MAX_POR_RUN.
     """
     conn = get_connection()
     conn.row_factory = sqlite3.Row
 
-    # Artículos sin categoría o con categoría vacía
+    NLP_MAX = int(os.environ.get("NLP_MAX_POR_RUN", "5000"))
+    LOG_CADA = 500
+    COMMIT_CADA = 500
+
+    # Artículos sin categoría o con categoría vacía (con cap)
     sin_clasificar = conn.execute("""
         SELECT id, titulo, resumen FROM articulos
         WHERE categorias IS NULL OR categorias = ''
-    """).fetchall()
+        ORDER BY fecha DESC, id DESC
+        LIMIT ?
+    """, (NLP_MAX,)).fetchall()
 
-    logger.info(f"Artículos por clasificar: {len(sin_clasificar)}")
+    total_pendiente = conn.execute(
+        "SELECT COUNT(*) FROM articulos WHERE categorias IS NULL OR categorias = ''"
+    ).fetchone()[0]
+
+    logger.info(
+        f"Artículos por clasificar: {len(sin_clasificar):,} (procesando ahora) "
+        f"de {total_pendiente:,} pendientes totales"
+    )
+    if total_pendiente > NLP_MAX:
+        logger.info(
+            f"  ⚠ Backlog > cap. Restantes ({total_pendiente - NLP_MAX:,}) se "
+            f"procesan en próximas corridas. Override con NLP_MAX_POR_RUN."
+        )
+
     clasificados = 0
-
-    for row in sin_clasificar:
+    for i, row in enumerate(sin_clasificar):
         categorias = clasificar_y_etiquetar(dict(row), conn=conn)
         if categorias:
             conn.execute(
@@ -649,6 +672,10 @@ def actualizar_categorias_en_db():
                 (categorias, row["id"]),
             )
             clasificados += 1
+        if (i + 1) % LOG_CADA == 0:
+            logger.info(f"  Clasificados {i+1:,}/{len(sin_clasificar):,} ({clasificados:,} ok)")
+        if (i + 1) % COMMIT_CADA == 0:
+            conn.commit()
 
     conn.commit()
     logger.info(f"Clasificados: {clasificados}/{len(sin_clasificar)}")
@@ -662,19 +689,31 @@ def actualizar_categorias_en_db():
     except Exception:
         pass  # Ya existe
 
+    GACETA_MAX = int(os.environ.get("NLP_MAX_GACETA_POR_RUN", "3000"))
     gaceta_sin = conn.execute("""
         SELECT id, titulo, resumen, comision FROM gaceta
         WHERE categorias IS NULL OR categorias = ''
-    """).fetchall()
-    logger.info(f"Gaceta por clasificar: {len(gaceta_sin)}")
+        ORDER BY fecha DESC, id DESC
+        LIMIT ?
+    """, (GACETA_MAX,)).fetchall()
+    gaceta_pendiente_total = conn.execute(
+        "SELECT COUNT(*) FROM gaceta WHERE categorias IS NULL OR categorias = ''"
+    ).fetchone()[0]
+    logger.info(
+        f"Gaceta por clasificar: {len(gaceta_sin):,} ahora "
+        f"de {gaceta_pendiente_total:,} pendientes"
+    )
 
     gaceta_ok = 0
-    for row in gaceta_sin:
+    for i, row in enumerate(gaceta_sin):
         d = dict(row)
         cats = clasificar_y_etiquetar(d, conn=conn)
         if cats:
             conn.execute("UPDATE gaceta SET categorias = ? WHERE id = ?", (cats, d["id"]))
             gaceta_ok += 1
+        if (i + 1) % 500 == 0:
+            logger.info(f"  Gaceta {i+1:,}/{len(gaceta_sin):,} ({gaceta_ok:,} ok)")
+            conn.commit()
 
     conn.commit()
     logger.info(f"Gaceta clasificados: {gaceta_ok}/{len(gaceta_sin)}")
@@ -755,15 +794,24 @@ def actualizar_categorias_en_db():
     except Exception as e:
         logger.warning(f"Error reclasificando gaceta por ley: {e}")
 
-    # ── Reclasificar SIL documentos sin categoría ──
+    # ── Reclasificar SIL documentos sin categoría (con cap) ──
+    SIL_MAX = int(os.environ.get("NLP_MAX_SIL_POR_RUN", "3000"))
     sil_sin = conn.execute("""
         SELECT id, titulo, sinopsis, comision FROM sil_documentos
         WHERE categoria IS NULL OR categoria = ''
-    """).fetchall()
-    logger.info(f"SIL por clasificar: {len(sil_sin)}")
+        ORDER BY fecha_presentacion DESC, id DESC
+        LIMIT ?
+    """, (SIL_MAX,)).fetchall()
+    sil_pendiente_total = conn.execute(
+        "SELECT COUNT(*) FROM sil_documentos WHERE categoria IS NULL OR categoria = ''"
+    ).fetchone()[0]
+    logger.info(
+        f"SIL por clasificar: {len(sil_sin):,} ahora "
+        f"de {sil_pendiente_total:,} pendientes"
+    )
 
     sil_ok = 0
-    for row in sil_sin:
+    for i, row in enumerate(sil_sin):
         d = dict(row)
         cats = clasificar_texto(
             d.get("titulo", ""),
@@ -771,10 +819,12 @@ def actualizar_categorias_en_db():
             comision=d.get("comision"),
         )
         if cats:
-            # SIL usa categoría simple (la de mayor score)
             cat_principal = list(cats.keys())[0]
             conn.execute("UPDATE sil_documentos SET categoria = ? WHERE id = ?", (cat_principal, d["id"]))
             sil_ok += 1
+        if (i + 1) % 500 == 0:
+            logger.info(f"  SIL {i+1:,}/{len(sil_sin):,} ({sil_ok:,} ok)")
+            conn.commit()
 
     conn.commit()
     logger.info(f"SIL clasificados: {sil_ok}/{len(sil_sin)}")
