@@ -29,10 +29,15 @@ export default {
 
     if (url.pathname === '/') {
       return corsResponse(
-        { status: 'ok', endpoints: ['/buscar', '/registro', '/radar', '/comisiones', '/h2h', '/historicos'] },
+        { status: 'ok', endpoints: ['/buscar', '/registro', '/radar', '/comisiones', '/h2h', '/historicos', '/probabilidad'] },
         200,
         request
       );
+    }
+
+    // ── Probabilidad determinista de un trigger (Nivel 1) ──
+    if (url.pathname === '/probabilidad') {
+      return handleProbabilidad(request, env);
     }
 
     // ── Registro de interesados ──
@@ -929,6 +934,193 @@ function generarExtracto(contenido, query) {
   if (start > 0) extracto = '...' + extracto;
   if (end < contenido.length) extracto += '...';
   return extracto;
+}
+
+/**
+ * Maneja GET /probabilidad — probabilidad determinista de que un trigger se dispare
+ *
+ * Tipos soportados:
+ *   - tema_score: usa serie histórica de scores (frecuencia empírica de cruces en ventanas
+ *     móviles del último año)
+ *     params: categoria, operador (>=, >, <=, <), umbral (0-100), ventana_dias (default 30)
+ *
+ *   - legislador_actividad: usa proyección Poisson sobre iniciativas_proy_15d + proposiciones_proy_15d
+ *     params: legislador_id, ventana_dias (default 30)
+ *
+ *   - comision_dictamen: usa SITL tasa_resolucion sobre pendientes en una ventana
+ *     params: comision (nombre), camara, ventana_dias (default 30)
+ *
+ * Respuesta:
+ *   { prob: 0.42, base: "frecuencia_empirica", n_ventanas: 335, n_cumplidas: 141,
+ *     descripcion: "...", confianza: "alta" | "media" | "baja" }
+ *
+ * Si no hay datos suficientes: { prob: null, razon: "datos_insuficientes" }
+ */
+async function handleProbabilidad(request, env) {
+  if (request.method !== 'GET') {
+    return corsResponse({ error: 'Solo GET' }, 405, request);
+  }
+  const url = new URL(request.url);
+  const tipo = url.searchParams.get('tipo') || '';
+  const ventanaDias = Math.max(1, Math.min(365, parseInt(url.searchParams.get('ventana_dias') || '30')));
+
+  try {
+    const db = env.DB;
+
+    if (tipo === 'tema_score') {
+      const categoria = (url.searchParams.get('categoria') || '').toLowerCase();
+      const operador = url.searchParams.get('operador') || '>=';
+      const umbral = parseFloat(url.searchParams.get('umbral'));
+      if (!categoria || isNaN(umbral)) {
+        return corsResponse({ prob: null, razon: 'parametros_invalidos' }, 400, request);
+      }
+      if (!['>=', '>', '<=', '<'].includes(operador)) {
+        return corsResponse({ prob: null, razon: 'operador_invalido' }, 400, request);
+      }
+      // Lookback 365 días
+      const hoy = new Date();
+      const desde = new Date(hoy.getTime() - 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const r = await db.prepare(
+        `SELECT fecha, score_total FROM scores
+         WHERE categoria = ? AND fecha >= ?
+         ORDER BY fecha ASC`
+      ).bind(categoria, desde).all();
+      const serie = r.results || [];
+      if (serie.length < ventanaDias + 5) {
+        return corsResponse({
+          prob: null, razon: 'datos_insuficientes',
+          n_observaciones: serie.length, requeridos: ventanaDias + 5
+        }, 200, request);
+      }
+      // Score actual y por arriba/abajo del umbral
+      const scoreActual = serie[serie.length - 1].score_total;
+      const cumple = (s) => {
+        if (operador === '>=') return s >= umbral;
+        if (operador === '>') return s > umbral;
+        if (operador === '<=') return s <= umbral;
+        if (operador === '<') return s < umbral;
+        return false;
+      };
+      // Si ya se cumple ahora mismo, prob alta pero no 1.0 (el trigger evalúa "se cumplirá EN la ventana", aceptamos que ya cumple)
+      if (cumple(scoreActual)) {
+        return corsResponse({
+          prob: 0.95,
+          base: 'condicion_actual',
+          n_observaciones: serie.length,
+          score_actual: scoreActual,
+          umbral,
+          ventana_dias: ventanaDias,
+          confianza: 'alta',
+          descripcion: `Score actual (${scoreActual.toFixed(1)}) ya cumple la condición`
+        }, 200, request);
+      }
+      // Frecuencia empírica: ventanas móviles donde ALGÚN día cumplió la condición
+      let nVentanas = 0, nCumplieron = 0;
+      for (let i = 0; i + ventanaDias <= serie.length; i++) {
+        nVentanas++;
+        const sub = serie.slice(i, i + ventanaDias);
+        if (sub.some(d => cumple(d.score_total))) nCumplieron++;
+      }
+      const prob = nVentanas > 0 ? nCumplieron / nVentanas : 0;
+      const confianza = nVentanas >= 200 ? 'alta' : nVentanas >= 60 ? 'media' : 'baja';
+      return corsResponse({
+        prob: Math.round(prob * 1000) / 1000,
+        base: 'frecuencia_empirica_365d',
+        n_ventanas: nVentanas,
+        n_cumplidas: nCumplieron,
+        score_actual: scoreActual,
+        umbral,
+        operador,
+        ventana_dias: ventanaDias,
+        confianza,
+        descripcion: `${nCumplieron} de ${nVentanas} ventanas de ${ventanaDias}d en el último año tuvieron al menos un día con score ${operador} ${umbral}`
+      }, 200, request);
+    }
+
+    if (tipo === 'legislador_actividad') {
+      const legId = parseInt(url.searchParams.get('legislador_id'));
+      if (!legId) {
+        return corsResponse({ prob: null, razon: 'legislador_id_requerido' }, 400, request);
+      }
+      const r = await db.prepare(
+        `SELECT iniciativas_proy_15d, proposiciones_proy_15d
+         FROM legisladores_stats WHERE legislador_id = ?`
+      ).bind(legId).first();
+      if (!r) {
+        return corsResponse({
+          prob: null, razon: 'legislador_sin_stats'
+        }, 200, request);
+      }
+      const lambda15 = (r.iniciativas_proy_15d || 0) + (r.proposiciones_proy_15d || 0);
+      if (lambda15 === 0) {
+        return corsResponse({
+          prob: 0.05, base: 'baseline_minimo',
+          lambda_15d: 0, ventana_dias: ventanaDias,
+          confianza: 'baja',
+          descripcion: 'Sin actividad histórica reciente; probabilidad mínima'
+        }, 200, request);
+      }
+      // Ajustar λ a la ventana solicitada
+      const lambdaVentana = lambda15 * (ventanaDias / 15);
+      // P(≥1 evento) = 1 - exp(-λ)
+      const prob = 1 - Math.exp(-lambdaVentana);
+      return corsResponse({
+        prob: Math.round(prob * 1000) / 1000,
+        base: 'poisson_proy_15d',
+        lambda_15d: Math.round(lambda15 * 100) / 100,
+        lambda_ventana: Math.round(lambdaVentana * 100) / 100,
+        ventana_dias: ventanaDias,
+        confianza: lambda15 >= 0.5 ? 'alta' : 'media',
+        descripcion: `Tasa proyectada de ${lambda15.toFixed(2)} instrumentos/15d → P(≥1 en ${ventanaDias}d)`
+      }, 200, request);
+    }
+
+    if (tipo === 'comision_dictamen') {
+      const comision = (url.searchParams.get('comision') || '').trim();
+      const camara = url.searchParams.get('camara') || 'Diputados';
+      if (!comision) {
+        return corsResponse({ prob: null, razon: 'comision_requerida' }, 400, request);
+      }
+      const r = await db.prepare(
+        `SELECT sitl_tasa_resolucion, sitl_pendientes, docs_dictamen
+         FROM comisiones_stats WHERE nombre = ? AND camara = ?`
+      ).bind(comision, camara).first();
+      if (!r) {
+        return corsResponse({ prob: null, razon: 'comision_no_encontrada' }, 200, request);
+      }
+      // tasa_resolucion es % anual aprox; convertir a tasa diaria y luego a ventana
+      // Si tasa = 30% en LXVI completa (~3 años) → tasa diaria = 0.3 / (3*365)
+      // Aproximación: tasa equivalente Poisson sobre dictámenes históricos
+      const dictamenes = r.docs_dictamen || 0;
+      const pendientes = r.sitl_pendientes || 0;
+      if (pendientes === 0) {
+        return corsResponse({
+          prob: 0.05, base: 'sin_pendientes',
+          confianza: 'media',
+          descripcion: 'Comisión sin asuntos pendientes en SITL'
+        }, 200, request);
+      }
+      // Tasa diaria de dictámenes basada en histórico LXVI (~180 días desde inicio Oct 2025)
+      const diasLegislatura = 180;
+      const tasaDiaria = dictamenes / Math.max(diasLegislatura, 1);
+      const lambdaVentana = tasaDiaria * ventanaDias;
+      const prob = 1 - Math.exp(-lambdaVentana);
+      return corsResponse({
+        prob: Math.round(prob * 1000) / 1000,
+        base: 'poisson_historico_lxvi',
+        dictamenes_historicos: dictamenes,
+        pendientes,
+        tasa_diaria: Math.round(tasaDiaria * 1000) / 1000,
+        ventana_dias: ventanaDias,
+        confianza: dictamenes >= 5 ? 'alta' : dictamenes >= 2 ? 'media' : 'baja',
+        descripcion: `${dictamenes} dictámenes en ~${diasLegislatura}d → tasa diaria, P(≥1 en ${ventanaDias}d)`
+      }, 200, request);
+    }
+
+    return corsResponse({ prob: null, razon: 'tipo_no_soportado', tipos: ['tema_score', 'legislador_actividad', 'comision_dictamen'] }, 400, request);
+  } catch (err) {
+    return corsResponse({ prob: null, razon: 'error_interno', detalle: err.message }, 500, request);
+  }
 }
 
 /** Respuesta JSON con CORS */

@@ -5951,37 +5951,36 @@
                     </div>
                   )}
 
-                  {/* Columna derecha: CSP arriba + Comisiones abajo, stacked */}
-                  <div className="flex flex-col gap-3">
-                    <div className="glass border border-borde rounded-xl p-4">
-                      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
-                        <div>
-                          <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Menciones de la presidenta</div>
-                          <div className="text-[10px] text-gray-400 mt-0.5">Mañaneras de Claudia Sheinbaum {cspTema && `· ${_catLabel(cspTema)}`}</div>
-                        </div>
-                        {temasSelectos.size > 0 && (
-                          <select value={cspTema || ''} onChange={e => setFiltroCSP(e.target.value)}
-                            className="text-xs px-2 py-1 border border-gray-200 rounded-lg bg-white">
-                            {Array.from(temasSelectos).map(t => <option key={t} value={t}>{_catLabel(t)}</option>)}
-                          </select>
-                        )}
+                  {/* Columna derecha: Menciones CSP (mismo alto que el mapa) */}
+                  <div className="glass border border-borde rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Menciones de la presidenta</div>
+                        <div className="text-[10px] text-gray-400 mt-0.5">Mañaneras de Claudia Sheinbaum {cspTema && `· ${_catLabel(cspTema)}`}</div>
                       </div>
-                      {/* Reusa el componente FuentesMananera REAL del DetalleModal con override compacto */}
-                      <div className="csp-compact">
-                        <FuentesMananera menciones={cspMenciones} />
-                      </div>
+                      {temasSelectos.size > 0 && (
+                        <select value={cspTema || ''} onChange={e => setFiltroCSP(e.target.value)}
+                          className="text-xs px-2 py-1 border border-gray-200 rounded-lg bg-white">
+                          {Array.from(temasSelectos).map(t => <option key={t} value={t}>{_catLabel(t)}</option>)}
+                        </select>
+                      )}
                     </div>
-                    {/* Comisiones · debajo del CSP, ocupa el resto del espacio derecho */}
-                    <MisComisiones
-                      comisionesIds={comisionesSelectos}
-                      allComisiones={allComisiones}
-                      convocatorias={data.convocatorias}
-                      onConfigClick={onConfigClick}
-                      onRemove={(key) => setConfig({ ...config, comisiones: (config.comisiones || []).filter(c => c !== key) })}
-                    />
+                    {/* Reusa el componente FuentesMananera REAL del DetalleModal con override compacto */}
+                    <div className="csp-compact">
+                      <FuentesMananera menciones={cspMenciones} />
+                    </div>
                   </div>
                 </div>
               )}
+
+              {/* Comisiones · tabla terminal full-width, debajo de Mapa+CSP, antes de Mis Legisladores */}
+              <ComiteWatch
+                comisionesIds={comisionesSelectos}
+                allComisiones={allComisiones}
+                convocatorias={data.convocatorias}
+                onConfigClick={onConfigClick}
+                onRemove={(key) => setConfig({ ...config, comisiones: (config.comisiones || []).filter(c => c !== key) })}
+              />
 
               {/* Mis legisladores con orden + agregar + export CSV */}
               {legisladoresEnConfig.length > 0 && (() => {
@@ -6267,9 +6266,317 @@
           );
         }
 
-        /* MisComisiones — Reusa endpoint /comisiones del Worker (mismos datos que la tab general).
-           Card expandible: composición política + SITL + última actividad + próxima sesión. */
-        function MisComisiones({ comisionesIds, allComisiones, convocatorias, onConfigClick, onRemove }) {
+        /* ComiteWatch — Tabla terminal full-width con sparkline de actividad 6m, próxima sesión y Δ30d.
+           Reusa endpoint /comisiones del Worker (mismos datos que la tab general).
+           Filtros: Mis · Diputados · Senado · Ver todas (modal). */
+        function ComiteWatch({ comisionesIds, allComisiones, convocatorias, onConfigClick, onRemove }) {
+          const [filtro, setFiltro] = useState('mis'); // mis | Diputados | Senado | todas
+          const [verTodas, setVerTodas] = useState(false);
+
+          const total = (allComisiones || []).length;
+          const seleccionadas = (allComisiones || []).filter(c => comisionesIds.has(`${c.nombre}|${c.camara}`));
+
+          let visibles = [];
+          if (filtro === 'mis') visibles = seleccionadas;
+          else if (filtro === 'Diputados' || filtro === 'Senado') {
+            visibles = (allComisiones || []).filter(c => c.camara === filtro && comisionesIds.has(`${c.nombre}|${c.camara}`));
+            if (visibles.length === 0) visibles = (allComisiones || []).filter(c => c.camara === filtro).slice(0, 12);
+          } else visibles = (allComisiones || []).slice(0, 12);
+
+          /* Estado vacío */
+          if (seleccionadas.length === 0 && filtro === 'mis') {
+            return (
+              <div className="glass border border-borde rounded-xl">
+                <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-gray-50">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span className="text-[11px] uppercase tracking-widest text-gray-700 font-mono font-bold">MI·COMITÉ·WATCH · COMISIONES·LEGISLATIVAS</span>
+                    <span className="text-[10px] text-gray-400 font-mono">/CX</span>
+                  </div>
+                  <button onClick={onConfigClick}
+                    className="text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded transition border bg-white border-gray-300 text-gray-700 hover:border-gray-500">
+                    + Agregar comisión
+                  </button>
+                </div>
+                <div className="p-8 text-center">
+                  <div className="text-xs uppercase tracking-widest text-gray-400 font-mono">SIN COMISIONES SELECCIONADAS</div>
+                  <div className="text-[11px] text-gray-500 mt-2">Configura hasta 10 comisiones para vigilar productividad y próximas sesiones</div>
+                </div>
+              </div>
+            );
+          }
+
+          /* Indexar convocatorias por nombre normalizado, max fecha futura */
+          const proximasMap = {};
+          const hoyStr = new Date().toISOString().slice(0, 10);
+          ['Diputados', 'Senado'].forEach(cam => {
+            (convocatorias?.[cam] || []).forEach(c => {
+              const key = (c.comision || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').trim();
+              if (!key) return;
+              if (!proximasMap[key] || (c.fecha && c.fecha > proximasMap[key].fecha)) {
+                proximasMap[key] = c;
+              }
+            });
+          });
+          const buscarProxima = (com) => {
+            const norm = (com.nombre || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').trim();
+            for (const [k, v] of Object.entries(proximasMap)) {
+              if (k.includes(norm) || norm.includes(k.split(' ')[0])) return v;
+            }
+            return null;
+          };
+
+          /* Δ30d aproximado: último mes vs promedio meses anteriores en historico_mensual */
+          const delta30 = (c) => {
+            const h = c.historico_mensual || [];
+            if (h.length < 2) return null;
+            const ult = h[h.length - 1].count || 0;
+            const ant = h.slice(-4, -1);
+            if (ant.length === 0) return null;
+            const prom = ant.reduce((s, x) => s + (x.count || 0), 0) / ant.length;
+            return ult - prom;
+          };
+
+          /* Sparkline SVG simple, sin librerías */
+          const Sparkline = ({ data, color = '#2e7d32', width = 110, height = 24 }) => {
+            if (!data || data.length < 2) return <span className="text-[10px] text-gray-300 font-mono">—</span>;
+            const max = Math.max(...data, 1);
+            const min = Math.min(...data, 0);
+            const range = max - min || 1;
+            const stepX = width / (data.length - 1);
+            const pts = data.map((v, i) => `${(i * stepX).toFixed(1)},${(height - ((v - min) / range) * height).toFixed(1)}`).join(' ');
+            const last = data[data.length - 1];
+            const lastY = height - ((last - min) / range) * height;
+            return (
+              <svg width={width} height={height} className="inline-block align-middle">
+                <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+                <polyline points={`0,${height} ${pts} ${width},${height}`} fill={color} fillOpacity="0.06" stroke="none" />
+                <circle cx={width} cy={lastY} r="2" fill={color} />
+              </svg>
+            );
+          };
+
+          /* Score actividad: tomar score_actividad y derivar serie 6m del histórico */
+          const serie6m = (c) => {
+            const h = c.historico_mensual || [];
+            const last6 = h.slice(-6);
+            return last6.map(x => x.count || 0);
+          };
+
+          /* Footer stats: sesiones hoy, dictámenes mes actual, hotspot */
+          const sesionesHoy = (() => {
+            const hoyDDMM = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'2-digit', year:'numeric'}).split('/').join('-');
+            const todas = [...(convocatorias?.Diputados || []), ...(convocatorias?.Senado || [])];
+            return todas.filter(c => c.fecha === hoyDDMM).length;
+          })();
+          const dictMesActual = visibles.reduce((acc, c) => {
+            const h = c.historico_mensual || [];
+            const ult = h[h.length - 1];
+            return acc + (ult?.dictamen || 0);
+          }, 0);
+          const hotspot = visibles.reduce((best, c) => (!best || (c.score_actividad || 0) > (best.score_actividad || 0)) ? c : best, null);
+
+          /* Helpers */
+          const camaraLabel = cam => cam === 'Senado' ? 'Sen.' : 'Dip.';
+          const camaraTag = cam => cam === 'Senado' ? 'bg-gray-900 text-white' : 'bg-gray-700 text-white';
+          const fmtFecha = f => f ? f.replace(/-/g, '·') : '—';
+          const colorScore = s => s >= 80 ? '#2e7d32' : s >= 50 ? '#c6972b' : '#c62828';
+
+          const FilterBtn = ({ k, label }) => (
+            <button onClick={() => setFiltro(k)}
+              className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded transition border ${filtro === k ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-300 hover:border-gray-500'}`}>
+              {label}
+            </button>
+          );
+
+          return (
+            <div className="glass border border-borde rounded-xl overflow-hidden">
+              {/* Header tipo terminal scope */}
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-200 bg-gray-50 flex-wrap gap-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  <span className="text-[11px] uppercase tracking-widest text-gray-700 font-mono font-bold">MI·COMITÉ·WATCH · COMISIONES·LEGISLATIVAS</span>
+                  <span className="text-[10px] text-gray-400 font-mono">/CX</span>
+                  <span className="text-[10px] text-gray-400 font-mono ml-2">{seleccionadas.length} COMISIONES SEGUIDAS · LXVI</span>
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[10px] uppercase tracking-widest text-gray-400 font-mono mr-1">Filtro:</span>
+                  <FilterBtn k="mis" label={`MIS·${seleccionadas.length}`} />
+                  <FilterBtn k="Diputados" label="Diputados" />
+                  <FilterBtn k="Senado" label="Senado" />
+                  <button onClick={onConfigClick}
+                    className="text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded transition border bg-white border-gray-300 text-gray-700 hover:border-gray-500">
+                    + Agregar
+                  </button>
+                  <button onClick={() => setVerTodas(true)}
+                    className="text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded transition border bg-white border-gray-300 text-gray-700 hover:border-gray-500">
+                    Ver·todas·{total} ▸
+                  </button>
+                </div>
+              </div>
+
+              {/* Tabla principal */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-[9px] uppercase tracking-widest text-gray-400 font-bold border-b border-gray-200">
+                      <th className="text-left py-2 pl-4 pr-2 font-bold w-10">#</th>
+                      <th className="text-left py-2 px-2 font-bold">Comisión</th>
+                      <th className="text-center py-2 px-2 font-bold w-16">Dict</th>
+                      <th className="text-center py-2 px-2 font-bold w-16">Inic</th>
+                      <th className="text-center py-2 px-2 font-bold w-16">Prop</th>
+                      <th className="text-center py-2 px-2 font-bold w-16">Total</th>
+                      <th className="text-left py-2 px-3 font-bold w-44">Score·Actividad·6m</th>
+                      <th className="text-left py-2 px-2 font-bold w-56">Próx·Sesión</th>
+                      <th className="text-right py-2 px-3 pr-4 font-bold w-16">Δ30d</th>
+                      <th className="w-8"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibles.map((c, i) => {
+                      const key = `${c.nombre}|${c.camara}`;
+                      const proxima = buscarProxima(c);
+                      const d30 = delta30(c);
+                      const serie = serie6m(c);
+                      const scoreAct = c.score_actividad || 0;
+                      const colorAct = colorScore(scoreAct);
+                      return (
+                        <tr key={key} className="border-b border-gray-100 hover:bg-gray-50 transition group">
+                          <td className="py-3 pl-4 pr-2 text-[10px] font-mono text-gray-400">{String(i + 1).padStart(2, '0')}</td>
+                          <td className="py-3 px-2">
+                            <div className="text-sm font-bold text-gray-900 leading-tight" title={c.nombre}>{c.nombre}</div>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${camaraTag(c.camara)}`}>{camaraLabel(c.camara)}</span>
+                              {c.categoria_nombre && <span className="text-[10px] text-gray-500">{c.categoria_nombre}</span>}
+                            </div>
+                          </td>
+                          <td className="text-center py-3 px-2 font-mono font-bold text-gray-800">{c.tipos?.dictamen || 0}</td>
+                          <td className="text-center py-3 px-2 font-mono text-gray-700">{c.tipos?.iniciativa || 0}</td>
+                          <td className="text-center py-3 px-2 font-mono text-gray-700">{c.tipos?.proposicion || 0}</td>
+                          <td className="text-center py-3 px-2 font-mono font-bold text-gray-900">{c.total_docs || 0}</td>
+                          <td className="py-3 px-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold font-mono" style={{color: colorAct}}>{Math.round(scoreAct)}</span>
+                              <Sparkline data={serie} color={colorAct} />
+                            </div>
+                            <div className="text-[9px] text-gray-400 font-mono mt-0.5">OCT — ABR</div>
+                          </td>
+                          <td className="py-3 px-2">
+                            {proxima ? (
+                              <a href={proxima.url} target="_blank" rel="noopener" className="block text-acento hover:underline">
+                                <div className="text-[11px] font-mono font-bold">▸ {fmtFecha(proxima.fecha)}</div>
+                                <div className="text-[10px] text-gray-500 truncate" style={{maxWidth: '180px'}} title={proxima.titulo}>
+                                  {(proxima.comision || '').slice(0, 30)}
+                                </div>
+                              </a>
+                            ) : (
+                              <div>
+                                <div className="text-[11px] text-gray-400 italic">— sin convocatoria —</div>
+                                {c.ultimo_dictamen_url && (
+                                  <a href={c.ultimo_dictamen_url} target="_blank" rel="noopener" className="text-[10px] text-acento hover:underline">▸ Último dictamen</a>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                          <td className="text-right py-3 px-3 pr-4 font-mono">
+                            {d30 == null ? <span className="text-gray-300">—</span> : (
+                              <span className="text-sm font-bold" style={{color: d30 > 0 ? '#2e7d32' : d30 < 0 ? '#c62828' : '#9ca3af'}}>
+                                {d30 > 0 ? '▲' : d30 < 0 ? '▼' : '·'} {Math.abs(d30).toFixed(0)}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 pr-3">
+                            {filtro === 'mis' && (
+                              <button onClick={() => onRemove(key)}
+                                className="text-gray-300 hover:text-rose-600 w-6 h-6 text-base leading-none opacity-0 group-hover:opacity-100 transition">×</button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {visibles.length === 0 && (
+                      <tr>
+                        <td colSpan="10" className="text-center py-6 text-[11px] text-gray-400 italic">Sin comisiones que mostrar con este filtro</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Footer terminal stats */}
+              <div className="px-4 py-2 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2 text-[10px] font-mono">
+                <div className="flex items-center gap-4 text-gray-500">
+                  <span>SESIONES·HOY <span className="text-gray-800 font-bold">{sesionesHoy}</span></span>
+                  <span>DICT·MES·ACTUAL <span className="text-emerald-700 font-bold">+{dictMesActual}</span></span>
+                  {hotspot && (
+                    <span>HOTSPOT <span className="text-gray-800 font-bold">{(hotspot.nombre || '').slice(0, 24)}</span> · <span className="text-acento font-bold">{Math.round(hotspot.score_actividad || 0)}</span></span>
+                  )}
+                </div>
+                <a href="/" className="text-acento font-bold hover:underline">▸ ABRIR PESTAÑA·COMISIONES</a>
+              </div>
+
+              {/* Modal Ver todas */}
+              {verTodas && (
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setVerTodas(false)}>
+                  <div onClick={e => e.stopPropagation()} className="bg-white rounded-2xl max-w-5xl w-full max-h-[85vh] flex flex-col" style={{boxShadow: '0 20px 60px rgba(0,0,0,0.15)'}}>
+                    <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">VER TODAS · COMISIONES LXVI</div>
+                        <h2 className="text-lg font-black text-gray-900 mt-0.5">{total} comisiones registradas</h2>
+                      </div>
+                      <button onClick={() => setVerTodas(false)} className="text-gray-400 hover:text-gray-700 text-2xl leading-none w-8 h-8 hover:bg-gray-100 rounded-full">×</button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-5">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="text-[9px] uppercase tracking-widest text-gray-400 font-bold border-b border-gray-200">
+                            <th className="text-left py-2 pl-2 pr-2">Comisión</th>
+                            <th className="text-center py-2 px-2 w-16">Cám.</th>
+                            <th className="text-center py-2 px-2 w-16">Dict</th>
+                            <th className="text-center py-2 px-2 w-16">Inic</th>
+                            <th className="text-center py-2 px-2 w-16">Prop</th>
+                            <th className="text-center py-2 px-2 w-16">Total</th>
+                            <th className="text-center py-2 px-2 w-16">Score</th>
+                            <th className="text-center py-2 px-2 w-20">Acción</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(allComisiones || []).map((c) => {
+                            const key = `${c.nombre}|${c.camara}`;
+                            const sel = comisionesIds.has(key);
+                            return (
+                              <tr key={key} className={`border-b border-gray-100 ${sel ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}>
+                                <td className="py-2 pl-2 pr-2 text-sm text-gray-800 truncate" title={c.nombre} style={{maxWidth: '320px'}}>{c.nombre}</td>
+                                <td className="text-center py-2 px-2 text-[10px] font-mono text-gray-600">{camaraLabel(c.camara)}</td>
+                                <td className="text-center py-2 px-2 font-mono text-gray-800">{c.tipos?.dictamen || 0}</td>
+                                <td className="text-center py-2 px-2 font-mono text-gray-700">{c.tipos?.iniciativa || 0}</td>
+                                <td className="text-center py-2 px-2 font-mono text-gray-700">{c.tipos?.proposicion || 0}</td>
+                                <td className="text-center py-2 px-2 font-mono font-bold text-gray-900">{c.total_docs || 0}</td>
+                                <td className="text-center py-2 px-2 font-mono font-bold" style={{color: colorScore(c.score_actividad || 0)}}>{Math.round(c.score_actividad || 0)}</td>
+                                <td className="text-center py-2 px-2">
+                                  <button onClick={() => sel ? onRemove(key) : (comisionesIds.size < 10 && onConfigClick())}
+                                    className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded border ${sel ? 'border-rose-300 text-rose-600 hover:bg-rose-50' : 'border-emerald-300 text-emerald-600 hover:bg-emerald-50'}`}>
+                                    {sel ? '× Quitar' : '+ Sumar'}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        /* MisComisiones — alias mantenido por retro-compat (reemplazado por ComiteWatch) */
+        function MisComisiones(props) { return <ComiteWatch {...props} />; }
+
+        /* (componente deprecated abajo, no se usa pero lo dejamos por si alguien lo referencia) */
+        function _MisComisionesDeprecated({ comisionesIds, allComisiones, convocatorias, onConfigClick, onRemove }) {
           const [expandido, setExpandido] = useState(null); // key de comisión expandida
           if (!comisionesIds || comisionesIds.size === 0) {
             return (
@@ -6471,7 +6778,11 @@
           );
         }
 
-        /* TriggerDesk — Alertas con reglas combinables AND/OR estilo terminal */
+        /* TriggerDesk — Alertas con reglas combinables AND/OR estilo terminal
+           Ahora con probabilidad real calculada desde Worker /probabilidad (Nivel 1):
+           - tema_score: frecuencia empírica de cruces en últimas 365d
+           - legislador_actividad: Poisson sobre iniciativas_proy_15d
+           - compuesta AND: producto · OR: 1-(1-p1)(1-p2) (asume independencia) */
         function TriggerDesk({ alertas, semaforo, allLegisladores, setConfig, config }) {
           const [showForm, setShowForm] = useState(false);
           const [logica, setLogica] = useState('AND');
@@ -6479,6 +6790,66 @@
             { tipo: 'tema_score', tema: '', operador: '>=', valor: 75 }
           ]);
           const [canales, setCanales] = useState({ email: true, push: false });
+          /* Cache de probabilidades por alerta.id → { prob, confianza, descripcion, loading } */
+          const [probs, setProbs] = useState({});
+
+          /* Pide la probabilidad de UNA condición al endpoint /probabilidad */
+          const fetchProbCondicion = async (c, ventanaDias = 30) => {
+            const params = new URLSearchParams();
+            params.set('ventana_dias', String(ventanaDias));
+            if (c.tipo === 'tema_score') {
+              if (!c.tema || c.valor == null) return null;
+              params.set('tipo', 'tema_score');
+              params.set('categoria', c.tema);
+              params.set('operador', c.operador || '>=');
+              params.set('umbral', String(c.valor));
+            } else if (c.tipo === 'legislador_actividad') {
+              if (!c.legislador_id) return null;
+              params.set('tipo', 'legislador_actividad');
+              params.set('legislador_id', String(c.legislador_id));
+            } else {
+              return null;
+            }
+            try {
+              const r = await fetch(`${WORKER_URL}/probabilidad?${params.toString()}`);
+              const j = await r.json();
+              return j;
+            } catch (e) {
+              return null;
+            }
+          };
+
+          /* Para cada alerta esperando, calcular probabilidad combinando condiciones */
+          useEffect(() => {
+            let cancelled = false;
+            const calcular = async () => {
+              for (const a of alertas) {
+                if (a.estado !== 'esperando' && a.estado !== 'disparado') continue;
+                if (probs[a.id] && !probs[a.id].loading) continue;
+                setProbs(prev => ({ ...prev, [a.id]: { loading: true } }));
+                const conds = a.condiciones || [];
+                const results = await Promise.all(conds.map(c => fetchProbCondicion(c, 30)));
+                if (cancelled) return;
+                const valid = results.filter(r => r && r.prob != null);
+                if (valid.length === 0) {
+                  setProbs(prev => ({ ...prev, [a.id]: { prob: null, descripcion: 'datos insuficientes' } }));
+                  continue;
+                }
+                let probComb;
+                if (a.logica === 'OR') {
+                  probComb = 1 - valid.reduce((acc, r) => acc * (1 - r.prob), 1);
+                } else {
+                  probComb = valid.reduce((acc, r) => acc * r.prob, 1);
+                }
+                const confianzas = valid.map(r => r.confianza);
+                const conf = confianzas.includes('baja') ? 'baja' : confianzas.includes('media') ? 'media' : 'alta';
+                const desc = valid.length === 1 ? valid[0].descripcion : `${valid.length} condiciones combinadas (${a.logica || 'AND'}, asume independencia)`;
+                setProbs(prev => ({ ...prev, [a.id]: { prob: probComb, confianza: conf, descripcion: desc, base: valid[0].base } }));
+              }
+            };
+            calcular();
+            return () => { cancelled = true; };
+          }, [alertas]);
 
           const addCondicion = () => {
             setCondiciones([...condiciones, { tipo: 'tema_score', tema: '', operador: '>=', valor: 75 }]);
@@ -6695,7 +7066,7 @@
                             <span className="text-[10px] text-gray-500 font-mono">creada hace {diasCreada}d</span>
                           </div>
                           <div className="text-sm text-gray-900 font-bold mb-2 leading-tight">{a.nombre}</div>
-                          <div className="grid grid-cols-3 gap-3 text-[10px] mb-2">
+                          <div className="grid grid-cols-4 gap-3 text-[10px] mb-2">
                             <div>
                               <div className="uppercase tracking-widest text-gray-400 font-bold mb-0.5">Condición</div>
                               <div className="text-gray-800 font-mono">{a.condiciones?.length || 1} regla{(a.condiciones?.length || 1) > 1 ? `s · ${a.logica}` : ''}</div>
@@ -6705,6 +7076,23 @@
                               <div className="font-mono font-bold" style={{color: stateColor}}>
                                 {isDisparada ? '▲ DISPARADO' : isPausada ? 'PAUSADA' : 'ESPERANDO'}
                               </div>
+                            </div>
+                            <div title={probs[a.id]?.descripcion || 'Calculando...'}>
+                              <div className="uppercase tracking-widest text-gray-400 font-bold mb-0.5">Probab. 30d</div>
+                              {(() => {
+                                const p = probs[a.id];
+                                if (!p || p.loading) return <div className="text-gray-400 font-mono">·····</div>;
+                                if (p.prob == null) return <div className="text-gray-400 font-mono italic">—</div>;
+                                const pct = Math.round(p.prob * 100);
+                                const color = pct >= 67 ? '#2e7d32' : pct >= 33 ? '#c6972b' : '#c62828';
+                                const dot = p.confianza === 'alta' ? '●' : p.confianza === 'media' ? '◐' : '○';
+                                return (
+                                  <div className="font-mono font-bold flex items-baseline gap-1" style={{color}}>
+                                    <span>{pct}%</span>
+                                    <span className="text-[8px] opacity-60" title={`Confianza: ${p.confianza || '—'}`}>{dot}</span>
+                                  </div>
+                                );
+                              })()}
                             </div>
                             <div>
                               <div className="uppercase tracking-widest text-gray-400 font-bold mb-0.5">Canal</div>
