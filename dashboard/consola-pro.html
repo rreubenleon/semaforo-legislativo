@@ -1275,7 +1275,7 @@
                 <div className="glass border border-borde rounded-xl p-4 space-y-3">
                     <div className="flex items-center justify-between">
                         <div>
-                            <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Tendencia de Scores</div>
+                            <div className="text-xs font-semibold text-gray-500">Tendencia de Scores</div>
                             <div className="text-[10px] text-gray-400 mt-0.5">Evolucion del score compuesto por categoria durante el actual periodo de sesiones</div>
                         </div>
                         <button onClick={toggleAll}
@@ -1750,7 +1750,7 @@
                                 </svg>
                                 <div className="relative flex items-start justify-between">
                                     <div className="flex-1 min-w-0">
-                                        <div className="text-xs font-semibold uppercase tracking-widest text-white/70 mb-1">Mayor probabilidad de actividad legislativa</div>
+                                        <div className="text-xs font-semibold text-white/80 mb-1">Mayor probabilidad de actividad legislativa</div>
                                         <h2 className="text-2xl md:text-3xl font-bold mb-2">{top.nombre}</h2>
                                         <NewsTicker articulos={topArticulos} max={5} />
                                     </div>
@@ -4246,7 +4246,7 @@
                         <div className="relative">
                             <div className="flex items-center gap-2 mb-5">
                                 <svg className="w-4 h-4 text-white/70" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-                                <span className="text-[10px] uppercase tracking-widest text-white/70 font-mono font-bold">Acceso restringido</span>
+                                <span className="text-[10px] text-white/80 font-mono font-bold">Acceso restringido</span>
                             </div>
                             <h2 className="text-white text-2xl md:text-3xl font-bold leading-tight mb-3">Métricas internas de FIAT.</h2>
                             <p className="text-white/70 text-sm leading-relaxed mb-6 font-mono">Aquí publicamos la calibración del modelo: qué tan honesta es la probabilidad que muestra FIAT cuando dice 70%, 80% o 90%. Acceso reservado.</p>
@@ -5444,7 +5444,7 @@
                           {partidosUnicos.map(p => <option key={p} value={p}>{p}</option>)}
                         </select>
                       </div>
-                      <div className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">{legisladoresFiltrados.length} resultados</div>
+                      <div className="text-[10px] text-gray-500 font-bold mb-2">{legisladoresFiltrados.length} resultados</div>
                       <div className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
                         {legisladoresFiltrados.slice(0, 100).map(l => {
                           const sel = config.legisladores.includes(l.id);
@@ -5527,7 +5527,7 @@
                           <option value="Senado">Senado</option>
                         </select>
                       </div>
-                      <div className="text-[10px] uppercase tracking-widest text-gray-400 font-bold mb-2">{comisionesFiltradas.length} resultados</div>
+                      <div className="text-[10px] text-gray-500 font-bold mb-2">{comisionesFiltradas.length} resultados</div>
                       <div className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
                         {comisionesFiltradas.slice(0, 100).map(c => {
                           const key = `${c.nombre}|${c.camara}`;
@@ -5783,7 +5783,7 @@
                   <ConsolaProTendencia historial={historialFiltrado} temasSelectos={temasSelectos} />
                 ) : (
                   <div className="glass border border-borde rounded-xl p-8 text-center h-full flex flex-col items-center justify-center" style={{minHeight: 320}}>
-                    <div className="text-xs uppercase tracking-widest text-gray-400 font-bold">TENDENCIA DE MIS TEMAS</div>
+                    <div className="text-xs text-gray-500 font-bold">TENDENCIA DE MIS TEMAS</div>
                     <div className="text-sm text-gray-500 mt-2">Selecciona temas en Configurar</div>
                   </div>
                 )}
@@ -5798,7 +5798,7 @@
                 return (
                   <div>
                     <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                      <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Mis temas · {temasEnConfig.length}/8</div>
+                      <div className="text-xs font-semibold text-gray-500">Mis temas · {temasEnConfig.length}/8</div>
                       <div className="flex items-center gap-2 text-xs">
                         <span className="text-gray-500 uppercase tracking-wider">Ordenar por</span>
                         <div className="inline-flex rounded-lg border border-borde bg-white overflow-hidden">
@@ -5830,7 +5830,7 @@
                       {/* Header consistente con el resto */}
                       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
                         <div>
-                          <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Mis estados</div>
+                          <div className="text-xs font-semibold text-gray-500">Mis estados</div>
                           <div className="text-[10px] text-gray-400 mt-0.5">{estadosFiltradosArr.length} de 32 entidades vigiladas{estadosFiltradosArr[0] && ` · hotspot ${estadosFiltradosArr[0][1].nombre || estadosFiltradosArr[0][0]}`}</div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -5907,7 +5907,7 @@
                     </div>
                   ) : (
                     <div className="glass border border-borde rounded-xl p-8 text-center h-full flex flex-col items-center justify-center">
-                      <div className="text-xs uppercase tracking-widest text-gray-400 font-bold">MIS ESTADOS</div>
+                      <div className="text-xs text-gray-500 font-bold">MIS ESTADOS</div>
                       <div className="text-sm text-gray-500 mt-2">Selecciona estados en Configurar</div>
                     </div>
                   )}
@@ -5916,7 +5916,7 @@
                   <div className="glass border border-borde rounded-xl p-4 flex flex-col h-full">
                     <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                       <div>
-                        <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Menciones de la presidenta</div>
+                        <div className="text-xs font-semibold text-gray-500">Menciones de la presidenta</div>
                         <div className="text-[10px] text-gray-400 mt-0.5">Mañaneras de Claudia Sheinbaum {cspTema && `· ${_catLabel(cspTema)}`}</div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -6018,7 +6018,7 @@
                 return (
                   <div>
                     <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                      <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Mis legisladores · {legisladoresEnConfig.length}/20</div>
+                      <div className="text-xs font-semibold text-gray-500">Mis legisladores · {legisladoresEnConfig.length}/20</div>
                       <div className="flex items-center gap-2">
                         <button onClick={exportCSV}
                           className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition border bg-white border-gray-200 text-gray-700 hover:border-gray-400 inline-flex items-center gap-1.5">
@@ -6058,7 +6058,7 @@
                   <div className="glass border border-borde rounded-xl p-4">
                     <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                       <div>
-                        <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Actividad reciente</div>
+                        <div className="text-xs font-semibold text-gray-500">Actividad reciente</div>
                         <div className="text-[10px] text-gray-400 mt-0.5">Tus legisladores y temas · última semana</div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -6227,7 +6227,7 @@
             <div className="glass border border-borde rounded-xl p-4 h-full flex flex-col">
               <div className="flex items-center justify-between mb-3">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Tendencia de mis temas</div>
+                  <div className="text-xs font-semibold text-gray-500">Tendencia de mis temas</div>
                   <div className="text-[10px] text-gray-400 mt-0.5">Evolución del score compuesto durante el actual periodo de sesiones</div>
                 </div>
                 <div className="flex items-center gap-1">
@@ -6269,7 +6269,7 @@
               <div className="glass border border-borde rounded-xl">
                 <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
                   <div>
-                    <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Comisiones</div>
+                    <div className="text-xs font-semibold text-gray-500">Comisiones</div>
                     <div className="text-[10px] text-gray-400 mt-0.5">Sin comisiones seleccionadas</div>
                   </div>
                   <button onClick={onConfigClick}
@@ -6396,7 +6396,7 @@
               {/* Header consistente con otros widgets — tipografía Inter, sin font-mono */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-wrap gap-2">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Comisiones</div>
+                  <div className="text-xs font-semibold text-gray-500">Comisiones</div>
                   <div className="text-[10px] text-gray-400 mt-0.5">{seleccionadas.length} de {total} comisiones LXVI vigiladas</div>
                 </div>
                 <div className="flex items-center gap-1.5 flex-wrap">
@@ -6422,7 +6422,7 @@
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
-                    <tr className="text-[9px] uppercase tracking-widest text-gray-400 font-bold border-b border-gray-200">
+                    <tr className="text-[9px] text-gray-500 font-bold border-b border-gray-200">
                       <th className="text-left py-2 pl-4 pr-2 font-bold w-10">#</th>
                       <th className="text-left py-2 px-2 font-bold">Comisión</th>
                       <th className="text-center py-2 px-2 font-bold w-16">Dict</th>
@@ -6540,7 +6540,7 @@
                     <div className="flex-1 overflow-y-auto p-5">
                       <table className="w-full text-xs">
                         <thead>
-                          <tr className="text-[9px] uppercase tracking-widest text-gray-400 font-bold border-b border-gray-200">
+                          <tr className="text-[9px] text-gray-500 font-bold border-b border-gray-200">
                             <th className="text-left py-2 pl-2 pr-2">Comisión</th>
                             <th className="text-center py-2 px-2 w-16">Cám.</th>
                             <th className="text-center py-2 px-2 w-16">Dict</th>
@@ -6597,7 +6597,7 @@
           if (!comisionesIds || comisionesIds.size === 0) {
             return (
               <div className="glass border border-borde rounded-xl p-6 text-center">
-                <div className="text-xs uppercase tracking-widest text-gray-400 font-bold">COMISIONES</div>
+                <div className="text-xs text-gray-500 font-bold">COMISIONES</div>
                 <div className="text-xs text-gray-500 mt-2 mb-3">Selecciona hasta 10 comisiones para vigilar productividad, composición y próximas sesiones</div>
                 <button onClick={onConfigClick}
                   className="text-[11px] font-semibold px-4 py-1.5 rounded-full transition border bg-white border-gray-300 text-gray-700 hover:border-gray-500">
@@ -6629,7 +6629,7 @@
             <div className="glass border border-borde rounded-xl p-4">
               <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Comisiones</div>
+                  <div className="text-xs font-semibold text-gray-500">Comisiones</div>
                   <div className="text-[10px] text-gray-400 mt-0.5">{seleccionadas.length}/10 vigiladas · click para expandir</div>
                 </div>
                 <button onClick={onConfigClick}
@@ -6953,7 +6953,7 @@
               {/* Header consistente con el resto: tipografía Inter, sin font-mono */}
               <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
                 <div>
-                  <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Trigger Desk</div>
+                  <div className="text-xs font-semibold text-gray-500">Trigger Desk</div>
                   <div className="text-[10px] text-gray-400 mt-0.5">{alertas.length} alerta{alertas.length === 1 ? '' : 's'} configurada{alertas.length === 1 ? '' : 's'}</div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -6977,7 +6977,7 @@
                       {condiciones.map((c, i) => (
                         <div key={i} className="bg-white rounded-lg border border-gray-200 p-2.5">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="text-[10px] uppercase tracking-widest text-gray-400 font-mono font-bold">
+                            <span className="text-[10px] text-gray-500 font-mono font-bold">
                               {i === 0 ? 'SI' : logica}
                             </span>
                             <select value={c.tipo}
@@ -7061,7 +7061,7 @@
                 {/* Lista de reglas */}
                 {alertas.length === 0 && !showForm ? (
                   <div className="text-center py-8">
-                    <div className="text-xs uppercase tracking-widest text-gray-400 font-mono">SIN REGLAS CONFIGURADAS</div>
+                    <div className="text-xs text-gray-500 font-mono">SIN REGLAS CONFIGURADAS</div>
                     <div className="text-[11px] text-gray-500 mt-2">Crea tu primera regla con condiciones combinables (AND/OR)</div>
                   </div>
                 ) : (
@@ -7086,7 +7086,7 @@
                           <div className="text-sm text-gray-900 font-bold mb-2 leading-tight">{a.nombre}</div>
                           <div className="grid grid-cols-3 gap-3 text-[10px] mb-2">
                             <div>
-                              <div className="uppercase tracking-widest text-gray-400 font-bold mb-0.5">Condición</div>
+                              <div className="text-gray-500 font-bold mb-0.5">Condición</div>
                               <div className="text-gray-800 font-mono">
                                 {(() => {
                                   const c0 = a.condiciones?.[0];
@@ -7100,17 +7100,17 @@
                             {/* Columna del medio cambia según estado: ESTADO si disparado/pausado, PROBABIL si esperando */}
                             {isDisparada ? (
                               <div>
-                                <div className="uppercase tracking-widest text-gray-400 font-bold mb-0.5">Estado</div>
+                                <div className="text-gray-500 font-bold mb-0.5">Estado</div>
                                 <div className="font-mono font-bold" style={{color: stateColor}}>▲ DISPARADO</div>
                               </div>
                             ) : isPausada ? (
                               <div>
-                                <div className="uppercase tracking-widest text-gray-400 font-bold mb-0.5">Estado</div>
+                                <div className="text-gray-500 font-bold mb-0.5">Estado</div>
                                 <div className="font-mono font-bold" style={{color: stateColor}}>◼ PAUSADA</div>
                               </div>
                             ) : (
                               <div title={probs[a.id]?.descripcion || 'Calculando...'}>
-                                <div className="uppercase tracking-widest text-gray-400 font-bold mb-0.5">Probabil.</div>
+                                <div className="text-gray-500 font-bold mb-0.5">Probabil.</div>
                                 {(() => {
                                   const p = probs[a.id];
                                   if (!p || p.loading) return <div className="text-gray-400 font-mono">·····</div>;
@@ -7128,7 +7128,7 @@
                               </div>
                             )}
                             <div>
-                              <div className="uppercase tracking-widest text-gray-400 font-bold mb-0.5">Canal</div>
+                              <div className="text-gray-500 font-bold mb-0.5">Canal</div>
                               <div className="text-gray-800 font-mono">{(a.canales || ['email']).join(' + ')}</div>
                             </div>
                           </div>
