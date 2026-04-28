@@ -2229,38 +2229,42 @@
           const camCorta = (leg.camara || '').replace('Cámara de ', '').toLowerCase();
           const camLabel = camCorta.includes('senad') ? 'Senado' : 'Diputados';
 
-          // Helper para encontrar rol en órgano
-          const find = (org, rol) => organos.find(o => o.organo === org && o.rol === rol);
+          // Helper para encontrar rol en órgano. Acepta sufijos _senado para
+          // distinguir entre Mesa Directiva de Diputados vs Senado en la BD,
+          // pero los normaliza a 'mesa_directiva' / 'jucopo' a nivel de match.
+          const norm = (org) => (org || '').replace(/_senado$/, '');
+          const find = (orgBase, rol) =>
+            organos.find(o => norm(o.organo) === orgBase && o.rol === rol);
 
           // 1. Mesa Directiva Presidencia (la más alta)
           if (find('mesa_directiva', 'Presidencia'))
-            return { label: `Presidente${camCorta.includes('senad')?'a':'a'} de la ${camLabel}`,
+            return { label: `Presidenta de la ${camLabel}`,
                      color: '#fff', bg: '#c62828',
                      tooltip: `Preside la ${camLabel}. Su rol institucional sesga la agenda parlamentaria.` };
 
           // 2. JUCOPO Presidencia
           if (find('jucopo', 'Presidencia'))
-            return { label: 'Presidencia JUCOPO',
+            return { label: `Presidencia JUCOPO ${camLabel}`,
                      color: '#fff', bg: '#1a365d',
-                     tooltip: 'Preside la Junta de Coordinación Política. Sesga acuerdos y agenda.' };
+                     tooltip: `Preside la Junta de Coordinación Política del ${camLabel}. Sesga acuerdos y agenda.` };
 
           // 3. Mesa Directiva Vicepresidencia
           if (find('mesa_directiva', 'Vicepresidencia'))
-            return { label: 'Vicepresidencia Mesa',
+            return { label: `Vicepresidencia ${camLabel}`,
                      color: '#fff', bg: '#7c3aed',
-                     tooltip: `Vicepresidente${camCorta.includes('senad')?'a':'a'} de la Mesa Directiva.` };
+                     tooltip: `Vicepresidencia de la Mesa Directiva del ${camLabel}.` };
 
           // 4. JUCOPO Coordinador (líder de bancada)
           if (find('jucopo', 'Coordinador'))
             return { label: `Coord. ${leg.partido || 'Bancada'}`,
                      color: '#fff', bg: '#c6972b',
-                     tooltip: `Coordinador del Grupo Parlamentario en JUCOPO. Líder de bancada.` };
+                     tooltip: `Coordinador del Grupo Parlamentario en JUCOPO ${camLabel}. Líder de bancada.` };
 
           // 5. Mesa Directiva Secretaría
           if (find('mesa_directiva', 'Secretaría'))
-            return { label: 'Sec. Mesa Directiva',
+            return { label: `Sec. Mesa ${camLabel}`,
                      color: '#fff', bg: '#475569',
-                     tooltip: 'Secretario de la Mesa Directiva.' };
+                     tooltip: `Secretaría de la Mesa Directiva del ${camLabel}.` };
 
           // 6. Presidente de Comisión (parsear comisiones_cargo string)
           // Formato: "A LAS QUE PERTENECE:Integrante|Comisión X:Presidente|..."

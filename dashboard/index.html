@@ -2160,22 +2160,24 @@
           const organos = Array.isArray(leg.organos_gobierno) ? leg.organos_gobierno : [];
           const camCorta = (leg.camara || '').replace('Cámara de ', '').toLowerCase();
           const camLabel = camCorta.includes('senad') ? 'Senado' : 'Diputados';
-          const find = (org, rol) => organos.find(o => o.organo === org && o.rol === rol);
+          const norm = (org) => (org || '').replace(/_senado$/, '');
+          const find = (orgBase, rol) =>
+            organos.find(o => norm(o.organo) === orgBase && o.rol === rol);
           if (find('mesa_directiva', 'Presidencia'))
             return { label: `Presidenta de la ${camLabel}`, bg: '#c62828', color: '#fff',
                      tooltip: `Preside la ${camLabel}. Su rol institucional sesga la agenda.` };
           if (find('jucopo', 'Presidencia'))
-            return { label: 'Presidencia JUCOPO', bg: '#1a365d', color: '#fff',
-                     tooltip: 'Preside la Junta de Coordinación Política.' };
+            return { label: `Presidencia JUCOPO ${camLabel}`, bg: '#1a365d', color: '#fff',
+                     tooltip: `Preside la Junta de Coordinación Política del ${camLabel}.` };
           if (find('mesa_directiva', 'Vicepresidencia'))
-            return { label: 'Vicepresidencia Mesa', bg: '#7c3aed', color: '#fff',
-                     tooltip: 'Vicepresidencia de la Mesa Directiva.' };
+            return { label: `Vicepresidencia ${camLabel}`, bg: '#7c3aed', color: '#fff',
+                     tooltip: `Vicepresidencia de la Mesa Directiva del ${camLabel}.` };
           if (find('jucopo', 'Coordinador'))
             return { label: `Coord. ${leg.partido || 'Bancada'}`, bg: '#c6972b', color: '#fff',
-                     tooltip: 'Coordinador del Grupo Parlamentario en JUCOPO.' };
+                     tooltip: `Coordinador del Grupo Parlamentario en JUCOPO ${camLabel}.` };
           if (find('mesa_directiva', 'Secretaría'))
-            return { label: 'Sec. Mesa Directiva', bg: '#475569', color: '#fff',
-                     tooltip: 'Secretaría de la Mesa Directiva.' };
+            return { label: `Sec. Mesa ${camLabel}`, bg: '#475569', color: '#fff',
+                     tooltip: `Secretaría de la Mesa Directiva del ${camLabel}.` };
           const cc = leg.comisiones_cargo || '';
           if (cc) {
             for (const p of cc.split('|')) {
