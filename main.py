@@ -1020,8 +1020,11 @@ def paso_7_exportar_dashboard():
               FROM divergencias_estado
              WHERE cerrada_en IS NULL
         """).fetchall()
-        from datetime import timezone
-        ahora_utc = datetime.now(timezone.utc) if hasattr(datetime, 'now') else datetime.utcnow()
+        # Nota: NO re-importar timezone aquí — ya está en el import top-level
+        # (línea 19). Hacerlo localmente lo convierte en variable local de TODA
+        # la función paso_7_exportar_dashboard y rompe líneas anteriores que
+        # también lo usan (línea 960 'datetime.now(timezone.utc)' falla con
+        # UnboundLocalError). Bug que tumbó 4 pipelines consecutivos.
         for r in estados:
             cat = r["categoria"]
             try:
