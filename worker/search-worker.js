@@ -326,7 +326,10 @@ async function handleRadar(request, env) {
              para que el frontend pueda parsearlo como badge. Solo Diputados por ahora. */
           (SELECT GROUP_CONCAT(o.organo || ':' || o.rol, ',')
              FROM legisladores_organos_gobierno o
-            WHERE o.legislador_id = l.id) as organos_gobierno
+            WHERE o.legislador_id = l.id) as organos_gobierno,
+          /* Asociación cargo-dictámenes: cuántos de los aprobados del legislador
+             pasaron por la comisión que preside. NULL si no preside nada. */
+          l.aprobados_total, l.aprobados_en_propia, l.comision_presidida
         FROM legisladores l
         LEFT JOIN legisladores_perfil p ON p.legislador_id = l.id
         LEFT JOIN legisladores_stats s ON s.legislador_id = l.id
@@ -399,6 +402,11 @@ async function handleRadar(request, env) {
           const [organo, rol] = s.split(':');
           return { organo, rol };
         }),
+      /* Asociación cargo-dictámenes: solo presentes si la persona preside
+         alguna comisión. Frontend muestra "X de Y pasaron por su comisión". */
+      aprobados_total: r.aprobados_total,
+      aprobados_en_propia: r.aprobados_en_propia,
+      comision_presidida: r.comision_presidida,
     }));
 
     // Meta agregada (útil para poblar filtros en el cliente)

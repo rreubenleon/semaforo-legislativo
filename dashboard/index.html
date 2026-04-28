@@ -2164,19 +2164,19 @@
           const find = (orgBase, rol) =>
             organos.find(o => norm(o.organo) === orgBase && o.rol === rol);
           if (find('mesa_directiva', 'Presidencia'))
-            return { label: `Presidenta de la ${camLabel}`, bg: '#c62828', color: '#fff',
+            return { label: `Presidencia de la ${camLabel}`,
                      tooltip: `Preside la ${camLabel}. Su rol institucional sesga la agenda.` };
           if (find('jucopo', 'Presidencia'))
-            return { label: `Presidencia JUCOPO ${camLabel}`, bg: '#1a365d', color: '#fff',
+            return { label: `Presidencia JUCOPO ${camLabel}`,
                      tooltip: `Preside la Junta de Coordinación Política del ${camLabel}.` };
           if (find('mesa_directiva', 'Vicepresidencia'))
-            return { label: `Vicepresidencia ${camLabel}`, bg: '#7c3aed', color: '#fff',
+            return { label: `Vicepresidencia ${camLabel}`,
                      tooltip: `Vicepresidencia de la Mesa Directiva del ${camLabel}.` };
           if (find('jucopo', 'Coordinador'))
-            return { label: `Coord. ${leg.partido || 'Bancada'}`, bg: '#c6972b', color: '#fff',
+            return { label: `Coordinador ${leg.partido || 'Bancada'} en JUCOPO ${camLabel}`,
                      tooltip: `Coordinador del Grupo Parlamentario en JUCOPO ${camLabel}.` };
           if (find('mesa_directiva', 'Secretaría'))
-            return { label: `Sec. Mesa ${camLabel}`, bg: '#475569', color: '#fff',
+            return { label: `Secretaría Mesa ${camLabel}`,
                      tooltip: `Secretaría de la Mesa Directiva del ${camLabel}.` };
           const cc = leg.comisiones_cargo || '';
           if (cc) {
@@ -2185,7 +2185,7 @@
               if (cargo && /presiden/i.test(cargo)) {
                 const nombreCom = (com || '').trim();
                 if (nombreCom && nombreCom.toUpperCase() !== 'A LAS QUE PERTENECE')
-                  return { label: `Preside ${nombreCom}`, bg: '#2e7d32', color: '#fff',
+                  return { label: `Preside ${nombreCom}`,
                            tooltip: `Preside la Comisión de ${nombreCom}.` };
               }
             }
@@ -2193,14 +2193,30 @@
           return null;
         }
 
-        function RolBadge({ leg, size = 'sm' }) {
+        function RolBadge({ leg }) {
           const r = _rolInstitucional(leg);
           if (!r) return null;
+          const tot = leg.aprobados_total;
+          const propia = leg.aprobados_en_propia;
+          const muestraAsoc = (
+            r.label.startsWith('Preside ')
+            && tot != null && tot > 0 && propia != null
+          );
+          const pct = muestraAsoc ? Math.round((propia / tot) * 100) : null;
           return (
-            <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded" title={r.tooltip}
-              style={{background: r.bg, color: r.color}}>
-              {r.label}
-            </span>
+            <div className="mt-0.5">
+              <div className="text-[10px] font-bold text-gray-700 inline-flex items-center gap-1"
+                title={r.tooltip}>
+                <span className="text-amber-500">★</span>
+                <span>{r.label}</span>
+              </div>
+              {muestraAsoc && (
+                <div className="text-[9px] text-gray-500 mt-0.5"
+                  title={`${propia} de ${tot} aprobados pasaron por la comisión que preside (${pct}%). Asociación alta puede indicar sesgo.`}>
+                  · {propia} de {tot} aprobados pasaron por su comisión
+                </div>
+              )}
+            </div>
           );
         }
 
@@ -2226,10 +2242,7 @@
                             onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreFmt || '?')}&background=e5e7eb&color=374151&size=96`; }}
                             className="w-10 h-10 rounded-full object-cover bg-gray-100 flex-shrink-0 border border-gray-200" />
                         <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-sm font-semibold text-gray-800 truncate" title={nombreFmt}>{nombreFmt}</span>
-                                <RolBadge leg={leg} />
-                            </div>
+                            <div className="text-sm font-semibold text-gray-800 truncate" title={nombreFmt}>{nombreFmt}</div>
                             <div className="flex items-center gap-1.5 mt-0.5">
                                 <PartidoBadge partido={leg.partido} size="sm" />
                                 <span className="text-[10px] text-gray-500 truncate font-mono">
@@ -2237,6 +2250,7 @@
                                     {leg.estado ? ` · ${leg.estado}` : ''}
                                 </span>
                             </div>
+                            <RolBadge leg={leg} />
                         </div>
                     </div>
 
@@ -2252,7 +2266,7 @@
                     {/* Desktop columns */}
                     <div className="hidden md:block text-center">
                         {leg.categoria_dominante ? (
-                            <span className="text-xs text-gray-700 truncate block" title={leg.categoria_dominante}>
+                            <span className="text-[11px] text-gray-500 truncate block" title={leg.categoria_dominante}>
                                 {_catLabel(leg.categoria_dominante)}
                             </span>
                         ) : <span className="text-xs text-gray-400">—</span>}

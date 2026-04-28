@@ -2237,67 +2237,71 @@
 
           // 1. Mesa Directiva Presidencia (la más alta)
           if (find('mesa_directiva', 'Presidencia'))
-            return { label: `Presidenta de la ${camLabel}`,
-                     color: '#fff', bg: '#c62828',
+            return { label: `Presidencia de la ${camLabel}`,
                      tooltip: `Preside la ${camLabel}. Su rol institucional sesga la agenda parlamentaria.` };
-
-          // 2. JUCOPO Presidencia
           if (find('jucopo', 'Presidencia'))
             return { label: `Presidencia JUCOPO ${camLabel}`,
-                     color: '#fff', bg: '#1a365d',
                      tooltip: `Preside la Junta de Coordinación Política del ${camLabel}. Sesga acuerdos y agenda.` };
-
-          // 3. Mesa Directiva Vicepresidencia
           if (find('mesa_directiva', 'Vicepresidencia'))
             return { label: `Vicepresidencia ${camLabel}`,
-                     color: '#fff', bg: '#7c3aed',
                      tooltip: `Vicepresidencia de la Mesa Directiva del ${camLabel}.` };
-
-          // 4. JUCOPO Coordinador (líder de bancada)
           if (find('jucopo', 'Coordinador'))
-            return { label: `Coord. ${leg.partido || 'Bancada'}`,
-                     color: '#fff', bg: '#c6972b',
+            return { label: `Coordinador ${leg.partido || 'Bancada'} en JUCOPO ${camLabel}`,
                      tooltip: `Coordinador del Grupo Parlamentario en JUCOPO ${camLabel}. Líder de bancada.` };
-
-          // 5. Mesa Directiva Secretaría
           if (find('mesa_directiva', 'Secretaría'))
-            return { label: `Sec. Mesa ${camLabel}`,
-                     color: '#fff', bg: '#475569',
+            return { label: `Secretaría Mesa ${camLabel}`,
                      tooltip: `Secretaría de la Mesa Directiva del ${camLabel}.` };
-
-          // 6. Presidente de Comisión (parsear comisiones_cargo string)
-          // Formato: "A LAS QUE PERTENECE:Integrante|Comisión X:Presidente|..."
+          // Presidente de Comisión (parsear comisiones_cargo string)
           const cc = leg.comisiones_cargo || '';
           if (cc) {
-            const partes = cc.split('|');
-            for (const p of partes) {
+            for (const p of cc.split('|')) {
               const [com, cargo] = p.split(':');
               if (cargo && /presiden/i.test(cargo)) {
                 const nombreCom = (com || '').trim();
                 if (nombreCom && nombreCom.toUpperCase() !== 'A LAS QUE PERTENECE') {
                   return { label: `Preside ${nombreCom}`,
-                           color: '#fff', bg: '#2e7d32',
-                           tooltip: `Preside la Comisión de ${nombreCom}. Sus dictámenes en esa comisión pueden estar sesgados por su rol.` };
+                           tooltip: `Preside la Comisión de ${nombreCom}.` };
                 }
               }
             }
           }
-
           return null;
         }
 
-        /* Render del badge de rol institucional. Se usa al lado del nombre. */
-        function RolBadge({ leg, size = 'sm' }) {
+        /* Badge sutil: texto en negritas + estrella, sin pill colorida.
+           Se renderiza DEBAJO de la línea cámara/estado (no al lado del nombre).
+           Ejemplo:
+              Ricardo Monreal Ávila
+              [logo MORENA] Diputados, Zacatecas
+              ★ Presidencia JUCOPO Diputados                    */
+        function RolBadge({ leg }) {
           const r = _rolInstitucional(leg);
           if (!r) return null;
-          const cls = size === 'sm'
-            ? 'text-[9px] font-semibold px-1.5 py-0.5 rounded'
-            : 'text-[10px] font-semibold px-2 py-0.5 rounded';
+          // Métrica de asociación cargo-dictámenes: solo aplica a presidentes
+          // de comisión (no Mesa/JUCOPO). Si el legislador preside una
+          // comisión Y tenemos el cómputo, mostramos "X de Y pasaron por aquí".
+          const tot = leg.aprobados_total;
+          const propia = leg.aprobados_en_propia;
+          const muestraAsoc = (
+            r.label.startsWith('Preside ')
+            && tot != null && tot > 0
+            && propia != null
+          );
+          const pct = muestraAsoc ? Math.round((propia / tot) * 100) : null;
           return (
-            <span className={cls} title={r.tooltip}
-              style={{background: r.bg, color: r.color}}>
-              {r.label}
-            </span>
+            <div className="mt-0.5">
+              <div className="text-[10px] font-bold text-gray-700 inline-flex items-center gap-1"
+                title={r.tooltip}>
+                <span className="text-amber-500">★</span>
+                <span>{r.label}</span>
+              </div>
+              {muestraAsoc && (
+                <div className="text-[9px] text-gray-500 mt-0.5"
+                  title={`${propia} de ${tot} aprobados en LXVI pasaron por la comisión que preside (${pct}%). Una asociación alta puede indicar sesgo institucional.`}>
+                  · {propia} de {tot} aprobados pasaron por su comisión
+                </div>
+              )}
+            </div>
           );
         }
 
@@ -2323,10 +2327,7 @@
                             onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreFmt || '?')}&background=e5e7eb&color=374151&size=96`; }}
                             className="w-10 h-10 rounded-full object-cover bg-gray-100 flex-shrink-0 border border-gray-200" />
                         <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                                <span className="text-sm font-semibold text-gray-800 truncate" title={nombreFmt}>{nombreFmt}</span>
-                                <RolBadge leg={leg} size="sm" />
-                            </div>
+                            <div className="text-sm font-semibold text-gray-800 truncate" title={nombreFmt}>{nombreFmt}</div>
                             <div className="flex items-center gap-1.5 mt-0.5">
                                 <PartidoBadge partido={leg.partido} size="sm" />
                                 <span className="text-[10px] text-gray-500 truncate font-mono">
@@ -2334,6 +2335,7 @@
                                     {leg.estado ? ` · ${leg.estado}` : ''}
                                 </span>
                             </div>
+                            <RolBadge leg={leg} />
                         </div>
                     </div>
 
@@ -2349,10 +2351,10 @@
                     {/* Desktop columns */}
                     <div className="hidden md:block text-center">
                         {leg.categoria_dominante ? (
-                            <span className="text-xs text-gray-700 truncate block" title={leg.categoria_dominante}>
+                            <span className="text-[11px] text-gray-500 truncate block" title={leg.categoria_dominante}>
                                 {_catLabel(leg.categoria_dominante)}
                             </span>
-                        ) : <span className="text-xs text-gray-400">—</span>}
+                        ) : <span className="text-[11px] text-gray-400">—</span>}
                     </div>
                     <div className="hidden md:block text-center">
                         <HitRateGaugeMini value={leg.hit_rate} />
