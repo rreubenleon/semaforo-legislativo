@@ -5183,7 +5183,15 @@
         function App() {
             const [data, setData] = useState(null);
             const [selected, setSelected] = useState(null);
-            const [pagina, setPagina] = useState('actividad');
+            /* Deep link: ?tab=comisiones | radar | mapa | resoluciones | actividad
+               Permite que cualquier link externo (ej. consola-pro) abra una pestaña directa. */
+            const tabFromURL = (() => {
+                try {
+                    const t = new URLSearchParams(window.location.search).get('tab');
+                    return ['actividad','radar','mapa','comisiones','resoluciones'].includes(t) ? t : 'actividad';
+                } catch { return 'actividad'; }
+            })();
+            const [pagina, setPagina] = useState(tabFromURL);
             const [loading, setLoading] = useState(true);
             const [busquedaGlobal, setBusquedaGlobal] = useState('');
             const [showRegistro, setShowRegistro] = useState(false);

@@ -123,6 +123,10 @@
         .csp-compact .text-sm { font-size: 11px; line-height: 1.45; }
         .csp-compact .text-xs { font-size: 10px; }
         .csp-compact .max-h-56 { max-height: 16rem; }
+        /* CSP en la consola: el contenedor padre limita altura via flex-1,
+           y FuentesMananera adentro debe llenar todo el espacio disponible.
+           Sobrescribimos su max-h-56 para que NO recorte el contenido. */
+        .csp-stretch .fuentes-panel { max-height: 100% !important; height: 100%; }
         .csp-compact .p-3 { padding: 0.5rem 0.625rem; }
         .csp-compact .mb-1\.5 { margin-bottom: 0.25rem; }
         .csp-compact .mt-1\.5 { margin-top: 0.25rem; }
@@ -964,9 +968,9 @@
             return (
                 <div className="space-y-2 fuentes-panel max-h-56 overflow-y-auto pr-1">
                     {menciones.map((m, i) => (
-                        <div key={i} className="bg-rose-50 rounded-lg p-3 border border-rose-200">
+                        <div key={i} className="bg-rose-50/60 rounded-lg p-3 border border-rose-100">
                             <div className="flex items-center gap-2 mb-1.5">
-                                <span className="bg-rose-600 text-white text-[10px] font-semibold px-1.5 py-0.5 rounded">Conferencia CSP</span>
+                                <span className="text-[10px] uppercase tracking-widest text-rose-700/80 font-semibold">Conferencia CSP</span>
                                 <span className="text-xs text-gray-400 font-mono">{m.fecha}</span>
                             </div>
                             <div className="text-sm text-gray-700 leading-relaxed italic">&laquo;{m.fragmento}&raquo;</div>
@@ -1895,6 +1899,10 @@
             inteligencia_artificial: 'IA', administracion: 'Administración',
         };
         const _catLabel = (c) => CATEGORIA_LABEL[c] || (c || '—');
+        /* Limpiar prefijo "Comisión de " del nombre (Diputados lo prepende, Senado no).
+           Para mostrar consistentemente solo el nombre distintivo. NO modificar la BD,
+           solo display. */
+        const _nombreComisionDisplay = (nombre) => (nombre || '').replace(/^Comisi[oó]n\s+de\s+/i, '').trim();
 
         // PARTIDO_LOGOS y PartidoBadge están definidos arriba (nivel alto) para que
         // widgets de toda la app los usen, no solo el Radar.
@@ -5295,12 +5303,12 @@
                     <div className="w-2.5 h-2.5 rounded-full" style={{background: 'rgba(245,158,11,0.7)'}}></div>
                     <div className="w-2.5 h-2.5 rounded-full" style={{background: 'rgba(16,185,129,0.7)'}}></div>
                   </div>
-                  <div className="text-[10px] uppercase tracking-widest text-slate-400 ml-2 font-semibold">FIAT_BRAIN.exe</div>
+                  <div className="text-[10px] uppercase tracking-widest text-slate-400 ml-2 font-semibold">Fiat Console</div>
                 </div>
                 <div className="text-[9px] uppercase tracking-widest font-bold" style={{color: '#4ade80'}}>v2 PRÓXIMAMENTE</div>
               </div>
               <div className="flex-1 text-[12px] leading-relaxed space-y-2 relative z-10 overflow-hidden" style={{minHeight: 240}}>
-                <div style={{color: '#4ade80'}}>FIAT BRAIN · Terminal IA</div>
+                <div style={{color: '#4ade80'}}>Fiat Console · Terminal IA</div>
                 <div className="text-slate-500">Modelo: Claude Haiku 4.5 + Sonnet 4.5</div>
                 <div className="text-slate-500">Datos: 16,352 instrumentos · 66,052 notas · 682 legisladores</div>
                 <div className="border-t border-slate-700/50 my-3"></div>
@@ -5528,7 +5536,7 @@
                             <button key={key} onClick={() => toggleComision(key)}
                               className={`w-full flex items-center justify-between px-3 py-2.5 text-left transition ${sel ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}>
                               <div className="flex-1 min-w-0 pr-3">
-                                <div className="text-sm font-semibold text-gray-800 truncate" title={c.nombre}>{c.nombre}</div>
+                                <div className="text-sm font-semibold text-gray-800 truncate" title={c.nombre}>{_nombreComisionDisplay(c.nombre)}</div>
                                 <div className="text-[10px] text-gray-500 font-mono mt-0.5">
                                   {c.camara} · {c.total_docs || 0} asuntos · {c.tipos?.dictamen || 0} dictámenes
                                 </div>
@@ -5552,6 +5560,38 @@
                 </div>
               </div>
             </div>
+          );
+        }
+
+        /* ShareButton — botón unificado para compartir un widget de la consola.
+           Misma lógica que el botón del DetalleModal del dashboard general:
+           navigator.share nativo si existe; fallback a clipboard con feedback ✓.
+           getText() = función que devuelve el texto a compartir (lazy para
+           regenerar con state actual). title opcional = título nativo. */
+        function ShareButton({ getText, title = 'Fiat Console', shareUrl = 'https://fiatmx.com/consola-pro.html', size = 16 }) {
+          const [done, setDone] = useState(false);
+          const handler = (e) => {
+            e.stopPropagation();
+            const texto = getText ? getText() : title;
+            if (navigator.share) {
+              navigator.share({ title, text: texto, url: shareUrl }).catch(() => {});
+            } else {
+              try {
+                navigator.clipboard.writeText(`${texto}\n${shareUrl}`);
+                setDone(true);
+                setTimeout(() => setDone(false), 1500);
+              } catch (_) { /* ignore */ }
+            }
+          };
+          return (
+            <button onClick={handler} title={title}
+              className="text-gray-400 hover:text-acento p-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0">
+              {done ? (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#2e7d32'}}><polyline points="20 6 9 17 4 12"/></svg>
+              ) : (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              )}
+            </button>
           );
         }
 
@@ -5599,7 +5639,7 @@
         function PageConsolePro({ data, setSelected, onConfigClick, onLegSelect, allLegisladores, allComisiones, config, setConfig }) {
           const [estadoSeleccionado, setEstadoSeleccionado] = useState(null);
           const [filtroCSP, setFiltroCSP] = useState(null);
-          const [actividadTab, setActividadTab] = useState('todo');
+          const [actividadTab, setActividadTab] = useState('legisladores');
           const [actividadSearch, setActividadSearch] = useState('');
           const [showAlertaForm, setShowAlertaForm] = useState(false);
           const [alertaTipo, setAlertaTipo] = useState('tema_score');
@@ -5681,7 +5721,7 @@
             return { todo, porLeg: out_leg, porTema: out_tema };
           }, [data, config.legisladores, config.temas]);
 
-          const actividadFuente = actividadTab === 'legisladores' ? actividad.porLeg : actividadTab === 'temas' ? actividad.porTema : actividad.todo;
+          const actividadFuente = actividadTab === 'legisladores' ? actividad.porLeg : actividadTab === 'medios' ? actividad.porTema : actividad.todo;
           const actividadFiltrada = actividadSearch.length >= 2
             ? actividadFuente.filter(it => (it.titulo || '').toLowerCase().includes(actividadSearch.toLowerCase()) || (it.sub || '').toLowerCase().includes(actividadSearch.toLowerCase()))
             : actividadFuente;
@@ -5787,100 +5827,22 @@
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
                   {estadosSelectos.size > 0 ? (
                     <div className="glass border border-borde rounded-xl overflow-hidden flex flex-col">
-                      {/* Header consistente con el resto: tipografía Inter, sin font-mono */}
+                      {/* Header consistente con el resto */}
                       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
                         <div>
                           <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Mis estados</div>
-                          <div className="text-[10px] text-gray-400 mt-0.5">{estadosFiltradosArr.length} de 32 entidades vigiladas</div>
+                          <div className="text-[10px] text-gray-400 mt-0.5">{estadosFiltradosArr.length} de 32 entidades vigiladas{estadosFiltradosArr[0] && ` · hotspot ${estadosFiltradosArr[0][1].nombre || estadosFiltradosArr[0][0]}`}</div>
                         </div>
-                        <div className="inline-flex rounded-lg border border-borde bg-white overflow-hidden">
-                          {['Calor','Red','Sat'].map((v, i) => (
-                            <button key={v} onClick={() => setVistaMapa(v.toLowerCase())}
-                              className={`px-2.5 py-1 text-[11px] font-medium transition-colors ${vistaMapa === v.toLowerCase() ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-50'} ${i > 0 ? 'border-l border-borde' : ''}`}>
-                              {v}
-                            </button>
-                          ))}
+                        <div className="flex items-center gap-2">
+                          <ShareButton getText={() => `Mis estados FIAT — ${estadosFiltradosArr.length} entidades vigiladas\n${estadosFiltradosArr.slice(0,5).map(([,v])=>`${v.nombre}: ${v.total_articulos||0} notas`).join('\n')}\nhttps://fiatmx.com`} title="Compartir Mis estados" />
+                          <a href="/?tab=mapa" target="_blank" rel="noopener" className="text-[11px] font-semibold text-acento hover:underline whitespace-nowrap">Ver mapa completo →</a>
                         </div>
                       </div>
-                      {/* Frame con corners + dots HTML/CSS (más confiable que SVG animate) */}
-                      <div className="map-intel-frame relative bg-gray-50 mx-3 my-3" style={{aspectRatio: '4/3', color: '#9ca3af'}}>
-                        <div className="map-intel-corner tl"></div>
-                        <div className="map-intel-corner tr"></div>
-                        <div className="map-intel-corner bl"></div>
-                        <div className="map-intel-corner br"></div>
-                        <div className="absolute top-2 left-3 text-[10px] font-mono text-gray-400 z-10">23°38'N · 102°33'W</div>
-                        {/* SVG: solo crosshair + silueta MX (sin dots) */}
-                        <svg viewBox="0 0 320 240" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet">
-                          <line x1="160" y1="0" x2="160" y2="240" stroke="#d1d5db" strokeWidth="0.5" strokeDasharray="2 4"/>
-                          <line x1="0" y1="120" x2="320" y2="120" stroke="#d1d5db" strokeWidth="0.5" strokeDasharray="2 4"/>
-                          <path d="M 30 90 Q 60 75 100 80 L 150 75 Q 200 70 235 80 L 270 95 L 285 115 L 280 145 L 270 165 L 240 180 L 200 195 L 150 200 L 100 185 L 70 165 L 50 140 L 35 115 Z"
-                            fill="rgba(46,125,50,0.04)" stroke="#2e7d32" strokeWidth="1" strokeDasharray="3 4" opacity="0.7"/>
-                        </svg>
-                        {/* Dots con HTML+CSS (animación CSS pura, sin SVG animate) */}
-                        {estadosFiltradosArr.map(([key, info]) => {
-                          const coords = ESTADO_COORDS[key];
-                          if (!coords) return null;
-                          const lonMin = -118, lonMax = -86, latMin = 14, latMax = 33;
-                          const xPct = ((coords[1] - lonMin) / (lonMax - lonMin)) * 100;
-                          const yPct = ((latMax - coords[0]) / (latMax - latMin)) * 100;
-                          const intensity = (info.total_articulos || 0) / maxArtsConfig;
-                          const color = intensity > 0.5 ? '#c62828' : intensity > 0.2 ? '#c6972b' : '#2e7d32';
-                          const isSel = estadoSeleccionado === key;
-                          const coreSize = isSel ? 12 : 8;
-                          const ringMax = coreSize + (intensity > 0.5 ? 28 : intensity > 0.2 ? 22 : 16);
-                          const numRings = intensity > 0.5 ? 3 : intensity > 0.2 ? 2 : 1;
-                          return (
-                            <div key={key}
-                              onClick={() => setEstadoSeleccionado(estadoSeleccionado === key ? null : key)}
-                              style={{position: 'absolute', left: `${xPct}%`, top: `${yPct}%`, transform: 'translate(-50%,-50%)', cursor: 'pointer', zIndex: 5, color}}
-                              title={`${info.nombre || info.abreviatura}: ${info.total_articulos || 0} notas`}>
-                              {[...Array(numRings)].map((_, r) => (
-                                <div key={r} className="intel-ring-css"
-                                  style={{
-                                    width: ringMax, height: ringMax,
-                                    marginLeft: -ringMax/2, marginTop: -ringMax/2,
-                                    animationDelay: `${(r * 2 / numRings).toFixed(2)}s`,
-                                    color
-                                  }}></div>
-                              ))}
-                              <div style={{
-                                position: 'relative', width: coreSize, height: coreSize,
-                                borderRadius: '50%', background: color,
-                                boxShadow: isSel ? `0 0 0 2px white, 0 0 0 3px ${color}` : `0 0 0 1.5px white, 0 1px 4px rgba(0,0,0,0.2)`,
-                              }}></div>
-                              {(isSel || intensity > 0.4) && (
-                                <div style={{
-                                  position: 'absolute', top: coreSize / 2 + 4, left: coreSize + 4,
-                                  whiteSpace: 'nowrap', fontFamily: 'JetBrains Mono, monospace',
-                                  fontSize: 9, fontWeight: 700, color: '#1f2937',
-                                  background: 'rgba(255,255,255,0.92)', padding: '1px 4px', borderRadius: 3,
-                                }}>
-                                  {(info.abreviatura || key).toUpperCase().slice(0,3)}
-                                  <span style={{color: '#6b7280', fontWeight: 500, marginLeft: 4}}>
-                                    {info.total_articulos || 0} · {intensity > 0.5 ? 'ALTA' : intensity > 0.2 ? 'MOD' : 'BAJA'}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          );
-                        })}
-                      </div>
-                      {/* Footer con stats tipo terminal */}
-                      <div className="px-4 py-2 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2 text-[10px] font-mono">
-                        <div className="flex items-center gap-3">
-                          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span><span className="text-gray-600">ALTA</span></span>
-                          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span><span className="text-gray-600">MOD</span></span>
-                          <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span><span className="text-gray-600">BAJA</span></span>
-                        </div>
-                        <div className="text-gray-400">SCOPE: MX · 32 ESTADOS</div>
-                      </div>
-                      <div className="px-4 py-2 border-t border-gray-200 bg-white flex items-center justify-between flex-wrap gap-2 text-[10px] font-mono">
-                        <div className="flex items-center gap-3 text-gray-500">
-                          <span>ENTIDADES <span className="text-gray-800 font-bold">{estadosFiltradosArr.length}/32</span></span>
-                          {estadosFiltradosArr[0] && <span>HOTSPOT <span className="text-gray-800 font-bold">{(estadosFiltradosArr[0][1].abreviatura || '').toUpperCase().slice(0,3)}</span></span>}
-                          <span className="text-acento">Δ24H +{estadosFiltradosArr.filter(([,v]) => (v.total_articulos||0)>0).length} estados</span>
-                        </div>
-                        <a href="/" className="text-acento font-bold hover:underline">ABRIR MAPA·FULL ▸</a>
+                      {/* Mapa real Leaflet con capa de calor radar — solo estados configurados */}
+                      <div className="px-3 py-3">
+                        <MapaMexico estados={estadosFiltradosArr} maxArts={maxArtsConfig}
+                          onSelectEstado={(key) => setEstadoSeleccionado(estadoSeleccionado === key ? null : key)}
+                          estadoSeleccionado={estadoSeleccionado} />
                       </div>
                       {selectedEstadoData && (() => {
                         /* Filtrar artículos del estado por periodo */
@@ -5957,12 +5919,16 @@
                         <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Menciones de la presidenta</div>
                         <div className="text-[10px] text-gray-400 mt-0.5">Mañaneras de Claudia Sheinbaum {cspTema && `· ${_catLabel(cspTema)}`}</div>
                       </div>
-                      {temasSelectos.size > 0 && (
-                        <select value={cspTema || ''} onChange={e => setFiltroCSP(e.target.value)}
-                          className="text-xs px-2 py-1 border border-gray-200 rounded-lg bg-white">
-                          {Array.from(temasSelectos).map(t => <option key={t} value={t}>{_catLabel(t)}</option>)}
-                        </select>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {temasSelectos.size > 0 && (
+                          <select value={cspTema || ''} onChange={e => setFiltroCSP(e.target.value)}
+                            className="text-xs px-2 py-1 border border-gray-200 rounded-lg bg-white">
+                            {Array.from(temasSelectos).map(t => <option key={t} value={t}>{_catLabel(t)}</option>)}
+                          </select>
+                        )}
+                        <ShareButton title={`Menciones CSP — ${cspTema ? _catLabel(cspTema) : 'temas vigilados'}`}
+                          getText={() => `Menciones de la Presidenta sobre ${cspTema ? _catLabel(cspTema) : 'mis temas'} (Fiat Console)\n${(cspMenciones||[]).slice(0,3).map(m => `· ${m.fecha}: «${(m.fragmento||'').slice(0,140)}…»`).join('\n')}`} />
+                      </div>
                     </div>
                     {/* Reusa el componente FuentesMananera REAL del DetalleModal con override compacto · flex-1 + scroll para llenar el alto */}
                     <div className="csp-compact csp-stretch flex-1 overflow-y-auto pr-1" style={{scrollbarWidth: 'thin'}}>
@@ -6063,6 +6029,8 @@
                           className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition border bg-white border-gray-300 text-gray-700 hover:border-gray-500">
                           + Agregar
                         </button>
+                        <ShareButton title="Mis legisladores — Fiat Console"
+                          getText={() => `Vigilando a ${legisladoresEnConfig.length} legisladores en Fiat Console:\n${ordenado.slice(0,5).map(l => `· ${formatNombreLegislador(l)} (${l.partido || '—'})`).join('\n')}`} />
                       </div>
                     </div>
                     <div className="glass border border-borde rounded-xl divide-y divide-gray-100 overflow-hidden">
@@ -6093,13 +6061,17 @@
                         <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Actividad reciente</div>
                         <div className="text-[10px] text-gray-400 mt-0.5">Tus legisladores y temas · última semana</div>
                       </div>
-                      <input type="text" placeholder="Buscar..." value={actividadSearch} onChange={e => setActividadSearch(e.target.value)}
-                        className="text-xs px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 w-32 focus:outline-none focus:border-acento focus:bg-white" />
+                      <div className="flex items-center gap-2">
+                        <input type="text" placeholder="Buscar..." value={actividadSearch} onChange={e => setActividadSearch(e.target.value)}
+                          className="text-xs px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 w-32 focus:outline-none focus:border-acento focus:bg-white" />
+                        <ShareButton title="Actividad reciente — Fiat Console"
+                          getText={() => `Actividad reciente de mis legisladores y temas vigilados (Fiat Console):\n${(actividad.todo||[]).slice(0,5).map(it => `· ${it.titulo || ''}`).join('\n')}`} />
+                      </div>
                     </div>
                     <div className="flex gap-1 mb-3 border-b border-gray-100">
-                      <button onClick={() => setActividadTab('todo')} className={`px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition ${actividadTab === 'todo' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>Todo · {actividad.todo.length}</button>
                       <button onClick={() => setActividadTab('legisladores')} className={`px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition ${actividadTab === 'legisladores' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>Legisladores · {actividad.porLeg.length}</button>
-                      <button onClick={() => setActividadTab('temas')} className={`px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition ${actividadTab === 'temas' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>Temas · {actividad.porTema.length}</button>
+                      <button onClick={() => setActividadTab('medios')} className={`px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition ${actividadTab === 'medios' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>Medios · {actividad.porTema.length}</button>
+                      <button onClick={() => setActividadTab('todo')} className={`px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition ${actividadTab === 'todo' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>Todo · {actividad.todo.length}</button>
                     </div>
                     {actividadFiltrada.length === 0 ? (
                       <div className="text-xs text-gray-500 italic text-center py-8">Sin actividad reciente en este filtro</div>
@@ -6258,7 +6230,16 @@
                   <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Tendencia de mis temas</div>
                   <div className="text-[10px] text-gray-400 mt-0.5">Evolución del score compuesto durante el actual periodo de sesiones</div>
                 </div>
-                <div className="text-[10px] text-gray-400 font-mono">{temasSelectos.size}/8</div>
+                <div className="flex items-center gap-1">
+                  <div className="text-[10px] text-gray-400 font-mono">{temasSelectos.size}/8</div>
+                  <ShareButton title="Tendencia de mis temas — Fiat Console"
+                    getText={() => {
+                      const cats = Object.values(historial?.categorias || {});
+                      const top = cats.map(c => ({nombre: c.nombre, ult: c.scores?.[c.scores.length-1]||0}))
+                                      .sort((a,b)=>b.ult-a.ult).slice(0,3);
+                      return `Tendencia de mis temas vigilados (Fiat Console):\n${top.map(t=>`· ${t.nombre}: ${t.ult.toFixed(0)}`).join('\n')}`;
+                    }} />
+                </div>
               </div>
               <div className="flex-1" style={{minHeight: 260}}><canvas ref={chartRef}></canvas></div>
             </div>
@@ -6303,24 +6284,48 @@
             );
           }
 
-          /* Indexar convocatorias por nombre normalizado, max fecha futura */
+          /* Indexar convocatorias por nombre normalizado, max fecha futura.
+             El matcher anterior era demasiado laxo: hacia split(' ')[0] del key
+             y matcheaba "hacienda" con cualquier comision que su norm incluyera
+             "hacienda". Ahora exigimos overlap de >=2 palabras significativas
+             (ignorando stopwords) entre la convocatoria y la comision. */
+          const STOPWORDS_COM = new Set(['de','la','el','los','las','y','del','en','para','sen','dip','comision','comisiones']);
+          const tokensRelevantes = (s) => (s || '')
+            .toLowerCase()
+            .normalize('NFD').replace(/[̀-ͯ]/g,'')   // sin acentos
+            .replace(/[^a-z0-9 ]/g, ' ')
+            .split(/\s+/)
+            .filter(t => t.length >= 4 && !STOPWORDS_COM.has(t));
+
           const proximasMap = {};
-          const hoyStr = new Date().toISOString().slice(0, 10);
           ['Diputados', 'Senado'].forEach(cam => {
             (convocatorias?.[cam] || []).forEach(c => {
-              const key = (c.comision || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').trim();
-              if (!key) return;
-              if (!proximasMap[key] || (c.fecha && c.fecha > proximasMap[key].fecha)) {
-                proximasMap[key] = c;
+              const tokens = tokensRelevantes(c.comision || c.titulo || '');
+              if (tokens.length === 0) return;
+              const key = tokens.join('|');
+              if (!proximasMap[key] || (c.fecha && c.fecha > (proximasMap[key].fecha || ''))) {
+                proximasMap[key] = { ...c, _tokens: tokens, _camara: cam };
               }
             });
           });
+
           const buscarProxima = (com) => {
-            const norm = (com.nombre || '').toLowerCase().replace(/[^a-z0-9]/g, ' ').trim();
-            for (const [k, v] of Object.entries(proximasMap)) {
-              if (k.includes(norm) || norm.includes(k.split(' ')[0])) return v;
+            const tokensCom = tokensRelevantes(com.nombre || '');
+            if (tokensCom.length === 0) return null;
+            let best = null, bestOverlap = 0;
+            for (const conv of Object.values(proximasMap)) {
+              // Match estricto: misma cámara + overlap de tokens significativos
+              if (conv._camara !== com.camara) continue;
+              const overlap = conv._tokens.filter(t => tokensCom.includes(t)).length;
+              // Necesitamos al menos 2 palabras en común, o 1 si es palabra distintiva
+              // (la comision tiene pocas palabras, ej. "Marina")
+              const minRequerido = tokensCom.length === 1 ? 1 : 2;
+              if (overlap >= minRequerido && overlap > bestOverlap) {
+                best = conv;
+                bestOverlap = overlap;
+              }
             }
-            return null;
+            return best;
           };
 
           /* Δ30d aproximado: último mes vs promedio meses anteriores en historico_mensual */
@@ -6408,6 +6413,8 @@
                     className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition border bg-white border-gray-300 text-gray-700 hover:border-gray-500">
                     Ver todas · {total}
                   </button>
+                  <ShareButton title="Comisiones vigiladas — Fiat Console"
+                    getText={() => `Comisiones vigiladas (${seleccionadas.length}/10):\n${seleccionadas.slice(0,5).map(c => `· ${c.nombre} (${c.camara}): ${(c.sitl?.turnadas ?? c.total_docs ?? 0)} turnados`).join('\n')}`} />
                 </div>
               </div>
 
@@ -6448,7 +6455,7 @@
                         <tr key={key} className="border-b border-gray-100 hover:bg-gray-50 transition group">
                           <td className="py-3 pl-4 pr-2 text-[10px] font-mono text-gray-400">{String(i + 1).padStart(2, '0')}</td>
                           <td className="py-3 px-2">
-                            <div className="text-sm font-bold text-gray-900 leading-tight" title={c.nombre}>{c.nombre}</div>
+                            <div className="text-sm font-bold text-gray-900 leading-tight" title={c.nombre}>{_nombreComisionDisplay(c.nombre)}</div>
                             <div className="flex items-center gap-1.5 mt-1">
                               <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${camaraTag(c.camara)}`}>{camaraLabel(c.camara)}</span>
                               {c.categoria_nombre && <span className="text-[10px] text-gray-500">{c.categoria_nombre}</span>}
@@ -6516,7 +6523,7 @@
                     <span>HOTSPOT <span className="text-gray-800 font-bold">{(hotspot.nombre || '').slice(0, 24)}</span> · <span className="text-acento font-bold">{Math.round(hotspot.score_actividad || 0)}</span></span>
                   )}
                 </div>
-                <a href="/" className="text-acento font-bold hover:underline">▸ ABRIR PESTAÑA·COMISIONES</a>
+                <a href="/?tab=comisiones" target="_blank" rel="noopener" className="text-acento font-semibold hover:underline">Abrir pestaña Comisiones →</a>
               </div>
 
               {/* Modal Ver todas */}
@@ -6555,7 +6562,7 @@
                             const totalN = sitl?.turnadas ?? c.total_docs ?? 0;
                             return (
                               <tr key={key} className={`border-b border-gray-100 ${sel ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}>
-                                <td className="py-2 pl-2 pr-2 text-sm text-gray-800 truncate" title={c.nombre} style={{maxWidth: '320px'}}>{c.nombre}</td>
+                                <td className="py-2 pl-2 pr-2 text-sm text-gray-800 truncate" title={c.nombre} style={{maxWidth: '320px'}}>{_nombreComisionDisplay(c.nombre)}</td>
                                 <td className="text-center py-2 px-2 text-[10px] font-mono text-gray-600">{camaraLabel(c.camara)}</td>
                                 <td className="text-center py-2 px-2 font-mono text-gray-800">{dictN}</td>
                                 <td className="text-center py-2 px-2 font-mono text-gray-700">{iniN}</td>
@@ -6655,7 +6662,7 @@
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
                               <span className="text-gray-400 text-[10px] font-mono">{isExpanded ? '▾' : '▸'}</span>
-                              <div className="text-sm font-semibold text-gray-900 truncate" title={c.nombre}>{c.nombre}</div>
+                              <div className="text-sm font-semibold text-gray-900 truncate" title={c.nombre}>{_nombreComisionDisplay(c.nombre)}</div>
                             </div>
                             <div className="text-[10px] text-gray-500 font-mono mt-0.5 ml-3.5">
                               {c.camara}{c.categoria_nombre ? ` · ${c.categoria_nombre}` : ''}
@@ -6949,11 +6956,14 @@
                   <div className="text-xs font-semibold uppercase tracking-widest text-gray-400">Trigger Desk</div>
                   <div className="text-[10px] text-gray-400 mt-0.5">{alertas.length} alerta{alertas.length === 1 ? '' : 's'} configurada{alertas.length === 1 ? '' : 's'}</div>
                 </div>
-                <button onClick={() => setShowForm(!showForm)}
-                  className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition border"
-                  style={showForm ? {background:'#f3f4f6', color:'#6b7280', borderColor:'#d1d5db'} : {background:'#1a365d', color:'white', borderColor:'#1a365d'}}>
-                  {showForm ? 'Cancelar' : '+ Nueva regla'}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setShowForm(!showForm)}
+                    className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition border"
+                    style={showForm ? {background:'#f3f4f6', color:'#6b7280', borderColor:'#d1d5db'} : {background:'#1a365d', color:'white', borderColor:'#1a365d'}}>
+                    {showForm ? 'Cancelar' : '+ Nueva regla'}
+                  </button>
+                  <ShareButton title="Trigger Desk — Fiat Console"
+                    getText={() => `Trigger Desk · ${alertas.length} alerta(s) configurada(s):\n${alertas.slice(0,5).map(a => `· ${a.nombre}`).join('\n')}`} /></div>
               </div>
 
               <div className="p-4 space-y-3">
