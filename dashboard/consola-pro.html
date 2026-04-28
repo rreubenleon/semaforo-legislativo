@@ -123,15 +123,14 @@
         .csp-compact .text-sm { font-size: 11px; line-height: 1.45; }
         .csp-compact .text-xs { font-size: 10px; }
         .csp-compact .max-h-56 { max-height: 16rem; }
-        /* CSP en la consola: la CARD debe tener exactamente la altura del
-           mapa (gracias a grid stretch). El contenedor de menciones llena
-           el espacio entre el header y el borde inferior — si hay más
-           menciones de las que caben, scroll interno. NO debe estirar la
-           card más allá. Truco: min-height:0 en el flex-1 (sin eso, el
-           contenido fuerza la card a crecer) + max-height:100% sobre el
-           panel interno para que NO recorte ni infle. */
-        .csp-stretch { min-height: 0; }
-        .csp-stretch .fuentes-panel { max-height: 100% !important; }
+        /* CSP en la consola: forzamos max-height absoluto (matchea el alto
+           del mapa Leaflet ~420px) al wrapper. Sin esto, los flex parents
+           no logran limitar la altura cuando el grid no tiene altura
+           explícita y el contenido empuja la card a crecer.
+           Resultado: el card mide ~480px (header CSP ~60px + panel 420px),
+           coincide con el mapa, y si hay más menciones se scrolean adentro. */
+        .csp-stretch { min-height: 0; max-height: 420px; overflow-y: auto; }
+        .csp-stretch .fuentes-panel { max-height: none !important; }
         .csp-compact .p-3 { padding: 0.5rem 0.625rem; }
         .csp-compact .mb-1\.5 { margin-bottom: 0.25rem; }
         .csp-compact .mt-1\.5 { margin-top: 0.25rem; }
