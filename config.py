@@ -39,8 +39,11 @@ MEDIOS = {
     },
     "excelsior": {
         "nombre": "Excélsior",
-        "rss": "",  # RSS eliminado por el medio; cubierto por medios_html.py
-        "peso": 1.0,
+        # RSS reactivado abr 2026: feed de Nacional funciona y trae autor por nota
+        # (relevante para detectar firmas de Ivonne Melgar, Leticia Robles, etc.).
+        # medios_html.py se mantiene como fallback de portada.
+        "rss": "https://www.excelsior.com.mx/rss/nacional",
+        "peso": 1.1,  # Subido de 1.0 → 1.1 por mejor cobertura legislativa
     },
     "la_razon": {
         "nombre": "La Razón",

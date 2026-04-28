@@ -149,8 +149,19 @@ def scrape_medio(clave, config_medio):
     articulos = []
     for entry in feed.entries:
         titulo = getattr(entry, "title", "").strip()
+        # Algunos RSS (Excélsior) dejan CDATA crudo en el título cuando el
+        # formato del feed es no estándar. Limpiar.
+        if titulo.startswith("<![CDATA[") and titulo.endswith("]]>"):
+            titulo = titulo[len("<![CDATA["):-len("]]>")].strip()
         if not titulo:
             continue
+
+        # Autor: relevante para identificar firmas de periodistas legislativos
+        # clave (Ivonne Melgar, Leticia Robles, etc.). Algunos RSS lo exponen
+        # como `author` o `dc_creator`.
+        autor = (getattr(entry, "author", "")
+                 or getattr(entry, "dc_creator", "")
+                 or "").strip()
 
         articulo = {
             "hash": generar_hash(titulo, clave),
@@ -162,6 +173,7 @@ def scrape_medio(clave, config_medio):
             "categorias": "",  # Se llena por el clasificador NLP
             "peso_fuente": peso,
             "fecha_scraping": datetime.now().isoformat(),
+            "autor": autor,
         }
         articulos.append(articulo)
 
@@ -187,9 +199,9 @@ def scrape_todos_medios():
             try:
                 conn.execute("""
                     INSERT INTO articulos
-                        (hash, fuente, titulo, fecha, resumen, url, categorias, peso_fuente, fecha_scraping)
+                        (hash, fuente, titulo, fecha, resumen, url, categorias, peso_fuente, fecha_scraping, autor)
                     VALUES
-                        (:hash, :fuente, :titulo, :fecha, :resumen, :url, :categorias, :peso_fuente, :fecha_scraping)
+                        (:hash, :fuente, :titulo, :fecha, :resumen, :url, :categorias, :peso_fuente, :fecha_scraping, :autor)
                 """, art)
                 conn.commit()
                 nuevos += 1
