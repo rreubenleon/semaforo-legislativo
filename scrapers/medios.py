@@ -49,9 +49,16 @@ def init_db():
             url TEXT,
             categorias TEXT,
             peso_fuente REAL DEFAULT 1.0,
-            fecha_scraping TEXT NOT NULL
+            fecha_scraping TEXT NOT NULL,
+            autor TEXT
         )
     """)
+    # Migración idempotente: BDs antiguas (cache GH Actions, etc.) que no
+    # tenían la columna 'autor'. Necesario porque el INSERT espera el campo.
+    try:
+        conn.execute("ALTER TABLE articulos ADD COLUMN autor TEXT")
+    except sqlite3.OperationalError:
+        pass  # ya existe
     # Índices para reducir row reads en Turso
     for idx_name, idx_def in [
         ("idx_articulos_fecha", "articulos(fecha)"),
