@@ -139,6 +139,81 @@ def _obtener_actividad_legisladores_reciente():
         return []
 
 
+def _obtener_aprobaciones_por_categoria(dias=30, items_max_por_cat=15):
+    """
+    Devuelve dict {categoria: {'count': N, 'items': [...]}} con aprobaciones
+    recientes de SIL LXVI agrupadas por categoría FIAT.
+
+    Cada item: {tipo, titulo, camara, presentador, partido, fecha_aprobacion,
+                url_sil, comision}.
+
+    La fecha de aprobación se extrae del campo `estatus` que viene como
+    "Resuelto / AprobadoAprobado15/04/2026". Si no hay fecha extraíble,
+    el item se omite (para que el conteo refleje aprobaciones VERIFICABLES
+    en ventana temporal, no acumulado histórico).
+    """
+    try:
+        import sqlite3
+        import re
+        from datetime import datetime, timedelta
+        from db import get_connection
+        conn = get_connection()
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute("""
+            SELECT seguimiento_id, asunto_id, tipo_grupo, titulo, camara,
+                   estatus, presentador, partido, comision, categoria,
+                   fecha_presentacion
+              FROM sil_documentos
+             WHERE legislatura = 'LXVI'
+               AND clasificacion = 'legislativa'
+               AND (LOWER(estatus) LIKE '%aprob%' OR LOWER(estatus) LIKE '%resuelto%')
+               AND categoria IS NOT NULL AND categoria != ''
+        """).fetchall()
+
+        hoy = datetime.now().date()
+        ventana = hoy - timedelta(days=dias)
+        re_fecha = re.compile(r'(\d{2}/\d{2}/\d{4})')
+        agrupado = {}
+        for r in rows:
+            cat = (r['categoria'] or '').split(':')[0].strip()  # quita ":0.75" sufijos
+            if not cat:
+                continue
+            m = re_fecha.search(r['estatus'] or '')
+            if not m:
+                continue
+            try:
+                fecha_aprob = datetime.strptime(m.group(1), '%d/%m/%Y').date()
+            except ValueError:
+                continue
+            if fecha_aprob < ventana or fecha_aprob > hoy:
+                continue
+            agrupado.setdefault(cat, []).append({
+                'tipo':              r['tipo_grupo'],
+                'titulo':            (r['titulo'] or '')[:200],
+                'camara':            (r['camara'] or '').replace('Cámara de ', ''),
+                'presentador':       (r['presentador'] or '')[:120],
+                'partido':           r['partido'] or '',
+                'fecha_aprobacion':  fecha_aprob.isoformat(),
+                'comision':          (r['comision'] or '')[:120],
+                'url_sil':           (f"http://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?"
+                                      f"Seguimiento={r['seguimiento_id']}&Asunto={r['asunto_id']}"
+                                      if r['seguimiento_id'] and r['asunto_id'] else ''),
+            })
+
+        # Ordenar items por fecha desc dentro de cada categoría y limitar
+        out = {}
+        for cat, items in agrupado.items():
+            items.sort(key=lambda x: x['fecha_aprobacion'], reverse=True)
+            out[cat] = {
+                'count': len(items),
+                'items': items[:items_max_por_cat],
+            }
+        return out
+    except Exception as e:
+        logger.warning(f"No se pudo obtener aprobaciones por categoría: {e}")
+        return {}
+
+
 def _obtener_tweets_fiat():
     """
     Obtiene los últimos tweets de @Fiat_MX via API v2 para mostrar en el dashboard.
@@ -989,6 +1064,9 @@ def paso_7_exportar_dashboard():
     conn_sub = get_connection()
     conn_sub.row_factory = sqlite3.Row
 
+    # Cargar aprobaciones recientes por categoría (últimos 30 días)
+    aprobaciones_por_cat = _obtener_aprobaciones_por_categoria(dias=30)
+
     # Cargar divergencias de la fecha más reciente para inyectar por categoría
     divergencias_por_cat = {}
     try:
@@ -1104,6 +1182,7 @@ def paso_7_exportar_dashboard():
             "momentum": calcular_momentum(cat_clave),
             "subcategorias_activas": subcats_activas,
             "divergencia": divergencias_por_cat.get(cat_clave),
+            "aprobados_30d": aprobaciones_por_cat.get(cat_clave) or {"count": 0, "items": []},
         })
 
     # Escribir JSON
