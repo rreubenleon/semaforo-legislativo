@@ -550,6 +550,24 @@ def paso_5f_divergencia():
         logger.info(f"Divergencia calculada ({duracion:.1f}s)")
         if result.returncode != 0:
             logger.warning(f"Divergencia stderr: {result.stderr[:500]}")
+
+        # Histéresis: aplicar lógica de sustain (apertura/mantenimiento/cierre)
+        # de estados de divergencia. Resuelve el bug de que una divergencia
+        # aparece y desaparece en 4h cuando la presión real dura mucho más.
+        try:
+            inicio_h = time.time()
+            res_h = subprocess.run(
+                [sys.executable, str(Path(__file__).parent / "scripts" / "divergencias_estado.py")],
+                capture_output=True, text=True, timeout=30,
+            )
+            for line in res_h.stdout.splitlines():
+                if any(k in line for k in ("ABRE", "CIERRA", "Procesamiento")):
+                    logger.info(f"Histéresis div: {line.strip()}")
+            logger.info(f"Histéresis divergencia aplicada ({time.time()-inicio_h:.1f}s)")
+            if res_h.returncode != 0:
+                logger.warning(f"Histéresis stderr: {res_h.stderr[:300]}")
+        except Exception as e:
+            logger.warning(f"Histéresis div falló (no crítico): {e}")
     except Exception as e:
         logger.warning(f"Divergencia falló (no crítico): {e}")
 
@@ -991,6 +1009,44 @@ def paso_7_exportar_dashboard():
             }
     except sqlite3.OperationalError:
         pass  # tabla aún no existe
+
+    # Histéresis: estados ABIERTOS de divergencia (sustain). El frontend
+    # debería preferir estos sobre el snapshot crudo cuando exista, porque
+    # representan presión sostenida (no flicker de pipeline a pipeline).
+    try:
+        estados = conn_sub.execute("""
+            SELECT categoria, abierta_en, kl_apertura, kl_pico, kl_actual,
+                   patron_apertura, patron_actual, sobre_apertura, sub_apertura
+              FROM divergencias_estado
+             WHERE cerrada_en IS NULL
+        """).fetchall()
+        from datetime import timezone
+        ahora_utc = datetime.now(timezone.utc) if hasattr(datetime, 'now') else datetime.utcnow()
+        for r in estados:
+            cat = r["categoria"]
+            try:
+                ab = datetime.fromisoformat(r["abierta_en"])
+                horas_activa = max(0, (datetime.utcnow() - ab).total_seconds() / 3600)
+            except Exception:
+                horas_activa = 0
+            # Sobre-escribir o agregar campos al dict de divergencia
+            base = divergencias_por_cat.get(cat, {})
+            divergencias_por_cat[cat] = {
+                **base,
+                "indice":              round(r["kl_actual"] or r["kl_pico"] or 0, 3),
+                "patron_id":           base.get("patron_id"),
+                "patron_label":        r["patron_actual"] or r["patron_apertura"],
+                "sobre_representada":  base.get("sobre_representada", r["sobre_apertura"]),
+                "sub_representada":    base.get("sub_representada", r["sub_apertura"]),
+                # Campos NUEVOS de histéresis para mostrar en el frontend
+                "estado_abierto":      True,
+                "abierta_en":          r["abierta_en"],
+                "horas_activa":        round(horas_activa, 1),
+                "kl_pico":             round(r["kl_pico"], 3),
+                "patron_apertura":     r["patron_apertura"],
+            }
+    except sqlite3.OperationalError:
+        pass  # divergencias_estado aún no existe
 
     for score in scores:
         cat_clave = score.get("categoria", "")

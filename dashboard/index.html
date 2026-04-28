@@ -570,11 +570,14 @@
         const PATRONES_OCULTOS = new Set(['rebalanceo_tecnico', 'convergencia']);
 
         function DivergenciasWidget({ semaforo, onSelect }) {
+            // Con histéresis: priorizamos estado_abierto del backend (lleva
+            // ≥ 4h activo, mínimo 24h hasta cerrar). Fallback a umbral crudo.
             const lista = (semaforo || [])
                 .filter(s => s.divergencia
-                    && s.divergencia.indice >= DIVERGENCIA_THRESHOLD
+                    && (s.divergencia.estado_abierto
+                        || s.divergencia.indice >= DIVERGENCIA_THRESHOLD)
                     && !PATRONES_OCULTOS.has(s.divergencia.patron_id))
-                .sort((a, b) => b.divergencia.indice - a.divergencia.indice);
+                .sort((a, b) => (b.divergencia.kl_pico || b.divergencia.indice) - (a.divergencia.kl_pico || a.divergencia.indice));
 
             // Si no hay nada narrativo hoy, mostramos placeholder en vez de ocultar
             const vacio = lista.length === 0;
@@ -622,7 +625,7 @@
                                         <div className="text-[11px] text-gray-700 leading-snug mb-1.5">
                                             {s.divergencia.patron_label}
                                         </div>
-                                        <div className="flex items-center gap-2 text-[10px] font-mono text-gray-500">
+                                        <div className="flex items-center gap-2 text-[10px] font-mono text-gray-500 flex-wrap">
                                             <span className="inline-flex items-center gap-0.5">
                                                 <span className="text-emerald-600 font-bold">↑</span>
                                                 <span>{s.divergencia.sobre_representada}</span>
@@ -632,6 +635,14 @@
                                                 <span className="text-rose-600 font-bold">↓</span>
                                                 <span>{s.divergencia.sub_representada}</span>
                                             </span>
+                                            {s.divergencia.estado_abierto && s.divergencia.horas_activa != null && (
+                                                <>
+                                                    <span className="text-gray-300">·</span>
+                                                    <span className="text-acento" title={`Abierta el ${s.divergencia.abierta_en} · pico KL ${s.divergencia.kl_pico}`}>
+                                                        activa hace {s.divergencia.horas_activa < 24 ? `${Math.round(s.divergencia.horas_activa)}h` : `${(s.divergencia.horas_activa/24).toFixed(1)}d`}
+                                                    </span>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                 );
