@@ -321,7 +321,12 @@ async function handleRadar(request, env) {
           e.rating as elo_rating, e.partidas as elo_partidas,
           e.aprobados as elo_aprobados, e.desechados as elo_desechados,
           e.pendientes_largo as elo_pendientes, e.draws as elo_draws,
-          e.indice as elo_indice, e.percentil_camara as elo_percentil_camara
+          e.indice as elo_indice, e.percentil_camara as elo_percentil_camara,
+          /* Cargo institucional: subquery que arma "mesa_directiva:Presidencia,jucopo:Coordinador"
+             para que el frontend pueda parsearlo como badge. Solo Diputados por ahora. */
+          (SELECT GROUP_CONCAT(o.organo || ':' || o.rol, ',')
+             FROM legisladores_organos_gobierno o
+            WHERE o.legislador_id = l.id) as organos_gobierno
         FROM legisladores l
         LEFT JOIN legisladores_perfil p ON p.legislador_id = l.id
         LEFT JOIN legisladores_stats s ON s.legislador_id = l.id
@@ -384,6 +389,16 @@ async function handleRadar(request, env) {
       elo_draws: r.elo_draws,
       elo_indice: r.elo_indice,
       elo_percentil_camara: r.elo_percentil_camara,
+      /* Cargo institucional parseado: array de {organo, rol}
+         Ej: [{organo:'mesa_directiva', rol:'Presidencia'},
+              {organo:'jucopo', rol:'Coordinador'}] */
+      organos_gobierno: (r.organos_gobierno || '')
+        .split(',')
+        .filter(Boolean)
+        .map(s => {
+          const [organo, rol] = s.split(':');
+          return { organo, rol };
+        }),
     }));
 
     // Meta agregada (útil para poblar filtros en el cliente)

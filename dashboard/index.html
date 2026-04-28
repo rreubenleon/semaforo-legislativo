@@ -2154,6 +2154,54 @@
             );
         }
 
+        /* Helper compartido con consola-pro: rol institucional MÁS ALTO de un legislador.
+           Usa organos_gobierno (mesa_directiva, jucopo) + comisiones_cargo (Pres. Comisión X). */
+        function _rolInstitucional(leg) {
+          const organos = Array.isArray(leg.organos_gobierno) ? leg.organos_gobierno : [];
+          const camCorta = (leg.camara || '').replace('Cámara de ', '').toLowerCase();
+          const camLabel = camCorta.includes('senad') ? 'Senado' : 'Diputados';
+          const find = (org, rol) => organos.find(o => o.organo === org && o.rol === rol);
+          if (find('mesa_directiva', 'Presidencia'))
+            return { label: `Presidenta de la ${camLabel}`, bg: '#c62828', color: '#fff',
+                     tooltip: `Preside la ${camLabel}. Su rol institucional sesga la agenda.` };
+          if (find('jucopo', 'Presidencia'))
+            return { label: 'Presidencia JUCOPO', bg: '#1a365d', color: '#fff',
+                     tooltip: 'Preside la Junta de Coordinación Política.' };
+          if (find('mesa_directiva', 'Vicepresidencia'))
+            return { label: 'Vicepresidencia Mesa', bg: '#7c3aed', color: '#fff',
+                     tooltip: 'Vicepresidencia de la Mesa Directiva.' };
+          if (find('jucopo', 'Coordinador'))
+            return { label: `Coord. ${leg.partido || 'Bancada'}`, bg: '#c6972b', color: '#fff',
+                     tooltip: 'Coordinador del Grupo Parlamentario en JUCOPO.' };
+          if (find('mesa_directiva', 'Secretaría'))
+            return { label: 'Sec. Mesa Directiva', bg: '#475569', color: '#fff',
+                     tooltip: 'Secretaría de la Mesa Directiva.' };
+          const cc = leg.comisiones_cargo || '';
+          if (cc) {
+            for (const p of cc.split('|')) {
+              const [com, cargo] = p.split(':');
+              if (cargo && /presiden/i.test(cargo)) {
+                const nombreCom = (com || '').trim();
+                if (nombreCom && nombreCom.toUpperCase() !== 'A LAS QUE PERTENECE')
+                  return { label: `Preside ${nombreCom}`, bg: '#2e7d32', color: '#fff',
+                           tooltip: `Preside la Comisión de ${nombreCom}.` };
+              }
+            }
+          }
+          return null;
+        }
+
+        function RolBadge({ leg, size = 'sm' }) {
+          const r = _rolInstitucional(leg);
+          if (!r) return null;
+          return (
+            <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded" title={r.tooltip}
+              style={{background: r.bg, color: r.color}}>
+              {r.label}
+            </span>
+          );
+        }
+
         function RadarRow({ leg, onClick }) {
             const nombreFmt = formatNombreLegislador(leg);
             const foto = leg.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreFmt || '?')}&background=e5e7eb&color=374151&size=96`;
@@ -2176,7 +2224,10 @@
                             onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreFmt || '?')}&background=e5e7eb&color=374151&size=96`; }}
                             className="w-10 h-10 rounded-full object-cover bg-gray-100 flex-shrink-0 border border-gray-200" />
                         <div className="min-w-0 flex-1">
-                            <div className="text-sm font-semibold text-gray-800 truncate" title={nombreFmt}>{nombreFmt}</div>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-sm font-semibold text-gray-800 truncate" title={nombreFmt}>{nombreFmt}</span>
+                                <RolBadge leg={leg} />
+                            </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
                                 <PartidoBadge partido={leg.partido} size="sm" />
                                 <span className="text-[10px] text-gray-500 truncate font-mono">

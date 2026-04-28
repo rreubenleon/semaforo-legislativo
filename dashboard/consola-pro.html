@@ -2212,6 +2212,92 @@
             );
         }
 
+        /* Helper: extrae el rol institucional MÁS ALTO de un legislador,
+           combinando órganos de gobierno (mesa_directiva, jucopo) + comisiones_cargo
+           (Presidente de comisión X). Devuelve null si no tiene cargo destacado.
+
+           Jerarquía:
+             1. Mesa Directiva — Presidencia
+             2. JUCOPO — Presidencia
+             3. Mesa Directiva — Vicepresidencia
+             4. JUCOPO — Coordinador
+             5. Mesa Directiva — Secretaría
+             6. Presidente de Comisión (la primera que matchee)
+           Retorna: {label, color, bg, tooltip} o null. */
+        function _rolInstitucional(leg) {
+          const organos = Array.isArray(leg.organos_gobierno) ? leg.organos_gobierno : [];
+          const camCorta = (leg.camara || '').replace('Cámara de ', '').toLowerCase();
+          const camLabel = camCorta.includes('senad') ? 'Senado' : 'Diputados';
+
+          // Helper para encontrar rol en órgano
+          const find = (org, rol) => organos.find(o => o.organo === org && o.rol === rol);
+
+          // 1. Mesa Directiva Presidencia (la más alta)
+          if (find('mesa_directiva', 'Presidencia'))
+            return { label: `Presidente${camCorta.includes('senad')?'a':'a'} de la ${camLabel}`,
+                     color: '#fff', bg: '#c62828',
+                     tooltip: `Preside la ${camLabel}. Su rol institucional sesga la agenda parlamentaria.` };
+
+          // 2. JUCOPO Presidencia
+          if (find('jucopo', 'Presidencia'))
+            return { label: 'Presidencia JUCOPO',
+                     color: '#fff', bg: '#1a365d',
+                     tooltip: 'Preside la Junta de Coordinación Política. Sesga acuerdos y agenda.' };
+
+          // 3. Mesa Directiva Vicepresidencia
+          if (find('mesa_directiva', 'Vicepresidencia'))
+            return { label: 'Vicepresidencia Mesa',
+                     color: '#fff', bg: '#7c3aed',
+                     tooltip: `Vicepresidente${camCorta.includes('senad')?'a':'a'} de la Mesa Directiva.` };
+
+          // 4. JUCOPO Coordinador (líder de bancada)
+          if (find('jucopo', 'Coordinador'))
+            return { label: `Coord. ${leg.partido || 'Bancada'}`,
+                     color: '#fff', bg: '#c6972b',
+                     tooltip: `Coordinador del Grupo Parlamentario en JUCOPO. Líder de bancada.` };
+
+          // 5. Mesa Directiva Secretaría
+          if (find('mesa_directiva', 'Secretaría'))
+            return { label: 'Sec. Mesa Directiva',
+                     color: '#fff', bg: '#475569',
+                     tooltip: 'Secretario de la Mesa Directiva.' };
+
+          // 6. Presidente de Comisión (parsear comisiones_cargo string)
+          // Formato: "A LAS QUE PERTENECE:Integrante|Comisión X:Presidente|..."
+          const cc = leg.comisiones_cargo || '';
+          if (cc) {
+            const partes = cc.split('|');
+            for (const p of partes) {
+              const [com, cargo] = p.split(':');
+              if (cargo && /presiden/i.test(cargo)) {
+                const nombreCom = (com || '').trim();
+                if (nombreCom && nombreCom.toUpperCase() !== 'A LAS QUE PERTENECE') {
+                  return { label: `Preside ${nombreCom}`,
+                           color: '#fff', bg: '#2e7d32',
+                           tooltip: `Preside la Comisión de ${nombreCom}. Sus dictámenes en esa comisión pueden estar sesgados por su rol.` };
+                }
+              }
+            }
+          }
+
+          return null;
+        }
+
+        /* Render del badge de rol institucional. Se usa al lado del nombre. */
+        function RolBadge({ leg, size = 'sm' }) {
+          const r = _rolInstitucional(leg);
+          if (!r) return null;
+          const cls = size === 'sm'
+            ? 'text-[9px] font-semibold px-1.5 py-0.5 rounded'
+            : 'text-[10px] font-semibold px-2 py-0.5 rounded';
+          return (
+            <span className={cls} title={r.tooltip}
+              style={{background: r.bg, color: r.color}}>
+              {r.label}
+            </span>
+          );
+        }
+
         function RadarRow({ leg, onClick }) {
             const nombreFmt = formatNombreLegislador(leg);
             const foto = leg.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreFmt || '?')}&background=e5e7eb&color=374151&size=96`;
@@ -2234,7 +2320,10 @@
                             onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreFmt || '?')}&background=e5e7eb&color=374151&size=96`; }}
                             className="w-10 h-10 rounded-full object-cover bg-gray-100 flex-shrink-0 border border-gray-200" />
                         <div className="min-w-0 flex-1">
-                            <div className="text-sm font-semibold text-gray-800 truncate" title={nombreFmt}>{nombreFmt}</div>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className="text-sm font-semibold text-gray-800 truncate" title={nombreFmt}>{nombreFmt}</span>
+                                <RolBadge leg={leg} size="sm" />
+                            </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
                                 <PartidoBadge partido={leg.partido} size="sm" />
                                 <span className="text-[10px] text-gray-500 truncate font-mono">
@@ -2281,10 +2370,38 @@
                         </div>
                     </div>
                     <div className="hidden md:flex flex-col items-center justify-center gap-0.5">
-                        <div className={`text-lg font-black font-mono ${efColor} leading-none`}
-                            title={efInd != null ? `Índice de Efectividad ${efInd}/100 · Mejor que ${Math.round(leg.elo_percentil_camara || 0)}% de su cámara · ${leg.elo_partidas || 0} instrumentos dictaminables` : 'Sin índice (menos de 3 instrumentos dictaminables)'}>
-                            {efInd != null ? efInd : '—'}
-                        </div>
+                        {(() => {
+                            // Tasa absoluta de aprobación
+                            const aprob = leg.elo_aprobados ?? 0;
+                            const totalP = leg.elo_partidas ?? 0;
+                            const tasaAbs = totalP > 0 ? Math.round(aprob / totalP * 100) : null;
+                            const pctCam = leg.elo_percentil_camara != null ? Math.round(leg.elo_percentil_camara) : null;
+                            // Promedio por cámara (hardcoded para tooltip — recalcular si cambia)
+                            const camCorta = (leg.camara || '').toLowerCase();
+                            const promCam = camCorta.includes('senad') ? 8.4 : 5.6;
+                            const rolInst = _rolInstitucional(leg);
+                            const tooltip = efInd == null
+                                ? 'Sin índice (menos de 3 instrumentos dictaminables)'
+                                : `Índice ${efInd}/100 — más efectivo que el ${pctCam}% de su cámara`
+                                  + `\n• ${aprob} aprobados de ${totalP} dictaminables (${tasaAbs}% absoluto)`
+                                  + `\n• Promedio cámara ≈ ${promCam}%`
+                                  + (rolInst ? `\n⚠ ${rolInst.tooltip}` : '');
+                            return (
+                                <>
+                                    <div className={`text-lg font-black font-mono ${efColor} leading-none flex items-center gap-0.5`}
+                                        title={tooltip}>
+                                        {efInd != null ? efInd : '—'}
+                                        {rolInst && <span className="text-[8px] text-amber-600" title="Rol institucional sesga métricas">⚑</span>}
+                                    </div>
+                                    {tasaAbs != null && (
+                                      <div className="text-[8px] text-gray-400 font-mono mt-0.5"
+                                           title={`Tasa absoluta de aprobación · promedio ${camCorta.includes('senad') ? 'Senado' : 'Diputados'} ≈ ${promCam}%`}>
+                                        {tasaAbs}%·{aprob}/{totalP}
+                                      </div>
+                                    )}
+                                </>
+                            );
+                        })()}
                         {efInd != null && (
                             <div className="flex items-center gap-0.5 mt-0.5" aria-hidden>
                                 {[0,1,2,3,4,5,6,7,8,9].map(i => (
