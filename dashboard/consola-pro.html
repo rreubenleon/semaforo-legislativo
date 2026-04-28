@@ -5534,27 +5534,24 @@
           );
         }
 
+        /* ConsolaProConfigModal — Wizard de 4 pasos.
+           Cada paso requiere ≥1 selección para avanzar. Botón "Siguiente"
+           se vuelve "Listo" en el último paso. Layouts pensados para que
+           el usuario identifique fácil: Diputados/Senado lado a lado con
+           fotos para legisladores y comisiones; columnas alfabéticas para
+           temas y estados. */
         function ConsolaProConfigModal({ data, allLegisladores, allComisiones, config, setConfig, onClose }) {
-          const [tab, setTab] = useState('legisladores');
+          const PASOS = ['legisladores', 'temas', 'estados', 'comisiones'];
+          const PASOS_LABEL = {
+            legisladores: 'Legisladores',
+            temas:        'Temas',
+            estados:      'Estados',
+            comisiones:   'Comisiones',
+          };
+          const [paso, setPaso] = useState(PASOS[0]);
           const [search, setSearch] = useState('');
           const [searchCom, setSearchCom] = useState('');
-          const [filtroCamara, setFiltroCamara] = useState('');
-          const [filtroCamaraCom, setFiltroCamaraCom] = useState('');
-          const [filtroPartido, setFiltroPartido] = useState('');
-
-          const legisladoresFiltrados = useMemo(() => {
-            let list = allLegisladores;
-            if (search.length >= 2) {
-              const q = search.toLowerCase();
-              list = list.filter(l => formatNombreLegislador(l).toLowerCase().includes(q));
-            }
-            if (filtroCamara) list = list.filter(l => l.camara === filtroCamara);
-            if (filtroPartido) list = list.filter(l => l.partido === filtroPartido);
-            return list;
-          }, [allLegisladores, search, filtroCamara, filtroPartido]);
-
-          const partidosUnicos = useMemo(() =>
-            [...new Set(allLegisladores.map(l => l.partido).filter(Boolean))].sort(), [allLegisladores]);
+          const idx = PASOS.indexOf(paso);
 
           const toggleLeg = (id) => {
             const set = new Set(config.legisladores);
@@ -5577,181 +5574,298 @@
             setConfig({ ...config, comisiones: Array.from(set) });
           };
 
-          const comisionesFiltradas = useMemo(() => {
-            let list = allComisiones || [];
-            if (filtroCamaraCom) list = list.filter(c => c.camara === filtroCamaraCom);
-            if (searchCom.length >= 2) {
-              const q = searchCom.toLowerCase();
-              list = list.filter(c => (c.nombre || '').toLowerCase().includes(q));
-            }
-            return [...list].sort((a, b) => (b.total_docs || 0) - (a.total_docs || 0));
-          }, [allComisiones, searchCom, filtroCamaraCom]);
+          /* Validación de avance: cada paso requiere ≥1 selección */
+          const counts = {
+            legisladores: config.legisladores.length,
+            temas:        config.temas.length,
+            estados:      config.estados.length,
+            comisiones:   (config.comisiones || []).length,
+          };
+          const limites = { legisladores: 20, temas: 8, estados: 12, comisiones: 10 };
+          const puedeAvanzar = counts[paso] >= 1;
 
           const semaforo = data?.semaforo || [];
           const mapa = data?.mapa || {};
-          const estadosList = Object.entries(mapa).sort((a, b) => (b[1].total_articulos || 0) - (a[1].total_articulos || 0));
+
+          /* Datos pre-procesados: alfabéticos + divididos por cámara */
+          const legPorCamara = useMemo(() => {
+            const dip = [], sen = [];
+            (allLegisladores || []).forEach(l => {
+              const cam = (l.camara || '').toLowerCase();
+              if (cam.includes('senad')) sen.push(l); else dip.push(l);
+            });
+            const sortByName = (a, b) => formatNombreLegislador(a).localeCompare(formatNombreLegislador(b));
+            dip.sort(sortByName); sen.sort(sortByName);
+            return { dip, sen };
+          }, [allLegisladores]);
+
+          const temasOrdenados = useMemo(
+            () => [...semaforo].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '')),
+            [semaforo]
+          );
+
+          const estadosOrdenados = useMemo(() => {
+            return Object.entries(mapa)
+              .sort(([, a], [, b]) => (a.nombre || '').localeCompare(b.nombre || ''));
+          }, [mapa]);
+
+          const comisionesPorCamara = useMemo(() => {
+            const dip = [], sen = [];
+            (allComisiones || []).forEach(c => {
+              const cam = (c.camara || '').toLowerCase();
+              if (cam.includes('senad')) sen.push(c); else dip.push(c);
+            });
+            const cmp = (a, b) => _nombreComisionDisplay(a.nombre).localeCompare(_nombreComisionDisplay(b.nombre));
+            dip.sort(cmp); sen.sort(cmp);
+            return { dip, sen };
+          }, [allComisiones]);
+
+          /* Filtro por búsqueda dentro de la lista alfabética por cámara */
+          const filtrarLegs = (lista) => {
+            if (search.length < 2) return lista;
+            const q = search.toLowerCase();
+            return lista.filter(l => formatNombreLegislador(l).toLowerCase().includes(q));
+          };
+          const filtrarComs = (lista) => {
+            if (searchCom.length < 2) return lista;
+            const q = searchCom.toLowerCase();
+            return lista.filter(c => (c.nombre || '').toLowerCase().includes(q));
+          };
+
+          /* === SUBCOMPONENTES === */
+
+          /* Card de legislador con foto. Click toggle. */
+          const LegCard = ({ l }) => {
+            const sel = config.legisladores.includes(l.id);
+            const nombreFmt = formatNombreLegislador(l);
+            const foto = l.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreFmt)}&background=e5e7eb&color=374151&size=64`;
+            return (
+              <button onClick={() => toggleLeg(l.id)}
+                className={`w-full flex items-center gap-2 px-2 py-2 text-left transition rounded-md ${sel ? 'bg-emerald-50 border border-emerald-200' : 'hover:bg-gray-50 border border-transparent'}`}>
+                <img src={foto} alt={nombreFmt}
+                  onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreFmt)}&background=e5e7eb&color=374151&size=64`; }}
+                  className="w-9 h-9 rounded-full object-cover bg-gray-100 flex-shrink-0 border border-gray-200" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[12px] font-semibold text-gray-800 truncate">{nombreFmt}</div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <PartidoBadge partido={l.partido} size="sm" />
+                    {l.estado && <span className="text-[10px] text-gray-500 truncate">{l.estado}</span>}
+                  </div>
+                </div>
+                {sel && <span className="text-emerald-600 font-bold text-base flex-shrink-0">✓</span>}
+              </button>
+            );
+          };
+
+          /* === STEPPER (encabezado visual con 4 puntos numerados) === */
+          const Stepper = () => (
+            <div className="flex items-center justify-center gap-2 px-5 py-4 border-b border-gray-100">
+              {PASOS.map((p, i) => {
+                const completado = counts[p] >= 1;
+                const activo = p === paso;
+                return (
+                  <React.Fragment key={p}>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition ${
+                        activo ? 'bg-acento text-white ring-2 ring-acento/30' :
+                        completado ? 'bg-emerald-500 text-white' :
+                        'bg-gray-200 text-gray-500'
+                      }`}>
+                        {completado && !activo ? '✓' : i + 1}
+                      </div>
+                      <div className={`text-xs font-semibold ${activo ? 'text-acento' : completado ? 'text-emerald-700' : 'text-gray-400'} hidden sm:inline`}>
+                        {PASOS_LABEL[p]}
+                      </div>
+                    </div>
+                    {i < PASOS.length - 1 && (
+                      <div className={`flex-1 h-0.5 max-w-[40px] ${completado ? 'bg-emerald-300' : 'bg-gray-200'}`}></div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          );
 
           return (
             <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
               <div onClick={e => e.stopPropagation()}
-                className="bg-white rounded-2xl max-w-4xl w-full max-h-[88vh] flex flex-col" style={{boxShadow: '0 20px 60px rgba(0,0,0,0.15)'}}>
+                className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col" style={{boxShadow: '0 20px 60px rgba(0,0,0,0.15)'}}>
                 <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                   <div>
-                    <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">CONFIGURAR CONSOLE</div>
-                    <h2 className="text-lg font-black text-gray-900 mt-0.5">Personaliza tu monitoreo</h2>
+                    <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">CONFIGURAR CONSOLE · PASO {idx + 1} DE {PASOS.length}</div>
+                    <h2 className="text-lg font-black text-gray-900 mt-0.5">
+                      {paso === 'legisladores' && 'Elige los legisladores que quieres vigilar'}
+                      {paso === 'temas'        && 'Elige los temas legislativos relevantes'}
+                      {paso === 'estados'      && 'Elige los estados que te interesan'}
+                      {paso === 'comisiones'   && 'Elige las comisiones a seguir'}
+                    </h2>
                   </div>
                   <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-2xl leading-none w-8 h-8 hover:bg-gray-100 rounded-full">×</button>
                 </div>
-                <div className="px-5 border-b border-gray-100 flex gap-1">
-                  <button onClick={() => setTab('legisladores')}
-                    className={`px-3 py-2.5 text-xs font-semibold transition border-b-2 -mb-px ${tab === 'legisladores' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
-                    Legisladores · {config.legisladores.length}/20
-                  </button>
-                  <button onClick={() => setTab('temas')}
-                    className={`px-3 py-2.5 text-xs font-semibold transition border-b-2 -mb-px ${tab === 'temas' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
-                    Temas · {config.temas.length}/8
-                  </button>
-                  <button onClick={() => setTab('estados')}
-                    className={`px-3 py-2.5 text-xs font-semibold transition border-b-2 -mb-px ${tab === 'estados' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
-                    Estados · {config.estados.length}/12
-                  </button>
-                  <button onClick={() => setTab('comisiones')}
-                    className={`px-3 py-2.5 text-xs font-semibold transition border-b-2 -mb-px ${tab === 'comisiones' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
-                    Comisiones · {(config.comisiones || []).length}/10
-                  </button>
-                </div>
+
+                <Stepper />
+
                 <div className="flex-1 overflow-y-auto p-5">
-                  {tab === 'legisladores' && (
+
+                  {/* === PASO 1 — LEGISLADORES === */}
+                  {paso === 'legisladores' && (
                     <div>
-                      <div className="flex items-center gap-2 mb-3 flex-wrap">
+                      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                        <div className="text-xs text-gray-600">
+                          Hasta {limites.legisladores} legisladores · <span className="font-semibold text-acento">{counts.legisladores} seleccionados</span>
+                        </div>
                         <input type="text" placeholder="Buscar por nombre..." value={search}
                           onChange={e => setSearch(e.target.value)}
-                          className="flex-1 min-w-[200px] px-3 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white" />
-                        <select value={filtroCamara} onChange={e => setFiltroCamara(e.target.value)}
-                          className="px-3 py-2 border border-gray-200 rounded-full text-xs bg-white">
-                          <option value="">Todas las cámaras</option>
-                          <option value="Cámara de Diputados">Diputados</option>
-                          <option value="Senado">Senado</option>
-                        </select>
-                        <select value={filtroPartido} onChange={e => setFiltroPartido(e.target.value)}
-                          className="px-3 py-2 border border-gray-200 rounded-full text-xs bg-white">
-                          <option value="">Todos los partidos</option>
-                          {partidosUnicos.map(p => <option key={p} value={p}>{p}</option>)}
-                        </select>
+                          className="w-full sm:w-72 px-3 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white" />
                       </div>
-                      <div className="text-[10px] text-gray-500 font-bold mb-2">{legisladoresFiltrados.length} resultados</div>
-                      <div className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
-                        {legisladoresFiltrados.slice(0, 100).map(l => {
-                          const sel = config.legisladores.includes(l.id);
-                          const nombreFmt = formatNombreLegislador(l);
-                          return (
-                            <button key={l.id} onClick={() => toggleLeg(l.id)}
-                              className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition ${sel ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}>
-                              <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center font-bold text-[11px] text-gray-700 flex-shrink-0">
-                                {nombreFmt.split(/\s+/).filter(t => t.length > 2 && !_PARTICULAS.has(t.toLowerCase())).slice(0, 2).map(t => t[0]).join('').toUpperCase()}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-semibold text-gray-800 truncate">{nombreFmt}</div>
-                                <div className="text-[10px] text-gray-500 font-mono">{l.partido} · {(l.camara || '').replace('Cámara de ', '')}{l.estado ? ` · ${l.estado}` : ''}</div>
-                              </div>
-                              <div className={`text-[11px] font-bold ${sel ? 'text-emerald-700' : 'text-gray-400'}`}>{sel ? '✓ Sí' : '+ Agregar'}</div>
-                            </button>
-                          );
-                        })}
-                        {legisladoresFiltrados.length > 100 && (
-                          <div className="text-center text-xs text-gray-500 py-3">Mostrando 100 de {legisladoresFiltrados.length}. Refina con búsqueda.</div>
-                        )}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* DIPUTADOS */}
+                        <div className="border border-gray-200 rounded-xl flex flex-col" style={{maxHeight: '60vh'}}>
+                          <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-xl flex items-center justify-between">
+                            <div className="text-xs font-bold text-gray-700">Cámara de Diputados</div>
+                            <div className="text-[10px] text-gray-500">{filtrarLegs(legPorCamara.dip).length}</div>
+                          </div>
+                          <div className="overflow-y-auto p-2 space-y-1">
+                            {filtrarLegs(legPorCamara.dip).map(l => <LegCard key={l.id} l={l} />)}
+                            {filtrarLegs(legPorCamara.dip).length === 0 && (
+                              <div className="text-xs text-gray-400 italic text-center py-4">Sin resultados</div>
+                            )}
+                          </div>
+                        </div>
+                        {/* SENADORES */}
+                        <div className="border border-gray-200 rounded-xl flex flex-col" style={{maxHeight: '60vh'}}>
+                          <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-xl flex items-center justify-between">
+                            <div className="text-xs font-bold text-gray-700">Senado</div>
+                            <div className="text-[10px] text-gray-500">{filtrarLegs(legPorCamara.sen).length}</div>
+                          </div>
+                          <div className="overflow-y-auto p-2 space-y-1">
+                            {filtrarLegs(legPorCamara.sen).map(l => <LegCard key={l.id} l={l} />)}
+                            {filtrarLegs(legPorCamara.sen).length === 0 && (
+                              <div className="text-xs text-gray-400 italic text-center py-4">Sin resultados</div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
-                  {tab === 'temas' && (
+
+                  {/* === PASO 2 — TEMAS === */}
+                  {paso === 'temas' && (
                     <div>
-                      <div className="text-xs text-gray-500 mb-3">Selecciona hasta 8 categorías para seguir su evolución.</div>
-                      <div className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
-                        {semaforo.map(s => {
+                      <div className="text-xs text-gray-600 mb-3">
+                        Hasta {limites.temas} temas · <span className="font-semibold text-acento">{counts.temas} seleccionados</span>
+                      </div>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        {temasOrdenados.map(s => {
                           const sel = config.temas.includes(s.categoria);
                           const colorDot = { verde: '#2e7d32', amarillo: '#c6972b', rojo: '#c62828' }[s.color];
                           return (
                             <button key={s.categoria} onClick={() => toggleTema(s.categoria)}
-                              className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition ${sel ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}>
-                              <div className="w-3 h-3 rounded-full flex-shrink-0" style={{background: colorDot}}></div>
-                              <div className="flex-1 min-w-0">
-                                <div className="text-sm font-semibold text-gray-800">{s.nombre}</div>
-                                <div className="text-[10px] text-gray-500 font-mono">Score {s.score_total.toFixed(0)}</div>
-                              </div>
-                              <div className={`text-[11px] font-bold ${sel ? 'text-emerald-700' : 'text-gray-400'}`}>{sel ? '✓ Sí' : '+ Agregar'}</div>
+                              className={`flex items-center gap-2 px-3 py-2.5 text-left rounded-lg border transition ${sel ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-gray-200 hover:border-gray-400'}`}>
+                              <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{background: colorDot}}></div>
+                              <div className="flex-1 min-w-0 text-sm font-semibold text-gray-800 truncate">{s.nombre}</div>
+                              {sel && <span className="text-emerald-600 font-bold text-sm flex-shrink-0">✓</span>}
                             </button>
                           );
                         })}
                       </div>
                     </div>
                   )}
-                  {tab === 'estados' && (
+
+                  {/* === PASO 3 — ESTADOS === */}
+                  {paso === 'estados' && (
                     <div>
-                      <div className="text-xs text-gray-500 mb-3">Selecciona hasta 12 estados para vigilar su cobertura mediática.</div>
-                      <div className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
-                        {estadosList.map(([key, info]) => {
+                      <div className="text-xs text-gray-600 mb-3">
+                        Hasta {limites.estados} estados · <span className="font-semibold text-acento">{counts.estados} seleccionados</span>
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                        {estadosOrdenados.map(([key, info]) => {
                           const sel = config.estados.includes(key);
                           return (
                             <button key={key} onClick={() => toggleEstado(key)}
-                              className={`w-full flex items-center justify-between px-3 py-2.5 text-left transition ${sel ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}>
-                              <div className="flex items-center gap-3 min-w-0">
-                                <span className="text-sm text-gray-800 truncate">{info.nombre || info.abreviatura}</span>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                <span className="text-[10px] text-gray-500 font-mono">{info.total_articulos || 0} notas</span>
-                                <span className={`text-[11px] font-bold ${sel ? 'text-emerald-700' : 'text-gray-400'}`}>{sel ? '✓ Sí' : '+ Agregar'}</span>
-                              </div>
+                              className={`flex items-center justify-between gap-2 px-3 py-2 text-left rounded-lg border transition ${sel ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-gray-200 hover:border-gray-400'}`}>
+                              <span className="text-sm text-gray-800 truncate">{info.nombre || info.abreviatura}</span>
+                              {sel && <span className="text-emerald-600 font-bold text-sm flex-shrink-0">✓</span>}
                             </button>
                           );
                         })}
                       </div>
                     </div>
                   )}
-                  {tab === 'comisiones' && (
+
+                  {/* === PASO 4 — COMISIONES === */}
+                  {paso === 'comisiones' && (
                     <div>
-                      <div className="text-xs text-gray-500 mb-3">Selecciona hasta 10 comisiones para vigilar productividad y próximas sesiones.</div>
-                      <div className="flex items-center gap-2 mb-3 flex-wrap">
+                      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                        <div className="text-xs text-gray-600">
+                          Hasta {limites.comisiones} comisiones · <span className="font-semibold text-acento">{counts.comisiones} seleccionadas</span>
+                        </div>
                         <input type="text" placeholder="Buscar comisión..." value={searchCom}
                           onChange={e => setSearchCom(e.target.value)}
-                          className="flex-1 min-w-[200px] px-3 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white" />
-                        <select value={filtroCamaraCom} onChange={e => setFiltroCamaraCom(e.target.value)}
-                          className="px-3 py-2 border border-gray-200 rounded-full text-xs bg-white">
-                          <option value="">Ambas cámaras</option>
-                          <option value="Diputados">Diputados</option>
-                          <option value="Senado">Senado</option>
-                        </select>
+                          className="w-full sm:w-72 px-3 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white" />
                       </div>
-                      <div className="text-[10px] text-gray-500 font-bold mb-2">{comisionesFiltradas.length} resultados</div>
-                      <div className="divide-y divide-gray-100 border border-gray-200 rounded-lg overflow-hidden">
-                        {comisionesFiltradas.slice(0, 100).map(c => {
-                          const key = `${c.nombre}|${c.camara}`;
-                          const sel = (config.comisiones || []).includes(key);
-                          return (
-                            <button key={key} onClick={() => toggleComision(key)}
-                              className={`w-full flex items-center justify-between px-3 py-2.5 text-left transition ${sel ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}>
-                              <div className="flex-1 min-w-0 pr-3">
-                                <div className="text-sm font-semibold text-gray-800 truncate" title={c.nombre}>{_nombreComisionDisplay(c.nombre)}</div>
-                                <div className="text-[10px] text-gray-500 font-mono mt-0.5">
-                                  {c.camara} · {c.total_docs || 0} asuntos · {c.tipos?.dictamen || 0} dictámenes
-                                </div>
-                              </div>
-                              <div className={`text-[11px] font-bold flex-shrink-0 ${sel ? 'text-emerald-700' : 'text-gray-400'}`}>{sel ? '✓ Sí' : '+ Agregar'}</div>
-                            </button>
-                          );
-                        })}
-                        {comisionesFiltradas.length > 100 && (
-                          <div className="text-center text-xs text-gray-500 py-3">Mostrando 100 de {comisionesFiltradas.length}. Refina con búsqueda.</div>
-                        )}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[
+                          { titulo: 'Cámara de Diputados', items: filtrarComs(comisionesPorCamara.dip) },
+                          { titulo: 'Senado',              items: filtrarComs(comisionesPorCamara.sen) },
+                        ].map(col => (
+                          <div key={col.titulo} className="border border-gray-200 rounded-xl flex flex-col" style={{maxHeight: '60vh'}}>
+                            <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-xl flex items-center justify-between">
+                              <div className="text-xs font-bold text-gray-700">{col.titulo}</div>
+                              <div className="text-[10px] text-gray-500">{col.items.length}</div>
+                            </div>
+                            <div className="overflow-y-auto p-2 space-y-1">
+                              {col.items.map(c => {
+                                const key = `${c.nombre}|${c.camara}`;
+                                const sel = (config.comisiones || []).includes(key);
+                                return (
+                                  <button key={key} onClick={() => toggleComision(key)}
+                                    className={`w-full flex items-center justify-between gap-2 px-2 py-2 text-left rounded-md border transition ${sel ? 'bg-emerald-50 border-emerald-300' : 'border-transparent hover:bg-gray-50'}`}>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-[12px] font-semibold text-gray-800 truncate" title={c.nombre}>{_nombreComisionDisplay(c.nombre)}</div>
+                                      <div className="text-[10px] text-gray-500">{(c.sitl?.turnadas ?? c.total_docs ?? 0)} asuntos</div>
+                                    </div>
+                                    {sel && <span className="text-emerald-600 font-bold text-base flex-shrink-0">✓</span>}
+                                  </button>
+                                );
+                              })}
+                              {col.items.length === 0 && (
+                                <div className="text-xs text-gray-400 italic text-center py-4">Sin resultados</div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
                 </div>
-                <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between bg-gray-50 rounded-b-2xl">
-                  <div className="text-[10px] text-gray-500 font-mono">Cambios se guardan automáticamente en este navegador</div>
-                  <button onClick={onClose}
-                    className="text-white font-semibold px-5 py-2 rounded-full text-xs"
-                    style={{background: 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)'}}>Listo</button>
+
+                {/* === FOOTER con Atrás / Siguiente / Listo === */}
+                <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between bg-gray-50 rounded-b-2xl gap-2">
+                  <button onClick={() => setPaso(PASOS[Math.max(0, idx - 1)])}
+                    disabled={idx === 0}
+                    className="text-xs font-semibold px-4 py-2 rounded-full transition border bg-white border-gray-300 text-gray-700 hover:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed">
+                    ← Atrás
+                  </button>
+                  <div className="text-[11px] text-gray-500 font-mono">
+                    {!puedeAvanzar && <span>Selecciona al menos 1 para continuar</span>}
+                    {puedeAvanzar && <span>{counts[paso]} de {limites[paso]} seleccionados</span>}
+                  </div>
+                  {idx < PASOS.length - 1 ? (
+                    <button onClick={() => setPaso(PASOS[idx + 1])}
+                      disabled={!puedeAvanzar}
+                      className="text-white font-semibold px-5 py-2 rounded-full text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{background: puedeAvanzar ? 'linear-gradient(135deg, #1a365d 0%, #2c5282 100%)' : '#9ca3af'}}>
+                      Siguiente →
+                    </button>
+                  ) : (
+                    <button onClick={onClose}
+                      disabled={!puedeAvanzar}
+                      className="text-white font-semibold px-5 py-2 rounded-full text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{background: puedeAvanzar ? 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)' : '#9ca3af'}}>
+                      ✓ Listo
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
