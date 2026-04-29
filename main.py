@@ -157,14 +157,17 @@ def _obtener_aprobaciones_por_categoria(dias=14, items_max_por_cat=15):
         from db import get_connection
         conn = get_connection()
         conn.row_factory = sqlite3.Row
-        # Detectar columnas disponibles. tipo_grupo es columna agregada
-        # post-Mar2026 que NO siempre existe en cache de GH Actions ni en BDs
-        # antiguas. Si falta, caemos a `tipo` (siempre existe en SIL).
+        # Detectar columnas disponibles. tipo_grupo y clasificacion son
+        # columnas agregadas post-Mar2026 que NO siempre existen en cache de
+        # GH Actions ni en BDs antiguas. Si faltan, fallback graceful.
         col_tipo = 'tipo'
+        filtro_clasif = ''
         try:
             cols = {r[1] for r in conn.execute("PRAGMA table_info(sil_documentos)").fetchall()}
             if 'tipo_grupo' in cols:
                 col_tipo = 'tipo_grupo'
+            if 'clasificacion' in cols:
+                filtro_clasif = "AND clasificacion = 'legislativa'"
         except Exception:
             pass
         rows = conn.execute(f"""
@@ -173,10 +176,11 @@ def _obtener_aprobaciones_por_categoria(dias=14, items_max_por_cat=15):
                    fecha_presentacion
               FROM sil_documentos
              WHERE legislatura = 'LXVI'
-               AND clasificacion = 'legislativa'
+               {filtro_clasif}
                AND (LOWER(estatus) LIKE '%aprob%' OR LOWER(estatus) LIKE '%resuelto%')
                AND categoria IS NOT NULL AND categoria != ''
         """).fetchall()
+        logger.info(f"_obtener_aprobaciones_por_categoria: {len(rows)} filas SIL aprobadas LXVI")
 
         hoy = datetime.now().date()
         ventana = hoy - timedelta(days=dias)
