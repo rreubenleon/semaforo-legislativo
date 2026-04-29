@@ -842,24 +842,6 @@
                             </div>
                         );
                     })()}
-                    {(() => {
-                        const aprob = data.aprobados_30d || {};
-                        if (!aprob.count) return null;
-                        const items = aprob.items || [];
-                        const senado = items.filter(it => /enad/i.test(it.camara || '')).length;
-                        const dip = items.filter(it => /iputad/i.test(it.camara || '')).length;
-                        return (
-                            <div className="text-[11px] text-emerald-700 font-medium mb-2 flex items-center gap-1.5">
-                                <span className="text-emerald-600">✓</span>
-                                <span>{aprob.count} aprobado{aprob.count === 1 ? '' : 's'} últimos 30d</span>
-                                {(senado > 0 || dip > 0) && (
-                                    <span className="text-[10px] text-gray-400 font-mono">
-                                        ({senado > 0 && `${senado} Sen`}{senado > 0 && dip > 0 && ' · '}{dip > 0 && `${dip} Dip`})
-                                    </span>
-                                )}
-                            </div>
-                        );
-                    })()}
                     <div className="grid grid-cols-5 gap-2 text-xs text-gray-500">
                         {[
                             { label: 'Media', value: data.score_media, danger: false },
@@ -1531,13 +1513,24 @@
                                 <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
                             </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                            <ScoreRing score={data.score_total} color={data.color} size={90} />
-                            <div>
-                                <div className="text-3xl font-bold" style={{color: colors[data.color]}}>{data.score_total.toFixed(1)}</div>
-                                <div className="text-gray-500 text-sm uppercase tracking-wider">{data.color}</div>
-                                <div className="text-xs text-gray-400 mt-1 font-mono">{formatearActualizacion(generado)}</div>
+                        <div className="flex items-center justify-between gap-4 flex-wrap">
+                            <div className="flex items-center gap-4">
+                                <ScoreRing score={data.score_total} color={data.color} size={90} />
+                                <div>
+                                    <div className="text-3xl font-bold" style={{color: colors[data.color]}}>{data.score_total.toFixed(1)}</div>
+                                    <div className="text-gray-500 text-sm uppercase tracking-wider">{data.color}</div>
+                                    <div className="text-xs text-gray-400 mt-1 font-mono">{formatearActualizacion(generado)}</div>
+                                </div>
                             </div>
+                            {/* Aprobaciones LXVI últimos 14d — métrica sutil al lado derecho del header */}
+                            {(data.aprobados_14d?.count > 0) && (
+                                <div className="text-right">
+                                    <div className="text-2xl font-bold text-emerald-700">{data.aprobados_14d.count}</div>
+                                    <div className="text-[11px] text-gray-500 leading-tight max-w-[160px]">
+                                        instrumentos aprobados<br/>en los últimos 14 días
+                                    </div>
+                                </div>
+                            )}
                         </div>
                         {/* Divergence Index oculto en modal hasta resolver calibración de las 5 capas del score */}
                         <div className="bg-gray-50/50 border border-gray-100 rounded-lg p-3">
@@ -1595,19 +1588,12 @@
                                 {[['media', `Medios (${nMedia})`], ['gaceta', `Gaceta (${nGaceta})`], ['csp', `Mención CSP (${nCSP})`], ['trends', `Trends (${nTrends})`], ['urgencia', 'Urgencia']].map(([key, label]) => (
                                     <button key={key} onClick={() => setTabActiva(key)} className={`px-3 py-2 text-sm transition-colors ${tabActiva === key ? 'tab-active' : 'tab-inactive'}`}>{label}</button>
                                 ))}
-                                {(data.aprobados_30d?.count > 0) && (
-                                    <button onClick={() => setTabActiva('aprobados')}
-                                        className={`px-3 py-2 text-sm transition-colors ${tabActiva === 'aprobados' ? 'tab-active' : 'tab-inactive'}`}>
-                                        ✓ Aprobados ({data.aprobados_30d.count})
-                                    </button>
-                                )}
                                 {autoria?.length > 0 && <button onClick={() => setTabActiva('autoria')} className={`px-3 py-2 text-sm transition-colors ${tabActiva === 'autoria' ? 'tab-active' : 'tab-inactive'}`}>Quien presenta?</button>}
                             </div>
                             {tabActiva === 'media' && <FuentesMedia articulos={catFuentes.articulos_medios} />}
                             {tabActiva === 'gaceta' && <FuentesGaceta documentos={catFuentes.documentos_gaceta} />}
                             {tabActiva === 'csp' && <FuentesMananera menciones={catFuentes.menciones_csp} />}
                             {tabActiva === 'trends' && <FuentesTrends trends={catFuentes.google_trends} />}
-                            {tabActiva === 'aprobados' && <FuentesAprobados items={data.aprobados_30d?.items || []} />}
                             {tabActiva === 'autoria' && autoria?.length > 0 && (
                                 <div className="space-y-2">
                                     <div className="text-xs text-gray-500 mb-2">Legisladores con mayor probabilidad de presentar instrumentos en esta categoria. <span className="text-gray-400">Pasa el cursor sobre un legislador para ver sus instrumentos.</span></div>

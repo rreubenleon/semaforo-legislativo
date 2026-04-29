@@ -139,18 +139,16 @@ def _obtener_actividad_legisladores_reciente():
         return []
 
 
-def _obtener_aprobaciones_por_categoria(dias=30, items_max_por_cat=15):
+def _obtener_aprobaciones_por_categoria(dias=14, items_max_por_cat=15):
     """
     Devuelve dict {categoria: {'count': N, 'items': [...]}} con aprobaciones
     recientes de SIL LXVI agrupadas por categoría FIAT.
 
-    Cada item: {tipo, titulo, camara, presentador, partido, fecha_aprobacion,
-                url_sil, comision}.
+    Default 14 días: el frontend solo muestra el conteo (sin lista) en el
+    header del DetalleModal — métrica sobria.
 
     La fecha de aprobación se extrae del campo `estatus` que viene como
-    "Resuelto / AprobadoAprobado15/04/2026". Si no hay fecha extraíble,
-    el item se omite (para que el conteo refleje aprobaciones VERIFICABLES
-    en ventana temporal, no acumulado histórico).
+    "Resuelto / AprobadoAprobado15/04/2026".
     """
     try:
         import sqlite3
@@ -159,8 +157,18 @@ def _obtener_aprobaciones_por_categoria(dias=30, items_max_por_cat=15):
         from db import get_connection
         conn = get_connection()
         conn.row_factory = sqlite3.Row
-        rows = conn.execute("""
-            SELECT seguimiento_id, asunto_id, tipo_grupo, titulo, camara,
+        # Detectar columnas disponibles. tipo_grupo es columna agregada
+        # post-Mar2026 que NO siempre existe en cache de GH Actions ni en BDs
+        # antiguas. Si falta, caemos a `tipo` (siempre existe en SIL).
+        col_tipo = 'tipo'
+        try:
+            cols = {r[1] for r in conn.execute("PRAGMA table_info(sil_documentos)").fetchall()}
+            if 'tipo_grupo' in cols:
+                col_tipo = 'tipo_grupo'
+        except Exception:
+            pass
+        rows = conn.execute(f"""
+            SELECT seguimiento_id, asunto_id, {col_tipo} AS tipo_doc, titulo, camara,
                    estatus, presentador, partido, comision, categoria,
                    fecha_presentacion
               FROM sil_documentos
@@ -188,7 +196,7 @@ def _obtener_aprobaciones_por_categoria(dias=30, items_max_por_cat=15):
             if fecha_aprob < ventana or fecha_aprob > hoy:
                 continue
             agrupado.setdefault(cat, []).append({
-                'tipo':              r['tipo_grupo'],
+                'tipo':              r['tipo_doc'],
                 'titulo':            (r['titulo'] or '')[:200],
                 'camara':            (r['camara'] or '').replace('Cámara de ', ''),
                 'presentador':       (r['presentador'] or '')[:120],
@@ -1182,7 +1190,7 @@ def paso_7_exportar_dashboard():
             "momentum": calcular_momentum(cat_clave),
             "subcategorias_activas": subcats_activas,
             "divergencia": divergencias_por_cat.get(cat_clave),
-            "aprobados_30d": aprobaciones_por_cat.get(cat_clave) or {"count": 0, "items": []},
+            "aprobados_14d": aprobaciones_por_cat.get(cat_clave) or {"count": 0, "items": []},
         })
 
     # Escribir JSON
