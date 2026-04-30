@@ -37,6 +37,11 @@ from pathlib import Path
 
 import requests
 from bs4 import BeautifulSoup
+try:
+    import cloudscraper
+    _HAS_CLOUDSCRAPER = True
+except ImportError:
+    _HAS_CLOUDSCRAPER = False
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -147,9 +152,15 @@ def listar_senadores(conn, solo_vacios: bool, limit: int = None):
 
 def fetch_perfil(sess, sitl_id, intentos=2):
     url = f"{BASE}/66/senador/{sitl_id}"
+    # cloudscraper requiere verify=True para no romper SSL match. Solo
+    # downgradeo a verify=False con requests Session.
+    use_verify = not _HAS_CLOUDSCRAPER or not isinstance(sess, type) or 'cloudscraper' not in str(type(sess))
     for i in range(intentos):
         try:
-            r = sess.get(url, timeout=30, verify=False)
+            kwargs = {'timeout': 30}
+            if not _HAS_CLOUDSCRAPER:
+                kwargs['verify'] = False
+            r = sess.get(url, **kwargs)
             if r.status_code == 200 and len(r.text) > 5000:
                 # Detectar Incapsula stub
                 if "<TITLE>Loading" in r.text or "iframe" in r.text[:300]:
@@ -179,10 +190,23 @@ def main():
     logger.info(f"A procesar: {len(sens)} senadores"
                 f" {'(solo vacíos)' if args.solo_vacios else '(todos)'}")
 
-    sess = requests.Session()
+    # cloudscraper evade Incapsula mucho mejor que requests directo.
+    # Si no está instalado, fallback a requests (peor cobertura pero
+    # funciona para algunos perfiles).
+    if _HAS_CLOUDSCRAPER:
+        sess = cloudscraper.create_scraper(
+            browser={"browser": "chrome", "platform": "darwin", "mobile": False}
+        )
+        logger.info("Usando cloudscraper (evade Incapsula)")
+    else:
+        sess = requests.Session()
+        logger.warning("cloudscraper no instalado, usando requests (puede bloquearse)")
     sess.headers.update(HEADERS)
-    # Warm-up
-    sess.get(f"{BASE}/", timeout=30, verify=False)
+    # Warm-up — cloudscraper resuelve el challenge de Incapsula aquí
+    warmup_kwargs = {'timeout': 30}
+    if not _HAS_CLOUDSCRAPER:
+        warmup_kwargs['verify'] = False
+    sess.get(f"{BASE}/", **warmup_kwargs)
     time.sleep(3)
 
     ahora = datetime.utcnow().isoformat(timespec='seconds')
