@@ -41,8 +41,11 @@ def es_modo_receso(hoy: date | None = None) -> bool:
     # 1er Receso: 16 dic - 31 ene
     if (m == 12 and d >= 16) or m == 1:
         return True
-    # 2do Receso: 1 may - 31 ago
-    if 5 <= m <= 8:
+    # 2do Receso: la Constitución dice 1 may - 31 ago, pero en la
+    # práctica el 2do periodo ordinario suele cerrar antes del 30 abr
+    # con la instalación de la Permanente. Para LXVI cerró el 26 abr
+    # 2026, por eso aceptamos desde el 25 abr en adelante.
+    if (m == 4 and d >= 25) or (5 <= m <= 8):
         return True
     return False
 

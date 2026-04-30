@@ -1740,15 +1740,58 @@
                     {/* Hero Spotlight (3/5) + Twitter Feed (2/5) */}
                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
                     {(() => {
+                        const enReceso = data.metadata?.modo_receso === true;
+                        const colorBg = { verde: 'from-emerald-600 to-emerald-800', amarillo: 'from-amber-600 to-amber-800', rojo: 'from-red-700 to-red-900' };
+
+                        // ── DURANTE RECESO: Widget "Probabilidad de periodo extraordinario" ──
+                        // El widget original ("Mayor probabilidad de actividad legislativa")
+                        // queda guardado abajo en la rama else, solo se muestra cuando
+                        // termine el receso. Para reactivarlo: cambiar `enReceso` a `false`
+                        // (o hacer que data.metadata.modo_receso vuelva a false en el pipeline).
+                        if (enReceso) {
+                            const top = [...semaforo]
+                                .filter(s => s.prob_extraordinario != null)
+                                .sort((a, b) => (b.prob_extraordinario || 0) - (a.prob_extraordinario || 0))[0];
+                            if (!top) return null;
+                            const topFuentes = fuentes[top.categoria] || {};
+                            const topArticulos = topFuentes.articulos_medios || [];
+                            const probInt = Math.round(top.prob_extraordinario);
+                            // Color por nivel de probabilidad (no por color del semáforo)
+                            const colorByProb = probInt >= 70 ? 'from-red-700 to-red-900'
+                                : probInt >= 50 ? 'from-amber-600 to-amber-800'
+                                : 'from-slate-600 to-slate-800';
+                            return (
+                                <div className={`lg:col-span-3 relative overflow-hidden bg-gradient-to-r ${colorByProb} rounded-2xl p-6 text-white cursor-pointer shadow-lg hover:shadow-xl transition-shadow`} onClick={() => setSelected(top)}>
+                                    <svg className="absolute pointer-events-none" style={{right: '-60px', top: '50%', transform: 'translateY(-50%)', width: '360px', height: '360px', opacity: 0.12}} viewBox="0 0 360 360">
+                                        <circle cx="180" cy="180" r="70" stroke="white" strokeWidth="1.2" fill="none"/>
+                                        <circle cx="180" cy="180" r="115" stroke="white" strokeWidth="1" fill="none"/>
+                                        <circle cx="180" cy="180" r="160" stroke="white" strokeWidth="0.8" fill="none"/>
+                                    </svg>
+                                    <div className="relative flex items-start justify-between">
+                                        <div className="flex-1 min-w-0">
+                                            <div className="text-xs font-semibold text-white/80 mb-1">Probabilidad de periodo extraordinario</div>
+                                            <h2 className="text-2xl md:text-3xl font-bold mb-2">{top.nombre}</h2>
+                                            <NewsTicker articulos={topArticulos} max={5} />
+                                            <div className="text-[10px] text-white/60 mt-3 leading-snug">
+                                                Combina presión mediática, intención presidencial e interés ciudadano con la reactividad histórica de la categoría en recesos LXVI.
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-end ml-6">
+                                            <div className="text-white text-4xl md:text-5xl font-black leading-none tracking-tight">{probInt}%</div>
+                                            <div className="text-[10px] text-white/50 mt-2 uppercase tracking-widest font-mono">prob. extraordinario</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        }
+
+                        // ── PERIODO ORDINARIO: widget original ──
                         const top = [...semaforo].sort((a,b) => b.score_total - a.score_total)[0];
                         if (!top) return null;
                         const topFuentes = fuentes[top.categoria] || {};
                         const topArticulos = topFuentes.articulos_medios || [];
-                        const colorBg = { verde: 'from-emerald-600 to-emerald-800', amarillo: 'from-amber-600 to-amber-800', rojo: 'from-red-700 to-red-900' };
-                        const colorBadge = { verde: 'bg-emerald-400', amarillo: 'bg-amber-400', rojo: 'bg-red-400' };
                         return (
                             <div className={`lg:col-span-3 relative overflow-hidden bg-gradient-to-r ${colorBg[top.color]} rounded-2xl p-6 text-white cursor-pointer shadow-lg hover:shadow-xl transition-shadow`} onClick={() => setSelected(top)}>
-                                {/* Radar rings decorativos en el fondo derecho */}
                                 <svg className="absolute pointer-events-none" style={{right: '-60px', top: '50%', transform: 'translateY(-50%)', width: '360px', height: '360px', opacity: 0.12}} viewBox="0 0 360 360">
                                     <circle cx="180" cy="180" r="70" stroke="white" strokeWidth="1.2" fill="none"/>
                                     <circle cx="180" cy="180" r="115" stroke="white" strokeWidth="1" fill="none"/>

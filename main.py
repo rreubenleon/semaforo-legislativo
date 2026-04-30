@@ -1063,6 +1063,13 @@ def paso_7_exportar_dashboard():
         logger.warning(f"Error en predicciones de autoría: {e}")
         autoria_stats = {}
 
+    # Detectar si estamos en modo receso (mayo-ago, dic-ene)
+    try:
+        from modo_receso import es_modo_receso as _es_receso
+        modo_receso_actual = _es_receso()
+    except Exception:
+        modo_receso_actual = False
+
     data = {
         "metadata": {
             "generado": datetime.now(timezone.utc).isoformat(),
@@ -1070,6 +1077,11 @@ def paso_7_exportar_dashboard():
             "formula": "SCORE = (0.20*Media) + (0.15*Trends) + (0.25*Congreso) + (0.10*Mañanera) + (0.15*Urgencia) + (0.15*Dominancia)",
             "umbrales": SCORING["umbrales"],
             "sil_docs": sil_stats.get("total", 0),
+            # Modo receso: durante mayo-agosto y diciembre-enero, solo
+            # sesiona la Comisión Permanente. El frontend usa este flag
+            # para reemplazar el widget 'Mayor probabilidad de actividad
+            # legislativa' por 'Probabilidad de periodo extraordinario'.
+            "modo_receso": modo_receso_actual,
         },
         "semaforo": [],
         "alertas": alertas,
@@ -1099,6 +1111,49 @@ def paso_7_exportar_dashboard():
 
     # Cargar aprobaciones recientes por categoría (últimos 30 días)
     aprobaciones_por_cat = _obtener_aprobaciones_por_categoria(dias=30)
+
+    # Ratio histórico de cada categoría en RECESO vs ORDINARIO (LXVI completo).
+    # Calculado en eval/recesos/analisis_historico.md. Se usa para el score
+    # de probabilidad de periodo extraordinario: las categorías con ratio
+    # alto son más reactivas a coyuntura y más propensas a generar
+    # convocatorias a extraordinario.
+    RATIO_RECESO = {
+        'trabajo':              0.88,
+        'agro_rural':           0.29,
+        'turismo':              0.28,
+        'politica_social':      0.28,
+        'economia_hacienda':    0.23,
+        'medio_ambiente':       0.21,
+        'derechos_humanos':     0.21,
+        'infraestructura':      0.19,
+        'energia':              0.18,
+        'seguridad_justicia':   0.18,
+        'educacion':            0.18,
+        'salud':                0.17,
+        'relaciones_exteriores':0.17,
+        'electoral_politico':   0.16,
+        'medios_comunicacion':  0.16,
+    }
+
+    def _prob_extraordinario(score):
+        """
+        Score 0-100 que estima qué tan probable es que un tema fuerce la
+        convocatoria a un periodo extraordinario. Combina:
+          · 35% presión mediática sostenida (score_media)
+          · 20% intención presidencial (score_mananera)
+          · 15% interés ciudadano (score_trends)
+          · 30% reactividad histórica de la categoría en receso
+        Solo tiene sentido durante el receso o cerca del cierre del periodo.
+        """
+        cat = score.get('categoria', '')
+        ratio = RATIO_RECESO.get(cat, 0.10)
+        prob = (
+            0.35 * score.get('score_media', 0) +
+            0.20 * score.get('score_mananera', 0) +
+            0.15 * score.get('score_trends', 0) +
+            30 * ratio   # max 30 puntos si ratio = 1.0
+        )
+        return round(min(100, max(0, prob)), 1)
 
     # Cargar divergencias de la fecha más reciente para inyectar por categoría
     divergencias_por_cat = {}
@@ -1216,6 +1271,9 @@ def paso_7_exportar_dashboard():
             "subcategorias_activas": subcats_activas,
             "divergencia": divergencias_por_cat.get(cat_clave),
             "aprobados_14d": aprobaciones_por_cat.get(cat_clave) or {"count": 0, "items": []},
+            # Probabilidad de que un tema fuerce convocatoria a extraordinario.
+            # Solo se muestra en frontend durante receso. Score 0-100.
+            "prob_extraordinario": _prob_extraordinario(score),
         })
 
     # Escribir JSON
