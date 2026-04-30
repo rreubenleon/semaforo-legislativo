@@ -79,6 +79,14 @@ jobs:
       - name: Instalar dependencias
         run: pip install -r requirements.txt
 
+      # 4a. Cargar roster oficial de la Comisión Permanente.
+      #     Idempotente (UPSERT). Solo escribe en SQLite local — sin red.
+      #     Necesario para que main.py lo exporte en data.json.permanente
+      #     y el frontend pueda filtrar widgets durante receso.
+      - name: Cargar Comisión Permanente (idempotente)
+        run: python scripts/cargar_permanente_lxvi.py
+        continue-on-error: true   # No bloquear pipeline si el roster falla
+
       # 5. Ejecutar el pipeline completo
       #    Modo local: SQLite puro, sin dependencia de Turso
       - name: Ejecutar pipeline
