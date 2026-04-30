@@ -3,16 +3,20 @@ name: Comisiones - Pipeline D1
 # Pipeline SEPARADO del principal (pipeline.yml). Lee semaforo.db en modo
 # read-only y escribe resultados a Cloudflare D1 (tabla comisiones_stats).
 #
-# Cadencia escalonada:
+# Cadencia:
 #   - Lunes  14:00 UTC: SITL batch 1 (IDs 5-29) + Gaceta refresh
 #   - Martes 14:00 UTC: SITL batch 2 (IDs 30-57)
+#
+# Durante RECESO (mayo-agosto, dic-enero), el script verifica si es la
+# primera semana del mes y skipea si no lo es. Así ahorramos ~75% del
+# scrape sin tocar el cron al regresar al periodo ordinario en septiembre.
 #
 # No toca el cache de semaforo.db — solo lectura.
 
 on:
   schedule:
-    - cron: '0 14 * * 1'   # Lunes 14:00 UTC → SITL lunes + gaceta
-    - cron: '0 14 * * 2'   # Martes 14:00 UTC → SITL martes
+    - cron: '0 14 * * 1'   # Lunes 14:00 UTC → SITL batch 1 + Gaceta
+    - cron: '0 14 * * 2'   # Martes 14:00 UTC → SITL batch 2
   workflow_dispatch:
     inputs:
       paso:

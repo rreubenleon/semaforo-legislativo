@@ -531,7 +531,22 @@ def main():
     )
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--delay", type=float, default=1.5)
+    ap.add_argument("--ignorar-modo-receso", action="store_true",
+                    help="Forzar ejecución incluso en receso fuera de primera semana del mes")
     args = ap.parse_args()
+
+    # Guard de modo receso: durante mayo-agosto (y dic-enero), las comisiones
+    # ordinarias casi no sesionan. Bajamos a 1x/mes (primer lunes/martes).
+    if not args.ignorar_modo_receso:
+        try:
+            from modo_receso import debe_correr_comisiones
+            correr, motivo = debe_correr_comisiones()
+            if not correr:
+                logger.info(f"SKIP comisiones: {motivo}")
+                return 0
+            logger.info(f"OK correr comisiones: {motivo}")
+        except ImportError:
+            logger.warning("modo_receso.py no encontrado, corriendo sin guard")
 
     if args.paso == "gaceta":
         result = paso_gaceta(dry_run=args.dry_run)

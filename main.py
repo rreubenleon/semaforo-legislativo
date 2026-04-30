@@ -335,10 +335,21 @@ def paso_1_scraping_medios():
 
 
 def paso_2_scraping_gaceta(dias=7):
-    """Paso 2: Scrapear Gaceta Parlamentaria."""
+    """Paso 2: Scrapear Gaceta Parlamentaria.
+
+    Durante RECESO (mayo-agosto, dic-enero), la Gaceta de las cámaras
+    casi no se publica fuera de los miércoles cuando sesiona la Permanente.
+    Skipeamos en otros días para ahorrar requests inútiles.
+    """
     logger.info("=" * 60)
     logger.info("PASO 2: Scraping de Gaceta Parlamentaria")
     logger.info("=" * 60)
+
+    from modo_receso import debe_correr_gaceta
+    correr, motivo = debe_correr_gaceta()
+    if not correr:
+        logger.info(f"PASO 2: SKIP — {motivo}")
+        return []
 
     inicio = time.time()
     documentos = scrape_gaceta_rango(dias=dias)
@@ -349,10 +360,20 @@ def paso_2_scraping_gaceta(dias=7):
 
 
 def paso_2a_scraping_gaceta_senado(dias=14):
-    """Paso 2a: Scrapear Gaceta del Senado."""
+    """Paso 2a: Scrapear Gaceta del Senado.
+
+    Durante RECESO sesiona la Permanente en el Senado los miércoles.
+    El resto del tiempo la gaceta del Senado prácticamente no se publica.
+    """
     logger.info("=" * 60)
     logger.info("PASO 2a: Scraping de Gaceta del Senado")
     logger.info("=" * 60)
+
+    from modo_receso import debe_correr_gaceta
+    correr, motivo = debe_correr_gaceta()
+    if not correr:
+        logger.info(f"PASO 2a: SKIP — {motivo}")
+        return []
 
     inicio = time.time()
     try:
