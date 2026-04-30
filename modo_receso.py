@@ -23,7 +23,38 @@ Uso:
 """
 from __future__ import annotations
 
+import os
 from datetime import date, datetime
+
+# ──────────────────────────────────────────────────────────────────────
+# OVERRIDE MANUAL — el cierre del periodo ordinario varía cada legislatura
+#
+# El periodo ordinario CONSTITUCIONALMENTE termina 30 abr / 15 dic, pero
+# en la práctica suele cerrarse unos días antes (LXVI cerró el 29 abr
+# 2026). Como esa fecha varía sesión a sesión, NO se hardcodea: cuando
+# la Permanente se instala, mover esta variable a True y dejarla así
+# hasta que arranque el siguiente periodo ordinario.
+#
+# Valores:
+#   True   → fuerza receso (Permanente activa)
+#   False  → fuerza ordinario (anula incluso fechas de mayo-ago / dic-ene)
+#   None   → automático según calendario constitucional
+#
+# También se puede sobreescribir con env var FIAT_RECESO_OVERRIDE=true|false|auto
+# (útil en CI sin tocar código).
+# ──────────────────────────────────────────────────────────────────────
+OVERRIDE_RECESO: bool | None = True  # LXVI 2do receso instalado 29 abr 2026
+
+
+def _override_efectivo() -> bool | None:
+    env = os.getenv("FIAT_RECESO_OVERRIDE", "").strip().lower()
+    if env in ("true", "1", "yes", "si"):
+        return True
+    if env in ("false", "0", "no"):
+        return False
+    if env in ("auto", ""):
+        return OVERRIDE_RECESO
+    return OVERRIDE_RECESO
 
 
 def es_modo_receso(hoy: date | None = None) -> bool:
@@ -31,21 +62,25 @@ def es_modo_receso(hoy: date | None = None) -> bool:
     Devuelve True si la fecha está dentro de uno de los recesos
     constitucionales. False si está en periodo ordinario.
 
+    Si OVERRIDE_RECESO (o FIAT_RECESO_OVERRIDE) está set a True/False,
+    fuerza ese valor sin importar la fecha.
+
     NOTA: NO toma en cuenta periodos extraordinarios (cuando se convoca
     al pleno fuera de calendario). Para esos casos hay que activar un
     override manual o detectar via SIL.
     """
+    ov = _override_efectivo()
+    if ov is not None:
+        return ov
+
     hoy = hoy or date.today()
     m, d = hoy.month, hoy.day
 
-    # 1er Receso: 16 dic - 31 ene
+    # 1er Receso constitucional: 16 dic - 31 ene
     if (m == 12 and d >= 16) or m == 1:
         return True
-    # 2do Receso: la Constitución dice 1 may - 31 ago, pero en la
-    # práctica el 2do periodo ordinario suele cerrar antes del 30 abr
-    # con la instalación de la Permanente. Para LXVI cerró el 26 abr
-    # 2026, por eso aceptamos desde el 25 abr en adelante.
-    if (m == 4 and d >= 25) or (5 <= m <= 8):
+    # 2do Receso constitucional: 1 may - 31 ago
+    if 5 <= m <= 8:
         return True
     return False
 

@@ -226,6 +226,63 @@ def _obtener_aprobaciones_por_categoria(dias=14, items_max_por_cat=15):
         return {}
 
 
+def _obtener_permanente():
+    """
+    Devuelve el roster oficial de la Comisión Permanente del periodo activo.
+    Solo se usa durante receso para filtrar widgets a quienes sí sesionan.
+
+    Estructura:
+      {
+        "periodo_id": "LXVI_2REC_2A",
+        "integrantes": [
+          {"nombre", "camara", "partido", "rol", "legislador_id"}, ...
+        ],
+        "nombres_norm": [...]   # normalizados (sin acentos, lower) para matching
+      }
+    Si no hay tabla o filas, devuelve None.
+    """
+    try:
+        import sqlite3, unicodedata
+        conn = get_connection()
+        # Verificar que la tabla existe
+        cur = conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='permanente_integrantes'"
+        )
+        if not cur.fetchone():
+            logger.info("permanente_integrantes no existe — omitiendo")
+            return None
+        # Tomar el periodo más reciente
+        cur = conn.execute(
+            "SELECT periodo_id FROM permanente_integrantes ORDER BY cargado_en DESC LIMIT 1"
+        )
+        row = cur.fetchone()
+        if not row:
+            return None
+        periodo_id = row[0]
+        cur = conn.execute(
+            "SELECT nombre, camara, partido, rol, legislador_id "
+            "FROM permanente_integrantes WHERE periodo_id = ? ORDER BY camara, rol DESC, nombre",
+            (periodo_id,),
+        )
+        integrantes = [
+            {"nombre": r[0], "camara": r[1], "partido": r[2], "rol": r[3], "legislador_id": r[4]}
+            for r in cur.fetchall()
+        ]
+        def _norm(s):
+            return ''.join(c for c in unicodedata.normalize('NFD', s or '')
+                           if unicodedata.category(c) != 'Mn').lower().strip()
+        nombres_norm = sorted({_norm(i["nombre"]) for i in integrantes})
+        logger.info(f"Permanente cargada: {len(integrantes)} integrantes ({periodo_id})")
+        return {
+            "periodo_id": periodo_id,
+            "integrantes": integrantes,
+            "nombres_norm": nombres_norm,
+        }
+    except Exception as e:
+        logger.warning(f"_obtener_permanente fallo: {e}")
+        return None
+
+
 def _obtener_tweets_fiat():
     """
     Obtiene los últimos tweets de @Fiat_MX via API v2 para mostrar en el dashboard.
@@ -1097,6 +1154,7 @@ def paso_7_exportar_dashboard():
         "mapa": obtener_mapa_datos(),
         "resoluciones": obtener_resoluciones(semanas=12),
         "tweets_fiat": _obtener_tweets_fiat(),
+        "permanente": _obtener_permanente(),
         "convocatorias": obtener_convocatorias(),
         "actividad_legisladores_reciente": _obtener_actividad_legisladores_reciente(),
         # comisiones_actividad: migrado a D1 (Worker /comisiones)

@@ -1713,23 +1713,33 @@
             }[orden];
             const ordenado = [...semaforoBusqueda].sort(sortFn);
 
-            /* Top 5 legisladores global */
+            /* Top 5 legisladores global.
+               Durante receso filtra a SOLO los integrantes de la Comisión Permanente
+               (no tiene sentido mostrar a quienes no van a sesionar). El roster oficial
+               viene en data.permanente.nombres_norm (normalizado sin acentos).        */
             const top5Legisladores = (() => {
                 if (!data.autoria || semaforo.length === 0) return [];
-                // Top 5 categorias por score del semaforo (donde hay mas probabilidad de accion)
+                const enReceso = data.metadata?.modo_receso === true;
+                const permSet = (enReceso && data.permanente?.nombres_norm)
+                    ? new Set(data.permanente.nombres_norm)
+                    : null;
+                const norm = (s) => (s || '')
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                    .toLowerCase().trim();
+                // Top categorias por score del semaforo (donde hay mas probabilidad de accion)
                 const topCats = [...semaforo].sort((a, b) => b.score_total - a.score_total).slice(0, 5);
                 const seen = new Set();
                 const result = [];
-                // Para cada categoria top, tomar el legislador #1 no repetido
                 for (const catData of topCats) {
                     const preds = data.autoria[catData.categoria];
                     if (!preds || preds.length === 0) continue;
                     for (const p of preds) {
-                        if (!seen.has(p.nombre)) {
-                            seen.add(p.nombre);
-                            result.push({...p, categoria: catData.nombre, catScore: catData.score_total});
-                            break;
-                        }
+                        if (seen.has(p.nombre)) continue;
+                        // Filtro Permanente durante receso
+                        if (permSet && !permSet.has(norm(p.nombre))) continue;
+                        seen.add(p.nombre);
+                        result.push({...p, categoria: catData.nombre, catScore: catData.score_total});
+                        break;
                     }
                 }
                 return result;
@@ -1744,41 +1754,40 @@
                         const colorBg = { verde: 'from-emerald-600 to-emerald-800', amarillo: 'from-amber-600 to-amber-800', rojo: 'from-red-700 to-red-900' };
 
                         // ── DURANTE RECESO: Widget "Probabilidad de periodo extraordinario" ──
-                        // El widget original ("Mayor probabilidad de actividad legislativa")
-                        // queda guardado abajo en la rama else, solo se muestra cuando
-                        // termine el receso. Para reactivarlo: cambiar `enReceso` a `false`
-                        // (o hacer que data.metadata.modo_receso vuelva a false en el pipeline).
+                        // Es un número GLOBAL — NO está atado a una categoría. La pregunta
+                        // "¿qué tema fuerza el extraordinario?" es otra pregunta, otra
+                        // metodología, y se mostrará en otro lado cuando esté lista.
+                        // El widget original queda en la rama else, se reactiva solo cuando
+                        // data.metadata.modo_receso vuelva a false (1 sept).
                         if (enReceso) {
-                            const top = [...semaforo]
+                            const probs = semaforo
                                 .filter(s => s.prob_extraordinario != null)
-                                .sort((a, b) => (b.prob_extraordinario || 0) - (a.prob_extraordinario || 0))[0];
-                            if (!top) return null;
-                            const topFuentes = fuentes[top.categoria] || {};
-                            const topArticulos = topFuentes.articulos_medios || [];
-                            const probInt = Math.round(top.prob_extraordinario);
-                            // Color por nivel de probabilidad (no por color del semáforo)
-                            const colorByProb = probInt >= 70 ? 'from-red-700 to-red-900'
-                                : probInt >= 50 ? 'from-amber-600 to-amber-800'
+                                .map(s => s.prob_extraordinario);
+                            if (probs.length === 0) return null;
+                            // Aggregate provisional: max de todas las categorías. La metodología
+                            // global está en revisión — el user está iterándola.
+                            const probGlobal = Math.round(Math.max(...probs));
+                            const colorByProb = probGlobal >= 70 ? 'from-red-700 to-red-900'
+                                : probGlobal >= 50 ? 'from-amber-600 to-amber-800'
                                 : 'from-slate-600 to-slate-800';
                             return (
-                                <div className={`lg:col-span-3 relative overflow-hidden bg-gradient-to-r ${colorByProb} rounded-2xl p-6 text-white cursor-pointer shadow-lg hover:shadow-xl transition-shadow`} onClick={() => setSelected(top)}>
+                                <div className={`lg:col-span-3 relative overflow-hidden bg-gradient-to-r ${colorByProb} rounded-2xl p-6 text-white shadow-lg`}>
                                     <svg className="absolute pointer-events-none" style={{right: '-60px', top: '50%', transform: 'translateY(-50%)', width: '360px', height: '360px', opacity: 0.12}} viewBox="0 0 360 360">
                                         <circle cx="180" cy="180" r="70" stroke="white" strokeWidth="1.2" fill="none"/>
                                         <circle cx="180" cy="180" r="115" stroke="white" strokeWidth="1" fill="none"/>
                                         <circle cx="180" cy="180" r="160" stroke="white" strokeWidth="0.8" fill="none"/>
                                     </svg>
-                                    <div className="relative flex items-start justify-between">
+                                    <div className="relative flex items-center justify-between">
                                         <div className="flex-1 min-w-0">
-                                            <div className="text-xs font-semibold text-white/80 mb-1">Probabilidad de periodo extraordinario</div>
-                                            <h2 className="text-2xl md:text-3xl font-bold mb-2">{top.nombre}</h2>
-                                            <NewsTicker articulos={topArticulos} max={5} />
-                                            <div className="text-[10px] text-white/60 mt-3 leading-snug">
-                                                Combina presión mediática, intención presidencial e interés ciudadano con la reactividad histórica de la categoría en recesos LXVI.
+                                            <div className="text-[10px] font-semibold text-white/70 mb-2 uppercase tracking-widest">Probabilidad de periodo extraordinario</div>
+                                            <h2 className="text-2xl md:text-3xl font-bold mb-3">2do receso · LXVI</h2>
+                                            <div className="text-xs text-white/75 leading-relaxed max-w-md">
+                                                Estimación de qué tan probable es que el Pleno sea convocado fuera de calendario antes del 1 de septiembre. <span className="text-white/55">Metodología en revisión.</span>
                                             </div>
                                         </div>
                                         <div className="flex flex-col items-end ml-6">
-                                            <div className="text-white text-4xl md:text-5xl font-black leading-none tracking-tight">{probInt}%</div>
-                                            <div className="text-[10px] text-white/50 mt-2 uppercase tracking-widest font-mono">prob. extraordinario</div>
+                                            <div className="text-white text-5xl md:text-6xl font-black leading-none tracking-tight">{probGlobal}%</div>
+                                            <div className="text-[10px] text-white/55 mt-2 uppercase tracking-widest font-mono">estimación global</div>
                                         </div>
                                     </div>
                                 </div>
@@ -2004,7 +2013,20 @@
             const [qInput, setQInput] = useState('');
             const [fSort, setFSort] = useState('hit_rate');
 
-            const LIMITE = 50;
+            // Sub-pestaña: 'todos' (default LXVI completa) | 'permanente' (solo
+            // integrantes oficiales de la Comisión Permanente del periodo activo)
+            const enReceso = data.metadata?.modo_receso === true;
+            const [vista, setVista] = useState(enReceso ? 'permanente' : 'todos');
+            const permanenteSet = useMemo(() => {
+                const norms = data.permanente?.nombres_norm;
+                return Array.isArray(norms) ? new Set(norms) : null;
+            }, [data]);
+            const permanenteCount = data.permanente?.integrantes?.length || 0;
+            const normNombre = (s) => (s || '')
+                .normalize('NFD').replace(/[̀-ͯ]/g, '')
+                .toLowerCase().trim();
+
+            const LIMITE = vista === 'permanente' ? 250 : 50;  // Permanente son 74, fetch todos
 
             useEffect(() => {
                 const t = setTimeout(() => { setFQ(qInput.trim()); setPaginaRadar(1); }, 350);
@@ -2016,7 +2038,7 @@
                 setCargando(true);
                 setError(null);
                 const params = new URLSearchParams({
-                    pagina: String(pagina),
+                    pagina: String(vista === 'permanente' ? 1 : pagina),
                     limite: String(LIMITE),
                     sort: fSort,
                 });
@@ -2029,15 +2051,26 @@
                     .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
                     .then(json => {
                         if (cancelado) return;
-                        setLegisladores(json.legisladores || []);
-                        setTotal(json.total || 0);
-                        setTotalPaginas(json.total_paginas || 1);
+                        let legs = json.legisladores || [];
+                        let totalReal = json.total || 0;
+                        let pagsReal = json.total_paginas || 1;
+                        // Filtro client-side cuando sub-pestaña = permanente.
+                        // El worker no conoce el roster Permanente; lo filtramos aquí
+                        // contra data.permanente.nombres_norm. Por eso pedimos limite=250.
+                        if (vista === 'permanente' && permanenteSet) {
+                            legs = legs.filter(l => permanenteSet.has(normNombre(l.nombre)));
+                            totalReal = legs.length;
+                            pagsReal = 1;
+                        }
+                        setLegisladores(legs);
+                        setTotal(totalReal);
+                        setTotalPaginas(pagsReal);
                         if (json.meta) setMeta(json.meta);
                     })
                     .catch(e => { if (!cancelado) setError(e.message); })
                     .finally(() => { if (!cancelado) setCargando(false); });
                 return () => { cancelado = true; };
-            }, [pagina, fCamara, fPartido, fCategoria, fQ, fSort]);
+            }, [pagina, fCamara, fPartido, fCategoria, fQ, fSort, vista]);
 
             const limpiarFiltros = () => {
                 setFCamara(''); setFPartido(''); setFCategoria('');
@@ -2061,7 +2094,11 @@
                                 <h2 className="text-lg font-bold text-gray-800">Radar de Legisladores</h2>
                                 <span className="px-2 py-0.5 text-[10px] font-semibold rounded-full bg-gradient-to-r from-purple-500 to-indigo-500 text-white tracking-wide">BETA</span>
                             </div>
-                            <p className="text-xs text-gray-500">Player props legislativos · LXVI completa · hit rate, proyecciones 15d y matchup vs comisión dictaminadora</p>
+                            <p className="text-xs text-gray-500">
+                                {vista === 'permanente'
+                                    ? 'Solo integrantes de la Comisión Permanente · sesiones miércoles · 2do receso LXVI'
+                                    : 'Player props legislativos · LXVI completa · hit rate, proyecciones 15d y matchup vs comisión dictaminadora'}
+                            </p>
                         </div>
                         <div className="flex items-center gap-3 text-[11px] text-gray-500">
                             {cargando ? (
@@ -2075,6 +2112,25 @@
                             </button>
                         </div>
                     </div>
+
+                    {/* Sub-pestañas: Todos LXVI / Comisión Permanente.
+                        Permanente solo aparece si hay roster cargado en data.permanente. */}
+                    {permanenteCount > 0 && (
+                        <div className="flex items-center gap-1 border-b border-gray-200">
+                            <button onClick={() => { setVista('todos'); setPaginaRadar(1); }}
+                                className={`px-3 py-2 text-xs font-semibold border-b-2 transition-colors ${vista === 'todos' ? 'border-acento text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+                                Todos los jugadores LXVI
+                            </button>
+                            <button onClick={() => { setVista('permanente'); setPaginaRadar(1); }}
+                                className={`px-3 py-2 text-xs font-semibold border-b-2 transition-colors flex items-center gap-1.5 ${vista === 'permanente' ? 'border-acento text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>
+                                Comisión Permanente
+                                <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-mono ${vista === 'permanente' ? 'bg-acento/15 text-acento' : 'bg-gray-100 text-gray-500'}`}>{permanenteCount}</span>
+                            </button>
+                            {enReceso && (
+                                <span className="ml-auto text-[10px] text-gray-400 italic">Receso activo · solo Permanente sesiona</span>
+                            )}
+                        </div>
+                    )}
 
                     {glosarioAbierto && (
                         <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 text-xs text-gray-700 space-y-2">
