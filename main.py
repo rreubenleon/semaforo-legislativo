@@ -487,16 +487,25 @@ def _obtener_extraordinarios_lxvi():
         if actual:
             eventos.append(actual)
 
-        # Filtrar clusters espurios: un extraordinario REAL del Congreso
-        # genera ≥3 piezas legislativas en una ventana ≥5 días. Un solo
-        # 'informe de actividades' que menciona la palabra no califica.
+        # Filtrar clusters espurios. Un extraordinario REAL del Congreso
+        # genera (a) ≥3 piezas en ≥5 días, Y (b) al menos un acto de tipo
+        # convocatoria/decreto/dispensa/iniciativa/acuerdo. Los clusters
+        # que solo agrupan 'Informes de Actividades' que mencionan la
+        # palabra son falsos positivos (caso real: sep 2025).
+        INDICADORES_REALES = ('convoca', 'decreto', 'dispensa', 'iniciativ', 'acuerdo')
         def _es_real(ev):
             try:
                 from datetime import datetime as _dt
                 dur = (_dt.fromisoformat(ev["fecha_fin"]) - _dt.fromisoformat(ev["fecha_inicio"])).days
             except Exception:
                 dur = 0
-            return len(ev["items"]) >= 3 and dur >= 5
+            if not (len(ev["items"]) >= 3 and dur >= 5):
+                return False
+            for it in ev["items"]:
+                tit_l = (it.get("titulo") or '').lower()
+                if any(ind in tit_l for ind in INDICADORES_REALES):
+                    return True
+            return False
         eventos = [e for e in eventos if _es_real(e)]
 
         # Etiquetar cada evento con un label legible
