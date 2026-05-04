@@ -283,6 +283,239 @@ def _obtener_permanente():
         return None
 
 
+def _obtener_permanente_stats():
+    """
+    Stats agregadas de las 3 comisiones de trabajo de la Permanente
+    (Primera/Segunda/Tercera) por receso LXVI. Alimenta la sub-pestaña
+    'Permanente' del tab Comisiones del dashboard.
+
+    Estructura:
+      [
+        {
+          "periodo_id": "01-05-2025_31-08-2025",
+          "fecha_inicio": "2025-05-01", "fecha_fin": "2025-08-31",
+          "label": "2do Receso 1er Año (may–ago 2025)",
+          "activo": false,
+          "total_turnadas": 760, "total_aprobadas": 202,
+          "comisiones": [
+            {"orden": "Primera", "alcance": "Asuntos Políticos e Internacionales",
+             "turnadas": 229, "iniciativas": 1, "proposiciones": 0, "aprobadas": 55,
+             "tasa_aprobacion": 24.0, "fecha_primera": "...", "fecha_ultima": "..."},
+            ...
+          ]
+        }, ...
+      ]
+    Lista ordenada por fecha de receso descendente.
+    """
+    import re
+    try:
+        from datetime import date as _date
+        conn = get_connection()
+        # Detectar columnas disponibles (cache CI puede ser viejo)
+        cols = [c[1] for c in conn.execute("PRAGMA table_info(sil_documentos)").fetchall()]
+        if not cols:
+            return []
+        tipo_col = 'tipo_grupo' if 'tipo_grupo' in cols else 'tipo'
+
+        rows = conn.execute(f"""
+            SELECT comision,
+                   COUNT(*) AS turnadas,
+                   SUM(CASE WHEN {tipo_col} = 'Iniciativa' THEN 1 ELSE 0 END) AS ini,
+                   SUM(CASE WHEN {tipo_col} LIKE '%Proposici%' THEN 1 ELSE 0 END) AS prop,
+                   SUM(CASE WHEN LOWER(estatus) LIKE '%aprob%' THEN 1 ELSE 0 END) AS aprob,
+                   MIN(fecha_presentacion) AS fmin,
+                   MAX(fecha_presentacion) AS fmax
+            FROM sil_documentos
+            WHERE legislatura='LXVI'
+              AND camara='Comisión Permanente'
+              AND comision LIKE '%Comisi%n de Trabajo%'
+            GROUP BY comision
+        """).fetchall()
+
+        def _to_iso(d_es):
+            # 'DD/MM/YYYY' → 'YYYY-MM-DD'
+            try:
+                d, m, y = d_es.split('/')
+                return f"{y}-{m.zfill(2)}-{d.zfill(2)}"
+            except Exception:
+                return d_es
+
+        def _label_receso(f_inicio_es, f_fin_es):
+            try:
+                _, m_ini, y_ini = f_inicio_es.split('/')
+                _, m_fin, y_fin = f_fin_es.split('/')
+                meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
+                m_ini_lbl = meses[int(m_ini)-1]; m_fin_lbl = meses[int(m_fin)-1]
+                # Determinar si es 1er o 2do receso por mes inicio
+                # Mayo-agosto = 2do receso; diciembre/enero = 1er receso
+                tipo = "2do Receso" if int(m_ini) in (5,) else "1er Receso"
+                # Determinar año legislativo: LXVI inició sept 2024
+                # 1er Año: 2024-09 → 2025-08
+                # 2do Año: 2025-09 → 2026-08
+                inicio_anio_legi = 2024 if int(y_ini) <= 2025 and int(m_ini) >= 9 else \
+                                   2024 if int(y_ini) == 2025 and int(m_ini) <= 8 else \
+                                   2025
+                anio_legi = "1er Año" if int(y_ini) <= 2025 and int(m_ini) <= 8 else "2do Año"
+                if int(y_ini) >= 2025 and int(m_ini) >= 9:
+                    anio_legi = "2do Año"
+                if int(y_ini) >= 2026:
+                    anio_legi = "2do Año"
+                return f"{tipo} {anio_legi} ({m_ini_lbl}–{m_fin_lbl} {y_fin})"
+            except Exception:
+                return f"{f_inicio_es} – {f_fin_es}"
+
+        hoy_iso = _date.today().isoformat()
+        periodos = {}
+        for comision_nombre, turnadas, ini, prop, aprob, fmin, fmax in rows:
+            # Extraer rango de fechas: "(DD/MM/YYYY-DD/MM/YYYY)" o "(DD/MM/YYYY - DD/MM/YYYY)"
+            m_fechas = re.search(r'\((\d{2}/\d{2}/\d{4})\s*-\s*(\d{2}/\d{2}/\d{4})\)', comision_nombre)
+            if not m_fechas:
+                # Comisión sin fechas en el nombre — ignorar (residual scraper)
+                continue
+            f_ini_es, f_fin_es = m_fechas.group(1), m_fechas.group(2)
+            f_ini_iso, f_fin_iso = _to_iso(f_ini_es), _to_iso(f_fin_es)
+            periodo_id = f"{f_ini_es.replace('/','-')}_{f_fin_es.replace('/','-')}"
+
+            # Extraer orden y alcance
+            m_part = re.match(
+                r'(Primera|Segunda|Tercera)\s+Comisi[oó]n\s+de\s+Trabajo:\s*([^(]+?)\s*\(',
+                comision_nombre)
+            if m_part:
+                orden = m_part.group(1)
+                alcance = m_part.group(2).strip().rstrip(';').strip()
+            else:
+                orden = ''
+                alcance = comision_nombre
+
+            if periodo_id not in periodos:
+                periodos[periodo_id] = {
+                    "periodo_id": periodo_id,
+                    "fecha_inicio": f_ini_iso,
+                    "fecha_fin": f_fin_iso,
+                    "label": _label_receso(f_ini_es, f_fin_es),
+                    "activo": (f_ini_iso <= hoy_iso <= f_fin_iso),
+                    "comisiones": [],
+                    "total_turnadas": 0,
+                    "total_aprobadas": 0,
+                }
+            periodos[periodo_id]["comisiones"].append({
+                "orden": orden,
+                "nombre_corto": f"{orden} Comisión" if orden else comision_nombre[:60],
+                "alcance": alcance,
+                "turnadas": turnadas,
+                "iniciativas": ini,
+                "proposiciones": prop,
+                "aprobadas": aprob,
+                "tasa_aprobacion": round(aprob / turnadas * 100, 1) if turnadas else 0.0,
+                "fecha_primera": fmin,
+                "fecha_ultima": fmax,
+            })
+            periodos[periodo_id]["total_turnadas"] += turnadas
+            periodos[periodo_id]["total_aprobadas"] += aprob
+
+        orden_map = {'Primera': 1, 'Segunda': 2, 'Tercera': 3, '': 99}
+        for p in periodos.values():
+            p["comisiones"].sort(key=lambda c: orden_map.get(c["orden"], 99))
+
+        resultado = sorted(periodos.values(), key=lambda p: p["fecha_inicio"], reverse=True)
+        logger.info(f"_obtener_permanente_stats: {len(resultado)} recesos LXVI")
+        return resultado
+    except Exception as e:
+        logger.warning(f"_obtener_permanente_stats fallo: {e}")
+        return []
+
+
+def _obtener_extraordinarios_lxvi():
+    """
+    Cronología de eventos relacionados con periodos extraordinarios LXVI.
+    Cluster por proximidad temporal (eventos en misma ventana de 30 días = 1 extraordinario).
+
+    Estructura:
+      [
+        {
+          "fecha_inicio": "2025-06-11", "fecha_fin": "2025-06-30",
+          "label": "1er Extraordinario LXVI (jun 2025)",
+          "items": [
+            {"fecha", "camara", "tipo", "titulo"}, ...
+          ]
+        }, ...
+      ]
+    """
+    try:
+        from datetime import datetime as _dt
+        conn = get_connection()
+        # Filtro estricto: solo docs que mencionan literal "periodo
+        # extraordinario" (singular o plural). Filtros más laxos generaban
+        # falsos positivos como "asambleas extraordinarias" o "convocatorias
+        # públicas extraordinarias" que no son periodos del Congreso.
+        rows = conn.execute("""
+            SELECT fecha_presentacion, camara, tipo, titulo
+            FROM sil_documentos
+            WHERE legislatura='LXVI'
+              AND (LOWER(titulo) LIKE '%periodo extraordinari%'
+                   OR LOWER(titulo) LIKE '%periodos extraordinari%'
+                   OR LOWER(sinopsis) LIKE '%periodo extraordinari%')
+              AND fecha_presentacion IS NOT NULL
+              AND fecha_presentacion != ''
+            ORDER BY fecha_presentacion
+        """).fetchall()
+
+        def _diff_dias(a, b):
+            try:
+                return abs((_dt.fromisoformat(a) - _dt.fromisoformat(b)).days)
+            except Exception:
+                return 999
+
+        eventos = []
+        actual = None
+        for fecha, camara, tipo, titulo in rows:
+            if actual is None or _diff_dias(actual["fecha_fin"], fecha) > 30:
+                if actual:
+                    eventos.append(actual)
+                actual = {
+                    "fecha_inicio": fecha,
+                    "fecha_fin": fecha,
+                    "items": [],
+                }
+            actual["fecha_fin"] = fecha
+            actual["items"].append({
+                "fecha": fecha,
+                "camara": camara or '',
+                "tipo": tipo or '',
+                "titulo": (titulo or '')[:200],
+            })
+        if actual:
+            eventos.append(actual)
+
+        # Filtrar clusters espurios: un extraordinario REAL del Congreso
+        # genera ≥3 piezas legislativas en una ventana ≥5 días. Un solo
+        # 'informe de actividades' que menciona la palabra no califica.
+        def _es_real(ev):
+            try:
+                from datetime import datetime as _dt
+                dur = (_dt.fromisoformat(ev["fecha_fin"]) - _dt.fromisoformat(ev["fecha_inicio"])).days
+            except Exception:
+                dur = 0
+            return len(ev["items"]) >= 3 and dur >= 5
+        eventos = [e for e in eventos if _es_real(e)]
+
+        # Etiquetar cada evento con un label legible
+        for i, ev in enumerate(eventos, 1):
+            try:
+                anio = ev["fecha_inicio"][:4]
+                mes_ini = int(ev["fecha_inicio"][5:7])
+                meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic']
+                ev["label"] = f"{i}º Extraordinario LXVI ({meses[mes_ini-1]} {anio})"
+            except Exception:
+                ev["label"] = f"Extraordinario {i} LXVI"
+
+        logger.info(f"_obtener_extraordinarios_lxvi: {len(eventos)} eventos · {sum(len(e['items']) for e in eventos)} docs")
+        return eventos
+    except Exception as e:
+        logger.warning(f"_obtener_extraordinarios_lxvi fallo: {e}")
+        return []
+
+
 def _obtener_tweets_fiat():
     """
     Obtiene los últimos tweets de @Fiat_MX via API v2 para mostrar en el dashboard.
@@ -1155,6 +1388,13 @@ def paso_7_exportar_dashboard():
         "resoluciones": obtener_resoluciones(semanas=12),
         "tweets_fiat": _obtener_tweets_fiat(),
         "permanente": _obtener_permanente(),
+        # Stats de comisiones de trabajo de la Permanente por receso LXVI
+        # (Primera/Segunda/Tercera) — alimenta sub-pestaña 'Permanente' en
+        # tab Comisiones del dashboard.
+        "permanente_stats": _obtener_permanente_stats(),
+        # Cronología de periodos extraordinarios LXVI (clusters por
+        # proximidad temporal). Hoy solo hay 1 (junio 2025).
+        "extraordinarios_lxvi": _obtener_extraordinarios_lxvi(),
         "convocatorias": obtener_convocatorias(),
         "actividad_legisladores_reciente": _obtener_actividad_legisladores_reciente(),
         # comisiones_actividad: migrado a D1 (Worker /comisiones)

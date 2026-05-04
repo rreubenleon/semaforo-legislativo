@@ -3818,7 +3818,123 @@
             );
         }
 
+        /* ── Sub-componente: vista de Comisión Permanente y extraordinarios LXVI ── */
+        function PermanenteSection({ permanente_stats, extraordinarios }) {
+            const recesos = permanente_stats || [];
+            const recesoActivo = recesos.find(r => r.activo);
+            const recesoActual = recesoActivo || recesos[0];  // si ninguno activo, mostrar el más reciente
+            const previos = recesos.filter(r => r !== recesoActual);
+            const events = extraordinarios || [];
+
+            const fmt = (iso) => {
+                if (!iso) return '—';
+                const [y, m, d] = iso.split('-');
+                const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+                return `${parseInt(d)} ${meses[parseInt(m)-1]} ${y}`;
+            };
+
+            const ComisionRow = ({ c }) => (
+                <div className="grid items-center px-3 py-2.5 border-b border-gray-200 last:border-b-0"
+                     style={{gridTemplateColumns: 'minmax(0, 1fr) 64px 64px 64px 70px'}}>
+                    <div className="min-w-0 pr-3">
+                        <div className="font-medium text-sm text-gray-800">{c.nombre_corto}</div>
+                        <div className="text-[11px] text-gray-500 truncate">{c.alcance}</div>
+                    </div>
+                    <div className="text-center text-sm font-mono text-gray-700">{c.turnadas}</div>
+                    <div className="text-center text-sm font-mono text-gray-700">{c.iniciativas + c.proposiciones}</div>
+                    <div className="text-center text-sm font-mono text-emerald-700 font-semibold">{c.aprobadas}</div>
+                    <div className="text-center text-xs font-mono text-gray-500">{c.tasa_aprobacion}%</div>
+                </div>
+            );
+
+            const RecesoCard = ({ r, destacado = false }) => (
+                <div className={`bg-white border ${destacado ? 'border-acento/40 shadow-sm' : 'border-gray-200'} rounded-xl overflow-hidden`}>
+                    <div className={`px-4 py-3 ${destacado ? 'bg-acento/5' : 'bg-gray-50/50'} border-b border-gray-200 flex items-center justify-between`}>
+                        <div>
+                            <div className="text-sm font-semibold text-gray-800">{r.label}</div>
+                            <div className="text-[11px] text-gray-500 mt-0.5">{fmt(r.fecha_inicio)} → {fmt(r.fecha_fin)}</div>
+                        </div>
+                        <div className="text-right">
+                            <div className="text-xs text-gray-500">Total turnadas</div>
+                            <div className="font-mono text-sm font-bold text-gray-800">{r.total_turnadas}</div>
+                        </div>
+                        {destacado && r.activo && <span className="ml-3 text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">Activo</span>}
+                    </div>
+                    <div className="hidden md:grid items-center px-3 py-1.5 border-b border-gray-200 text-[10px] uppercase tracking-wider text-gray-400 font-bold font-mono"
+                         style={{gridTemplateColumns: 'minmax(0, 1fr) 64px 64px 64px 70px'}}>
+                        <div>Comisión de Trabajo</div>
+                        <div className="text-center">Turn.</div>
+                        <div className="text-center">Ini.+Prop.</div>
+                        <div className="text-center">Aprob.</div>
+                        <div className="text-center">Tasa</div>
+                    </div>
+                    {r.comisiones.length > 0 ? (
+                        r.comisiones.map((c, i) => <ComisionRow key={i} c={c} />)
+                    ) : (
+                        <div className="px-4 py-6 text-center text-xs text-gray-400">Aún sin actividad turnada en este receso.</div>
+                    )}
+                </div>
+            );
+
+            return (
+                <div className="space-y-6">
+                    <div className="bg-amber-50/50 border border-amber-200/60 rounded-lg p-3 text-xs text-amber-900">
+                        <span className="font-semibold">Comisión Permanente y periodos extraordinarios.</span> Durante los recesos del Congreso (16 dic – 31 ene · 1 may – 31 ago) sólo sesiona la Permanente con sus 3 Comisiones de Trabajo. Los datos de aprobaciones aquí <strong>no se mezclan</strong> con las comisiones ordinarias del tab anterior.
+                    </div>
+
+                    {recesoActual && (
+                        <div>
+                            <div className="text-[11px] uppercase tracking-wider text-gray-500 font-bold font-mono mb-2">{recesoActual.activo ? 'Receso vigente' : 'Receso más reciente'}</div>
+                            <RecesoCard r={recesoActual} destacado={true} />
+                        </div>
+                    )}
+
+                    {previos.length > 0 && (
+                        <div>
+                            <div className="text-[11px] uppercase tracking-wider text-gray-500 font-bold font-mono mb-2">Recesos previos LXVI</div>
+                            <div className="space-y-3">
+                                {previos.map((r, i) => <RecesoCard key={i} r={r} destacado={false} />)}
+                            </div>
+                        </div>
+                    )}
+
+                    {events.length > 0 && (
+                        <div>
+                            <div className="text-[11px] uppercase tracking-wider text-gray-500 font-bold font-mono mb-2">Periodos extraordinarios LXVI</div>
+                            <div className="space-y-3">
+                                {events.map((ev, i) => (
+                                    <div key={i} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                                        <div className="px-4 py-3 bg-gray-50/50 border-b border-gray-200 flex items-center justify-between">
+                                            <div>
+                                                <div className="text-sm font-semibold text-gray-800">{ev.label}</div>
+                                                <div className="text-[11px] text-gray-500 mt-0.5">{fmt(ev.fecha_inicio)} → {fmt(ev.fecha_fin)} · {ev.items.length} actos legislativos</div>
+                                            </div>
+                                        </div>
+                                        <div className="divide-y divide-gray-100">
+                                            {ev.items.map((it, j) => (
+                                                <div key={j} className="grid items-start px-4 py-2"
+                                                     style={{gridTemplateColumns: '90px 130px 1fr'}}>
+                                                    <div className="text-[11px] font-mono text-gray-500">{fmt(it.fecha)}</div>
+                                                    <div className={`text-[10px] font-mono uppercase tracking-wide px-1.5 py-0.5 rounded inline-block w-fit ${it.camara.includes('Permanente') ? 'bg-amber-50 text-amber-700' : it.camara.includes('Senad') ? 'bg-blue-50 text-blue-700' : it.camara.includes('Diputad') ? 'bg-purple-50 text-purple-700' : 'bg-gray-50 text-gray-600'}`}>{it.camara.replace('Cámara de ','').replace('Comisión ','Com. ').replace('H. Congreso General','Congreso')}</div>
+                                                    <div className="text-xs text-gray-700 leading-snug">{it.titulo}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {recesos.length === 0 && events.length === 0 && (
+                        <div className="text-center py-12 text-sm text-gray-400">Sin datos de Permanente todavía.</div>
+                    )}
+                </div>
+            );
+        }
+
         function PageComisiones({ data }) {
+            const [subTabCom, setSubTabCom] = useState('ordinarias');
             const [filtroCamara, setFiltroCamara] = useState('');
             const [filtroCategoria, setFiltroCategoria] = useState('');
             const [qCom, setQCom] = useState('');
@@ -3856,12 +3972,33 @@
             /* Categorías presentes en comisiones */
             const categoriasComisiones = [...new Set(comisiones.map(c => c.categoria).filter(Boolean))].sort();
 
+            const recesosCount = (data.permanente_stats || []).length;
+            const extraCount = (data.extraordinarios_lxvi || []).length;
+
             return (
                 <div className="space-y-5">
                     <div>
                         <h2 className="text-lg font-bold text-gray-800 mb-1">Actividad de comisiones</h2>
                         <p className="text-sm text-gray-500">Ranking de comisiones por actividad legislativa en la LXVI Legislatura (sep 2024 — presente). Haz clic en una comision para ver detalle.</p>
                     </div>
+
+                    {/* Sub-pestañas: Ordinarias vs Permanente */}
+                    <div className="flex items-end gap-1 border-b border-gray-200">
+                        <button onClick={() => setSubTabCom('ordinarias')}
+                                className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${subTabCom === 'ordinarias' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                            Ordinarias <span className="text-[10px] font-mono text-gray-400 ml-1">{comisiones.length || ''}</span>
+                        </button>
+                        <button onClick={() => setSubTabCom('permanente')}
+                                className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${subTabCom === 'permanente' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                            Permanente <span className="text-[10px] font-mono text-gray-400 ml-1">{recesosCount} recesos{extraCount ? ` · ${extraCount} extraord.` : ''}</span>
+                        </button>
+                    </div>
+
+                    {subTabCom === 'permanente' && (
+                        <PermanenteSection permanente_stats={data.permanente_stats || []} extraordinarios={data.extraordinarios_lxvi || []} />
+                    )}
+
+                    {subTabCom === 'ordinarias' && <React.Fragment>
 
                     {comLoading && (
                         <div className="text-center py-8 text-sm text-gray-400">Cargando comisiones...</div>
@@ -3999,6 +4136,7 @@
                         <ProximasSesionesPanel convocatorias={convocatorias} defaultTab="Diputados" />
                     </div>
                     </div>
+                    </React.Fragment>}
                     </React.Fragment>}
                 </div>
             );
