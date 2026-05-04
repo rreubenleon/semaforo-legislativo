@@ -124,6 +124,40 @@
         .modal-float-3 { animation: floatUp 0.5s ease-out 0.3s both; }
         .modal-float-4 { animation: floatUp 0.5s ease-out 0.4s both; }
         .modal-input-glow:focus { box-shadow: 0 0 0 3px rgba(46,125,50,0.15), 0 1px 2px rgba(0,0,0,0.05); }
+
+        /* Loading screen — línea de score que se dibuja sola */
+        @keyframes fiat-draw {
+            0%   { stroke-dashoffset: 230; opacity: 1; }
+            55%  { stroke-dashoffset: 0;   opacity: 1; }
+            85%  { stroke-dashoffset: 0;   opacity: 1; }
+            100% { stroke-dashoffset: 0;   opacity: 0; }
+        }
+        @keyframes fiat-dot-pop {
+            0%, 50%  { opacity: 0; transform: scale(0); }
+            58%, 85% { opacity: 1; transform: scale(1); }
+            100%     { opacity: 0; transform: scale(1); }
+        }
+        @keyframes fiat-baseline-fade {
+            0%, 100% { opacity: 0.4; }
+            50%      { opacity: 0.7; }
+        }
+        .fiat-loading-line {
+            stroke-dasharray: 230;
+            stroke-dashoffset: 230;
+            animation: fiat-draw 2.4s ease-in-out infinite;
+        }
+        .fiat-loading-dot {
+            transform-origin: 214px 10px;
+            animation: fiat-dot-pop 2.4s ease-in-out infinite;
+        }
+        .fiat-loading-baseline {
+            animation: fiat-baseline-fade 2.4s ease-in-out infinite;
+        }
+        .fiat-loading-text::after {
+            content: '…';
+            display: inline-block;
+            animation: fiat-baseline-fade 1.4s ease-in-out infinite;
+        }
     </style>
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "2dcb1144eb1242b48bfad55aa873c89d"}'></script>
@@ -5436,7 +5470,26 @@
                 fetch('./data.json?v=' + Date.now()).then(r => r.ok ? r.json() : Promise.reject()).then(d => { setData(d); setLoading(false); }).catch(() => { setLoading(false); });
             }, []);
 
-            if (loading) return (<div className="min-h-screen flex items-center justify-center"><div className="text-center space-y-4"><div className="w-12 h-12 border-4 border-acento border-t-transparent rounded-full animate-spin mx-auto"></div><div className="text-gray-500">Cargando datos...</div></div></div>);
+            if (loading) return (
+                <div className="min-h-screen flex items-center justify-center bg-white">
+                    <div className="text-center space-y-5">
+                        <svg width="220" height="80" viewBox="0 0 220 80" className="mx-auto" aria-hidden="true">
+                            <line x1="0" y1="68" x2="220" y2="68" stroke="#e5e7eb" strokeWidth="1" className="fiat-loading-baseline"/>
+                            <path
+                                d="M 6,62 L 28,56 L 50,60 L 72,48 L 94,52 L 116,38 L 138,42 L 160,28 L 182,30 L 204,16 L 214,10"
+                                fill="none"
+                                stroke="#10b981"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="fiat-loading-line"
+                            />
+                            <circle cx="214" cy="10" r="3.5" fill="#10b981" className="fiat-loading-dot"/>
+                        </svg>
+                        <div className="text-gray-500 font-mono text-sm tracking-wide"><span className="fiat-loading-text">Calculando</span></div>
+                    </div>
+                </div>
+            );
             if (!data) return (<div className="min-h-screen flex items-center justify-center"><div className="text-center space-y-4 text-gray-500"><div className="text-4xl">&#128202;</div><div>No se encontro data.json. Ejecuta el pipeline primero.</div><code className="text-xs bg-gray-100 border border-gray-200 px-3 py-1 rounded text-gray-700">python main.py</code></div></div>);
 
             const semaforo = data.semaforo || [];
