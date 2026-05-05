@@ -70,14 +70,15 @@ jobs:
 
       - name: Correr auditoría externa
         id: auditoria
+        # set +e: el script devuelve 1 cuando delta > umbral (esperado).
+        # No queremos que GH bash mate el step antes de extraer DELTA/VEREDICTO.
+        shell: bash
         run: |
+          set +e
           UMBRAL="${{ inputs.umbral || '0.10' }}"
-          # Capturar salida JSON para parsear y reportar
           python scripts/auditoria_externa.py --umbral "$UMBRAL" --json > auditoria.json
           AUDIT_EXIT=$?
-          # Imprimir tabla legible al log para el reviewer humano
           python scripts/auditoria_externa.py --umbral "$UMBRAL"
-          # Pasar el resultado al siguiente paso
           DELTA=$(python -c "import json; print(json.load(open('auditoria.json'))['delta_promedio_pct'])")
           VEREDICTO=$(python -c "import json; print(json.load(open('auditoria.json'))['veredicto'])")
           echo "delta=$DELTA" >> $GITHUB_OUTPUT
