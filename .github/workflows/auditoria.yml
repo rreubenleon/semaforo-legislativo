@@ -1,0 +1,127 @@
+name: Auditoría externa de cobertura
+
+# Cada domingo 16:00 UTC (10:00 CDMX) corre auditoria_externa.py contra
+# fuentes públicas (Robles/Excélsior para Senado, otras pendientes) y
+# falla con warning si el delta promedio supera el umbral.
+#
+# Es la red de seguridad post-incidente del cap=500 (mayo 2026): el
+# scraper SIL se quedó congelado 2 semanas sin que ningún check lo
+# detectara, hasta que un periodista publicó cifras y la brecha
+# saltó. Sin esto, el sistema vuelve a fallar silenciosamente.
+#
+# El job lee la BD del cache del pipeline principal — no descarga seed
+# ni hace scraping, solo lectura.
+
+on:
+  schedule:
+    - cron: '0 16 * * 0'   # Domingos 16:00 UTC = 10:00 CDMX
+  workflow_dispatch:
+    inputs:
+      umbral:
+        description: 'Umbral de delta promedio (0.10 = 10%)'
+        required: false
+        default: '0.10'
+        type: string
+
+permissions:
+  contents: read
+  issues: write   # para abrir issue si la auditoría falla
+
+concurrency:
+  group: "auditoria-externa"
+  cancel-in-progress: false
+
+jobs:
+  auditar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Restaurar SQLite del cache (read-only)
+        id: cache-db
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-readonly-auditoria
+          restore-keys: |
+            semaforo-db-
+
+      - name: Fallback a release seed si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            echo "No hay cache, descargando seed..."
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          else
+            echo "DB del cache: $(du -h semaforo.db | cut -f1)"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Forzar BD read-only
+        run: chmod 0444 semaforo.db
+
+      - name: Correr auditoría externa
+        id: auditoria
+        run: |
+          UMBRAL="${{ inputs.umbral || '0.10' }}"
+          # Capturar salida JSON para parsear y reportar
+          python scripts/auditoria_externa.py --umbral "$UMBRAL" --json > auditoria.json
+          AUDIT_EXIT=$?
+          # Imprimir tabla legible al log para el reviewer humano
+          python scripts/auditoria_externa.py --umbral "$UMBRAL"
+          # Pasar el resultado al siguiente paso
+          DELTA=$(python -c "import json; print(json.load(open('auditoria.json'))['delta_promedio_pct'])")
+          VEREDICTO=$(python -c "import json; print(json.load(open('auditoria.json'))['veredicto'])")
+          echo "delta=$DELTA" >> $GITHUB_OUTPUT
+          echo "veredicto=$VEREDICTO" >> $GITHUB_OUTPUT
+          exit $AUDIT_EXIT
+        continue-on-error: true
+
+      - name: Subir resultado como artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: auditoria-${{ github.run_id }}
+          path: auditoria.json
+          retention-days: 90
+
+      - name: Warning visible en GitHub Actions
+        if: steps.auditoria.outputs.veredicto != 'OK'
+        run: |
+          echo "::warning title=Cobertura SIL insuficiente::Delta promedio FIAT vs Robles = ${{ steps.auditoria.outputs.delta }}%. Umbral: ${{ inputs.umbral || '10' }}%."
+
+      - name: Abrir GitHub Issue si veredicto != OK
+        if: steps.auditoria.outputs.veredicto != 'OK'
+        run: |
+          gh issue create \
+            --title "Auditoría externa $(date -u +%Y-%m-%d): cobertura SIL en alerta (${{ steps.auditoria.outputs.delta }}%)" \
+            --body "$(cat <<EOF
+          La auditoría dominical detectó una brecha de **${{ steps.auditoria.outputs.delta }}%** entre los conteos de FIAT y la fuente externa (Leticia Robles, Excélsior).
+
+          **Umbral configurado:** ${{ inputs.umbral || '10' }}%
+          **Veredicto:** ${{ steps.auditoria.outputs.veredicto }}
+
+          Posibles causas:
+          1. Scraper SIL congelado (revisar logs del pipeline reciente, paso 'PASO 3b')
+          2. Cap escondido en queries (caso histórico mayo 2026 con max_resultados=500)
+          3. Cobertura incompleta en alguna cámara
+
+          Run completo: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EOF
+          )" \
+            --label "alerta-cobertura,automatic"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: Estado final
+        run: |
+          echo "Veredicto: ${{ steps.auditoria.outputs.veredicto }}"
+          echo "Delta promedio: ${{ steps.auditoria.outputs.delta }}%"
