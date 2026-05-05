@@ -186,8 +186,25 @@ def encontrar_legislador_id(
     if mejor:
         return mejor
 
-    # 3. Fallback BD-abreviado
+    # 3. Fallback BD-abreviado (generalizado N tokens, con unicidad).
+    #    Caso real: roster oficial Permanente trae "Alma Carolina Viggiano
+    #    Austria" pero BD tiene "Carolina Viggiano Austria" (sin "Alma").
+    #    Mismo patrón con Lilly Téllez García/Lilly Téllez, Gerardo
+    #    Fernández Noroña/José Gerardo Rodolfo Fernández Noroña, etc.
+    #    Si ≥2 tokens del BD están todos en SIL, candidato válido.
+    #    Solo se devuelve si es ÚNICO (evitar falsos positivos por
+    #    apellido común).
+    abreviados = []
     for cid, _, _, _, tok in candidatos:
-        if sum(tok.values()) == 2 and all(t in sil_tok for t in tok):
-            return cid
+        n_tokens = sum(tok.values())
+        if n_tokens >= 2 and all(t in sil_tok for t in tok):
+            abreviados.append((cid, n_tokens))
+    if len(abreviados) == 1:
+        return abreviados[0][0]
+    if len(abreviados) > 1:
+        # Desempatar por mayor cantidad de tokens contenidos.
+        # Si sigue habiendo empate, no resolver (ambiguo).
+        abreviados.sort(key=lambda x: -x[1])
+        if abreviados[0][1] != abreviados[1][1]:
+            return abreviados[0][0]
     return None

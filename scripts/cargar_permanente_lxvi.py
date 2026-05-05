@@ -26,6 +26,8 @@ ROOT = Path(__file__).resolve().parent.parent
 DB = ROOT / "semaforo.db"
 sys.path.insert(0, str(ROOT))
 
+from utils.matcher import build_bd_index, encontrar_legislador_id, normalizar_nombre
+
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s",
                     datefmt="%H:%M:%S")
 logger = logging.getLogger(__name__)
@@ -146,30 +148,29 @@ def crear_tabla(conn):
     conn.execute("CREATE INDEX IF NOT EXISTS idx_perm_legislador ON permanente_integrantes(legislador_id)")
 
 
-def matchear_legislador(conn, nombre, camara):
-    """Busca el legislador_id por nombre + cámara via LIKE flexible."""
-    import unicodedata
-    def norm(s):
-        s = unicodedata.normalize('NFKD', s or '')
-        return ''.join(c for c in s if not unicodedata.combining(c)).lower().strip()
-    tokens = norm(nombre).split()
-    if len(tokens) < 2:
+def matchear_legislador(conn, nombre, camara, _bd_idx_cache=[None]):
+    """
+    Busca legislador_id usando utils.matcher (fuente única de verdad).
+
+    Antes este script tenía su propio matcher inline con sig1/sig2
+    (primer + último token), que fallaba con el roster oficial cuyo
+    formato usa nombres completos ("Alma Carolina Viggiano Austria")
+    cuando la BD guarda el nombre acortado ("Carolina Viggiano
+    Austria"). El matcher central tiene fallback "BD-abreviado" que
+    resuelve esos casos.
+    """
+    if _bd_idx_cache[0] is None:
+        _bd_idx_cache[0] = build_bd_index(conn)
+    bd_idx = _bd_idx_cache[0]
+    nn = normalizar_nombre(nombre)
+    lid = encontrar_legislador_id(nn, camara, bd_idx)
+    if lid is None:
         return None, None
-    # Match con 2 tokens distintivos (apellido + nombre principal)
-    sig1 = tokens[0]
-    sig2 = tokens[-1] if len(tokens) > 2 else tokens[1]
-    pattern = f'%{sig1}%' if sig1 != sig2 else f'%{sig1}%'
-    cam_filter = "Senado" if camara == "Senado" else "Diputados"
-    rows = conn.execute(f"""
-        SELECT id, sitl_id, nombre FROM legisladores
-         WHERE camara LIKE '%{cam_filter}%'
-    """).fetchall()
-    # Buscar el que tenga AMBOS tokens en su nombre normalizado
-    for r in rows:
-        nn = norm(r[2])
-        if sig1 in nn and sig2 in nn:
-            return r[0], r[1]
-    return None, None
+    # Recuperar sitl_id del candidato
+    row = conn.execute(
+        "SELECT sitl_id FROM legisladores WHERE id = ?", (lid,)
+    ).fetchone()
+    return lid, (row[0] if row else None)
 
 
 def main():
