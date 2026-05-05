@@ -440,7 +440,11 @@ def scrape_sil_completo(fecha_desde="2025-09-01", detalle_max=200):
     ]
 
     for query in QUERIES_GENERICAS:
-        resultados = _buscar_ids(query, max_resultados=500)
+        # max_resultados=None: traemos el universo completo (~10K filas).
+        # El cap anterior de 500 nos dejaba perdiendo el 95% del flujo
+        # legislativo y la BD se congelaba cuando el SIL agregaba docs
+        # que empujaban los recientes fuera del top 500.
+        resultados = _buscar_ids(query, max_resultados=None)
         queries_hechas += 1
 
         nuevos_en_query = 0

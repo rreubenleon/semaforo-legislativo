@@ -128,7 +128,10 @@ jobs:
           # lo más efectivo es correrlo una vez más — docs del gap ya tendrían
           # fecha_presentacion en el rango correcto desde el momento en que
           # existan en SIL oficial.
-          python -c "from scrapers.sil import scrape_sil_completo; scrape_sil_completo(fecha_desde='${{ inputs.desde }}', detalle_max=500)"
+          # detalle_max alto: procesar todos los nuevos del rango en una corrida.
+          # Cada detalle = 1 HTTP request + sleep 0.8s ≈ 1.5s por doc.
+          # 5000 docs = ~2h. Si se trunca por timeout (180min), correr otra vez.
+          python -c "from scrapers.sil import scrape_sil_completo; scrape_sil_completo(fecha_desde='${{ inputs.desde }}', detalle_max=5000)"
         env:
           SEMAFORO_DB_MODE: local
         continue-on-error: true
