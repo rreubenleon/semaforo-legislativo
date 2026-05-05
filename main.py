@@ -1369,13 +1369,35 @@ def paso_7_exportar_dashboard():
     except Exception:
         modo_receso_actual = False
 
+    # Frescura del SIL: la fecha más reciente que efectivamente
+    # capturamos desde la fuente. Sirve para detectar si el scraper se
+    # quedó atrás (caso 21-abr-2026: bug del cap=500 nos congeló por
+    # ~2 semanas sin que ningún check lo notara). El frontend lo expone
+    # en banner para que sea visible.
+    try:
+        cur_fr = get_connection().execute("""
+            SELECT MAX(fecha_presentacion), MAX(fecha_scraping)
+            FROM sil_documentos
+            WHERE legislatura = 'LXVI' AND fecha_presentacion != ''
+        """).fetchone()
+        sil_max_presentacion = cur_fr[0] if cur_fr else None
+        sil_max_scraping = cur_fr[1] if cur_fr else None
+    except Exception:
+        sil_max_presentacion = None
+        sil_max_scraping = None
+
     data = {
         "metadata": {
             "generado": datetime.now(timezone.utc).isoformat(),
-            "version": "3.2",
+            "version": "3.3",
             "formula": "SCORE = (0.20*Media) + (0.15*Trends) + (0.25*Congreso) + (0.10*Mañanera) + (0.15*Urgencia) + (0.15*Dominancia)",
             "umbrales": SCORING["umbrales"],
             "sil_docs": sil_stats.get("total", 0),
+            # Fecha más reciente que el SIL scraper logró capturar.
+            # Si lleva >7 días atrás, el banner del frontend salta amarillo.
+            # Si >14 días, salta rojo.
+            "sil_max_fecha_presentacion": sil_max_presentacion,
+            "sil_max_fecha_scraping": sil_max_scraping,
             # Modo receso: durante mayo-agosto y diciembre-enero, solo
             # sesiona la Comisión Permanente. El frontend usa este flag
             # para reemplazar el widget 'Mayor probabilidad de actividad

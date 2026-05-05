@@ -470,6 +470,27 @@
             PRD:    'assets/partidos/prd.svg',
         };
 
+        /* ── Banner de frescura del SIL: avisa si el scraper se quedó atrás ── */
+        function SilFreshnessBanner({ metadata }) {
+            const fechaPres = metadata?.sil_max_fecha_presentacion;
+            if (!fechaPres) return null;
+            const hoy = new Date();
+            const fp = new Date(fechaPres + 'T00:00:00');
+            const diasGap = Math.floor((hoy - fp) / (1000 * 60 * 60 * 24));
+            if (diasGap < 5) return null;  // <5 días: silencio
+            const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+            const labelFecha = `${parseInt(fechaPres.slice(8,10))} ${meses[parseInt(fechaPres.slice(5,7))-1]} ${fechaPres.slice(0,4)}`;
+            const nivel = diasGap >= 14 ? 'rojo' : diasGap >= 7 ? 'amarillo' : 'gris';
+            const cls = nivel === 'rojo' ? 'bg-red-50 border-red-200 text-red-900'
+                      : nivel === 'amarillo' ? 'bg-amber-50 border-amber-200 text-amber-900'
+                      : 'bg-gray-50 border-gray-200 text-gray-700';
+            return (
+                <div className={`border rounded-lg px-3 py-2 text-xs ${cls}`}>
+                    <span className="font-semibold">Cobertura SIL:</span> última actividad legislativa registrada el <span className="font-mono">{labelFecha}</span> ({diasGap} días atrás). {nivel === 'rojo' ? 'El scraper puede estar incompleto — los conteos por legislador subestiman la realidad.' : nivel === 'amarillo' ? 'Posible retraso de scraping; los conteos pueden estar abajo.' : ''}
+                </div>
+            );
+        }
+
         function PartidoBadge({ partido, size = 'sm' }) {
             const [errored, setErrored] = React.useState(false);
             const color = PARTIDO_COLORS[partido] || '#6B7280';
@@ -2060,7 +2081,12 @@
                 .normalize('NFD').replace(/[̀-ͯ]/g, '')
                 .toLowerCase().trim();
 
-            const LIMITE = vista === 'permanente' ? 250 : 50;  // Permanente son 74, fetch todos
+            // Permanente son 74 integrantes pero el filtro es client-side
+            // contra data.permanente.nombres_norm. Si pedimos solo los top 250
+            // del worker, casi ninguno de Permanente cae ahí (especialmente
+            // Diputados, que rankean bajo en hit_rate). Necesitamos traer
+            // TODO el universo LXVI (~628 leg.) para que el filtro funcione.
+            const LIMITE = vista === 'permanente' ? 1500 : 50;
 
             useEffect(() => {
                 const t = setTimeout(() => { setFQ(qInput.trim()); setPaginaRadar(1); }, 350);
