@@ -53,16 +53,27 @@ def main():
     print()
     print("Cotejo contra Robles (Excélsior, 4-may-2026):")
     print(f"{'Senador':<42s} {'Robles tot':>11s} {'FIAT tot':>9s} {'Δ%':>7s}")
+    # Stopwords típicos de nombres mexicanos que no son apellidos distintivos
+    NO_DISTINTIVOS = {"miguel", "ángel", "angel", "maría", "maria", "del",
+                      "de", "la", "los", "las", "y", "san", "santa", "san"}
     for nombre, r_ind, r_firm in ROBLES_TOP10:
-        # Buscar match parcial en stats keys
+        # Match basado en APELLIDOS distintivos (no nombres de pila)
+        # Tomamos los tokens del nombre Robles que NO son nombres comunes
+        toks_r = [t for t in nombre.lower().split() if t not in NO_DISTINTIVOS and len(t) > 2]
         match = None
+        mejor_score = 0
         for (nom, par), v in stats.items():
-            apellidos_robles = nombre.lower().split()
-            apellidos_fiat = nom.lower().split()
-            comunes = set(apellidos_robles) & set(apellidos_fiat)
-            if len(comunes) >= 2:
-                match = (nom, par, v)
-                break
+            toks_f = [t for t in nom.lower().split() if t not in NO_DISTINTIVOS and len(t) > 2]
+            comunes = set(toks_r) & set(toks_f)
+            # Requerir al menos 2 apellidos distintivos en común,
+            # y que el ÚLTIMO token de Robles esté en el FIAT
+            # Requisito: al menos 1 apellido distintivo en común. Si Robles
+            # tiene 2+ apellidos, exigir 2 comunes; si solo 1, basta con eso.
+            min_req = 2 if len(toks_r) >= 2 else 1
+            if len(comunes) >= min_req:
+                if len(comunes) > mejor_score:
+                    mejor_score = len(comunes)
+                    match = (nom, par, v)
         if match:
             nom, par, v = match
             r_total = r_ind + r_firm

@@ -39,11 +39,8 @@ MEDIOS = {
     },
     "excelsior": {
         "nombre": "Excélsior",
-        # RSS reactivado abr 2026: feed de Nacional funciona y trae autor por nota
-        # (relevante para detectar firmas de Ivonne Melgar, Leticia Robles, etc.).
-        # medios_html.py se mantiene como fallback de portada.
-        "rss": "https://www.excelsior.com.mx/rss/nacional",
-        "peso": 1.1,  # Subido de 1.0 → 1.1 por mejor cobertura legislativa
+        "rss": "",  # RSS eliminado por el medio; cubierto por medios_html.py
+        "peso": 1.0,
     },
     "la_razon": {
         "nombre": "La Razón",
@@ -104,23 +101,6 @@ MEDIOS = {
         "nombre": "El País",
         "rss": "",  # Sin RSS público para sección México; cubierto por medios_html.py
         "peso": 1.3,  # Peso alto: cobertura internacional de referencia
-    },
-    # Talla Política — seguimiento legislativo granular por cámara + secretarías.
-    # Tres feeds RSS separados para detectar señales que anticipen iniciativas.
-    "talla_diputados": {
-        "nombre": "Talla Política (Diputados)",
-        "rss": "https://www.tallapolitica.com.mx/category/camara_de_diputados/feed/",
-        "peso": 1.3,  # Peso alto: cobertura legislativa específica de Diputados
-    },
-    "talla_senadores": {
-        "nombre": "Talla Política (Senadores)",
-        "rss": "https://www.tallapolitica.com.mx/category/camara_de_senadores/feed/",
-        "peso": 1.3,  # Peso alto: cobertura legislativa específica del Senado
-    },
-    "talla_secretarias": {
-        "nombre": "Talla Política (Secretarías)",
-        "rss": "https://www.tallapolitica.com.mx/category/secretarias_de_estado/feed/",
-        "peso": 1.1,  # Señales tempranas de temas que pueden volverse legislativos
     },
 }
 
@@ -276,11 +256,7 @@ CATEGORIAS = {
                 "nombre": "Seguridad pública y policía",
                 "keywords": ["policía", "guardia nacional", "seguridad pública", "operativo", "patrullaje", "estrategia de seguridad",
                              "balacera", "enfrentamiento armado", "emboscada", "levantón", "toque de queda", "militarización",
-                             "autodefensa", "grupo armado", "célula criminal", "abuso policial", "ejecución extrajudicial",
-                             # Nuevos (abr 2026 — gap detectado en benchmark ground truth):
-                             # CURP biométrica fue un tema legislativo clave 2025-2026 que sub-detectaba.
-                             "CURP biométrica", "CURP biometrica", "identidad biométrica",
-                             "Sistema Nacional de Inteligencia", "Sistema Nacional de Seguridad"],
+                             "autodefensa", "grupo armado", "célula criminal", "abuso policial", "ejecución extrajudicial"],
             },
             "justicia_penal": {
                 "nombre": "Justicia penal y reforma judicial",
@@ -328,12 +304,7 @@ CATEGORIAS = {
             },
             "violencia_victimas": {
                 "nombre": "Violencia y víctimas",
-                # Señales de hechos criminales agregadas abr 2026 (benchmark):
-                # casos tipo "mujer herida de bala", "cae presunto", "mató a menor"
-                # no clasificaban o iban a DDHH/igualdad. Agregan patrones de
-                # hechos delictivos con víctimas para que Seguridad gane cuando
-                # haya evidencia textual clara.
-                "keywords": ["homicidio", "desaparición forzada", "violencia", "impunidad", "víctimas",
+                "keywords": ["homicidio", "feminicidio", "desaparición forzada", "violencia", "impunidad", "víctimas",
                              "fosa clandestina", "fosas", "asesinato", "muertos", "restos humanos",
                              "desaparecidos", "persona desaparecida", "búsqueda de personas", "tortura", "detención arbitraria",
                              "cadáver", "cadáveres", "cuerpo sin vida", "cuerpos sin vida",
@@ -341,14 +312,6 @@ CATEGORIAS = {
                              "agresor sexual", "agresores sexuales", "abuso sexual", "abusador", "abusadores",
                              "delito sexual", "delitos sexuales", "violación sexual", "pederastia", "pedofilia",
                              "registro de agresores", "trata de personas", "acoso sexual",
-                             # Señales de hechos criminales (benchmark abr 2026)
-                             "herido de bala", "herida de bala", "heridos de bala", "heridas de bala",
-                             "a balazos", "por impacto de bala", "disparos",
-                             "ráfaga de disparos", "tiroteo", "balacera con saldo",
-                             "mató a", "mata a", "mataron a", "dispararon a",
-                             "asesinó a", "asesinaron a", "apuñaló", "apuñalado",
-                             "cae presunto", "detienen a presunto", "presunto responsable",
-                             "vinculado a proceso", "captura a presunto",
                              # Leyes federales
                              "Ley General de Víctimas", "Ley para Prevenir y Sancionar la Tortura",
                              "Ley de Prevención Social de la Violencia",
@@ -396,10 +359,7 @@ CATEGORIAS = {
             },
             "presupuesto_gasto": {
                 "nombre": "Presupuesto y gasto público",
-                # "austeridad" quitada abr 2026: ambigua (austeridad política,
-                # personal, republicana — no siempre económica). Si se habla de
-                # austeridad presupuestal, ya matcheará "presupuesto".
-                "keywords": ["presupuesto", "gasto público", "PEF", "deuda pública", "déficit", "deuda",
+                "keywords": ["presupuesto", "gasto público", "PEF", "deuda pública", "déficit", "austeridad", "deuda",
                              "Rogelio Ramírez de la O", "secretario de hacienda", "subasta", "Cetes", "bonos gubernamentales"],
             },
             "politica_monetaria": {
@@ -581,13 +541,8 @@ CATEGORIAS = {
             },
             "educacion_superior": {
                 "nombre": "Educación superior e investigación",
-                # "investigación" atómica quitada abr 2026: ambigua (investigación
-                # criminal, periodística, administrativa). Reemplazada por frases
-                # específicas del dominio académico.
-                "keywords": ["universidad", "UNAM", "IPN", "Conahcyt", "CONACYT", "becas", "posgrado",
+                "keywords": ["universidad", "UNAM", "IPN", "Conahcyt", "CONACYT", "investigación", "becas", "posgrado",
                              "beca universal",
-                             "investigación científica", "investigación académica",
-                             "centros de investigación", "investigadores del SNI", "SNII",
                              # Leyes federales
                              "Ley Orgánica de la UNAM", "Ley Orgánica de la UAM",
                              "Ley Orgánica del IPN", "Ley de la Universidad Autónoma Chapingo",
@@ -595,29 +550,13 @@ CATEGORIAS = {
             },
             "ciencia_tecnologia": {
                 "nombre": "Ciencia y tecnología",
-                # Atómicas ambiguas quitadas abr 2026: "ciencia", "tecnología",
-                # "innovación" y "patente". Todas aparecen en contextos económicos,
-                # empresariales y políticos. Se mantiene "desarrollo tecnológico"
-                # y se agregan frases específicas del dominio científico.
-                "keywords": ["desarrollo tecnológico", "política científica",
-                             "divulgación científica", "fomento a la ciencia",
-                             "innovación educativa", "innovación tecnológica",
-                             "sistema nacional de ciencia",
+                "keywords": ["ciencia", "tecnología", "innovación", "desarrollo tecnológico", "patente",
                              # Leyes federales
                              "Ley General de Humanidades Ciencias Tecnologías e Innovación"],
             },
             "cultura_deporte": {
                 "nombre": "Cultura y deporte",
-                # Atómicas ambiguas quitadas abr 2026: "cultura", "juventud",
-                # "deporte", "biblioteca". Todas demasiado amplias en notas
-                # generales (cultura popular, deporte profesional, juventud
-                # política). Reemplazadas por frases del dominio político-cultural.
-                "keywords": ["patrimonio cultural", "política cultural",
-                             "fomento cultural", "industrias culturales",
-                             "biblioteca pública", "red de bibliotecas",
-                             "política de juventud", "apoyos a la juventud",
-                             "deporte estudiantil", "fomento al deporte",
-                             "política deportiva",
+                "keywords": ["cultura", "patrimonio cultural", "juventud", "deporte", "biblioteca",
                              # Leyes federales
                              "Ley General de Cultura y Derechos Culturales", "Ley General de Bibliotecas",
                              "Ley de Fomento para la Lectura y el Libro", "Ley de Derechos Lingüísticos",
@@ -689,14 +628,10 @@ CATEGORIAS = {
         "subcategorias": {
             "reforma_electoral": {
                 "nombre": "Reforma electoral",
-                # Endurecido abr 2026: "voto" solo capturaba "voto a favor",
-                # "voto de los diputados", etc. Se sustituye por variantes
-                # explícitas del ejercicio del sufragio.
-                "keywords": ["reforma electoral", "INE", "TEPJF", "campaña electoral", "jornada electoral",
-                             "voto popular", "voto electoral", "voto en urna", "voto razonado",
-                             "proceso electoral", "padrón electoral", "credencial de elector",
-                             "lista nominal", "PREP", "conteo rápido", "resultados electorales", "urna", "boleta electoral",
-                             "casilla electoral", "distrito electoral", "circunscripción electoral", "fiscalización de campañas",
+                "keywords": ["reforma electoral", "INE", "TEPJF", "voto", "campaña electoral", "elección", "casilla",
+                             "jornada electoral", "proceso electoral", "padrón electoral", "credencial de elector",
+                             "lista nominal", "PREP", "conteo rápido", "resultados electorales", "urna", "boleta",
+                             "casilla electoral", "distrito electoral", "circunscripción", "fiscalización de campañas",
                              "Guadalupe Taddei", "consejero electoral", "consejera electoral", "tribunal electoral",
                              "impugnación electoral", "tómbola", "insaculación",
                              # Leyes federales
@@ -717,14 +652,11 @@ CATEGORIAS = {
             },
             "gobernabilidad": {
                 "nombre": "Gobernabilidad",
-                # Endurecido abr 2026: se quitaron "sesión plenaria", "tribuna",
-                # "coordinador parlamentario", "líder parlamentario", "ejecutivo
-                # federal" y "periodo de sesiones" — aparecen en CUALQUIER nota
-                # legislativa rutinaria y metían falsos positivos por centenares.
                 "keywords": ["gobernabilidad", "sistema político", "crisis política", "desafuero",
                              "juicio político", "Ley Orgánica del Congreso",
+                             "periodo de sesiones", "sesión plenaria", "tribuna", "coordinador parlamentario",
+                             "líder parlamentario", "ejecutivo federal",
                              "crisis de gobierno", "ingobernabilidad", "vacío de poder",
-                             "ruptura del orden", "polarización política",
                              # Leyes federales — sólo las propiamente políticas/parlamentarias.
                              # Las leyes administrativas (LOAPF, Planeación, Entidades Paraestatales,
                              # Servicio Profesional, Procedimiento Administrativo, etc.) se movieron
@@ -738,22 +670,10 @@ CATEGORIAS = {
             },
             "participacion_ciudadana": {
                 "nombre": "Participación ciudadana",
-                # Endurecido abr 2026: "candidato/a", "debate", "gobernador/a",
-                # "alcalde/sa" y "encuesta" sueltos capturaban cualquier nota
-                # de un gobernador o alcalde en funciones, cualquier candidato
-                # a concurso o premio, cualquier debate público. Se sustituyen
-                # por variantes explícitamente electorales.
-                "keywords": ["consulta popular", "revocación de mandato", "democracia representativa", "referéndum", "plebiscito",
-                             "encuesta electoral", "preferencia electoral", "intención de voto", "precampaña", "proselitismo",
-                             "candidatura electoral",
-                             "candidato a presidente", "candidato a la presidencia", "candidata a presidenta",
-                             "candidato a gobernador", "candidata a gobernadora",
-                             "candidato a senador", "candidata a senadora",
-                             "candidato a diputado", "candidata a diputada",
-                             "candidato a alcalde", "candidata a alcaldesa",
-                             "debate presidencial", "debate electoral", "debate de candidatos",
-                             "elección de gobernador", "elección de senadores", "elección de diputados",
-                             "gubernatura", "elección intermedia", "elección presidencial", "elección federal"],
+                "keywords": ["consulta popular", "revocación de mandato", "democracia", "referéndum", "plebiscito",
+                             "encuesta", "preferencia electoral", "intención de voto", "precampaña", "proselitismo",
+                             "candidatura", "candidato", "candidata", "debate", "debate presidencial",
+                             "gubernatura", "gobernador", "gobernadora", "alcalde", "alcaldesa", "elección intermedia"],
             },
         },
     },
@@ -808,16 +728,8 @@ CATEGORIAS = {
             },
             "derechos_ninez": {
                 "nombre": "Derechos de la niñez",
-                # "menor de edad" atómica quitada abr 2026: FP en noticias
-                # criminales como "cae sujeto que mató a una menor de edad" que
-                # son Seguridad, no DDHH. Se reemplaza por compuestas específicas
-                # del lenguaje legislativo de niñez.
-                "keywords": ["niñez", "adolescencia", "trabajo infantil", "adopción",
+                "keywords": ["niñez", "adolescencia", "trabajo infantil", "adopción", "menor de edad",
                              "matrimonio infantil", "matrimonio forzado",
-                             "derechos de menores", "protección de menores",
-                             "derechos de niñas y niños", "derechos de la niñez",
-                             "derechos de niñez y adolescencia", "interés superior del niño",
-                             "interés superior de la niñez",
                              # Leyes federales
                              "Ley General de los Derechos de Niñas Niños y Adolescentes",
                              "Ley General de Prestación de Servicios para Cuidado Infantil",
@@ -842,17 +754,13 @@ CATEGORIAS = {
             "Desarrollo Municipal",
             "Desarrollo Regional",
         ],
-        "trends_keywords": ["Tren Maya", "AIFA", "agua potable", "vivienda social", "carreteras México"],
+        "trends_keywords": ["Tren Maya", "AIFA", "agua potable", "vivienda", "carreteras México"],
         "subcategorias": {
             "transporte_movilidad": {
                 "nombre": "Transporte y movilidad",
-                # Endurecido v3 (abr 2026): se quitó "movilidad" suelta y "cuota"
-                # suelta porque generan FPs (movilidad social/laboral, cuota de
-                # género/sindical). Se agregaron compuestas específicas.
                 "keywords": ["sistema de transporte", "red de transporte", "Tren Maya", "tren interurbano", "tren suburbano", "carretera", "aeropuerto", "AIFA",
-                             "seguridad vial", "movilidad urbana", "movilidad vial", "movilidad sostenible",
-                             "proyectos carreteros", "carretero", "red carretera",
-                             "transporte público", "Metro", "Metrobús", "Línea 12", "autopista", "peaje",
+                             "seguridad vial", "movilidad", "proyectos carreteros", "carretero", "red carretera",
+                             "transporte público", "Metro", "Metrobús", "Línea 12", "autopista", "cuota", "peaje",
                              "Capufe", "bache", "socavón",
                              "aviación", "aviación civil", "Ley de Aviación", "autotransporte", "autotransporte federal",
                              "caminos y puentes", "Ley de Caminos", "transporte federal", "transporte terrestre",
@@ -867,14 +775,8 @@ CATEGORIAS = {
             },
             "obra_publica": {
                 "nombre": "Obra pública",
-                # Endurecido abr 2026: "puente" solo matcheaba "megapuente" en
-                # notas de días feriados y cualquier uso figurado. Se sustituye
-                # por variantes explícitas de infraestructura. Lo mismo con
-                # "concesión" y "APP" que son siglas ambiguas.
-                "keywords": ["obra pública", "obra de infraestructura", "corredor interoceánico", "licitación de obra",
-                             "puente vehicular", "puente peatonal", "construcción de puente", "puente federal",
-                             "concesión de obra", "concesión carretera", "concesión federal",
-                             "asociación público privada", "Jorge Nuño Lara", "secretario de infraestructura",
+                "keywords": ["obra pública", "obra de infraestructura", "corredor interoceánico", "licitación de obra", "puente",
+                             "concesión", "APP", "asociación público privada", "Jorge Nuño Lara", "secretario de infraestructura",
                              # Leyes federales
                              "Ley de Obras Públicas", "Ley de Asociaciones Público Privadas"],
             },
@@ -887,16 +789,9 @@ CATEGORIAS = {
             },
             "vivienda_urbano": {
                 "nombre": "Vivienda y desarrollo urbano",
-                # Endurecido v3 (abr 2026): se quitó "vivienda" suelta porque
-                # matchea nombres oficiales genéricos como "censo de población
-                # y vivienda" (INEGI) que NO son propuestas de política de
-                # vivienda. Caso testigo: propuesta de Damaris Silva (abr 2026)
-                # sobre inclusión LGBT+ en censo 2030 caía aquí falsamente.
-                # Se mantienen TODAS las compuestas porque son específicas.
-                "keywords": ["vivienda social", "Infonavit", "desarrollo urbano", "ordenamiento territorial",
+                "keywords": ["vivienda", "vivienda social", "Infonavit", "desarrollo urbano", "ordenamiento territorial",
                              "Conavi", "crédito de vivienda", "hipoteca", "Ley de Vivienda",
                              "vivienda digna", "vivienda adecuada", "vivienda popular",
-                             "política de vivienda", "déficit habitacional",
                              "Fovissste", "subsidio de vivienda", "rezago habitacional",
                              # Leyes federales
                              "Ley General de Asentamientos Humanos", "Ley del Infonavit"],
@@ -909,15 +804,8 @@ CATEGORIAS = {
             },
             "proteccion_civil": {
                 "nombre": "Protección civil y desastres",
-                # Endurecido abr 2026: "sismo" suelto capturaba todas las notas
-                # de sismos internacionales (caso testigo: sismo Japón 7.7 apr-26).
-                # "terremoto" y "huracán" se limitan a contexto mexicano.
-                "keywords": ["sismo en México", "sismo México", "sismo CDMX", "sismo Ciudad de México",
-                             "terremoto México", "terremoto en México", "temblor en México",
-                             "huracán México", "huracán en México",
-                             "inundación", "desastre natural", "protección civil",
-                             "reconstrucción", "declaratoria de emergencia", "damnificados", "derrumbe", "evacuación",
-                             "réplica sísmica", "zona sísmica"],
+                "keywords": ["terremoto", "sismo", "inundación", "huracán", "desastre natural", "protección civil",
+                             "reconstrucción", "declaratoria de emergencia", "damnificados", "derrumbe", "evacuación"],
             },
             "megaproyectos": {
                 "nombre": "Megaproyectos federales",
@@ -1109,18 +997,10 @@ CATEGORIAS = {
             },
             "contaminacion_residuos": {
                 "nombre": "Contaminación y residuos",
-                # Keywords de calidad del agua agregadas abr 2026 tras benchmark:
-                # el caso "Contaminada, 59.1% del agua superficial de México"
-                # caía en infraestructura por "Ley de Aguas Nacionales" en vez
-                # de en medio_ambiente (donde sí pertenece).
                 "keywords": ["contaminación ambiental", "residuos peligrosos", "contingencia ambiental", "calidad del aire",
                              "economía circular", "ley ambiental", "norma ambiental", "impacto ambiental", "política ambiental",
                              "gestión de residuos", "residuos sólidos", "Gestión Integral de los Residuos",
-                             "agua contaminada", "contaminación del agua", "calidad del agua",
-                             "crisis del agua", "agua superficial", "agua subterránea",
-                             "mantos acuíferos", "río contaminado", "derrame petrolero",
-                             "derrame químico", "derrame industrial", "derrame de hidrocarburos",
-                             "basura", "relleno sanitario",
+                             "agua contaminada", "río contaminado", "derrame", "basura", "relleno sanitario",
                              "tiradero", "smog", "mala calidad del aire", "contingencia",
                              # Leyes federales
                              "Ley General para la Prevención y Gestión de Residuos",
@@ -1368,26 +1248,6 @@ CATEGORIAS = {
                     "igualdad institucional",
                 ],
             },
-            # Agregada v3 (abr 2026): el clasificador solo tenía "diversidad sexual"
-            # bajo derechos_humanos.genero_diversidad, lo que dejaba fuera a
-            # igualdad_genero en propuestas LGBT+. En MX INMUJERES y Conavim
-            # también intervienen en diversidad, así que debe aparecer en ambas.
-            # Caso testigo: propuesta INEGI/censo 2030 de Damaris Silva (abr 2026).
-            "diversidad_sexual_genero": {
-                "nombre": "Diversidad sexual y de género",
-                "keywords": [
-                    "diversidad sexual y de género", "diversidad sexual",
-                    "diversidad de género", "identidad de género",
-                    "orientación sexual", "expresión de género",
-                    "matrimonio igualitario", "adopción homoparental",
-                    "población de la diversidad sexual",
-                    "personas LGBT", "personas LGBTI", "comunidad LGBT",
-                    "LGBT", "LGBTI", "LGBTI+", "LGBTTTI", "LGBTTTIQ", "LGBTTTIQ+",
-                    "homofobia", "transfobia", "lesbofobia", "bifobia",
-                    "transgénero", "transexual", "personas trans",
-                    "infancias trans", "adolescencias trans",
-                ],
-            },
         },
     },
     # ─────────────────────────────────────────────
@@ -1583,10 +1443,7 @@ LAG_CONFIG = {
 NLP_CONFIG = {
     "modelo": "keyword_matching",  # Fase 1: keywords. Fase 2: transformers
     "idioma": "es",
-    "min_confianza": 0.3,          # Umbral mínimo (bajado abr 2026 tras fix word boundary
-                                   # + match de tokens compuestos. Los FPs que antes pasaban
-                                   # por tokens sueltos ya no existen, así que el umbral puede
-                                   # ser más permisivo para rescatar casos con 1 keyword limpia.)
+    "min_confianza": 0.4,          # Umbral mínimo (ajustado tras stopwords legales + log2 norm)
     "max_categorias": 3,           # Probado v3=4 contra eval set v1 → meseta (recupera 1 TP en derechos_humanos pero mete 4 FPs en categorías ruidosas). Volver a 3 hasta arreglar la precision de electoral_politico/relaciones_exteriores.
     "stopwords_extra": [
         "México", "mexicano", "país", "república",
@@ -2043,13 +1900,6 @@ KEYWORDS_NEGATIVOS = [
     "desde Chile", "desde Colombia", "desde Argentina", "desde Perú",
     "desde Brasil", "desde Venezuela",
     "guía de viaje", "SoloCruceros",
-    # Gentilicios como adjetivo (señal fuerte de noticia no-México)
-    "argentino", "argentina", "colombiano", "colombiana",
-    "peruano", "peruana", "chileno", "chilena",
-    "brasileño", "brasileña", "venezolano", "venezolana",
-    "ecuatoriano", "ecuatoriana", "uruguayo", "uruguaya",
-    "paraguayo", "paraguaya", "boliviano", "boliviana",
-    "costarricense", "panameño", "panameña",
     # Figuras y partidos internacionales no-México
     "Steffon Diggs", "Stefon Diggs", "Tom Brady", "LeBron James",
     "Taylor Swift", "Elon Musk", "Jeff Bezos",
@@ -2057,9 +1907,6 @@ KEYWORDS_NEGATIVOS = [
     "Fujimori", "Keiko Fujimori", "Bukele", "Maduro",
     "Bolsonaro", "Castillo", "Arce", "Lacalle Pou",
     "parlamento de Perú", "congreso peruano",
-    # Figuras económicas internacionales
-    "Dujovne", "Sergio Massa", "Luis Caputo",
-    "Paulo Guedes", "Haddad", "Roberto Campos Neto",
     # Entretenimiento / farándula / virales
     "Hollywood", "Bollywood", "Oscar de Hollywood",
     "Grammy", "Emmy", "Golden Globe",
@@ -2302,21 +2149,14 @@ def normalizar_comision_senado(nombre_raw):
             return _COMISIONES_SENADO_INDEX[primera.lower()]
 
     # 3. Nombre en MAYÚSCULAS pegado a texto (ej: "AGRICULTURAConvocatoria...")
-    #    Buscar la comisión más larga cuyo nombre en mayúsculas sea prefijo.
-    #    Se normaliza la puntuación para que "RELACIONES EXTERIORES ÁFRICA..."
-    #    (sin coma) matchee "Relaciones Exteriores, África" (con coma).
-    import re as _re_punct
+    #    Buscar la comisión más larga cuyo nombre en mayúsculas sea prefijo
     nombre_upper = nombre.upper()
-    _strip_punct = lambda s: _re_punct.sub(r"[,\.]", "", s).upper()
-    nombre_upper_norm = _strip_punct(nombre)
     mejor = None
-    mejor_len = 0
     for canonica in COMISIONES_SENADO:
-        prefijo = _strip_punct(canonica)
-        if nombre_upper_norm.startswith(prefijo):
-            if len(prefijo) > mejor_len:
+        prefijo = canonica.upper()
+        if nombre_upper.startswith(prefijo):
+            if mejor is None or len(canonica) > len(mejor):
                 mejor = canonica
-                mejor_len = len(prefijo)
     if mejor:
         return mejor
 

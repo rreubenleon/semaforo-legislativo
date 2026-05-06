@@ -94,31 +94,35 @@ def obtener_listado_senadores() -> list[dict]:
 
 
 def parsear_perfil_para_partido(senador_id: int) -> tuple[str, str]:
-    """Devuelve (nombre, partido) leídos del perfil individual."""
+    """
+    Devuelve (nombre, partido) leídos del perfil individual del senador.
+    Detecta partido buscando frases típicas en el HTML.
+    """
     r = requests.get(f'{BASE}/66/senador/{senador_id}', headers=HEADERS, timeout=30)
+    if r.status_code != 200 or len(r.text) < 1000:
+        return '', ''
     soup = BeautifulSoup(r.text, 'html.parser')
     nombre = ''
-    partido = ''
-    if soup.title:
-        t = soup.title.string or ''
-        # Quitar prefijo "Sen. " si está
-        nombre = re.sub(r'^Sen\.\s*', '', t).strip()
-    # Partido aparece como "Grupo Parlamentario del Partido X" en el HTML
-    text = soup.get_text(' ', strip=True)
-    m = re.search(r'Grupo Parlamentario\s+(?:del?\s+)?([A-ZÁÉÍÓÚ][a-záéíóúñ ]+)', text)
-    if m:
-        nombre_partido = m.group(1).strip()
-        # Mapear a sigla
-        mapeo = {'Acción Nacional': 'PAN', 'Movimiento Regeneración Nacional': 'MORENA',
-                 'Revolucionario Institucional': 'PRI', 'Verde': 'PVEM',
-                 'Trabajo': 'PT', 'Movimiento Ciudadano': 'MC', 'Encuentro Solidario': 'PES'}
-        for k, v in mapeo.items():
-            if k.lower() in nombre_partido.lower():
-                partido = v
-                break
-        if not partido and 'morena' in nombre_partido.lower():
-            partido = 'MORENA'
-    return nombre, partido
+    if soup.title and soup.title.string:
+        nombre = re.sub(r'^Sen\.\s*', '', soup.title.string).strip()
+
+    text = r.text  # mantenemos HTML para no perder contextos
+    # Patrones por partido (ordenados por especificidad).
+    # Senado escribe el partido en frases como "Grupo Parlamentario de MORENA",
+    # "Grupo Parlamentario del Partido Acción Nacional", etc.
+    PATRONES = [
+        ('MORENA', [r'Grupo\s+Parlamentario\s+de\s+MORENA', r'>\s*MORENA\s*<', r'Movimiento\s+Regeneraci[oó]n\s+Nacional']),
+        ('PAN',    [r'Partido\s+Acci[oó]n\s+Nacional', r'>\s*PAN\s*<']),
+        ('PRI',    [r'Revolucionario\s+Institucional', r'>\s*PRI\s*<']),
+        ('PVEM',   [r'Verde\s+Ecologista', r'>\s*PVEM\s*<']),
+        ('PT',     [r'Partido\s+del\s+Trabajo', r'Grupo\s+Parlamentario\s+del?\s+PT', r'>\s*PT\s*<']),
+        ('MC',     [r'Movimiento\s+Ciudadano', r'>\s*MC\s*<']),
+    ]
+    for partido, patrones in PATRONES:
+        for p in patrones:
+            if re.search(p, text, flags=re.IGNORECASE):
+                return nombre, partido
+    return nombre, ''
 
 
 def parsear_bloque(bloque_html: str, senador_id: int, senador_nombre: str,

@@ -67,11 +67,48 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
-      - name: Mostrar resultados
+      - name: Mostrar resultados scrape
         if: always()
         run: |
           test -f dashboard/senadores_lxvi_oficial.json || { echo "no JSON"; exit 1; }
           python scripts/reporte_senadores_oficial.py
+
+      # ── INTEGRACIÓN A BD ──
+      # Restaura cache, integra el JSON, guarda cache de vuelta para que el
+      # próximo run del pipeline principal (cada 4h) regenere data.json con
+      # los conteos corregidos del Senado.
+
+      - name: Restaurar cache SQLite (read-write para integración)
+        if: ${{ inputs.solo == '' && inputs.limite == '' }}
+        id: cache-db
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-integracion-senado-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - name: Fallback seed
+        if: ${{ inputs.solo == '' && inputs.limite == '' }}
+        run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          else
+            echo "DB del cache: $(du -h semaforo.db | cut -f1)"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Integrar a sil_documentos
+        if: ${{ inputs.solo == '' && inputs.limite == '' }}
+        run: python scripts/integrar_senadores_oficial.py
+
+      - name: Guardar SQLite actualizado al cache
+        if: ${{ inputs.solo == '' && inputs.limite == '' }}
+        uses: actions/cache/save@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-postscrape-${{ github.run_id }}
 
       - name: Commit JSON al repo
         if: ${{ inputs.solo == '' && inputs.limite == '' }}
