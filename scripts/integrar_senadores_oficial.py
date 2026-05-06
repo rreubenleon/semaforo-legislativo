@@ -167,8 +167,12 @@ def main():
         tipo_oficial = "Iniciativa" if es_iniciativa else "Proposición con punto de acuerdo"
 
         partido = inst.get("senador_partido", "") or ""
-        senador_nombre = inst.get("senador_nombre", "") or ""
-        presentador = f"Sen. {senador_nombre}" + (f" ({partido})" if partido else "")
+        # IMPORTANTE: presentador debe contener TODOS los promoventes
+        # (no solo el senador del scrape). Una iniciativa firmada por 13
+        # senadores se inserta una sola vez (UNIQUE seg_id+asu_id), pero
+        # debe poder buscarse por LIKE %Apellido% de cualquiera de ellos.
+        # promoventes_raw del scrape ya viene con la lista completa.
+        presentador = (inst.get("promoventes_raw", "") or "")[:500]
         comision = extraer_comision_de_turno(inst.get("turno", ""))
         periodo = derivar_periodo(fecha)
         clasificacion = "legislativa"  # Iniciativas y proposiciones son siempre actos legislativos
