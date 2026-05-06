@@ -1,0 +1,71 @@
+name: Regenerar narrativas IA
+
+# Workflow manual para regenerar las narrativas de legisladores
+# (legisladores_stats.narrativa en D1) usando Haiku 4.5.
+#
+# Costos esperados (684 legisladores):
+#   best:    $0.72
+#   normal:  $1.10
+#   worst:   $2.20
+#
+# Cap mensual Haiku FIAT: $7.50 (compartido con clasificador NLP).
+# Verificar uso actual antes de correr (ver banner del dashboard).
+
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: 'Limitar a N legisladores (0 = todos los 684)'
+        required: false
+        default: '0'
+        type: string
+      camara:
+        description: 'Filtrar por cámara (vacío = ambas)'
+        required: false
+        default: ''
+        type: choice
+        options:
+          - ''
+          - 'Senado'
+          - 'Cámara de Diputados'
+      delay:
+        description: 'Segundos entre requests (rate-limit)'
+        required: false
+        default: '0.3'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "regenerar-narrativas"
+  cancel-in-progress: false
+
+jobs:
+  generar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias
+        run: pip install anthropic requests
+
+      - name: Generar narrativas
+        run: |
+          ARGS="--delay ${{ inputs.delay }}"
+          if [ "${{ inputs.limit }}" != "0" ] && [ -n "${{ inputs.limit }}" ]; then
+            ARGS="$ARGS --limit ${{ inputs.limit }}"
+          fi
+          echo "Ejecutando: python scripts/generar_narrativas.py $ARGS"
+          python scripts/generar_narrativas.py $ARGS
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.FIAT_CLAUDE_API_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
