@@ -237,6 +237,9 @@ def imprimir_ranking(elos, top_n=20):
         key=lambda kv: -kv[1]["rating"]
     )
     print(f"\n  Legisladores con ≥ 3 partidas: {len(legisladores)}")
+    if not legisladores:
+        print("  (sin legisladores que cumplan filtro — posible exceso de filtro individual)")
+        return
     print()
     print("  " + "═" * 110)
     print(f"  {'#':<3} {'Legislador':<50} {'Partido':<8} {'ELO':>6} {'P':>3} {'W':>3} {'L':>3} {'D':>3} {'%Apr':>5}")
