@@ -118,15 +118,37 @@ def main():
         ("tipo_inferido", "ALTER TABLE sil_documentos ADD COLUMN tipo_inferido TEXT DEFAULT ''"),
         ("presentador", "ALTER TABLE sil_documentos ADD COLUMN presentador TEXT DEFAULT ''"),
         ("tipo_presentador", "ALTER TABLE sil_documentos ADD COLUMN tipo_presentador TEXT DEFAULT ''"),
-        # Para distinguir actos de iniciativa personal vs adhesión a bancada.
-        # Crítico: matchups y rankings de eficiencia DEBEN filtrar por
-        # es_individual=1 para no atribuir a un senador la conducta colectiva.
+        # n_firmantes en sil_documentos es info DEL INSTRUMENTO (no del
+        # legislador). La relación N:M legislador↔instrumento vive en la
+        # tabla senador_instrumento (creada abajo).
         ("n_firmantes", "ALTER TABLE sil_documentos ADD COLUMN n_firmantes INTEGER DEFAULT 1"),
         ("es_individual", "ALTER TABLE sil_documentos ADD COLUMN es_individual INTEGER DEFAULT 1"),
     ]:
         if col not in cols_existentes:
             print(f"  Schema migration: agregando columna {col}")
             conn.execute(ddl)
+
+    # Tabla relacional 1:N. Cada iniciativa firmada por 13 senadores
+    # genera 13 filas aquí (una por perfil de senador). Permite
+    # responder "iniciativas individuales de Angulo" filtrando por
+    # senador_id_perfil + es_individual_perfil sin que el dedup de
+    # sil_documentos por seg_id colapse información.
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS senador_instrumento (
+            seguimiento_id TEXT NOT NULL,
+            asunto_id TEXT NOT NULL,
+            senador_id_senado INTEGER NOT NULL,
+            senador_nombre TEXT,
+            senador_partido TEXT,
+            es_individual_perfil INTEGER NOT NULL DEFAULT 0,
+            n_firmantes_perfil INTEGER NOT NULL DEFAULT 1,
+            tipo_instrumento TEXT,
+            fecha_scraping TEXT,
+            PRIMARY KEY (seguimiento_id, asunto_id, senador_id_senado)
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_si_senador ON senador_instrumento(senador_id_senado)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_si_individual ON senador_instrumento(senador_id_senado, es_individual_perfil)")
     conn.commit()
 
     # 1. Borrar filas existentes (solo Senado, solo iniciativas/proposiciones)
@@ -146,7 +168,13 @@ def main():
               AND camara = 'Cámara de Senadores'
               AND tipo_grupo IN ('Iniciativa', 'Proposición con PA')
         """).rowcount
-        print(f"  → borradas {deleted}")
+        print(f"  → borradas sil_documentos: {deleted}")
+        # Limpiar también la tabla relacional para no tener filas huérfanas
+        deleted_rel = conn.execute("""
+            DELETE FROM senador_instrumento
+            WHERE seguimiento_id LIKE 'SEN_%'
+        """).rowcount
+        print(f"  → borradas senador_instrumento: {deleted_rel}")
         conn.commit()
 
     # 2. Insertar las nuevas
@@ -213,7 +241,32 @@ def main():
         except sqlite3.IntegrityError:
             saltadas += 1
         except Exception as e:
-            print(f"ERROR insertando: {e}", file=sys.stderr)
+            print(f"ERROR insertando sil_documentos: {e}", file=sys.stderr)
+
+        # Tabla relacional: una fila por (instrumento, perfil de senador).
+        # AQUÍ es donde guardamos el n_firmantes y es_individual TAL COMO LO
+        # VE EL PERFIL DE ESE SENADOR, sin colapsarlo con la versión que vio
+        # otro perfil. Esto es lo que permite que los conteos por senador
+        # cuadren con lo que el Senado muestra en su perfil personal.
+        try:
+            conn.execute("""
+                INSERT OR REPLACE INTO senador_instrumento
+                  (seguimiento_id, asunto_id, senador_id_senado, senador_nombre,
+                   senador_partido, es_individual_perfil, n_firmantes_perfil,
+                   tipo_instrumento, fecha_scraping)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                seg_id, asu_id,
+                int(inst.get("senador_id") or 0),
+                senador_nombre,
+                partido,
+                es_individual_int,
+                n_firmantes,
+                tipo_grupo,
+                ahora,
+            ))
+        except Exception as e:
+            print(f"ERROR insertando senador_instrumento: {e}", file=sys.stderr)
 
     if not args.dry_run:
         conn.commit()
@@ -238,26 +291,30 @@ def main():
         ("Virgilio Mendoza Amezcua", 22, 104),
         ("Miguel Ángel Riquelme", 24, 76),
     ]
+    # Conteos correctos: usar la tabla relacional senador_instrumento que
+    # sí refleja "lo que el perfil de ese senador muestra" (sin colapsar
+    # por dedup global de sil_documentos).
     deltas_ind = []
+    deltas_col = []
     for nombre, r_ind, r_col in ROBLES:
-        n_ind = conn.execute("""
-            SELECT COUNT(*) FROM sil_documentos
-            WHERE legislatura = 'LXVI' AND camara = 'Cámara de Senadores'
-              AND tipo_grupo = 'Iniciativa' AND es_individual = 1
-              AND presentador LIKE ?
-        """, (f"%{nombre}%",)).fetchone()[0]
-        n_col = conn.execute("""
-            SELECT COUNT(*) FROM sil_documentos
-            WHERE legislatura = 'LXVI' AND camara = 'Cámara de Senadores'
-              AND tipo_grupo = 'Iniciativa' AND es_individual = 0
-              AND presentador LIKE ?
-        """, (f"%{nombre}%",)).fetchone()[0]
+        row = conn.execute("""
+            SELECT
+              SUM(CASE WHEN es_individual_perfil = 1 THEN 1 ELSE 0 END) AS ind,
+              SUM(CASE WHEN es_individual_perfil = 0 THEN 1 ELSE 0 END) AS col
+            FROM senador_instrumento
+            WHERE tipo_instrumento = 'Iniciativa'
+              AND senador_nombre LIKE ?
+        """, (f"%{nombre}%",)).fetchone()
+        n_ind = int(row[0] or 0)
+        n_col = int(row[1] or 0)
         d_ind = abs(n_ind - r_ind) / r_ind * 100 if r_ind else 0
+        d_col = abs(n_col - r_col) / r_col * 100 if r_col else 0
         deltas_ind.append(d_ind)
-        marker = "✓" if d_ind <= 5 else "⚠"
+        deltas_col.append(d_col)
+        marker = "✓" if d_ind <= 5 and d_col <= 10 else "⚠"
         print(f"{nombre:<38s} {n_ind:>4d} {r_ind:>6d}  {n_col:>4d} {r_col:>6d}  {marker}")
-    avg = sum(deltas_ind) / len(deltas_ind)
-    print(f"\nΔ promedio individuales: {avg:.1f}%")
+    print(f"\nΔ promedio individuales: {sum(deltas_ind)/len(deltas_ind):.1f}%")
+    print(f"Δ promedio colectivas:   {sum(deltas_col)/len(deltas_col):.1f}%")
 
 
 if __name__ == "__main__":
