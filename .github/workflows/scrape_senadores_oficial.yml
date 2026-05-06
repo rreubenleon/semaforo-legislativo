@@ -58,42 +58,20 @@ jobs:
           echo "Argumentos: $ARGS"
           python scripts/scrape_senadores_senado_gob.py $ARGS
 
-      - name: Mostrar resultados
-        run: |
-          if [ -f dashboard/senadores_lxvi_oficial.json ]; then
-            python -c "
-            import json
-            d = json.load(open('dashboard/senadores_lxvi_oficial.json'))
-            print(f'Senadores: {len(d[\"senadores\"])}')
-            print(f'Instrumentos: {len(d[\"instrumentos\"])}')
-            from collections import Counter
-            print(f'Por tipo: {Counter(i[\"tipo\"] for i in d[\"instrumentos\"])}')
-            print('Top 10 senadores por # iniciativas:')
-            from collections import defaultdict
-            stats = defaultdict(lambda: {'ini': 0, 'prop': 0, 'ind_ini': 0})
-            for i in d['instrumentos']:
-                k = (i['senador_id'], i['senador_nombre'], i['senador_partido'])
-                if i['tipo'] == 'iniciativa':
-                    stats[k]['ini'] += 1
-                    if i['es_individual']:
-                        stats[k]['ind_ini'] += 1
-                else:
-                    stats[k]['prop'] += 1
-            top = sorted(stats.items(), key=lambda x: x[1]['ini'], reverse=True)[:15]
-            for (sid, nom, par), v in top:
-                print(f'  {nom:42s} ({par:6s}) ini={v[\"ini\"]:3d} (ind={v[\"ind_ini\"]:3d}) prop={v[\"prop\"]:3d}')
-            "
-          else
-            echo "ERROR: no se generó el JSON"
-            exit 1
-          fi
-
       - name: Subir como artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: senadores-lxvi-oficial
           path: dashboard/senadores_lxvi_oficial.json
           retention-days: 30
+          if-no-files-found: warn
+
+      - name: Mostrar resultados
+        if: always()
+        run: |
+          test -f dashboard/senadores_lxvi_oficial.json || { echo "no JSON"; exit 1; }
+          python scripts/reporte_senadores_oficial.py
 
       - name: Commit JSON al repo
         if: ${{ inputs.solo == '' && inputs.limite == '' }}
