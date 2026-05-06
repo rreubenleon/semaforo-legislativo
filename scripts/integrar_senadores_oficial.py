@@ -200,6 +200,7 @@ def main():
         tipo_oficial = "Iniciativa" if es_iniciativa else "Proposición con punto de acuerdo"
 
         partido = inst.get("senador_partido", "") or ""
+        senador_nombre = inst.get("senador_nombre", "") or ""
         # IMPORTANTE: presentador debe contener TODOS los promoventes
         # (no solo el senador del scrape). Una iniciativa firmada por 13
         # senadores se inserta una sola vez (UNIQUE seg_id+asu_id), pero
