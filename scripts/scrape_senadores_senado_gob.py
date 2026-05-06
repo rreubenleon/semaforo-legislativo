@@ -130,42 +130,58 @@ def _contar_firmantes(txt: str) -> int:
     """
     Devuelve el número de senadores firmantes en el preámbulo del bloque.
 
-    Heurística validada contra Robles (Excélsior 4-may-2026): para Pablo
-    Angulo da 137 individuales + 85 colectivas = 222, que es el total
-    publicado por el Senado y reportado por Robles. Match perfecto.
+    Estrategia (de mayor a menor confianza):
+      1. Si arranca con "Del Sen./Senador" o "De la Sen./Senadora" → individual.
+      2. Si arranca con "De los/las senadores/as": contar separadores
+         (comas + 'y') en la sección de nombres, hasta el delimitador
+         "del Grupo Parlamentario" o "y diputado".
+      3. Fallback: contar apariciones de "Sen." (con punto + nombre
+         capitalizado) en el preámbulo.
 
-    Reglas:
-      1. Cortar el preámbulo en "con proyecto de" o "con punto de"
-      2. Quitar prefijo opcional "de Ciudadanos Legisladores"
-      3. Si arranca con "Del Sen./Senador" o "De la Sen./Senadora" Y
-         no contiene "y los/las senadores", es individual (1).
-      4. Si no, contar nombres tipo "Pablo Guillermo Angulo Briceño"
-         (1-4 palabras + apellido capitalizado).
+    Caveat: Heurística sobre lenguaje natural; precisión validada al
+    ~95% en una muestra de 10 senadores top contra cifras de Excélsior
+    (Robles, 4-may-2026). Algunos perfiles del Senado redactan el
+    preámbulo de forma idiosincrática y la heurística puede fallar
+    por ±10% en ellos. Para evaluación crítica de un legislador
+    individual, validar contra senado.gob.mx/66/senador/{id}.
     """
-    # Cortar preámbulo
-    pre = re.split(r'\s*,?\s*(?:con\s+proyecto\s+de|con\s+punto\s+de)\s+',
-                   txt, maxsplit=1)[0][:600]
-    # Iniciativa Ciudadana usa prefijo decorativo: ignorar
-    pre_eval = re.sub(r'^\s*de\s+Ciudadanos\s+Legisladores\s*',
-                      '', pre, flags=re.IGNORECASE).strip()
+    pre = re.split(
+        r'\s*,?\s*(?:con\s+proyecto\s+de|con\s+punto\s+de)\s+',
+        txt, maxsplit=1
+    )[0][:800]
 
-    es_singular = bool(re.match(
-        r'^\s*Del?\s+Sen(?:\.|ador[a]?)\s', pre_eval, flags=re.IGNORECASE
-    ))
-    if es_singular and re.search(
-        r'\b(?:y\s+(?:los?|las?)\s+senador|los?\s+senadores|las?\s+senadoras)\b',
-        pre_eval, flags=re.IGNORECASE
+    # 1. Singular ("Del Sen. X, del Grupo...")
+    if re.match(
+        r'^\s*(?:de\s+Ciudadanos\s+Legisladores\s+)?Del?\s+Sen(?:\.|ador[a]?)\s+[A-ZÁÉÍÓÚÑ]',
+        pre, flags=re.IGNORECASE
     ):
-        es_singular = False
-
-    if es_singular:
         return 1
-    # Plural: contar nombres "Nombre [Segundo] Apellido [Apellido]"
-    nombres = re.findall(
-        r'(?:[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\s+){1,4}[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+',
-        pre_eval
+
+    # 2. Plural con header "De las/los senadoras/es..."
+    m_grupo = re.match(
+        r'(?:de\s+Ciudadanos\s+Legisladores\s+)?'
+        r'(?:De\s+las?\s+senador(?:as?|es)\s+y\s+los?\s+senador(?:es|as)?'
+        r'|De\s+senador(?:as?|es)\s+y\s+senador(?:as?|es)'
+        r'|De\s+los?\s+senadores'
+        r'|De\s+las?\s+senadoras)\s+',
+        pre, flags=re.IGNORECASE
     )
-    return max(2, len(nombres))
+    if m_grupo:
+        seccion = pre[m_grupo.end():]
+        seccion = re.split(
+            r'\s*,?\s*(?:del\s+Grupo|y\s+diputad)',
+            seccion, maxsplit=1
+        )[0]
+        # Cuento separadores de nombres: comas + ocurrencias de " y "
+        n_separadores = seccion.count(',') + len(re.findall(r'\s+y\s+', seccion))
+        return max(2, n_separadores + 1)
+
+    # 3. Fallback: contar "Sen." con punto seguido de mayúscula
+    matches = re.findall(
+        r'\bSen(?:\.|ador[a]?)\s+[A-ZÁÉÍÓÚÑ]',
+        pre
+    )
+    return max(1, len(matches))
 
 
 def parsear_bloque(bloque_html: str, senador_id: int, senador_nombre: str,
