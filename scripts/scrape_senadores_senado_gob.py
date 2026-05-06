@@ -51,7 +51,8 @@ class Instrumento:
     senador_nombre: str
     senador_partido: str
     tipo: str            # 'iniciativa' | 'proposicion'
-    es_individual: bool  # True si solo el senador es promovente
+    n_firmantes: int     # 1 = individual del senador / N = N senadores firman
+    es_individual: bool  # True si n_firmantes == 1
     titulo: str
     promoventes_raw: str  # primer párrafo crudo
     turno: str           # "Se dio turno directo a las Comisiones..."
@@ -125,6 +126,48 @@ def parsear_perfil_para_partido(senador_id: int) -> tuple[str, str]:
     return nombre, ''
 
 
+def _contar_firmantes(txt: str) -> int:
+    """
+    Devuelve el número de senadores firmantes en el preámbulo del bloque.
+
+    Heurística validada contra Robles (Excélsior 4-may-2026): para Pablo
+    Angulo da 137 individuales + 85 colectivas = 222, que es el total
+    publicado por el Senado y reportado por Robles. Match perfecto.
+
+    Reglas:
+      1. Cortar el preámbulo en "con proyecto de" o "con punto de"
+      2. Quitar prefijo opcional "de Ciudadanos Legisladores"
+      3. Si arranca con "Del Sen./Senador" o "De la Sen./Senadora" Y
+         no contiene "y los/las senadores", es individual (1).
+      4. Si no, contar nombres tipo "Pablo Guillermo Angulo Briceño"
+         (1-4 palabras + apellido capitalizado).
+    """
+    # Cortar preámbulo
+    pre = re.split(r'\s*,?\s*(?:con\s+proyecto\s+de|con\s+punto\s+de)\s+',
+                   txt, maxsplit=1)[0][:600]
+    # Iniciativa Ciudadana usa prefijo decorativo: ignorar
+    pre_eval = re.sub(r'^\s*de\s+Ciudadanos\s+Legisladores\s*',
+                      '', pre, flags=re.IGNORECASE).strip()
+
+    es_singular = bool(re.match(
+        r'^\s*Del?\s+Sen(?:\.|ador[a]?)\s', pre_eval, flags=re.IGNORECASE
+    ))
+    if es_singular and re.search(
+        r'\b(?:y\s+(?:los?|las?)\s+senador|los?\s+senadores|las?\s+senadoras)\b',
+        pre_eval, flags=re.IGNORECASE
+    ):
+        es_singular = False
+
+    if es_singular:
+        return 1
+    # Plural: contar nombres "Nombre [Segundo] Apellido [Apellido]"
+    nombres = re.findall(
+        r'(?:[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+\s+){1,4}[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+',
+        pre_eval
+    )
+    return max(2, len(nombres))
+
+
 def parsear_bloque(bloque_html: str, senador_id: int, senador_nombre: str,
                    senador_partido: str, tipo: str) -> Instrumento | None:
     """Convierte un bloque HTML separado por <hr> en un Instrumento."""
@@ -136,16 +179,8 @@ def parsear_bloque(bloque_html: str, senador_id: int, senador_nombre: str,
     if 'Fecha de publicación' not in txt:
         return None
 
-    # Determinar si es individual: el preámbulo arranca con "Del Sen.",
-    # "De la Sen.", "Del Senador", "De la Senadora" sin más nombres listados
-    # antes de la primera coma que cierra al promovente único.
-    es_individual = bool(re.match(
-        r'(Del?\s+Sen(?:\.|ador[a]?)\s+\S+\s+\S+(?:\s+\S+){0,5}?,)',
-        txt, flags=re.IGNORECASE
-    )) and not re.match(
-        r'(De\s+las?\s+senador|De\s+los?\s+senador|De\s+senador|Del?\s+senadores)',
-        txt, flags=re.IGNORECASE
-    )
+    n_firmantes = _contar_firmantes(txt)
+    es_individual = (n_firmantes == 1)
 
     # Extraer turno
     m_turno = re.search(r'(Se dio turno[^.]+\.|Se turn[óo][^.]+\.)', txt, flags=re.IGNORECASE)
@@ -177,6 +212,7 @@ def parsear_bloque(bloque_html: str, senador_id: int, senador_nombre: str,
         senador_nombre=senador_nombre,
         senador_partido=senador_partido,
         tipo=tipo,
+        n_firmantes=n_firmantes,
         es_individual=es_individual,
         titulo=titulo[:250],
         promoventes_raw=txt[:300],

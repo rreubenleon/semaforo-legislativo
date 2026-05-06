@@ -118,6 +118,11 @@ def main():
         ("tipo_inferido", "ALTER TABLE sil_documentos ADD COLUMN tipo_inferido TEXT DEFAULT ''"),
         ("presentador", "ALTER TABLE sil_documentos ADD COLUMN presentador TEXT DEFAULT ''"),
         ("tipo_presentador", "ALTER TABLE sil_documentos ADD COLUMN tipo_presentador TEXT DEFAULT ''"),
+        # Para distinguir actos de iniciativa personal vs adhesión a bancada.
+        # Crítico: matchups y rankings de eficiencia DEBEN filtrar por
+        # es_individual=1 para no atribuir a un senador la conducta colectiva.
+        ("n_firmantes", "ALTER TABLE sil_documentos ADD COLUMN n_firmantes INTEGER DEFAULT 1"),
+        ("es_individual", "ALTER TABLE sil_documentos ADD COLUMN es_individual INTEGER DEFAULT 1"),
     ]:
         if col not in cols_existentes:
             print(f"  Schema migration: agregando columna {col}")
@@ -181,14 +186,18 @@ def main():
             insertadas += 1
             continue
 
+        n_firmantes = int(inst.get("n_firmantes", 1) or 1)
+        es_individual_int = 1 if inst.get("es_individual") else 0
+
         try:
             conn.execute("""
                 INSERT OR IGNORE INTO sil_documentos
                   (seguimiento_id, asunto_id, tipo, titulo, sinopsis, camara,
                    fecha_presentacion, legislatura, periodo, estatus, partido,
                    comision, categoria, fecha_scraping, presentador,
-                   tipo_presentador, tipo_grupo, clasificacion)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                   tipo_presentador, tipo_grupo, clasificacion,
+                   n_firmantes, es_individual)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 seg_id, asu_id, tipo_oficial,
                 inst.get("titulo", "")[:500],
@@ -198,6 +207,7 @@ def main():
                 "",  # estatus se llena después con cruce a comisiones_stats
                 partido, comision, "",
                 ahora, presentador, "legislador", tipo_grupo, clasificacion,
+                n_firmantes, es_individual_int,
             ))
             insertadas += 1
         except sqlite3.IntegrityError:
@@ -211,32 +221,43 @@ def main():
     print(f"Saltadas (duplicado por seg_id): {saltadas}")
     print(f"Sin fecha parseable: {sin_fecha}")
 
-    # 3. Validación contra Robles
+    # 3. Validación contra Robles — individuales y colectivas separados
+    # Robles publicó: (individuales, firmadas con bancada/otros)
     print()
-    print("=== Validación post-inserción contra Robles ===")
+    print("=== Validación post-inserción contra Robles (Excélsior 4-may-2026) ===")
+    print(f"{'Senador':<38s} {'IND':>4s} {'(Rob)':>6s}  {'COL':>4s} {'(Rob)':>6s}")
     ROBLES = [
-        ("Pablo Guillermo Angulo", 222),
-        ("Karen Michel González", 165),
-        ("Rocío Corona Nakamura", 193),
-        ("Olga Patricia Sosa", 87),
-        ("Enrique Vargas del Villar", 206),
-        ("Saúl Monreal", 79),
-        ("Martina Kantún", 84),
-        ("Juan Antonio Martín del Campo", 99),
-        ("Virgilio Mendoza Amezcua", 126),
-        ("Miguel Ángel Riquelme", 100),
+        ("Pablo Guillermo Angulo", 137, 85),
+        ("Karen Michel González", 116, 49),
+        ("Rocío Corona Nakamura", 109, 84),
+        ("Olga Patricia Sosa", 79, 8),
+        ("Enrique Vargas del Villar", 78, 128),
+        ("Saúl Monreal", 66, 13),
+        ("Martina Kantún", 55, 29),
+        ("Juan Antonio Martín del Campo", 48, 51),
+        ("Virgilio Mendoza Amezcua", 22, 104),
+        ("Miguel Ángel Riquelme", 24, 76),
     ]
-    for nombre, robles in ROBLES:
-        n = conn.execute("""
+    deltas_ind = []
+    for nombre, r_ind, r_col in ROBLES:
+        n_ind = conn.execute("""
             SELECT COUNT(*) FROM sil_documentos
-            WHERE legislatura = 'LXVI'
-              AND camara = 'Cámara de Senadores'
-              AND tipo_grupo = 'Iniciativa'
+            WHERE legislatura = 'LXVI' AND camara = 'Cámara de Senadores'
+              AND tipo_grupo = 'Iniciativa' AND es_individual = 1
               AND presentador LIKE ?
         """, (f"%{nombre}%",)).fetchone()[0]
-        delta = abs(n - robles) / robles * 100 if robles else 0
-        marker = "✓" if delta <= 5 else "⚠"
-        print(f"  {nombre:38s} BD={n:3d} Robles={robles:3d}  Δ={delta:5.1f}%  {marker}")
+        n_col = conn.execute("""
+            SELECT COUNT(*) FROM sil_documentos
+            WHERE legislatura = 'LXVI' AND camara = 'Cámara de Senadores'
+              AND tipo_grupo = 'Iniciativa' AND es_individual = 0
+              AND presentador LIKE ?
+        """, (f"%{nombre}%",)).fetchone()[0]
+        d_ind = abs(n_ind - r_ind) / r_ind * 100 if r_ind else 0
+        deltas_ind.append(d_ind)
+        marker = "✓" if d_ind <= 5 else "⚠"
+        print(f"{nombre:<38s} {n_ind:>4d} {r_ind:>6d}  {n_col:>4d} {r_col:>6d}  {marker}")
+    avg = sum(deltas_ind) / len(deltas_ind)
+    print(f"\nΔ promedio individuales: {avg:.1f}%")
 
 
 if __name__ == "__main__":
