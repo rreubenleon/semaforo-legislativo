@@ -107,6 +107,23 @@ def main():
     conn = sqlite3.connect(str(DB))
     conn.execute("PRAGMA journal_mode=WAL")
 
+    # Asegurar que las columnas que necesitamos existan (cache viejo del seed
+    # puede no traer tipo_grupo, clasificacion, etc.).
+    cols_existentes = {
+        r[1] for r in conn.execute("PRAGMA table_info(sil_documentos)").fetchall()
+    }
+    for col, ddl in [
+        ("tipo_grupo", "ALTER TABLE sil_documentos ADD COLUMN tipo_grupo TEXT DEFAULT ''"),
+        ("clasificacion", "ALTER TABLE sil_documentos ADD COLUMN clasificacion TEXT DEFAULT ''"),
+        ("tipo_inferido", "ALTER TABLE sil_documentos ADD COLUMN tipo_inferido TEXT DEFAULT ''"),
+        ("presentador", "ALTER TABLE sil_documentos ADD COLUMN presentador TEXT DEFAULT ''"),
+        ("tipo_presentador", "ALTER TABLE sil_documentos ADD COLUMN tipo_presentador TEXT DEFAULT ''"),
+    ]:
+        if col not in cols_existentes:
+            print(f"  Schema migration: agregando columna {col}")
+            conn.execute(ddl)
+    conn.commit()
+
     # 1. Borrar filas existentes (solo Senado, solo iniciativas/proposiciones)
     cur = conn.execute("""
         SELECT COUNT(*) FROM sil_documentos
