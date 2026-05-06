@@ -149,19 +149,43 @@ def calcular_elos(conn):
     tasas_com, tasa_global = calcular_tasas_comision(conn)
     print(f"  Tasa global LXVI: {100*tasa_global:.1f}% · {len(tasas_com)} comisiones con data suficiente")
 
-    # Iterar instrumentos cronológicamente — solo legislativo sustantivo
+    # Iterar instrumentos cronológicamente — solo legislativo sustantivo Y
+    # solo actos donde el legislador es promovente único (es_individual=1).
+    # Una iniciativa firmada por toda la bancada NO cuenta para el ELO
+    # personal: es acción colectiva del partido. (Decisión post-feedback
+    # del 6-may-2026.) Para sil_documentos sin la columna es_individual
+    # (Diputados aún sin recalibrar), aceptamos cuando es NULL pero
+    # filtramos por presentador con ≤1 'Sen.' en su string.
     rows = conn.execute("""
-        SELECT presentador, partido, camara, tipo, comision, estatus, fecha_presentacion
+        SELECT presentador, partido, camara, tipo, comision, estatus,
+               fecha_presentacion, es_individual
         FROM sil_documentos
         WHERE fecha_presentacion >= '2024-09-01' AND presentador != ''
           AND (clasificacion = 'legislativo_sustantivo' OR clasificacion IS NULL)
         ORDER BY fecha_presentacion
     """).fetchall()
 
+    def _es_acto_individual(presentador_raw: str, es_individual_flag) -> bool:
+        # Fuente 1: flag explícito si existe (Senado post-mayo 2026)
+        if es_individual_flag is not None:
+            return bool(es_individual_flag)
+        # Fuente 2: contar 'Sen.' o 'Dip.' con punto en el string. Si solo
+        # hay 1 título, es individual. Si hay 2+, es colectivo.
+        import re as _re
+        if not presentador_raw:
+            return True
+        n = len(_re.findall(r'\b(?:Sen\.|Dip\.)\s+[A-ZÁÉÍÓÚÑ]', presentador_raw))
+        return n <= 1
+
     elos = {}  # nombre → {rating, partidas, wins, losses, ...}
     procesados = 0
 
-    for presentador, partido_raw, camara, tipo, comision, estatus, fp in rows:
+    saltados_colectivos = 0
+    for presentador, partido_raw, camara, tipo, comision, estatus, fp, es_ind in rows:
+        # Excluir actos colectivos: no atribuibles al legislador individual.
+        if not _es_acto_individual(presentador, es_ind):
+            saltados_colectivos += 1
+            continue
         info_leg = extraer_legislador(presentador)
         if not info_leg:
             continue
@@ -202,7 +226,7 @@ def calcular_elos(conn):
 
         procesados += 1
 
-    print(f"  Partidas procesadas: {procesados}")
+    print(f"  Partidas procesadas: {procesados} (colectivas excluidas: {saltados_colectivos})")
     print(f"  Legisladores con ELO: {len(elos)}")
     return elos
 

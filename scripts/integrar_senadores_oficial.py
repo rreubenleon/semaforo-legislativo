@@ -209,7 +209,9 @@ def main():
         presentador = (inst.get("promoventes_raw", "") or "")[:500]
         comision = extraer_comision_de_turno(inst.get("turno", ""))
         periodo = derivar_periodo(fecha)
-        clasificacion = "legislativa"  # Iniciativas y proposiciones son siempre actos legislativos
+        # 'legislativo_sustantivo' es el valor que ELO + paso_hit_rate filtran.
+        # Sin este string los datos del Senado quedaban excluidos del scoring.
+        clasificacion = "legislativo_sustantivo"
 
         if args.dry_run:
             insertadas += 1

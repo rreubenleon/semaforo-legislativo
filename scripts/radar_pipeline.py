@@ -635,6 +635,10 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
     #    Tie-break determinístico: score ponderado → count real → nombre asc.
     cats_por_leg: dict[int, str] = {}
     raw_counts: dict[int, dict[str, dict[str, float]]] = {}
+    # Filtrar SOLO actos individuales del legislador. Un instrumento firmado
+    # por toda la bancada (13 senadores) NO debe contar como acción personal
+    # — eso distorsiona el ranking de eficiencia. co_firmantes = '' significa
+    # que el legislador es promovente único (decisión de scrape).
     for row in db_ro.execute(
         """
         SELECT legislador_id, categoria, tipo_instrumento, COUNT(*) as n
@@ -642,6 +646,7 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
         WHERE legislador_id IS NOT NULL
           AND categoria IS NOT NULL AND categoria <> ''
           AND fecha_presentacion >= ?
+          AND (co_firmantes IS NULL OR co_firmantes = '')
         GROUP BY legislador_id, categoria, tipo_instrumento
         """,
         (FECHA_INICIO_LXVI,),
@@ -695,6 +700,8 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
     # 3) Pre-cargar set de (legislador_id, categoria, fecha) de actividad
     #    para lookup O(1) sin hacer 10 queries por legislador.
     actividad_set: set[tuple[int, str, str]] = set()
+    # Mismo filtro: solo actos individuales cuentan como "respondió al pico".
+    # Si firmó con bancada, es acción colectiva del partido, no del legislador.
     for row in db_ro.execute(
         """
         SELECT legislador_id, categoria, fecha_presentacion
@@ -703,6 +710,7 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
           AND categoria IS NOT NULL AND categoria <> ''
           AND fecha_presentacion IS NOT NULL AND fecha_presentacion <> ''
           AND fecha_presentacion >= ?
+          AND (co_firmantes IS NULL OR co_firmantes = '')
         """,
         (FECHA_INICIO_LXVI,),
     ):
