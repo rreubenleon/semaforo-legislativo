@@ -177,48 +177,71 @@ def main():
         print(f"  → borradas senador_instrumento: {deleted_rel}")
         conn.commit()
 
-    # 2. Insertar las nuevas
+    # 2. AGRUPAR por instrumento (seg_id). Cada iniciativa firmada por 13
+    # senadores aparece 13 veces en el JSON (una por perfil). Para
+    # sil_documentos necesitamos UNA fila por instrumento con la lista
+    # completa de firmantes en formato que _parsear_presentadores reconoce:
+    #     'Sen. NOMBRE (PARTIDO)Sen. OTRO (PARTIDO)...'
+    # Esto hace que actividad_legislador reciba N filas por iniciativa
+    # colectiva (una por cada firmante) y los rankings personales cuadren.
+    from collections import defaultdict
+    import hashlib
+    grupos = defaultdict(list)
+    for inst in data["instrumentos"]:
+        fecha = parsear_fecha_es(inst.get("fecha", ""))
+        gaceta_id = extraer_gaceta_id(inst.get("enlace_gaceta", ""))
+        if not gaceta_id:
+            seed = f"{inst.get('titulo','')[:80]}|{fecha}|{inst.get('tipo')}"
+            gaceta_id = hashlib.md5(seed.encode("utf-8")).hexdigest()[:12]
+        seg_id = f"SEN_{gaceta_id}"
+        grupos[(seg_id, inst.get("tipo"))].append(inst)
+
+    # 3. Insertar UNA fila por instrumento, con presentador formateado
     ahora = datetime.now().isoformat()
     insertadas = 0
     saltadas = 0
     sin_fecha = 0
-    for inst in data["instrumentos"]:
-        fecha = parsear_fecha_es(inst.get("fecha", ""))
+    for (seg_id, tipo_inst), entries in grupos.items():
+        primer = entries[0]
+        # Firmantes únicos (por senador_id) preservando orden de aparición
+        firmantes_seen = set()
+        firmantes_orden = []
+        for e in entries:
+            sid = e.get("senador_id")
+            if sid in firmantes_seen:
+                continue
+            firmantes_seen.add(sid)
+            firmantes_orden.append(e)
+
+        # Formato CRÍTICO compatible con scrapers/legisladores._parsear_presentadores:
+        # "Sen. NOMBRE (PARTIDO)Sen. OTRO (PARTIDO)..."
+        presentador_formateado = "".join(
+            f"Sen. {f.get('senador_nombre','')} ({f.get('senador_partido','')})"
+            for f in firmantes_orden
+            if f.get('senador_nombre')
+        )[:1000]  # cap para no romper schema
+
+        n_firmantes = len(firmantes_orden)
+        es_individual_int = 1 if n_firmantes == 1 else 0
+
+        fecha = parsear_fecha_es(primer.get("fecha", ""))
         if not fecha:
             sin_fecha += 1
-        gaceta_id = extraer_gaceta_id(inst.get("enlace_gaceta", ""))
-        if not gaceta_id:
-            # Fallback: usar hash deterministico para evitar colisiones
-            import hashlib
-            seed = f"{inst.get('senador_id')}|{inst.get('titulo','')[:80]}|{fecha}|{inst.get('tipo')}"
-            gaceta_id = hashlib.md5(seed.encode("utf-8")).hexdigest()[:12]
-        seg_id = f"SEN_{gaceta_id}"
-        asu_id = f"SEN_{gaceta_id}"
+        asu_id = seg_id  # mismo valor
 
-        es_iniciativa = inst.get("tipo") == "iniciativa"
+        es_iniciativa = tipo_inst == "iniciativa"
         tipo_grupo = "Iniciativa" if es_iniciativa else "Proposición con PA"
         tipo_oficial = "Iniciativa" if es_iniciativa else "Proposición con punto de acuerdo"
 
-        partido = inst.get("senador_partido", "") or ""
-        senador_nombre = inst.get("senador_nombre", "") or ""
-        # IMPORTANTE: presentador debe contener TODOS los promoventes
-        # (no solo el senador del scrape). Una iniciativa firmada por 13
-        # senadores se inserta una sola vez (UNIQUE seg_id+asu_id), pero
-        # debe poder buscarse por LIKE %Apellido% de cualquiera de ellos.
-        # promoventes_raw del scrape ya viene con la lista completa.
-        presentador = (inst.get("promoventes_raw", "") or "")[:500]
-        comision = extraer_comision_de_turno(inst.get("turno", ""))
+        # Partido: del primer firmante (el principal)
+        partido = primer.get("senador_partido", "") or ""
+        comision = extraer_comision_de_turno(primer.get("turno", ""))
         periodo = derivar_periodo(fecha)
-        # 'legislativo_sustantivo' es el valor que ELO + paso_hit_rate filtran.
-        # Sin este string los datos del Senado quedaban excluidos del scoring.
         clasificacion = "legislativo_sustantivo"
 
         if args.dry_run:
             insertadas += 1
             continue
-
-        n_firmantes = int(inst.get("n_firmantes", 1) or 1)
-        es_individual_int = 1 if inst.get("es_individual") else 0
 
         try:
             conn.execute("""
@@ -231,13 +254,12 @@ def main():
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 seg_id, asu_id, tipo_oficial,
-                inst.get("titulo", "")[:500],
-                inst.get("promoventes_raw", "")[:500],
+                primer.get("titulo", "")[:500],
+                primer.get("promoventes_raw", "")[:500],
                 "Cámara de Senadores",
                 fecha, "LXVI", periodo,
-                "",  # estatus se llena después con cruce a comisiones_stats
-                partido, comision, "",
-                ahora, presentador, "legislador", tipo_grupo, clasificacion,
+                "", partido, comision, "",
+                ahora, presentador_formateado, "legislador", tipo_grupo, clasificacion,
                 n_firmantes, es_individual_int,
             ))
             insertadas += 1
@@ -246,30 +268,27 @@ def main():
         except Exception as e:
             print(f"ERROR insertando sil_documentos: {e}", file=sys.stderr)
 
-        # Tabla relacional: una fila por (instrumento, perfil de senador).
-        # AQUÍ es donde guardamos el n_firmantes y es_individual TAL COMO LO
-        # VE EL PERFIL DE ESE SENADOR, sin colapsarlo con la versión que vio
-        # otro perfil. Esto es lo que permite que los conteos por senador
-        # cuadren con lo que el Senado muestra en su perfil personal.
-        try:
-            conn.execute("""
-                INSERT OR REPLACE INTO senador_instrumento
-                  (seguimiento_id, asunto_id, senador_id_senado, senador_nombre,
-                   senador_partido, es_individual_perfil, n_firmantes_perfil,
-                   tipo_instrumento, fecha_scraping)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                seg_id, asu_id,
-                int(inst.get("senador_id") or 0),
-                senador_nombre,
-                partido,
-                es_individual_int,
-                n_firmantes,
-                tipo_grupo,
-                ahora,
-            ))
-        except Exception as e:
-            print(f"ERROR insertando senador_instrumento: {e}", file=sys.stderr)
+        # Tabla relacional: una fila por (instrumento, firmante).
+        for f in firmantes_orden:
+            try:
+                conn.execute("""
+                    INSERT OR REPLACE INTO senador_instrumento
+                      (seguimiento_id, asunto_id, senador_id_senado, senador_nombre,
+                       senador_partido, es_individual_perfil, n_firmantes_perfil,
+                       tipo_instrumento, fecha_scraping)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    seg_id, asu_id,
+                    int(f.get("senador_id") or 0),
+                    f.get("senador_nombre", "") or "",
+                    f.get("senador_partido", "") or "",
+                    es_individual_int,
+                    n_firmantes,
+                    tipo_grupo,
+                    ahora,
+                ))
+            except Exception as e:
+                print(f"ERROR insertando senador_instrumento: {e}", file=sys.stderr)
 
     if not args.dry_run:
         conn.commit()
