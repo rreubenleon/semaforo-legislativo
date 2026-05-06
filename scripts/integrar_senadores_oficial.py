@@ -181,7 +181,16 @@ def main():
               )
         """).rowcount
         print(f"  → borradas sil_documentos: {deleted}")
-        # Limpiar también la tabla relacional para no tener filas huérfanas
+        # CRÍTICO: limpiar actividad_legislador huérfana. Las filas que
+        # apuntaban a las sil_documentos recién borradas siguen ahí y los
+        # COUNT(*) por legislador las cuentan. Sin esta limpieza, Pablo
+        # Angulo aparece con 384 IND en lugar de 137 (las viejas + nuevas).
+        deleted_act = conn.execute("""
+            DELETE FROM actividad_legislador
+            WHERE sil_documento_id NOT IN (SELECT id FROM sil_documentos)
+        """).rowcount
+        print(f"  → borradas actividad_legislador huérfanas: {deleted_act}")
+        # Limpiar también la tabla relacional 1:N de senadores
         deleted_rel = conn.execute("""
             DELETE FROM senador_instrumento
             WHERE seguimiento_id LIKE 'SEN_%'
