@@ -2494,8 +2494,9 @@
                     <div className="hidden md:block text-center">
                         <div className="text-base font-bold text-gray-800 leading-tight font-mono">{propProy}</div>
                     </div>
-                    <div className="hidden md:block text-center">
+                    <div className="hidden md:block text-center" title={`Solo individuales: ${l3pTotal}. Con bancada: +${(leg.l3p_iniciativas_col ?? 0) + (leg.l3p_proposiciones_col ?? 0)}`}>
                         <div className="text-base font-bold text-gray-800 leading-tight font-mono">{l3pTotal}</div>
+                        <div className="text-[9px] text-gray-400 font-mono leading-none">+{(leg.l3p_iniciativas_col ?? 0) + (leg.l3p_proposiciones_col ?? 0)} banc.</div>
                     </div>
                     <div className="hidden md:flex flex-col items-center justify-center gap-0.5">
                         <div className={`text-lg font-black font-mono ${gradeStyle}`}
@@ -2680,15 +2681,15 @@
                                     <div className="text-xl font-bold mt-0.5 font-mono">{hitPct != null ? `${hitPct}%` : '—'}</div>
                                     <div className="text-[10px] text-white/60 font-mono">{leg.hit_respondio ?? 0}/{leg.hit_total ?? 0} picos</div>
                                 </div>
-                                <div className="bg-white/10 rounded-lg p-2.5 text-center">
-                                    <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Ini 15d</div>
-                                    <div className="text-xl font-bold mt-0.5 font-mono">{iniProy}</div>
-                                    <div className="text-[10px] text-white/60 font-mono">L3P · {l3pIni}</div>
+                                <div className="bg-white/10 rounded-lg p-2.5 text-center" title="Iniciativas individuales (sin firmas con bancada). Las colectivas se cuentan aparte abajo.">
+                                    <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Ini · solo</div>
+                                    <div className="text-xl font-bold mt-0.5 font-mono">{l3pIni}</div>
+                                    <div className="text-[10px] text-white/60 font-mono">+{leg.l3p_iniciativas_col ?? 0} bancada</div>
                                 </div>
-                                <div className="bg-white/10 rounded-lg p-2.5 text-center">
-                                    <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Prop 15d</div>
-                                    <div className="text-xl font-bold mt-0.5 font-mono">{propProy}</div>
-                                    <div className="text-[10px] text-white/60 font-mono">L3P · {l3pProp}</div>
+                                <div className="bg-white/10 rounded-lg p-2.5 text-center" title="Proposiciones de punto de acuerdo individuales. Las firmadas con bancada se cuentan aparte abajo.">
+                                    <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Prop · solo</div>
+                                    <div className="text-xl font-bold mt-0.5 font-mono">{l3pProp}</div>
+                                    <div className="text-[10px] text-white/60 font-mono">+{leg.l3p_proposiciones_col ?? 0} bancada</div>
                                 </div>
                             </div>
                         </div>

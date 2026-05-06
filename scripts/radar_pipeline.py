@@ -968,6 +968,18 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
     """
     logger.info("Cálculo de proyecciones forward 15d…")
 
+    # Migration: añadir columnas para conteos colectivos (idempotente).
+    # Worker D1 las expondrá si existen, sino devuelve null.
+    try:
+        ejecutar_sql_d1(
+            "ALTER TABLE legisladores_stats ADD COLUMN promedio_l3p_iniciativas_col REAL DEFAULT 0.0;\n"
+            "ALTER TABLE legisladores_stats ADD COLUMN promedio_l3p_proposiciones_col REAL DEFAULT 0.0;"
+        )
+        logger.info("  Columnas col agregadas a legisladores_stats")
+    except Exception as e:
+        # Ignorar si ya existen (segundo run en adelante)
+        logger.debug(f"  Migration cols col: {e}")
+
     # Patrones LIKE (case-insensitive) para tipo_instrumento.
     # Usamos LIKE en vez de IN porque el SIL devuelve strings completos
     # como "Proposición con punto de acuerdo", no solo "proposicion".
@@ -985,28 +997,36 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
     DIAS_LXVI = max(int(fila["d"] or 0), 1)
     logger.info(f"  Baseline LXVI: {DIAS_LXVI} días desde {FECHA_INICIO_LXVI}")
 
-    def _tasa_lxvi(leg_id: int, tipos: tuple) -> float:
-        """Actividad del tipo desde inicio LXVI / días_lxvi."""
+    def _tasa_lxvi(leg_id: int, tipos: tuple, solo_individual: bool = True) -> float:
+        """Actividad del tipo desde inicio LXVI / días_lxvi.
+
+        Por defecto (solo_individual=True): solo cuenta actos donde el
+        legislador es promovente único. Las firmas con bancada se excluyen
+        del ranking de eficiencia personal porque son acción colectiva
+        del partido. Si solo_individual=False, cuenta todas las actividades.
+        """
         like_clause = " OR ".join(["LOWER(tipo_instrumento) LIKE ?"] * len(tipos))
+        filtro_ind = " AND (co_firmantes IS NULL OR co_firmantes = '')" if solo_individual else ""
         row = db_ro.execute(
             f"""
             SELECT COUNT(*) as n FROM actividad_legislador
             WHERE legislador_id = ?
               AND ({like_clause})
-              AND fecha_presentacion >= ?
+              AND fecha_presentacion >= ?{filtro_ind}
             """,
             (leg_id, *tipos, FECHA_INICIO_LXVI),
         ).fetchone()
         return (row["n"] or 0) / DIAS_LXVI
 
-    def _tasa_reciente(leg_id: int, tipos: tuple, dias: int) -> float:
+    def _tasa_reciente(leg_id: int, tipos: tuple, dias: int, solo_individual: bool = True) -> float:
         like_clause = " OR ".join(["LOWER(tipo_instrumento) LIKE ?"] * len(tipos))
+        filtro_ind = " AND (co_firmantes IS NULL OR co_firmantes = '')" if solo_individual else ""
         row = db_ro.execute(
             f"""
             SELECT COUNT(*) as n FROM actividad_legislador
             WHERE legislador_id = ?
               AND ({like_clause})
-              AND fecha_presentacion >= date('now', '-{dias} days')
+              AND fecha_presentacion >= date('now', '-{dias} days'){filtro_ind}
             """,
             (leg_id, *tipos),
         ).fetchone()
@@ -1031,8 +1051,12 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
     calculados = 0
 
     for leg_id in leg_activos:
+        # Tasas individuales (default) — ranking de eficiencia personal
         base_ini = _tasa_lxvi(leg_id, TIPOS_INICIATIVA)
         base_prop = _tasa_lxvi(leg_id, TIPOS_PROPOSICION)
+        # Tasas TOTALES (incluye colectivas) — para mostrar como dato adicional
+        base_ini_total = _tasa_lxvi(leg_id, TIPOS_INICIATIVA, solo_individual=False)
+        base_prop_total = _tasa_lxvi(leg_id, TIPOS_PROPOSICION, solo_individual=False)
         rec_ini = _tasa_reciente(leg_id, TIPOS_INICIATIVA, 30)
         rec_prop = _tasa_reciente(leg_id, TIPOS_PROPOSICION, 30)
 
@@ -1045,27 +1069,38 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
         proy_ini = base_ini * _factor(rec_ini, base_ini) * VENTANA_PROYECCION_DIAS
         proy_prop = base_prop * _factor(rec_prop, base_prop) * VENTANA_PROYECCION_DIAS
 
-        if proy_ini == 0 and proy_prop == 0 and base_ini == 0 and base_prop == 0:
+        if proy_ini == 0 and proy_prop == 0 and base_ini == 0 and base_prop == 0 \
+                and base_ini_total == 0 and base_prop_total == 0:
             continue
 
-        # L3P absoluto: total de actividades durante la LXVI
-        prom_l3p_ini = base_ini * DIAS_LXVI  # = count
+        # L3P individuales (lo que evalúa al legislador en lo personal)
+        prom_l3p_ini = base_ini * DIAS_LXVI
         prom_l3p_prop = base_prop * DIAS_LXVI
+        # L3P totales (referencia: ind + colectivas)
+        prom_l3p_ini_total = base_ini_total * DIAS_LXVI
+        prom_l3p_prop_total = base_prop_total * DIAS_LXVI
+        # Colectivas = total - individuales
+        prom_l3p_ini_col = max(0.0, prom_l3p_ini_total - prom_l3p_ini)
+        prom_l3p_prop_col = max(0.0, prom_l3p_prop_total - prom_l3p_prop)
 
         batch_sql.append(
             "INSERT INTO legisladores_stats "
             "(legislador_id, fecha_calculo, iniciativas_proy_15d, "
             "proposiciones_proy_15d, promedio_l3p_iniciativas, "
-            "promedio_l3p_proposiciones) VALUES ("
+            "promedio_l3p_proposiciones, "
+            "promedio_l3p_iniciativas_col, promedio_l3p_proposiciones_col) VALUES ("
             f"{leg_id}, {_sql_escape(ahora)}, "
             f"{proy_ini:.2f}, {proy_prop:.2f}, "
-            f"{prom_l3p_ini:.1f}, {prom_l3p_prop:.1f}) "
+            f"{prom_l3p_ini:.1f}, {prom_l3p_prop:.1f}, "
+            f"{prom_l3p_ini_col:.1f}, {prom_l3p_prop_col:.1f}) "
             "ON CONFLICT(legislador_id) DO UPDATE SET "
             "fecha_calculo=excluded.fecha_calculo, "
             "iniciativas_proy_15d=excluded.iniciativas_proy_15d, "
             "proposiciones_proy_15d=excluded.proposiciones_proy_15d, "
             "promedio_l3p_iniciativas=excluded.promedio_l3p_iniciativas, "
-            "promedio_l3p_proposiciones=excluded.promedio_l3p_proposiciones;"
+            "promedio_l3p_proposiciones=excluded.promedio_l3p_proposiciones, "
+            "promedio_l3p_iniciativas_col=excluded.promedio_l3p_iniciativas_col, "
+            "promedio_l3p_proposiciones_col=excluded.promedio_l3p_proposiciones_col;"
         )
         calculados += 1
 

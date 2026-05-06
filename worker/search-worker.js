@@ -315,6 +315,7 @@ async function handleRadar(request, env) {
           s.categoria_dominante, s.prob_reaccion_dominante,
           s.iniciativas_proy_15d, s.proposiciones_proy_15d,
           s.promedio_l3p_iniciativas, s.promedio_l3p_proposiciones,
+          s.promedio_l3p_iniciativas_col, s.promedio_l3p_proposiciones_col,
           s.matchup_grade, s.matchup_comision_target, s.matchup_tasa_dictamen,
           s.narrativa,
           hr.respondio, hr.total_oportunidades,
@@ -376,8 +377,10 @@ async function handleRadar(request, env) {
       hit_total: r.total_oportunidades,
       iniciativas_proy_15d: r.iniciativas_proy_15d,
       proposiciones_proy_15d: r.proposiciones_proy_15d,
-      l3p_iniciativas: r.promedio_l3p_iniciativas,
-      l3p_proposiciones: r.promedio_l3p_proposiciones,
+      l3p_iniciativas: r.promedio_l3p_iniciativas,            // solo individuales
+      l3p_proposiciones: r.promedio_l3p_proposiciones,         // solo individuales
+      l3p_iniciativas_col: r.promedio_l3p_iniciativas_col,    // colectivas (firmadas con bancada)
+      l3p_proposiciones_col: r.promedio_l3p_proposiciones_col,
       matchup_grade: r.matchup_grade,
       matchup_comision: r.matchup_comision_target,
       matchup_tasa: r.matchup_tasa_dictamen,
