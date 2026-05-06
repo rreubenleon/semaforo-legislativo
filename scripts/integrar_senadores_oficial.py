@@ -151,12 +151,20 @@ def main():
     conn.execute("CREATE INDEX IF NOT EXISTS idx_si_individual ON senador_instrumento(senador_id_senado, es_individual_perfil)")
     conn.commit()
 
-    # 1. Borrar filas existentes (solo Senado, solo iniciativas/proposiciones)
+    # 1. Borrar filas existentes — Senado iniciativas/proposiciones.
+    # CUIDADO: hay filas del SIL Gobernación que tienen tipo_grupo VACÍO
+    # (no clasificadas) pero sí están como tipo='Iniciativa' o
+    # 'Proposición con punto de acuerdo'. Esas también deben borrarse o se
+    # duplican con las nuevas del scrape oficial del Senado.
     cur = conn.execute("""
         SELECT COUNT(*) FROM sil_documentos
         WHERE legislatura = 'LXVI'
           AND camara = 'Cámara de Senadores'
-          AND tipo_grupo IN ('Iniciativa', 'Proposición con PA')
+          AND (
+            tipo_grupo IN ('Iniciativa', 'Proposición con PA')
+            OR tipo LIKE 'Iniciativa%'
+            OR tipo LIKE 'Proposici%con%punto%acuerdo%'
+          )
     """)
     pre_count = cur.fetchone()[0]
     print(f"Filas LXVI Senado iniciativas/proposiciones existentes: {pre_count}")
@@ -166,7 +174,11 @@ def main():
             DELETE FROM sil_documentos
             WHERE legislatura = 'LXVI'
               AND camara = 'Cámara de Senadores'
-              AND tipo_grupo IN ('Iniciativa', 'Proposición con PA')
+              AND (
+                tipo_grupo IN ('Iniciativa', 'Proposición con PA')
+                OR tipo LIKE 'Iniciativa%'
+                OR tipo LIKE 'Proposici%con%punto%acuerdo%'
+              )
         """).rowcount
         print(f"  → borradas sil_documentos: {deleted}")
         # Limpiar también la tabla relacional para no tener filas huérfanas
