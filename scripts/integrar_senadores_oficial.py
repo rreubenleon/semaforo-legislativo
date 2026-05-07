@@ -160,6 +160,7 @@ def main():
         SELECT COUNT(*) FROM sil_documentos
         WHERE legislatura = 'LXVI'
           AND camara = 'Cámara de Senadores'
+          AND tipo_presentador = 'legislador'
           AND (
             tipo_grupo IN ('Iniciativa', 'Proposición con PA')
             OR tipo LIKE 'Iniciativa%'
@@ -167,25 +168,30 @@ def main():
           )
     """)
     pre_count = cur.fetchone()[0]
-    print(f"Filas LXVI Senado iniciativas/proposiciones existentes: {pre_count}")
+    print(f"Filas LXVI Senado ini/prop presentadas POR LEGISLADOR: {pre_count}")
 
     if not args.dry_run:
-        # REEMPLAZO QUIRÚRGICO: borramos SOLO iniciativas y proposiciones
-        # (lo que efectivamente reemplazamos con el scrape oficial). NO
-        # tocamos comunicados, dictámenes, efemérides, acuerdos —esos
-        # vienen del SIL Gobernación y son data válida que NO tenemos
-        # cómo regenerar; borrarlos sin reponer baja el score_congreso.
+        # REEMPLAZO QUIRÚRGICO ULTRA-PRECISO: borramos SOLO iniciativas y
+        # proposiciones LXVI Senado donde tipo_presentador = 'legislador'.
+        # NO tocamos:
+        #   - Iniciativas del Ejecutivo turnadas al Senado (Sheinbaum)
+        #   - Iniciativas de Diputados turnadas al Senado para revisión
+        #   - Dictámenes, comunicados, efemérides, acuerdos
+        # Solo el scrape oficial del Senado tiene cobertura COMPLETA y
+        # actualizada de "lo que presenta cada senador"; esos son los
+        # únicos que reemplazamos.
         deleted = conn.execute("""
             DELETE FROM sil_documentos
             WHERE legislatura = 'LXVI'
               AND camara = 'Cámara de Senadores'
+              AND tipo_presentador = 'legislador'
               AND (
                 tipo_grupo IN ('Iniciativa', 'Proposición con PA')
                 OR tipo LIKE 'Iniciativa%'
                 OR tipo LIKE 'Proposici%con%punto%acuerdo%'
               )
         """).rowcount
-        print(f"  → borradas sil_documentos LXVI Senado (solo ini+prop): {deleted}")
+        print(f"  → borradas sil_documentos (solo ini/prop de legisladores): {deleted}")
         # CRÍTICO: limpiar actividad_legislador huérfana. Las filas que
         # apuntaban a las sil_documentos recién borradas siguen ahí y los
         # COUNT(*) por legislador las cuentan. Sin esta limpieza, Pablo
