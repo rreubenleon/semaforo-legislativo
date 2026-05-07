@@ -283,8 +283,31 @@ async function handleRadar(request, env) {
   if (partido) { filters.push('l.partido = ?'); params.push(partido); }
   if (categoria) { filters.push('s.categoria_dominante = ?'); params.push(categoria); }
   if (q && q.length >= 2) {
-    filters.push('LOWER(l.nombre) LIKE ?');
-    params.push(`%${q}%`);
+    // Buscar por palabras independientes en lugar de string completo.
+    // Permite que "Karen Michel" matchee "Michel González Márquez"
+    // (BD a veces guarda nombres acortados sin el primer nombre).
+    // Quitar acentos para que "Kantún" matchee "Kantun" si está sin acento.
+    const sinAcentos = q.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const palabras = sinAcentos
+      .split(/\s+/)
+      .filter(w => w.length >= 3);
+    if (palabras.length > 0) {
+      // Cada palabra debe estar en LOWER(nombre) — sin acentos también
+      // (usamos REPLACE para quitar acentos típicos del nombre en BD).
+      // Nota: SQLite no tiene NORMALIZE nativo; aproximamos con REPLACE.
+      const acentos = [['á','a'],['é','e'],['í','i'],['ó','o'],['ú','u'],['ñ','n']];
+      let nombreNorm = "LOWER(l.nombre)";
+      for (const [con, sin] of acentos) {
+        nombreNorm = `REPLACE(${nombreNorm},'${con}','${sin}')`;
+      }
+      for (const p of palabras) {
+        filters.push(`${nombreNorm} LIKE ?`);
+        params.push(`%${p}%`);
+      }
+    } else {
+      filters.push('LOWER(l.nombre) LIKE ?');
+      params.push(`%${q}%`);
+    }
   }
   const whereSql = filters.length ? 'WHERE ' + filters.join(' AND ') : '';
 
