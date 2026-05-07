@@ -170,17 +170,19 @@ def main():
     print(f"Filas LXVI Senado iniciativas/proposiciones existentes: {pre_count}")
 
     if not args.dry_run:
+        # RESET SELECTIVO: borramos TODAS las filas LXVI Senado de
+        # sil_documentos (no solo iniciativas/proposiciones). Esto incluye
+        # comunicados, dictámenes, efemérides, acuerdos. La fuente nueva
+        # (senado.gob.mx) repobla iniciativas+proposiciones; el resto
+        # vendrá de scrapers existentes en futuras corridas. Sin este
+        # reset, datos legados del SIL Gob viejo siguen contaminando los
+        # conteos derivados.
         deleted = conn.execute("""
             DELETE FROM sil_documentos
             WHERE legislatura = 'LXVI'
               AND camara = 'Cámara de Senadores'
-              AND (
-                tipo_grupo IN ('Iniciativa', 'Proposición con PA')
-                OR tipo LIKE 'Iniciativa%'
-                OR tipo LIKE 'Proposici%con%punto%acuerdo%'
-              )
         """).rowcount
-        print(f"  → borradas sil_documentos: {deleted}")
+        print(f"  → borradas sil_documentos LXVI Senado (TODOS los tipos): {deleted}")
         # CRÍTICO: limpiar actividad_legislador huérfana. Las filas que
         # apuntaban a las sil_documentos recién borradas siguen ahí y los
         # COUNT(*) por legislador las cuentan. Sin esta limpieza, Pablo
