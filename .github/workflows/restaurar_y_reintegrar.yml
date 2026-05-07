@@ -1,0 +1,81 @@
+name: Restaurar BD pre-RESET y reintegrar Senado
+
+# Workflow de recuperación. Restaura cache anterior al RESET v13 (donde
+# se perdieron ~3K docs y sus clasificaciones NLP), aplica la
+# integración quirúrgica del scrape oficial Senado (solo iniciativas+
+# proposiciones), y sube como nuevo cache.
+#
+# Diseñado para correr UNA VEZ tras el incidente del 7-may-2026.
+
+on:
+  workflow_dispatch:
+    inputs:
+      cache_key:
+        description: 'Key del cache a restaurar (ej. semaforo-db-25453135403-postnlp)'
+        required: true
+        default: 'semaforo-db-25453135403-postnlp'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "restaurar-y-reintegrar"
+  cancel-in-progress: false
+
+jobs:
+  restaurar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Restaurar cache específico
+        id: restore
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: ${{ inputs.cache_key }}
+
+      - name: Verificar restore
+        run: |
+          if [ ! -f semaforo.db ]; then
+            echo "ERROR: cache no encontrado para key ${{ inputs.cache_key }}"
+            exit 1
+          fi
+          echo "DB restaurada: $(du -h semaforo.db | cut -f1)"
+
+      - name: Bajar JSON oficial Senado de último scrape exitoso
+        run: |
+          # Buscar último run de scrape exitoso y bajar artifact
+          LAST_RUN=$(gh run list --workflow=scrape_senadores_oficial.yml \
+            --status success --limit 1 --json databaseId -q '.[0].databaseId')
+          if [ -z "$LAST_RUN" ]; then
+            echo "ERROR: no hay run exitoso de scrape"
+            exit 1
+          fi
+          echo "Bajando artifact del run $LAST_RUN"
+          gh run download "$LAST_RUN" -n senadores-lxvi-oficial -D dashboard/
+          ls -la dashboard/senadores_lxvi_oficial.json
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Instalar dependencias
+        run: pip install requests beautifulsoup4
+
+      - name: Aplicar integración quirúrgica Senado
+        run: python scripts/integrar_senadores_oficial.py
+
+      - name: Guardar BD restaurada como nuevo cache
+        uses: actions/cache/save@v4
+        with:
+          path: semaforo.db
+          # Key con timestamp para que el pipeline siguiente la prefiera
+          key: semaforo-db-restaurado-${{ github.run_id }}
