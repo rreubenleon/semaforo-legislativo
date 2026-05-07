@@ -10,6 +10,11 @@ on:
         required: false
         default: '0'
         type: string
+      nlp_max_por_run:
+        description: 'Cap de artículos a clasificar por corrida (5000 default, 20000 para limpiar backlog)'
+        required: false
+        default: '5000'
+        type: string
 
 permissions:
   contents: write
@@ -92,6 +97,7 @@ jobs:
       - name: Ejecutar pipeline
         run: python main.py
         env:
+          NLP_MAX_POR_RUN: ${{ inputs.nlp_max_por_run || '5000' }}
           TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
           TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
           TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
