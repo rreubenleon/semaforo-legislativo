@@ -156,23 +156,70 @@ def main():
     # (no clasificadas) pero sí están como tipo='Iniciativa' o
     # 'Proposición con punto de acuerdo'. Esas también deben borrarse o se
     # duplican con las nuevas del scrape oficial del Senado.
-    # MODO COMPLEMENTO: NO borramos nada. Solo INSERTAMOS las filas del
-    # scrape oficial Senado como filas nuevas (con seg_id 'SEN_*'). Si
-    # una iniciativa ya existe en SIL Gob con seg_id distinto, queda
-    # duplicada — la dedupe se hará en una iteración futura por
-    # similitud de título+fecha+presentador. Por ahora, prioridad:
-    # tener TODO. Limpieza después.
-    print(f"MODO COMPLEMENTO: NO se borra nada de sil_documentos. Solo INSERT.")
+    # MODO ENRIQUECIMIENTO con DEDUPE: para cada entry del scrape oficial,
+    # buscar si ya existe en sil_documentos por (título primer 80 chars,
+    # fecha, senador en presentador). Si match → UPDATE flags (es_individual,
+    # n_firmantes). Si no match → INSERT como SEN_*.
+    # Resultado:
+    #  - Sin duplicados (las que SIL Gob ya tenía se enriquecen)
+    #  - Sin pérdida (las que SIL Gob no tenía se añaden)
+    #  - Sin tocar comunicados/dictámenes/efemérides
+    print("MODO ENRIQUECIMIENTO: dedupe por título+fecha+senador")
 
     if not args.dry_run:
-        # Solo limpiar la tabla relacional de senadores (que es nuestra
-        # propia tabla de info auxiliar, sin afectar otros componentes).
         deleted_rel = conn.execute("""
             DELETE FROM senador_instrumento
             WHERE seguimiento_id LIKE 'SEN_%'
         """).rowcount
         print(f"  → borradas senador_instrumento (tabla auxiliar Senado): {deleted_rel}")
         conn.commit()
+
+    # Pre-cargar índice de iniciativas+proposiciones LXVI Senado existentes
+    # para hacer matching en memoria (más rápido que SELECT por cada uno).
+    # Key: (titulo_primer_60_lower, fecha) → lista de (id, presentador)
+    existentes_idx = {}
+    rows_existentes = conn.execute("""
+        SELECT id, titulo, fecha_presentacion, presentador
+        FROM sil_documentos
+        WHERE legislatura = 'LXVI'
+          AND camara = 'Cámara de Senadores'
+          AND tipo_presentador = 'legislador'
+          AND (
+            tipo_grupo IN ('Iniciativa', 'Proposición con PA')
+            OR tipo LIKE 'Iniciativa%'
+            OR tipo LIKE 'Proposici%con%punto%acuerdo%'
+          )
+    """).fetchall()
+    print(f"Filas SIL Gob LXVI Senado ini/prop existentes para match: {len(rows_existentes)}")
+    for row_id, titulo, fecha, presentador in rows_existentes:
+        if not titulo or not fecha:
+            continue
+        key = (titulo[:60].lower().strip(), fecha)
+        existentes_idx.setdefault(key, []).append((row_id, presentador or ""))
+
+    def _buscar_match(titulo_scrape, fecha_scrape, senador_apellido):
+        """Busca fila SIL Gob que matchee con esta entry del scrape."""
+        if not titulo_scrape or not fecha_scrape:
+            return None
+        # Normalizar título: quitar acentos, lowercase, primer 60 chars
+        import unicodedata as _ud
+        t = _ud.normalize('NFKD', titulo_scrape.lower())
+        t = ''.join(c for c in t if not _ud.combining(c))
+        key = (t[:60].strip(), fecha_scrape)
+        candidatos = existentes_idx.get(key, [])
+        if not candidatos:
+            return None
+        # De los candidatos por título+fecha, preferir el que tiene el
+        # senador en el campo presentador
+        ap_norm = _ud.normalize('NFKD', senador_apellido.lower())
+        ap_norm = ''.join(c for c in ap_norm if not _ud.combining(c))
+        for row_id, pres in candidatos:
+            pres_norm = _ud.normalize('NFKD', (pres or '').lower())
+            pres_norm = ''.join(c for c in pres_norm if not _ud.combining(c))
+            if ap_norm in pres_norm:
+                return row_id
+        # Si no, devolver primer candidato (matchea por titulo+fecha)
+        return candidatos[0][0]
 
     # 2. AGRUPAR por instrumento (seg_id). Cada iniciativa firmada por 13
     # senadores aparece 13 veces en el JSON (una por perfil). Para
@@ -240,30 +287,62 @@ def main():
             insertadas += 1
             continue
 
-        try:
-            conn.execute("""
-                INSERT OR IGNORE INTO sil_documentos
-                  (seguimiento_id, asunto_id, tipo, titulo, sinopsis, camara,
-                   fecha_presentacion, legislatura, periodo, estatus, partido,
-                   comision, categoria, fecha_scraping, presentador,
-                   tipo_presentador, tipo_grupo, clasificacion,
-                   n_firmantes, es_individual)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                seg_id, asu_id, tipo_oficial,
-                primer.get("titulo", "")[:500],
-                primer.get("promoventes_raw", "")[:500],
-                "Cámara de Senadores",
-                fecha, "LXVI", periodo,
-                "", partido, comision, "",
-                ahora, presentador_formateado, "legislador", tipo_grupo, clasificacion,
-                n_firmantes, es_individual_int,
-            ))
-            insertadas += 1
-        except sqlite3.IntegrityError:
-            saltadas += 1
-        except Exception as e:
-            print(f"ERROR insertando sil_documentos: {e}", file=sys.stderr)
+        # Buscar match en SIL Gob existente
+        senador_apellido = (primer.get("senador_nombre", "") or "").split()[-1] if primer.get("senador_nombre") else ""
+        match_id = _buscar_match(
+            primer.get("titulo", ""),
+            fecha,
+            senador_apellido
+        )
+
+        if match_id is not None:
+            # ENRIQUECER fila existente: añadir es_individual y n_firmantes
+            try:
+                conn.execute("""
+                    UPDATE sil_documentos
+                    SET es_individual = ?, n_firmantes = ?
+                    WHERE id = ?
+                """, (es_individual_int, n_firmantes, match_id))
+                # Para tabla relacional, usar seg_id real de la fila SIL Gob
+                row_match = conn.execute(
+                    "SELECT seguimiento_id, asunto_id FROM sil_documentos WHERE id = ?",
+                    (match_id,)
+                ).fetchone()
+                if row_match:
+                    seg_id_real = row_match[0]
+                    asu_id_real = row_match[1]
+                    # Actualizar el seg_id que usaremos para senador_instrumento
+                    seg_id = seg_id_real
+                    asu_id = asu_id_real
+                saltadas += 1
+            except Exception as e:
+                print(f"ERROR enriqueciendo: {e}", file=sys.stderr)
+        else:
+            # NO match → INSERT como SEN_*
+            try:
+                conn.execute("""
+                    INSERT OR IGNORE INTO sil_documentos
+                      (seguimiento_id, asunto_id, tipo, titulo, sinopsis, camara,
+                       fecha_presentacion, legislatura, periodo, estatus, partido,
+                       comision, categoria, fecha_scraping, presentador,
+                       tipo_presentador, tipo_grupo, clasificacion,
+                       n_firmantes, es_individual)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    seg_id, asu_id, tipo_oficial,
+                    primer.get("titulo", "")[:500],
+                    primer.get("promoventes_raw", "")[:500],
+                    "Cámara de Senadores",
+                    fecha, "LXVI", periodo,
+                    "", partido, comision, "",
+                    ahora, presentador_formateado, "legislador", tipo_grupo, clasificacion,
+                    n_firmantes, es_individual_int,
+                ))
+                insertadas += 1
+            except sqlite3.IntegrityError:
+                saltadas += 1
+            except Exception as e:
+                print(f"ERROR insertando sil_documentos: {e}", file=sys.stderr)
 
         # Tabla relacional: una fila por (instrumento, firmante).
         for f in firmantes_orden:
