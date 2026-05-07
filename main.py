@@ -686,6 +686,32 @@ def paso_2a_scraping_gaceta_senado(dias=14):
     return documentos
 
 
+def paso_2a2_scraping_gaceta_permanente():
+    """Paso 2a2: Scrapear Gaceta de la Comisión Permanente.
+
+    Durante RECESO la Permanente sesiona y publica su propia Gaceta.
+    Fuente: senado.gob.mx/66/gaceta_comision_permanente/
+    Fuera de receso, la Gaceta de Permanente del periodo anterior aún
+    es consultable para histórico.
+    """
+    logger.info("=" * 60)
+    logger.info("PASO 2a2: Scraping de Gaceta Comisión Permanente")
+    logger.info("=" * 60)
+    inicio = time.time()
+    try:
+        from scrapers.gaceta_permanente import scrape as scrape_gaceta_perm
+        res = scrape_gaceta_perm()
+        duracion = time.time() - inicio
+        logger.info(
+            f"Gaceta Permanente: {res.get('insertados', 0)} nuevos, "
+            f"{res.get('saltados', 0)} ya en BD ({duracion:.1f}s)"
+        )
+        return res
+    except Exception as e:
+        logger.warning(f"Gaceta Permanente falló (no crítico): {e}")
+        return {"insertados": 0, "saltados": 0}
+
+
 def paso_2b_scraping_mananera():
     """Paso 2b: Scrapear conferencias matutinas de la Presidenta."""
     logger.info("=" * 60)
@@ -1709,6 +1735,7 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     paso_1_scraping_medios()
     paso_2_scraping_gaceta(dias=dias_gaceta)
     paso_2a_scraping_gaceta_senado(dias=dias_gaceta)
+    paso_2a2_scraping_gaceta_permanente()
     paso_2b_scraping_mananera()
     paso_2c_scraping_sintesis()
     paso_2d_scraping_twitter()
