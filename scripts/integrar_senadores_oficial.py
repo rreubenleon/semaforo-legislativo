@@ -156,57 +156,22 @@ def main():
     # (no clasificadas) pero sí están como tipo='Iniciativa' o
     # 'Proposición con punto de acuerdo'. Esas también deben borrarse o se
     # duplican con las nuevas del scrape oficial del Senado.
-    cur = conn.execute("""
-        SELECT COUNT(*) FROM sil_documentos
-        WHERE legislatura = 'LXVI'
-          AND camara = 'Cámara de Senadores'
-          AND tipo_presentador = 'legislador'
-          AND (
-            tipo_grupo IN ('Iniciativa', 'Proposición con PA')
-            OR tipo LIKE 'Iniciativa%'
-            OR tipo LIKE 'Proposici%con%punto%acuerdo%'
-          )
-    """)
-    pre_count = cur.fetchone()[0]
-    print(f"Filas LXVI Senado ini/prop presentadas POR LEGISLADOR: {pre_count}")
+    # MODO COMPLEMENTO: NO borramos nada. Solo INSERTAMOS las filas del
+    # scrape oficial Senado como filas nuevas (con seg_id 'SEN_*'). Si
+    # una iniciativa ya existe en SIL Gob con seg_id distinto, queda
+    # duplicada — la dedupe se hará en una iteración futura por
+    # similitud de título+fecha+presentador. Por ahora, prioridad:
+    # tener TODO. Limpieza después.
+    print(f"MODO COMPLEMENTO: NO se borra nada de sil_documentos. Solo INSERT.")
 
     if not args.dry_run:
-        # REEMPLAZO QUIRÚRGICO ULTRA-PRECISO: borramos SOLO iniciativas y
-        # proposiciones LXVI Senado donde tipo_presentador = 'legislador'.
-        # NO tocamos:
-        #   - Iniciativas del Ejecutivo turnadas al Senado (Sheinbaum)
-        #   - Iniciativas de Diputados turnadas al Senado para revisión
-        #   - Dictámenes, comunicados, efemérides, acuerdos
-        # Solo el scrape oficial del Senado tiene cobertura COMPLETA y
-        # actualizada de "lo que presenta cada senador"; esos son los
-        # únicos que reemplazamos.
-        deleted = conn.execute("""
-            DELETE FROM sil_documentos
-            WHERE legislatura = 'LXVI'
-              AND camara = 'Cámara de Senadores'
-              AND tipo_presentador = 'legislador'
-              AND (
-                tipo_grupo IN ('Iniciativa', 'Proposición con PA')
-                OR tipo LIKE 'Iniciativa%'
-                OR tipo LIKE 'Proposici%con%punto%acuerdo%'
-              )
-        """).rowcount
-        print(f"  → borradas sil_documentos (solo ini/prop de legisladores): {deleted}")
-        # CRÍTICO: limpiar actividad_legislador huérfana. Las filas que
-        # apuntaban a las sil_documentos recién borradas siguen ahí y los
-        # COUNT(*) por legislador las cuentan. Sin esta limpieza, Pablo
-        # Angulo aparece con 384 IND en lugar de 137 (las viejas + nuevas).
-        deleted_act = conn.execute("""
-            DELETE FROM actividad_legislador
-            WHERE sil_documento_id NOT IN (SELECT id FROM sil_documentos)
-        """).rowcount
-        print(f"  → borradas actividad_legislador huérfanas: {deleted_act}")
-        # Limpiar también la tabla relacional 1:N de senadores
+        # Solo limpiar la tabla relacional de senadores (que es nuestra
+        # propia tabla de info auxiliar, sin afectar otros componentes).
         deleted_rel = conn.execute("""
             DELETE FROM senador_instrumento
             WHERE seguimiento_id LIKE 'SEN_%'
         """).rowcount
-        print(f"  → borradas senador_instrumento: {deleted_rel}")
+        print(f"  → borradas senador_instrumento (tabla auxiliar Senado): {deleted_rel}")
         conn.commit()
 
     # 2. AGRUPAR por instrumento (seg_id). Cada iniciativa firmada por 13
