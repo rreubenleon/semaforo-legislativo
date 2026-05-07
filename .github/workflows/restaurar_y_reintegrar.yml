@@ -52,27 +52,11 @@ jobs:
           fi
           echo "DB restaurada: $(du -h semaforo.db | cut -f1)"
 
-      - name: Bajar JSON oficial Senado de último scrape exitoso
-        run: |
-          # Buscar último run de scrape exitoso y bajar artifact
-          LAST_RUN=$(gh run list --workflow=scrape_senadores_oficial.yml \
-            --status success --limit 1 --json databaseId -q '.[0].databaseId')
-          if [ -z "$LAST_RUN" ]; then
-            echo "ERROR: no hay run exitoso de scrape"
-            exit 1
-          fi
-          echo "Bajando artifact del run $LAST_RUN"
-          rm -f dashboard/senadores_lxvi_oficial.json
-          gh run download "$LAST_RUN" -n senadores-lxvi-oficial -D dashboard/
-          ls -la dashboard/senadores_lxvi_oficial.json
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Instalar dependencias
-        run: pip install requests beautifulsoup4
-
-      - name: Aplicar integración quirúrgica Senado
-        run: python scripts/integrar_senadores_oficial.py
+      # NOTA: ya NO se aplica integración Senado en este workflow.
+      # El scrape oficial Senado tiene MENOS docs que SIL Gobernación
+      # (4,043 vs 10,284 únicos). Reemplazar quita data válida del SIL.
+      # En futuras versiones se hará enriquecimiento (matching por
+      # titulo+fecha) sin borrar.
 
       - name: Guardar BD restaurada como nuevo cache
         uses: actions/cache/save@v4
