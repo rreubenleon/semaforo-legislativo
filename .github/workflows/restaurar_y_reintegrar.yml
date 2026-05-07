@@ -62,6 +62,7 @@ jobs:
             exit 1
           fi
           echo "Bajando artifact del run $LAST_RUN"
+          rm -f dashboard/senadores_lxvi_oficial.json
           gh run download "$LAST_RUN" -n senadores-lxvi-oficial -D dashboard/
           ls -la dashboard/senadores_lxvi_oficial.json
         env:
