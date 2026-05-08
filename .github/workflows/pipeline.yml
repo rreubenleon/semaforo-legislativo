@@ -125,6 +125,15 @@ jobs:
         run: python scripts/fix_partido_sil.py
         continue-on-error: true
 
+      # 4e. Re-integrar Senado para asegurar URLs y partidos correctos.
+      #     El paso 4d arregla partido en sil_documentos, pero los
+      #     SEN_* existentes pueden quedarse sin URL si el seed de la BD
+      #     fue creado antes del fix. Esto re-integra desde el JSON que
+      #     YA tiene partidos+URLs correctas. Idempotente (UPSERT).
+      - name: Re-integrar Senado oficial (URLs + partidos)
+        run: python scripts/integrar_senadores_oficial.py
+        continue-on-error: true
+
       # 5. Ejecutar el pipeline completo
       #    Modo local: SQLite puro, sin dependencia de Turso
       - name: Ejecutar pipeline

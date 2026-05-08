@@ -123,6 +123,7 @@ def main():
         # tabla senador_instrumento (creada abajo).
         ("n_firmantes", "ALTER TABLE sil_documentos ADD COLUMN n_firmantes INTEGER DEFAULT 1"),
         ("es_individual", "ALTER TABLE sil_documentos ADD COLUMN es_individual INTEGER DEFAULT 1"),
+        ("url", "ALTER TABLE sil_documentos ADD COLUMN url TEXT DEFAULT ''"),
     ]:
         if col not in cols_existentes:
             print(f"  Schema migration: agregando columna {col}")
@@ -319,7 +320,29 @@ def main():
                 print(f"ERROR enriqueciendo: {e}", file=sys.stderr)
         else:
             # NO match → INSERT como SEN_*
+            url_doc = primer.get("enlace_gaceta", "")
             try:
+                conn.execute("""
+                    INSERT OR IGNORE INTO sil_documentos
+                      (seguimiento_id, asunto_id, tipo, titulo, sinopsis, camara,
+                       fecha_presentacion, legislatura, periodo, estatus, partido,
+                       comision, categoria, fecha_scraping, presentador,
+                       tipo_presentador, tipo_grupo, clasificacion,
+                       n_firmantes, es_individual, url)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    seg_id, asu_id, tipo_oficial,
+                    primer.get("titulo", "")[:500],
+                    primer.get("promoventes_raw", "")[:500],
+                    "Cámara de Senadores",
+                    fecha, "LXVI", periodo,
+                    "", partido, comision, "",
+                    ahora, presentador_formateado, "legislador", tipo_grupo, clasificacion,
+                    n_firmantes, es_individual_int, url_doc,
+                ))
+                insertadas += 1
+            except sqlite3.OperationalError:
+                # url column might not exist yet (legacy schema). Insert sin url.
                 conn.execute("""
                     INSERT OR IGNORE INTO sil_documentos
                       (seguimiento_id, asunto_id, tipo, titulo, sinopsis, camara,

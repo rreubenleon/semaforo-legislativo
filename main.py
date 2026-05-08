@@ -667,6 +667,36 @@ def _calcular_prob_extraordinario_global():
             f"sil={pts_sil} tw={pts_tw} neg=-{pts_neg})"
         )
 
+        # Lista de notas reales para el ticker del widget. Mezclamos
+        # afirmativas (sin desmentidos), ordenadas por fecha desc, con
+        # tope de 12.
+        notas_ticker = []
+        try:
+            rows_articulos = conn.execute(f"""
+                SELECT id, titulo, fuente, fecha, url
+                FROM articulos
+                WHERE fecha >= ? AND {kw_match} AND NOT {kw_neg}
+                ORDER BY fecha DESC
+                LIMIT 30
+            """, (d30,)).fetchall()
+            seen_titles = set()
+            for r in rows_articulos:
+                t = r[1] or ""
+                k = t[:60].lower()
+                if k in seen_titles:
+                    continue
+                seen_titles.add(k)
+                notas_ticker.append({
+                    "titulo": t[:200],
+                    "fuente": r[2] or "",
+                    "fecha": (r[3] or "")[:10],
+                    "url": r[4] or "",
+                })
+                if len(notas_ticker) >= 12:
+                    break
+        except Exception as e:
+            logger.warning(f"  notas_ticker fallo: {e}")
+
         return {
             "probabilidad": prob,
             "señales": {
@@ -688,6 +718,7 @@ def _calcular_prob_extraordinario_global():
             },
             "explicacion": explicacion,
             "ventana_dias": 30,
+            "notas": notas_ticker,
         }
     except Exception as e:
         logger.warning(f"_calcular_prob_extraordinario_global fallo: {e}")
@@ -1309,11 +1340,18 @@ def obtener_fuentes_por_categoria():
                 "fuente_tabla": "gaceta",
             })
 
-        # 2. Tabla sil_documentos (SIL Gobernación: Dip + Sen + Permanente)
+        # 2. Tabla sil_documentos (SIL Gobernación: Dip + Sen + Permanente).
+        # Modo "permisivo" en columna url: si la BD ya tiene url (post-fix
+        # del integrador) la usamos; si no, construimos una al sitio oficial
+        # según el prefijo del seguimiento_id.
         try:
-            rows_sil = conn.execute("""
+            # Detectar si la columna url existe (BD legacy puede no tenerla)
+            cols_sil = {r[1] for r in conn.execute("PRAGMA table_info(sil_documentos)").fetchall()}
+            url_select = ", url" if "url" in cols_sil else ", '' AS url"
+            rows_sil = conn.execute(f"""
                 SELECT tipo_grupo, tipo, titulo, presentador, comision,
-                       fecha_presentacion, camara, seguimiento_id
+                       fecha_presentacion, camara, seguimiento_id, n_firmantes,
+                       es_individual{url_select}
                 FROM sil_documentos
                 WHERE categoria = ?
                   AND fecha_presentacion >= date('now', '-14 days')
@@ -1321,6 +1359,26 @@ def obtener_fuentes_por_categoria():
                                      'Acuerdo Parlamentario', 'Dictamen')
                 ORDER BY fecha_presentacion DESC
             """, (cat_clave,)).fetchall()
+
+            # En receso, los docs SEN_/PERM_ presentados en sesión de
+            # Comisión Permanente: 2do receso 2do año LXVI = mayo-agosto 2026.
+            # Reflejarlos como cámara 'Comisión Permanente' aunque la BD
+            # los tenga como 'Cámara de Senadores'.
+            from datetime import datetime as _dt
+            def _en_receso(fecha_str):
+                try:
+                    d = _dt.fromisoformat(fecha_str[:10]).date()
+                    # 1er receso: 16-dic a 31-ene
+                    # 2do receso: 1-may a 31-ago
+                    m, dia = d.month, d.day
+                    if (m == 12 and dia >= 16) or m == 1:
+                        return True
+                    if 5 <= m <= 8:
+                        return True
+                    return False
+                except Exception:
+                    return False
+
             for r in rows_sil:
                 titulo = r["titulo"] or ""
                 fecha = r["fecha_presentacion"][:10] if r["fecha_presentacion"] else ""
@@ -1328,7 +1386,6 @@ def obtener_fuentes_por_categoria():
                 if key in seen_titulos:
                     continue
                 seen_titulos.add(key)
-                # Mapear tipo_grupo a tipo legible
                 tipo_legible = (r["tipo_grupo"] or r["tipo"] or "").lower()
                 if "iniciativa" in tipo_legible:
                     tipo_legible = "iniciativa"
@@ -1338,17 +1395,40 @@ def obtener_fuentes_por_categoria():
                     tipo_legible = "acuerdo"
                 elif "dictamen" in tipo_legible:
                     tipo_legible = "dictamen"
+
+                # Construir URL si BD no la tiene
+                seg_id = r["seguimiento_id"] or ""
+                url_doc = (r["url"] or "").strip() if "url" in cols_sil else ""
+                if not url_doc:
+                    if seg_id.startswith("PERM_"):
+                        # PERM_158927 → senado.gob.mx/66/gaceta_comision_permanente/documento/158927
+                        doc_id = seg_id[5:]
+                        if doc_id.isdigit():
+                            url_doc = f"https://www.senado.gob.mx/66/gaceta_comision_permanente/documento/{doc_id}"
+
+                # Cámara: durante receso, los docs SEN_/PERM_ se presentan
+                # en sesión de Comisión Permanente (no del Pleno del Senado).
+                # Reflejarlo en el badge.
+                camara_real = r["camara"] or ""
+                if _en_receso(fecha) and (
+                    seg_id.startswith("PERM_") or camara_real == "Cámara de Senadores"
+                ):
+                    camara_real = "Comisión Permanente"
+
                 gaceta_docs.append({
                     "tipo": tipo_legible,
                     "titulo": titulo[:150],
-                    "autor": (r["presentador"] or "")[:80],
+                    "autor": (r["presentador"] or "")[:200],  # más espacio
+                                                              #  para co-firmantes
                     "comision": (r["comision"] or "")[:80],
                     "fecha": fecha,
-                    "url": "",
+                    "url": url_doc,
                     "url_pdf": "",
-                    "numero_doc": r["seguimiento_id"] or "",
-                    "camara": r["camara"] or "",
+                    "numero_doc": seg_id,
+                    "camara": camara_real,
                     "fuente_tabla": "sil",
+                    "n_firmantes": r["n_firmantes"] or 1,
+                    "es_individual": bool(r["es_individual"]) if r["es_individual"] is not None else True,
                 })
         except sqlite3.OperationalError as e:
             logger.warning(f"  SIL docs por cat: {e}")

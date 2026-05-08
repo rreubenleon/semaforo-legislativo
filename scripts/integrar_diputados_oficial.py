@@ -157,6 +157,7 @@ def main():
         ("tipo_presentador", "ALTER TABLE sil_documentos ADD COLUMN tipo_presentador TEXT DEFAULT ''"),
         ("n_firmantes", "ALTER TABLE sil_documentos ADD COLUMN n_firmantes INTEGER DEFAULT 1"),
         ("es_individual", "ALTER TABLE sil_documentos ADD COLUMN es_individual INTEGER DEFAULT 1"),
+        ("url", "ALTER TABLE sil_documentos ADD COLUMN url TEXT DEFAULT ''"),
     ]:
         if col not in cols:
             logger.info(f"  Schema migration: agregando columna {col}")
