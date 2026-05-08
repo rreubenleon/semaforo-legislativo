@@ -2079,14 +2079,15 @@
             const normNombre = (s) => (s || '')
                 .normalize('NFD').replace(/[̀-ͯ]/g, '')
                 .toLowerCase().trim();
-            // Canoniza el orden de las palabras para que matchee igual
-            // "Rubén Ignacio Moreira Valdez" (formato Senado: nombre primero)
-            // que "Moreira Valdez Rubén Ignacio" (formato Diputados: apellido
-            // primero). Sin esto perdíamos 38/74 integrantes en el filtro.
-            const tokenKey = (s) => normNombre(s).split(/\s+/).filter(Boolean).sort().join(' ');
-            const permanenteSet = useMemo(() => {
-                const norms = data.permanente?.nombres_norm;
-                return Array.isArray(norms) ? new Set(norms.map(tokenKey)) : null;
+            // Filtramos por legislador_id (no por nombre) para evitar mismatch
+            // entre formatos "Nombre Apellido" del roster y "Apellido Nombre"
+            // de la BD de Diputados, además de versiones cortas/largas
+            // ("Lilly Téllez" vs "Lilly Téllez García"). Los IDs son la única
+            // fuente de verdad confiable.
+            const permanenteIdSet = useMemo(() => {
+                const ints = data.permanente?.integrantes;
+                if (!Array.isArray(ints)) return null;
+                return new Set(ints.map(i => i.legislador_id).filter(x => x != null));
             }, [data]);
             const permanenteCount = data.permanente?.integrantes?.length || 0;
 
@@ -2126,8 +2127,8 @@
                         // Filtro client-side cuando sub-pestaña = permanente.
                         // El worker no conoce el roster Permanente; lo filtramos aquí
                         // contra data.permanente.nombres_norm. Por eso pedimos limite=250.
-                        if (vista === 'permanente' && permanenteSet) {
-                            legs = legs.filter(l => permanenteSet.has(tokenKey(l.nombre)));
+                        if (vista === 'permanente' && permanenteIdSet) {
+                            legs = legs.filter(l => permanenteIdSet.has(l.id));
                             totalReal = legs.length;
                             pagsReal = 1;
                         }
