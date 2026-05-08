@@ -74,9 +74,49 @@ def clasificar_tipo(titulo: str) -> tuple[str, str]:
     """Devuelve (tipo, tipo_grupo) inferido del título."""
     if not titulo:
         return "Otro", "Otro"
-    for patron, tipo in TIPO_PATRONES:
+
+    # 1. Tipos explícitos al inicio del título
+    explicitos = [
+        (r"^Iniciativa", "Iniciativa"),
+        (r"^Proposici[oó]n", "Proposición con punto de acuerdo"),
+        (r"^Punto\s+de\s+Acuerdo", "Proposición con punto de acuerdo"),
+        (r"^Acuerdo\s+Parlamentario", "Acuerdo Parlamentario"),
+        (r"^Dictamen", "Dictamen"),
+        (r"^Oficio|^Comunicaci", "Comunicado"),
+        (r"^ACTA", "Acta"),
+        (r"^Orden\s+del\s+D[íi]a", "Orden del Día"),
+    ]
+    for patron, tipo in explicitos:
         if re.match(patron, titulo, flags=re.IGNORECASE):
             return tipo, TIPO_GRUPO_MAP.get(tipo, "Otro")
+
+    # 2. Arranca con un PROMOVENTE (Sen./Dip./diputado/senador/etc.).
+    # Esto cubre los casos de iniciativas y proposiciones presentadas
+    # durante la Permanente que arrancan con quién las propuso.
+    es_promovente = bool(re.match(
+        r"^Del?\s+(?:Sen|Dip)\.\s+|"
+        r"^De\s+la\s+(?:Sen|Dip)\.\s+|"
+        r"^Del?\s+(?:senador|diputad|legislador)|"
+        r"^De\s+la\s+(?:senadora|diputad|legislador)|"
+        r"^De\s+l[oa]s?\s+(?:senador|diputad|legislador|senadora|diputada)",
+        titulo, flags=re.IGNORECASE
+    ))
+    if es_promovente:
+        # Distinguir por el contenido del título
+        if re.search(r"con\s+punto\s+de\s+acuerdo|exhorta\s+a", titulo, flags=re.IGNORECASE):
+            return "Proposición con punto de acuerdo", "Proposición con PA"
+        if re.search(
+            r"con\s+proyecto\s+de\s+decreto|"
+            r"que\s+(?:reforma|adiciona|expide|abroga|deroga|modifica)|"
+            r"se\s+(?:reforma|adiciona|expide|abroga|deroga|modifica)|"
+            r"declara\s+el\s+\d|adicion[aóa]",
+            titulo, flags=re.IGNORECASE
+        ):
+            return "Iniciativa", "Iniciativa"
+        # Si no aplica ni proyecto de decreto ni punto de acuerdo,
+        # probable comunicación de un legislador (reincorporación, etc.)
+        return "Comunicado", "Comunicado"
+
     return "Otro", "Otro"
 
 
@@ -150,14 +190,20 @@ def scrape(solo_count: bool = False) -> dict:
         tipo, tipo_grupo = clasificar_tipo(doc["titulo"])
         distribucion_tipo[tipo] = distribucion_tipo.get(tipo, 0) + 1
         fecha = fecha_default_para_id(int(doc["doc_id"]))
+        clasificacion = "legislativo_sustantivo" if tipo_grupo in ("Iniciativa", "Proposición con PA") else ""
         try:
             cur = conn.execute("""
-                INSERT OR IGNORE INTO sil_documentos
+                INSERT INTO sil_documentos
                   (seguimiento_id, asunto_id, tipo, titulo, sinopsis, camara,
                    fecha_presentacion, legislatura, periodo, estatus, partido,
                    comision, categoria, fecha_scraping, presentador,
                    tipo_presentador, tipo_grupo, clasificacion)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(seguimiento_id, asunto_id) DO UPDATE SET
+                    tipo=excluded.tipo,
+                    tipo_grupo=excluded.tipo_grupo,
+                    clasificacion=excluded.clasificacion,
+                    titulo=excluded.titulo
             """, (
                 seg_id, asu_id, tipo,
                 doc["titulo"][:500],
@@ -167,7 +213,7 @@ def scrape(solo_count: bool = False) -> dict:
                 "", "", "", "",
                 ahora, "", "",
                 tipo_grupo,
-                "legislativo_sustantivo" if tipo_grupo in ("Iniciativa", "Proposición con PA") else "",
+                clasificacion,
             ))
             if cur.rowcount > 0:
                 insertados += 1
