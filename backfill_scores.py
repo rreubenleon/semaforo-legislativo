@@ -100,7 +100,13 @@ def main():
             "fuente": a["fuente"] or "",
         })
 
-    # Gaceta: {fecha_str: [{titulo, resumen, comision, tipo}, ...]}
+    # Gaceta + SIL fusionados: actividad legislativa de TODAS las fuentes.
+    # Antes solo se contaba `gaceta` (Cámara de Diputados). Ahora sumamos
+    # `sil_documentos` para que el score_congreso refleje también:
+    #   · Iniciativas/proposiciones del Senado
+    #   · Docs presentados en sesión de Comisión Permanente (PERM_*)
+    # Sin esto, durante receso el score_congreso daba 0 aunque hubiera
+    # actividad real en Permanente.
     gaceta_por_dia = defaultdict(list)
     for g in gaceta_raw:
         fecha_str = str(g["fecha"])[:10]
@@ -109,6 +115,14 @@ def main():
             "resumen": (g["resumen"] or "").lower(),
             "comision": (g["comision"] or "").lower(),
             "tipo": g["tipo"] or "",
+        })
+    for s in sil_raw:
+        fecha_str = str(s["fecha_presentacion"])[:10]
+        gaceta_por_dia[fecha_str].append({
+            "titulo": (s["titulo"] or "").lower(),
+            "resumen": (s["sinopsis"] or "").lower(),
+            "comision": "",  # sil_raw no trae comisión en este SELECT
+            "tipo": "sil",
         })
 
     # SIL: {categoria: {fecha_str: count}}

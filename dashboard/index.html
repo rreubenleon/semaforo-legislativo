@@ -1813,19 +1813,15 @@
                         const colorBg = { verde: 'from-emerald-600 to-emerald-800', amarillo: 'from-amber-600 to-amber-800', rojo: 'from-red-700 to-red-900' };
 
                         // ── DURANTE RECESO: Widget "Probabilidad de periodo extraordinario" ──
-                        // Es un número GLOBAL — NO está atado a una categoría. La pregunta
-                        // "¿qué tema fuerza el extraordinario?" es otra pregunta, otra
-                        // metodología, y se mostrará en otro lado cuando esté lista.
-                        // El widget original queda en la rama else, se reactiva solo cuando
-                        // data.metadata.modo_receso vuelva a false (1 sept).
+                        // UN solo número global basado en señales reales (medios + Twitter +
+                        // actos legislativos formales en últimos 30 días). NO atado a una
+                        // categoría — la pregunta "¿qué tema fuerza el extraordinario?" es
+                        // otra metodología.
+                        // Backend: main.py:_calcular_prob_extraordinario_global()
                         if (enReceso) {
-                            const probs = semaforo
-                                .filter(s => s.prob_extraordinario != null)
-                                .map(s => s.prob_extraordinario);
-                            if (probs.length === 0) return null;
-                            // Aggregate provisional: max de todas las categorías. La metodología
-                            // global está en revisión — el user está iterándola.
-                            const probGlobal = Math.round(Math.max(...probs));
+                            const px = data.prob_extraordinario_global;
+                            if (!px) return null;
+                            const probGlobal = px.probabilidad;
                             const colorByProb = probGlobal >= 70 ? 'from-red-700 to-red-900'
                                 : probGlobal >= 50 ? 'from-amber-600 to-amber-800'
                                 : 'from-slate-600 to-slate-800';
@@ -1839,14 +1835,21 @@
                                     <div className="relative flex items-center justify-between">
                                         <div className="flex-1 min-w-0">
                                             <div className="text-[10px] font-semibold text-white/70 mb-2 uppercase tracking-widest">Probabilidad de periodo extraordinario</div>
-                                            <h2 className="text-2xl md:text-3xl font-bold mb-3">2do receso · LXVI</h2>
-                                            <div className="text-xs text-white/75 leading-relaxed max-w-md">
-                                                Estimación de qué tan probable es que el Pleno sea convocado fuera de calendario antes del 1 de septiembre. <span className="text-white/55">Metodología en revisión.</span>
+                                            <h2 className="text-2xl md:text-3xl font-bold mb-2">2do receso · LXVI</h2>
+                                            <div className="text-xs text-white/85 leading-relaxed max-w-md mb-3">
+                                                {px.explicacion}
+                                            </div>
+                                            <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-white/65 font-mono">
+                                                {px.señales?.notas_30d > 0 && <span>📰 {px.señales.notas_30d} notas</span>}
+                                                {px.señales?.convocatorias_formales_30d > 0 && <span>📜 {px.señales.convocatorias_formales_30d} conv.</span>}
+                                                {px.señales?.iniciativas_sil_30d > 0 && <span>📋 {px.señales.iniciativas_sil_30d} ini.</span>}
+                                                {px.señales?.tweets_coordinadores_30d > 0 && <span>🐦 {px.señales.tweets_coordinadores_30d} tw</span>}
+                                                {px.señales?.desmentidos_7d > 0 && <span className="text-white/50">⚠ {px.señales.desmentidos_7d} desmentidos 7d</span>}
                                             </div>
                                         </div>
                                         <div className="flex flex-col items-end ml-6">
                                             <div className="text-white text-5xl md:text-6xl font-black leading-none tracking-tight">{probGlobal}%</div>
-                                            <div className="text-[10px] text-white/55 mt-2 uppercase tracking-widest font-mono">estimación global</div>
+                                            <div className="text-[10px] text-white/55 mt-2 uppercase tracking-widest font-mono">señal últimos 30d</div>
                                         </div>
                                     </div>
                                 </div>

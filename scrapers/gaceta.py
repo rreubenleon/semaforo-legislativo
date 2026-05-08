@@ -887,24 +887,53 @@ def _build_like_conditions(kw, campos=("titulo", "resumen", "comision")):
 
 
 def obtener_score_congreso(categoria_keywords, dias=7):
-    """Calcula un score 0-100 de actividad legislativa para una categoría."""
+    """Calcula un score 0-100 de actividad legislativa para una categoría.
+
+    Cuenta actividad de TODAS las fuentes legislativas:
+      - Tabla `gaceta` (Gaceta Parlamentaria de Diputados)
+      - Tabla `sil_documentos` (SIL Gobernación: Diputados+Senado+Permanente)
+
+    Antes solo leía `gaceta`, lo que excluía:
+      · Docs presentados en sesión de Comisión Permanente (PERM_*)
+      · Docs del Senado registrados en SIL pero no en gaceta de Diputados
+      · Iniciativas/proposiciones del SIL en general
+
+    Resultado: durante receso (cuando solo sesiona la Permanente) el score
+    daba 0 aunque hubiera actividad. Cambio: actividad legislativa = unión.
+    """
     conn = get_connection()
 
     fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
 
-    total_docs = conn.execute(
+    # Total: gaceta + sil_documentos en la ventana
+    total_gaceta = conn.execute(
         "SELECT COUNT(*) FROM gaceta WHERE fecha >= ?", (fecha_limite,)
     ).fetchone()[0]
+    total_sil = conn.execute(
+        "SELECT COUNT(*) FROM sil_documentos WHERE fecha_presentacion >= ?",
+        (fecha_limite,),
+    ).fetchone()[0]
+    total_docs = total_gaceta + total_sil
 
     docs_relevantes = 0
     for kw in categoria_keywords:
-        cond_sql, cond_params = _build_like_conditions(kw)
-        count = conn.execute(f"""
-            SELECT COUNT(*) FROM gaceta
-            WHERE fecha >= ?
-              AND {cond_sql}
-        """, [fecha_limite] + cond_params).fetchone()[0]
-        docs_relevantes += count
+        # Gaceta (campos: titulo, resumen, comision)
+        cond_g, params_g = _build_like_conditions(kw)
+        n_g = conn.execute(
+            f"SELECT COUNT(*) FROM gaceta WHERE fecha >= ? AND {cond_g}",
+            [fecha_limite] + params_g,
+        ).fetchone()[0]
+        # SIL (campos: titulo, sinopsis, comision)
+        like = f"%{kw}%"
+        n_s = conn.execute(
+            """
+            SELECT COUNT(*) FROM sil_documentos
+            WHERE fecha_presentacion >= ?
+              AND (titulo LIKE ? OR sinopsis LIKE ? OR comision LIKE ?)
+            """,
+            (fecha_limite, like, like, like),
+        ).fetchone()[0]
+        docs_relevantes += n_g + n_s
 
     if total_docs == 0:
         return 0

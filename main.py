@@ -525,6 +525,175 @@ def _obtener_extraordinarios_lxvi():
         return []
 
 
+def _calcular_prob_extraordinario_global():
+    """
+    Probabilidad GLOBAL (0-100) de que el Congreso convoque a periodo
+    extraordinario. UN solo número agregado, no por categoría.
+
+    La fórmula anterior (_prob_extraordinario per-cat) confundía
+    "qué tema es más reactivo" con "qué tan probable es la convocatoria".
+    Eran preguntas distintas. Ésta responde solo la segunda, basándose
+    en señales reales de medios + Twitter + actos legislativos formales.
+
+    Señales (ventana últimos 30 días):
+      A. Notas en medios con "periodo extraordinari"  → hasta 35 pts
+         + bonus por densidad reciente (7d vs 30d)    → hasta 15 pts
+      B. Convocatorias/decretos formales en gaceta    → hasta 25 pts
+      C. Iniciativas/proposiciones SIL sobre extra.   → hasta 15 pts
+      D. Tweets de coordinadores parlamentarios       → hasta 10 pts
+      E. Penalización por desmentidos recientes (7d)  → hasta -20 pts
+
+    Returns dict con probabilidad y breakdown:
+      {"probabilidad": 72, "señales": {...}, "explicacion": "..."}
+    """
+    try:
+        conn = get_connection()
+        from datetime import datetime as _dt, timedelta as _td
+
+        hoy = _dt.now().date()
+        d30 = (hoy - _td(days=30)).strftime('%Y-%m-%d')
+        d14 = (hoy - _td(days=14)).strftime('%Y-%m-%d')
+        d7 = (hoy - _td(days=7)).strftime('%Y-%m-%d')
+
+        # Filtro estricto: "periodo extraordinari" (singular/plural).
+        # Excluye "sesión extraordinaria" porque mete cabildos municipales.
+        kw_match = """
+          (LOWER(titulo) LIKE '%periodo extraordinari%'
+           OR LOWER(titulo) LIKE '%periodos extraordinari%'
+           OR LOWER(resumen) LIKE '%periodo extraordinari%'
+           OR LOWER(resumen) LIKE '%periodos extraordinari%')
+        """
+        # Desmentidos: niega/descarta/falsa/no habrá + ventana del término
+        kw_neg = """
+          (LOWER(titulo) LIKE '%niega%extraordinari%'
+           OR LOWER(titulo) LIKE '%descarta%extraordinari%'
+           OR LOWER(titulo) LIKE '%falsa%extraordinari%'
+           OR LOWER(titulo) LIKE '%no habr%extraordinari%'
+           OR LOWER(titulo) LIKE '%desmiente%extraordinari%')
+        """
+
+        # A. Notas afirmativas (cualquier mención periodo extraordinari).
+        # Excluimos las que también son desmentidos para no doble-contar.
+        n_30 = conn.execute(f"""
+            SELECT COUNT(DISTINCT id) FROM articulos
+            WHERE fecha >= ? AND {kw_match} AND NOT {kw_neg}
+        """, (d30,)).fetchone()[0]
+        n_14 = conn.execute(f"""
+            SELECT COUNT(DISTINCT id) FROM articulos
+            WHERE fecha >= ? AND {kw_match} AND NOT {kw_neg}
+        """, (d14,)).fetchone()[0]
+        n_7 = conn.execute(f"""
+            SELECT COUNT(DISTINCT id) FROM articulos
+            WHERE fecha >= ? AND {kw_match} AND NOT {kw_neg}
+        """, (d7,)).fetchone()[0]
+
+        # A.1 Volumen: hasta 35 pts. 1 nota = 5 pts, 10+ = 35 pts.
+        pts_volumen = min(35, n_30 * 3.5)
+
+        # A.2 Aceleración: si >40% de las 30d son de últimos 7d → +15.
+        if n_30 >= 3:
+            ratio_reciente = n_7 / n_30
+            if ratio_reciente >= 0.5:
+                pts_acel = 15
+            elif ratio_reciente >= 0.3:
+                pts_acel = 10
+            elif ratio_reciente >= 0.15:
+                pts_acel = 5
+            else:
+                pts_acel = 0
+        else:
+            pts_acel = 0
+
+        # B. Convocatorias formales en gaceta. La gaceta SOLO publica un
+        # "convoca a periodo extraordinari" cuando hay decreto real.
+        # Esa señal es de altísima fiabilidad — vale +25 con 1 sola.
+        n_conv = conn.execute("""
+            SELECT COUNT(*) FROM gaceta
+            WHERE fecha >= ?
+              AND (LOWER(titulo) LIKE '%convoca%periodo extraordinari%'
+                   OR LOWER(titulo) LIKE '%decreto%periodo extraordinari%'
+                   OR LOWER(titulo) LIKE '%dispensa%periodo extraordinari%')
+        """, (d30,)).fetchone()[0]
+        pts_conv = 25 if n_conv >= 1 else 0
+
+        # C. Iniciativas/proposiciones SIL sobre extraordinario.
+        n_sil = conn.execute(f"""
+            SELECT COUNT(*) FROM sil_documentos
+            WHERE fecha_presentacion >= ?
+              AND (LOWER(titulo) LIKE '%periodo extraordinari%'
+                   OR LOWER(titulo) LIKE '%periodos extraordinari%')
+        """, (d30,)).fetchone()[0]
+        pts_sil = min(15, n_sil * 5)
+
+        # D. Tweets de coordinadores con la keyword.
+        try:
+            n_tw = conn.execute("""
+                SELECT COUNT(*) FROM tweets
+                WHERE created_at >= ?
+                  AND LOWER(texto) LIKE '%extraordinari%'
+            """, (d30,)).fetchone()[0]
+        except Exception:
+            n_tw = 0
+        pts_tw = min(10, n_tw * 2)
+
+        # E. Desmentidos recientes (últimos 7d).
+        n_neg_7 = conn.execute(f"""
+            SELECT COUNT(*) FROM articulos
+            WHERE fecha >= ? AND {kw_neg}
+        """, (d7,)).fetchone()[0]
+        pts_neg = min(20, n_neg_7 * 5)  # cada desmentido reciente -5 pts
+
+        prob = pts_volumen + pts_acel + pts_conv + pts_sil + pts_tw - pts_neg
+        prob = round(max(0, min(100, prob)))
+
+        # Breakdown explicable
+        partes = []
+        if n_30 > 0:
+            partes.append(f"{n_30} notas en 30d ({n_7} en últimos 7d)")
+        if n_conv > 0:
+            partes.append(f"{n_conv} convocatoria(s) formal(es) en gaceta")
+        if n_sil > 0:
+            partes.append(f"{n_sil} iniciativa(s)/proposición(es) en SIL")
+        if n_tw > 0:
+            partes.append(f"{n_tw} tweet(s) de coordinadores")
+        if n_neg_7 > 0:
+            partes.append(f"{n_neg_7} desmentido(s) recientes")
+
+        explicacion = " · ".join(partes) if partes else "Sin señales en últimos 30 días"
+
+        logger.info(
+            f"_calcular_prob_extraordinario_global: {prob}% "
+            f"(vol={pts_volumen:.0f} acel={pts_acel} conv={pts_conv} "
+            f"sil={pts_sil} tw={pts_tw} neg=-{pts_neg})"
+        )
+
+        return {
+            "probabilidad": prob,
+            "señales": {
+                "notas_30d": int(n_30),
+                "notas_14d": int(n_14),
+                "notas_7d": int(n_7),
+                "convocatorias_formales_30d": int(n_conv),
+                "iniciativas_sil_30d": int(n_sil),
+                "tweets_coordinadores_30d": int(n_tw),
+                "desmentidos_7d": int(n_neg_7),
+            },
+            "puntos": {
+                "volumen": round(pts_volumen, 1),
+                "aceleracion": pts_acel,
+                "convocatorias": pts_conv,
+                "iniciativas_sil": pts_sil,
+                "tweets": pts_tw,
+                "penalizacion_desmentidos": -pts_neg,
+            },
+            "explicacion": explicacion,
+            "ventana_dias": 30,
+        }
+    except Exception as e:
+        logger.warning(f"_calcular_prob_extraordinario_global fallo: {e}")
+        return None
+
+
 def _obtener_tweets_fiat():
     """
     Obtiene los últimos tweets de @Fiat_MX via API v2 para mostrar en el dashboard.
@@ -1452,6 +1621,11 @@ def paso_7_exportar_dashboard():
         # Cronología de periodos extraordinarios LXVI (clusters por
         # proximidad temporal). Hoy solo hay 1 (junio 2025).
         "extraordinarios_lxvi": _obtener_extraordinarios_lxvi(),
+        # Probabilidad GLOBAL (0-100) de que se convoque a extraordinario
+        # en los próximos 30 días, basada en señales de medios + Twitter +
+        # actos legislativos formales. Reemplaza el cálculo por-categoría
+        # que confundía "tema reactivo" con "convocatoria probable".
+        "prob_extraordinario_global": _calcular_prob_extraordinario_global(),
         "convocatorias": obtener_convocatorias(),
         "actividad_legisladores_reciente": _obtener_actividad_legisladores_reciente(),
         # comisiones_actividad: migrado a D1 (Worker /comisiones)
