@@ -1268,9 +1268,17 @@ def obtener_fuentes_por_categoria():
                 "fecha": r["fecha"][:10] if r["fecha"] else "",
             })
 
-        # Documentos de Gaceta que coinciden con esta categoría
-        # Excluye convocatorias/citatorios (van en widget separado)
+        # Documentos legislativos que coinciden con esta categoría.
+        # Antes solo leía tabla `gaceta` (Cámara de Diputados Gaceta
+        # Parlamentaria). Ahora también incluye `sil_documentos` (SIL
+        # Gobernación: Diputados + Senado + Permanente) para que las
+        # iniciativas/proposiciones que NO se publican en la Gaceta de
+        # Diputados pero SÍ están registradas en SIL aparezcan.
+        # Excluye convocatorias/citatorios (van en widget separado).
         gaceta_docs = []
+        seen_titulos = set()  # Dedupe entre gaceta y sil
+
+        # 1. Tabla gaceta (Cámara de Diputados)
         rows = conn.execute("""
             SELECT tipo, titulo, autor, comision, fecha, url,
                    COALESCE(url_pdf, '') as url_pdf,
@@ -1284,6 +1292,10 @@ def obtener_fuentes_por_categoria():
             ORDER BY fecha DESC
         """, (f"%{cat_clave}%",)).fetchall()
         for r in rows:
+            key = (r["titulo"][:80].lower().strip(), r["fecha"][:10] if r["fecha"] else "")
+            if key in seen_titulos:
+                continue
+            seen_titulos.add(key)
             gaceta_docs.append({
                 "tipo": r["tipo"],
                 "titulo": r["titulo"][:150],
@@ -1294,7 +1306,56 @@ def obtener_fuentes_por_categoria():
                 "url_pdf": r["url_pdf"] or "",
                 "numero_doc": r["numero_doc"] or "",
                 "camara": r["camara"] or "Diputados",
+                "fuente_tabla": "gaceta",
             })
+
+        # 2. Tabla sil_documentos (SIL Gobernación: Dip + Sen + Permanente)
+        try:
+            rows_sil = conn.execute("""
+                SELECT tipo_grupo, tipo, titulo, presentador, comision,
+                       fecha_presentacion, camara, seguimiento_id
+                FROM sil_documentos
+                WHERE categoria = ?
+                  AND fecha_presentacion >= date('now', '-14 days')
+                  AND tipo_grupo IN ('Iniciativa', 'Proposición con Punto de Acuerdo',
+                                     'Acuerdo Parlamentario', 'Dictamen')
+                ORDER BY fecha_presentacion DESC
+            """, (cat_clave,)).fetchall()
+            for r in rows_sil:
+                titulo = r["titulo"] or ""
+                fecha = r["fecha_presentacion"][:10] if r["fecha_presentacion"] else ""
+                key = (titulo[:80].lower().strip(), fecha)
+                if key in seen_titulos:
+                    continue
+                seen_titulos.add(key)
+                # Mapear tipo_grupo a tipo legible
+                tipo_legible = (r["tipo_grupo"] or r["tipo"] or "").lower()
+                if "iniciativa" in tipo_legible:
+                    tipo_legible = "iniciativa"
+                elif "proposici" in tipo_legible:
+                    tipo_legible = "proposicion"
+                elif "acuerdo" in tipo_legible:
+                    tipo_legible = "acuerdo"
+                elif "dictamen" in tipo_legible:
+                    tipo_legible = "dictamen"
+                gaceta_docs.append({
+                    "tipo": tipo_legible,
+                    "titulo": titulo[:150],
+                    "autor": (r["presentador"] or "")[:80],
+                    "comision": (r["comision"] or "")[:80],
+                    "fecha": fecha,
+                    "url": "",
+                    "url_pdf": "",
+                    "numero_doc": r["seguimiento_id"] or "",
+                    "camara": r["camara"] or "",
+                    "fuente_tabla": "sil",
+                })
+        except sqlite3.OperationalError as e:
+            logger.warning(f"  SIL docs por cat: {e}")
+
+        # Re-ordenar por fecha desc (mezcla gaceta + sil)
+        gaceta_docs.sort(key=lambda x: x.get("fecha", ""), reverse=True)
+        gaceta_docs = gaceta_docs[:50]  # cap razonable
 
         # Google Trends: top keywords y sus valores
         trends_data = []
