@@ -1405,6 +1405,13 @@ def obtener_fuentes_por_categoria():
                         doc_id = seg_id[5:]
                         if doc_id.isdigit():
                             url_doc = f"https://www.senado.gob.mx/66/gaceta_comision_permanente/documento/{doc_id}"
+                    elif seg_id.startswith("SEN_") and _en_receso(fecha):
+                        # SEN_<hash> presentado durante receso: el scraper
+                        # original no capturó enlace_gaceta. Como fallback,
+                        # llevar al micrositio de la Permanente actual.
+                        # No es URL al doc específico, pero al menos es
+                        # navegable a la sesión relevante.
+                        url_doc = "https://www.senado.gob.mx/66/gaceta_comision_permanente/"
 
                 # Cámara: durante receso, los docs SEN_/PERM_ se presentan
                 # en sesión de Comisión Permanente (no del Pleno del Senado).
