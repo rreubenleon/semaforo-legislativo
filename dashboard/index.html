@@ -983,23 +983,53 @@
 
         function FuentesGaceta({ documentos }) {
             if (!documentos || documentos.length === 0) return <div className="text-gray-400 text-sm py-3 text-center">Sin documentos de Gaceta</div>;
-            const tipoColor = { iniciativa: 'bg-blue-50 text-blue-800 border border-blue-200', dictamen: 'bg-amber-50 text-amber-800 border border-amber-200', punto_de_acuerdo: 'bg-purple-50 text-purple-800 border border-purple-200', minuta: 'bg-green-50 text-green-800 border border-green-200' };
+            const tipoColor = {
+                iniciativa: 'bg-blue-50 text-blue-800 border border-blue-200',
+                dictamen: 'bg-amber-50 text-amber-800 border border-amber-200',
+                proposicion: 'bg-purple-50 text-purple-800 border border-purple-200',
+                punto_de_acuerdo: 'bg-purple-50 text-purple-800 border border-purple-200',
+                acuerdo: 'bg-rose-50 text-rose-800 border border-rose-200',
+                minuta: 'bg-green-50 text-green-800 border border-green-200',
+            };
+            // Limpia el campo autor: "Sen. Anaya (PAN)Sen. Bañuelos (PAN)Sen. ..." → 1ro + count
+            const formatearAutor = (autor) => {
+                if (!autor) return '';
+                // Truncar lista de co-firmantes a "Primer firmante + N más"
+                const matches = autor.match(/(?:Sen|Dip)\.\s*[^()]+?\([^)]+\)/g);
+                if (matches && matches.length > 1) {
+                    return matches[0] + ' + ' + (matches.length - 1) + ' más';
+                }
+                return autor.length > 80 ? autor.slice(0, 80) + '…' : autor;
+            };
+            // Solo mostramos numero_doc si parece un identificador público
+            // (no un hash interno como SEN_xxx, DIP_xxx, PERM_xxx).
+            const esIdInterno = (n) => !n || /^(SEN|DIP|PERM)_[a-f0-9]+$/.test(n);
             return (
                 <div className="space-y-2 fuentes-panel max-h-56 overflow-y-auto pr-1">
-                    {documentos.map((d, i) => (
-                        <div key={i} className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
-                            <div className="flex items-start gap-2">
-                                {d.numero_doc && <span className="flex-shrink-0 bg-acento text-white text-xs font-bold px-2 py-0.5 rounded mt-0.5 font-mono">#{d.numero_doc}</span>}
-                                <a href={d.url_pdf || d.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-700 hover:text-blue-900 hover:underline leading-tight">{d.titulo.replace(/\n\t/g, ' ').slice(0, 150)}</a>
+                    {documentos.map((d, i) => {
+                        const titulo = (d.titulo || '').replace(/\n\t/g, ' ').slice(0, 150);
+                        const tieneURL = d.url_pdf || d.url;
+                        return (
+                            <div key={i} className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
+                                <div className="flex items-start gap-2">
+                                    {!esIdInterno(d.numero_doc) && (
+                                        <span className="flex-shrink-0 bg-acento text-white text-xs font-bold px-2 py-0.5 rounded mt-0.5 font-mono">#{d.numero_doc}</span>
+                                    )}
+                                    {tieneURL ? (
+                                        <a href={d.url_pdf || d.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-700 hover:text-blue-900 hover:underline leading-tight">{titulo}</a>
+                                    ) : (
+                                        <span className="text-sm text-gray-800 leading-tight">{titulo}</span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400 flex-wrap">
+                                    <span className={`px-1.5 py-0.5 rounded text-xs font-mono ${tipoColor[d.tipo] || 'bg-gray-100 text-gray-600'}`}>{d.tipo}</span>
+                                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium font-mono ${(d.camara || '').includes('Senado') ? 'bg-gray-800 text-white' : (d.camara || '').includes('Permanente') ? 'bg-amber-700 text-white' : 'bg-gray-200 text-gray-700'}`}>{d.camara || 'Diputados'}</span>
+                                    {d.autor && d.autor !== 'No identificado' && <span className="text-gray-500">{formatearAutor(d.autor)}</span>}
+                                    <span className="font-mono">{d.fecha}</span>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400 flex-wrap">
-                                <span className={`px-1.5 py-0.5 rounded text-xs font-mono ${tipoColor[d.tipo] || 'bg-gray-100 text-gray-600'}`}>{d.tipo}</span>
-                                <span className={`px-1.5 py-0.5 rounded text-xs font-medium font-mono ${d.camara === 'Senado' ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-700'}`}>{d.camara || 'Diputados'}</span>
-                                {d.autor && d.autor !== 'No identificado' && <span className="text-gray-500">{d.autor}</span>}
-                                <span className="font-mono">{d.fecha}</span>
-                            </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             );
         }

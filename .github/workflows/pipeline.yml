@@ -103,6 +103,28 @@ jobs:
         run: python scripts/integrar_diputados_oficial.py
         continue-on-error: true
 
+      # 4c. Limpiar comisiones falsas de senadores. El scraper original
+      #     parseó mal el HTML del Senado y metió items del menú lateral
+      #     ('Diario de los Debates', 'Documentos de Apoyo Parlamentario',
+      #     'Expedientes Legislativos Digitales', 'Iniciativas, Minutas,
+      #     Instrumentos', etc.) como falsas comisiones. Eso inflaba el
+      #     índice de efectividad por comisión. El script filtra contra
+      #     CATALOGO_LXVI (las 68 comisiones reales del Senado) y descarta
+      #     todo lo demás. Idempotente.
+      - name: Limpiar comisiones falsas senadores (idempotente)
+        run: python scripts/limpiar_cargos_senadores.py
+        continue-on-error: true
+
+      # 4d. Reparar campo `partido` en sil_documentos. Bug: el scraper
+      #     oficial del Senado asignaba 'PAN' a todos los opositores y
+      #     'MORENA' a todos los oficialistas, sin distinguir PT, PRI,
+      #     PVEM, MC. El script cruza presentador con tabla legisladores
+      #     (que sí tiene partidos correctos) usando utils.matcher central.
+      #     Solo aplica cuando hay match único. Idempotente.
+      - name: Fix partido en sil_documentos (idempotente)
+        run: python scripts/fix_partido_sil.py
+        continue-on-error: true
+
       # 5. Ejecutar el pipeline completo
       #    Modo local: SQLite puro, sin dependencia de Turso
       - name: Ejecutar pipeline
