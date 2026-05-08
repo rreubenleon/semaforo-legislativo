@@ -261,7 +261,10 @@ async function handleRadar(request, env) {
   const q = (url.searchParams.get('q') || '').trim().toLowerCase();
   const sort = (url.searchParams.get('sort') || 'hit_rate').trim();
   const pagina = Math.max(1, parseInt(url.searchParams.get('pagina') || '1') || 1);
-  const limite = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limite') || '30') || 30));
+  // Cap subido a 2000 para soportar la sub-pestaña 'Permanente' del Radar
+  // que necesita el universo LXVI completo (~684 legisladores) para
+  // filtrar contra los 74 integrantes oficiales en client-side.
+  const limite = Math.min(2000, Math.max(1, parseInt(url.searchParams.get('limite') || '30') || 30));
   const offset = (pagina - 1) * limite;
 
   // Orden
