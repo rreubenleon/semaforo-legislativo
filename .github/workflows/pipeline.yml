@@ -92,6 +92,17 @@ jobs:
         run: python scripts/cargar_permanente_lxvi.py
         continue-on-error: true   # No bloquear pipeline si el roster falla
 
+      # 4b. Integrar SITL Diputados oficial al sil_documentos.
+      #     Idempotente (UPSERT por seg_id determinístico). Lee
+      #     dashboard/diputados_lxvi_oficial.json (committeado en repo)
+      #     y completa los ~2,000 docs de Diputados que SIL Gobernación
+      #     no exponía pero SITL Diputados sí (gap de ~30% en proposiciones).
+      #     No re-scrape: el JSON se actualiza manualmente cuando hay
+      #     nuevos periodos (2-3 veces por año). Sin red.
+      - name: Integrar SITL Diputados oficial (idempotente)
+        run: python scripts/integrar_diputados_oficial.py
+        continue-on-error: true
+
       # 5. Ejecutar el pipeline completo
       #    Modo local: SQLite puro, sin dependencia de Turso
       - name: Ejecutar pipeline
