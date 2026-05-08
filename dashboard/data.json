@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generado": "2026-05-08T16:25:47.703228+00:00",
+    "generado": "2026-05-08T17:52:18.841022+00:00",
     "version": "3.3",
     "formula": "SCORE = (0.20*Media) + (0.15*Trends) + (0.25*Congreso) + (0.10*Mañanera) + (0.15*Urgencia) + (0.15*Dominancia)",
     "umbrales": {
@@ -14,6 +14,55 @@
     "modo_receso": true
   },
   "semaforo": [
+    {
+      "categoria": "relaciones_exteriores",
+      "nombre": "Relaciones Exteriores",
+      "score_total": 74.31,
+      "score_media": 100.0,
+      "score_trends": 13.8,
+      "score_congreso": 100.0,
+      "score_mananera": 52.61,
+      "score_urgencia": 46.53,
+      "score_dominancia": 100.0,
+      "color": "verde",
+      "fecha": "2026-05-08",
+      "momentum": {
+        "dias_consecutivos": 29,
+        "semanas_en_agenda": 4,
+        "tendencia": "down",
+        "etiqueta": "Semana 4 en agenda"
+      },
+      "subcategorias_activas": [
+        {
+          "clave": "relacion_eeuu",
+          "nombre": "Relación con EE.UU.",
+          "peso": 1.0
+        },
+        {
+          "clave": "diplomacia_organismos",
+          "nombre": "Diplomacia y organismos",
+          "peso": 0.53
+        },
+        {
+          "clave": "soberania_fronteras",
+          "nombre": "Soberanía y fronteras",
+          "peso": 0.16
+        }
+      ],
+      "divergencia": {
+        "indice": 0.049,
+        "patron_id": "convergencia",
+        "patron_label": "Convergencia",
+        "explicacion": "Las 6 fuentes alineadas con su distribución típica.",
+        "sobre_representada": "Dominancia",
+        "sub_representada": "Congreso"
+      },
+      "aprobados_14d": {
+        "count": 0,
+        "items": []
+      },
+      "prob_extraordinario": 52.7
+    },
     {
       "categoria": "seguridad_justicia",
       "nombre": "Seguridad y Justicia",
@@ -41,32 +90,32 @@
         {
           "clave": "violencia_victimas",
           "nombre": "Violencia y víctimas",
-          "peso": 0.83
+          "peso": 0.88
         },
         {
           "clave": "seguridad_publica",
           "nombre": "Seguridad pública y policía",
-          "peso": 0.47
+          "peso": 0.54
         },
         {
           "clave": "justicia_penal",
           "nombre": "Justicia penal y reforma judicial",
-          "peso": 0.32
+          "peso": 0.34
         },
         {
           "clave": "fuerzas_armadas",
           "nombre": "Fuerzas armadas y defensa",
-          "peso": 0.21
+          "peso": 0.23
         },
         {
           "clave": "justicia_constitucional",
           "nombre": "Justicia constitucional",
-          "peso": 0.13
+          "peso": 0.15
         },
         {
           "clave": "sistema_penitenciario",
           "nombre": "Sistema penitenciario",
-          "peso": 0.07
+          "peso": 0.08
         }
       ],
       "divergencia": {
@@ -82,55 +131,6 @@
         "items": []
       },
       "prob_extraordinario": 49.5
-    },
-    {
-      "categoria": "relaciones_exteriores",
-      "nombre": "Relaciones Exteriores",
-      "score_total": 73.11,
-      "score_media": 100.0,
-      "score_trends": 13.8,
-      "score_congreso": 100.0,
-      "score_mananera": 40.61,
-      "score_urgencia": 46.53,
-      "score_dominancia": 100.0,
-      "color": "verde",
-      "fecha": "2026-05-08",
-      "momentum": {
-        "dias_consecutivos": 29,
-        "semanas_en_agenda": 4,
-        "tendencia": "down",
-        "etiqueta": "Semana 4 en agenda"
-      },
-      "subcategorias_activas": [
-        {
-          "clave": "relacion_eeuu",
-          "nombre": "Relación con EE.UU.",
-          "peso": 1.0
-        },
-        {
-          "clave": "diplomacia_organismos",
-          "nombre": "Diplomacia y organismos",
-          "peso": 0.51
-        },
-        {
-          "clave": "soberania_fronteras",
-          "nombre": "Soberanía y fronteras",
-          "peso": 0.13
-        }
-      ],
-      "divergencia": {
-        "indice": 0.051,
-        "patron_id": "rebalanceo_tecnico",
-        "patron_label": "Rebalanceo del modelo",
-        "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
-        "sobre_representada": "Dominancia",
-        "sub_representada": "Congreso"
-      },
-      "aprobados_14d": {
-        "count": 0,
-        "items": []
-      },
-      "prob_extraordinario": 50.3
     },
     {
       "categoria": "economia_hacienda",
@@ -157,24 +157,24 @@
           "peso": 1.0
         },
         {
-          "clave": "presupuesto_gasto",
-          "nombre": "Presupuesto y gasto público",
-          "peso": 0.23
-        },
-        {
           "clave": "fomento_economico",
           "nombre": "Fomento económico",
-          "peso": 0.2
+          "peso": 0.21
+        },
+        {
+          "clave": "presupuesto_gasto",
+          "nombre": "Presupuesto y gasto público",
+          "peso": 0.14
+        },
+        {
+          "clave": "politica_fiscal",
+          "nombre": "Política fiscal y recaudación",
+          "peso": 0.11
         },
         {
           "clave": "comercio_exterior",
           "nombre": "Comercio exterior e inversión",
           "peso": 0.11
-        },
-        {
-          "clave": "politica_fiscal",
-          "nombre": "Política fiscal y recaudación",
-          "peso": 0.09
         },
         {
           "clave": "competencia_mercados",
@@ -223,32 +223,32 @@
         {
           "clave": "vivienda_urbano",
           "nombre": "Vivienda y desarrollo urbano",
-          "peso": 0.81
+          "peso": 0.86
         },
         {
           "clave": "proteccion_civil",
           "nombre": "Protección civil y desastres",
-          "peso": 0.49
+          "peso": 0.52
         },
         {
           "clave": "megaproyectos",
           "nombre": "Megaproyectos federales",
-          "peso": 0.29
+          "peso": 0.25
         },
         {
           "clave": "obra_publica",
           "nombre": "Obra pública",
-          "peso": 0.15
+          "peso": 0.18
         },
         {
           "clave": "telecomunicaciones",
           "nombre": "Telecomunicaciones",
-          "peso": 0.11
+          "peso": 0.12
         },
         {
           "clave": "agua_saneamiento",
           "nombre": "Agua y saneamiento",
-          "peso": 0.09
+          "peso": 0.1
         }
       ],
       "divergencia": {
@@ -292,12 +292,12 @@
         {
           "clave": "participacion_ciudadana",
           "nombre": "Participación ciudadana",
-          "peso": 0.86
+          "peso": 0.85
         },
         {
           "clave": "gobernabilidad",
           "nombre": "Gobernabilidad",
-          "peso": 0.19
+          "peso": 0.2
         },
         {
           "clave": "partidos_coaliciones",
@@ -346,12 +346,17 @@
         {
           "clave": "educacion_superior",
           "nombre": "Educación superior e investigación",
-          "peso": 0.1
+          "peso": 0.14
         },
         {
           "clave": "ciencia_tecnologia",
           "nombre": "Ciencia y tecnología",
           "peso": 0.04
+        },
+        {
+          "clave": "cultura_deporte",
+          "nombre": "Cultura y deporte",
+          "peso": 0.02
         }
       ],
       "divergencia": {
@@ -371,8 +376,8 @@
     {
       "categoria": "anticorrupcion",
       "nombre": "Anticorrupción",
-      "score_total": 59.6,
-      "score_media": 85.64,
+      "score_total": 59.63,
+      "score_media": 85.75,
       "score_trends": 6.13,
       "score_congreso": 80.45,
       "score_mananera": 8.62,
@@ -395,7 +400,7 @@
         {
           "clave": "delitos_financieros",
           "nombre": "Delitos financieros",
-          "peso": 0.38
+          "peso": 0.37
         },
         {
           "clave": "etica_publica",
@@ -420,13 +425,13 @@
         "count": 0,
         "items": []
       },
-      "prob_extraordinario": 35.6
+      "prob_extraordinario": 35.7
     },
     {
       "categoria": "trabajo",
       "nombre": "Trabajo",
-      "score_total": 58.2,
-      "score_media": 86.4,
+      "score_total": 58.18,
+      "score_media": 86.32,
       "score_trends": 13.33,
       "score_congreso": 69.21000000000001,
       "score_mananera": 26.99,
@@ -449,17 +454,17 @@
         {
           "clave": "relaciones_laborales",
           "nombre": "Relaciones laborales",
-          "peso": 0.94
+          "peso": 0.89
         },
         {
           "clave": "empleo_salario",
           "nombre": "Empleo y salarios",
-          "peso": 0.68
+          "peso": 0.71
         },
         {
           "clave": "derechos_laborales",
           "nombre": "Derechos laborales",
-          "peso": 0.31
+          "peso": 0.28
         }
       ],
       "divergencia": {
@@ -480,7 +485,7 @@
       "categoria": "salud",
       "nombre": "Salud",
       "score_total": 58.17,
-      "score_media": 93.31,
+      "score_media": 93.29,
       "score_trends": 8.87,
       "score_congreso": 72.87,
       "score_mananera": 8.58,
@@ -533,8 +538,8 @@
     {
       "categoria": "medio_ambiente",
       "nombre": "Medio Ambiente y Cambio Climático",
-      "score_total": 57.61,
-      "score_media": 91.63,
+      "score_total": 57.63,
+      "score_media": 91.71,
       "score_trends": 4.27,
       "score_congreso": 68.81,
       "score_mananera": 1.72,
@@ -557,17 +562,17 @@
         {
           "clave": "contaminacion_residuos",
           "nombre": "Contaminación y residuos",
-          "peso": 0.3
+          "peso": 0.24
         },
         {
           "clave": "cambio_climatico",
           "nombre": "Cambio climático",
-          "peso": 0.13
+          "peso": 0.12
         },
         {
           "clave": "conservacion_biodiversidad",
           "nombre": "Conservación y biodiversidad",
-          "peso": 0.08
+          "peso": 0.07
         },
         {
           "clave": "fenomenos_naturales",
@@ -592,8 +597,8 @@
     {
       "categoria": "derechos_humanos",
       "nombre": "Derechos Humanos",
-      "score_total": 55.22,
-      "score_media": 83.17,
+      "score_total": 55.21,
+      "score_media": 83.13,
       "score_trends": 3.6,
       "score_congreso": 68.24,
       "score_mananera": 11.89,
@@ -705,12 +710,12 @@
     {
       "categoria": "agro_rural",
       "nombre": "Agro y Desarrollo Rural",
-      "score_total": 43.47,
-      "score_media": 86.51,
+      "score_total": 43.46,
+      "score_media": 86.48,
       "score_trends": 13.93,
       "score_congreso": 11.71,
       "score_mananera": 10.23,
-      "score_urgencia": 34.18,
+      "score_urgencia": 34.17,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-05-08",
@@ -759,12 +764,12 @@
     {
       "categoria": "politica_social",
       "nombre": "Política Social",
-      "score_total": 40.1,
-      "score_media": 74.45,
+      "score_total": 40.09,
+      "score_media": 74.39,
       "score_trends": 14.87,
       "score_congreso": 15.469999999999999,
       "score_mananera": 5.82,
-      "score_urgencia": 23.53,
+      "score_urgencia": 23.52,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-05-08",
@@ -805,7 +810,7 @@
         "sub_representada": "Congreso",
         "estado_abierto": true,
         "abierta_en": "2026-05-08T04:01:09",
-        "horas_activa": 12.4,
+        "horas_activa": 13.9,
         "kl_pico": 0.339,
         "patron_apertura": "Interés ciudadano elevado"
       },
@@ -813,13 +818,13 @@
         "count": 0,
         "items": []
       },
-      "prob_extraordinario": 37.9
+      "prob_extraordinario": 37.8
     },
     {
       "categoria": "inteligencia_artificial",
       "nombre": "Inteligencia Artificial",
-      "score_total": 36.38,
-      "score_media": 64.61,
+      "score_total": 36.37,
+      "score_media": 64.57000000000001,
       "score_trends": 6.4,
       "score_congreso": 14.280000000000001,
       "score_mananera": 0.0,
@@ -873,7 +878,7 @@
       "categoria": "medios_comunicacion",
       "nombre": "Medios de Comunicación",
       "score_total": 36.17,
-      "score_media": 70.02,
+      "score_media": 70.0,
       "score_trends": 12.6,
       "score_congreso": 9.03,
       "score_mananera": 0.0,
@@ -921,12 +926,12 @@
     {
       "categoria": "turismo",
       "nombre": "Turismo",
-      "score_total": 34.58,
-      "score_media": 64.8,
+      "score_total": 35.28,
+      "score_media": 68.05,
       "score_trends": 10.6,
       "score_congreso": 0.0,
       "score_mananera": 0.93,
-      "score_urgencia": 36.9,
+      "score_urgencia": 37.24,
       "score_dominancia": 96.0,
       "color": "rojo",
       "fecha": "2026-05-08",
@@ -959,7 +964,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.388,
+        "indice": 0.381,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -970,13 +975,13 @@
         "count": 0,
         "items": []
       },
-      "prob_extraordinario": 32.9
+      "prob_extraordinario": 34.0
     },
     {
       "categoria": "igualdad_genero",
       "nombre": "Igualdad de género",
-      "score_total": 34.5,
-      "score_media": 61.28,
+      "score_total": 34.49,
+      "score_media": 61.24,
       "score_trends": 2.6,
       "score_congreso": 10.74,
       "score_mananera": 0.0,
@@ -999,22 +1004,22 @@
         {
           "clave": "igualdad_sustantiva",
           "nombre": "Igualdad sustantiva",
-          "peso": 0.44
+          "peso": 0.42
         },
         {
           "clave": "instituciones_genero",
           "nombre": "Instituciones de género",
-          "peso": 0.32
+          "peso": 0.31
         },
         {
           "clave": "participacion_politica_mujeres",
           "nombre": "Participación política de mujeres",
-          "peso": 0.29
+          "peso": 0.28
         },
         {
           "clave": "derechos_reproductivos",
           "nombre": "Derechos reproductivos",
-          "peso": 0.17
+          "peso": 0.16
         }
       ],
       "divergencia": {
@@ -1035,7 +1040,7 @@
       "categoria": "administracion",
       "nombre": "Administración",
       "score_total": 32.26,
-      "score_media": 39.34,
+      "score_media": 39.33,
       "score_trends": 0.0,
       "score_congreso": 12.68,
       "score_mananera": 0.0,
@@ -1087,6 +1092,51 @@
     }
   ],
   "alertas": [
+    {
+      "id": 1696,
+      "categoria": "relaciones_exteriores",
+      "tipo_alerta": "score_alto",
+      "score": 74.31,
+      "color": "verde",
+      "mensaje": "ALERTA: Relaciones Exteriores con score 74.3 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-05-08T17:52:10.388947"
+    },
+    {
+      "id": 1695,
+      "categoria": "infraestructura",
+      "tipo_alerta": "score_alto",
+      "score": 72.33,
+      "color": "verde",
+      "mensaje": "ALERTA: Infraestructura con score 72.3 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-05-08T17:52:09.464096"
+    },
+    {
+      "id": 1694,
+      "categoria": "electoral_politico",
+      "tipo_alerta": "score_alto",
+      "score": 71.34,
+      "color": "verde",
+      "mensaje": "ALERTA: Electoral y Político con score 71.3 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-05-08T17:52:08.272098"
+    },
+    {
+      "id": 1693,
+      "categoria": "economia_hacienda",
+      "tipo_alerta": "score_alto",
+      "score": 72.38,
+      "color": "verde",
+      "mensaje": "ALERTA: Economía y Hacienda con score 72.4 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-05-08T17:52:05.802531"
+    },
+    {
+      "id": 1692,
+      "categoria": "seguridad_justicia",
+      "tipo_alerta": "score_alto",
+      "score": 73.98,
+      "color": "verde",
+      "mensaje": "ALERTA: Seguridad y Justicia con score 74.0 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-05-08T17:52:04.815191"
+    },
     {
       "id": 1691,
       "categoria": "relaciones_exteriores",
@@ -1491,71 +1541,26 @@
       "color": "verde",
       "mensaje": "ALERTA: Electoral y Político con score 70.7 - Alta probabilidad de actividad legislativa",
       "fecha": "2026-05-06T18:15:12.599945"
-    },
-    {
-      "id": 1646,
-      "categoria": "trabajo",
-      "tipo_alerta": "score_alto",
-      "score": 70.62,
-      "color": "verde",
-      "mensaje": "ALERTA: Trabajo con score 70.6 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-05-06T18:15:11.782432"
-    },
-    {
-      "id": 1645,
-      "categoria": "educacion",
-      "tipo_alerta": "score_alto",
-      "score": 70.53,
-      "color": "verde",
-      "mensaje": "ALERTA: Educación con score 70.5 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-05-06T18:15:11.262293"
-    },
-    {
-      "id": 1644,
-      "categoria": "economia_hacienda",
-      "tipo_alerta": "score_alto",
-      "score": 76.04,
-      "color": "verde",
-      "mensaje": "ALERTA: Economía y Hacienda con score 76.0 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-05-06T18:15:09.555708"
-    },
-    {
-      "id": 1643,
-      "categoria": "seguridad_justicia",
-      "tipo_alerta": "score_alto",
-      "score": 72.09,
-      "color": "verde",
-      "mensaje": "ALERTA: Seguridad y Justicia con score 72.1 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-05-06T18:15:08.324490"
-    },
-    {
-      "id": 1642,
-      "categoria": "relaciones_exteriores",
-      "tipo_alerta": "score_alto",
-      "score": 71.34,
-      "color": "verde",
-      "mensaje": "ALERTA: Relaciones Exteriores con score 71.3 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-05-06T15:12:16.547916"
     }
   ],
   "distribucion_categorias": {
-    "electoral_politico": 466,
-    "seguridad_justicia": 655,
-    "educacion": 227,
-    "trabajo": 147,
-    "anticorrupcion": 68,
+    "electoral_politico": 470,
+    "seguridad_justicia": 660,
+    "educacion": 236,
+    "trabajo": 148,
+    "anticorrupcion": 69,
     "inteligencia_artificial": 29,
-    "relaciones_exteriores": 361,
-    "igualdad_genero": 31,
-    "infraestructura": 257,
+    "relaciones_exteriores": 369,
+    "igualdad_genero": 32,
+    "infraestructura": 259,
     "salud": 145,
-    "economia_hacienda": 199,
+    "economia_hacienda": 202,
     "derechos_humanos": 76,
     "energia": 107,
     "turismo": 33,
     "medios_comunicacion": 37,
     "agro_rural": 81,
-    "medio_ambiente": 108,
+    "medio_ambiente": 110,
     "politica_social": 59,
     "administracion": 21
   },
@@ -1755,6 +1760,30 @@
     "seguridad_justicia": {
       "articulos_medios": [
         {
+          "fuente": "el_universal",
+          "titulo": "Detienen a Víctor “N”, presunto integrante de Los Malportados; la banda está relacionada con un triple homicidio en Azcapotzalco",
+          "url": "https://www.eluniversal.com.mx/metropoli/detienen-a-victor-n-presunto-integrante-de-los-malportados-la-banda-esta-relacionada-con-un-triple-homicidio-en-azcapotzalco/",
+          "fecha": "2026-05-08"
+        },
+        {
+          "fuente": "cronica",
+          "titulo": "Vinculan a proceso a “El Shimon” de “Los Malportados”, principal narcomenudista y extorsionador en Azcapotzalco",
+          "url": "https://www.cronica.com.mx/metropoli/2026/05/08/vinculan-a-proceso-a-el-shimon-de-los-malportados-principal-narcomenudista-y-extorsionador-en-azcapotzalco/",
+          "fecha": "2026-05-08"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Suman 6 muertos por incendio en plaza comercial de Los Mochis, Sinaloa; gobernadora visita a lesionados",
+          "url": "https://www.eluniversal.com.mx/estados/suman-6-muertos-por-incendio-en-plaza-comercial-de-los-mochis-sinaloa-gobernadora-visita-a-lesionados/",
+          "fecha": "2026-05-08"
+        },
+        {
+          "fuente": "cronica",
+          "titulo": "Detienen a joven que habría asesinado a su madre y la reportó cómo desaparecida en VC",
+          "url": "https://www.cronica.com.mx/metropoli/2026/05/08/detienen-a-joven-que-habria-asesinado-a-su-madre-y-la-reporto-como-desaparecida-en-vc/",
+          "fecha": "2026-05-08"
+        },
+        {
           "fuente": "la_razon",
           "titulo": "Reportan que suman 8 muertos por incendio en centro comercial de Los Mochis, Sinaloa",
           "url": "https://www.razon.com.mx/estados/2026/05/08/reportan-que-suman-8-muertos-por-incendio-en-centro-comercial-de-los-mochis-sinaloa/",
@@ -1818,30 +1847,6 @@
           "fuente": "la_razon",
           "titulo": "Incendio arrasa Feria de Tabasco; deja 5 muertos",
           "url": "https://www.razon.com.mx/estados/2026/05/08/incendio-arrasa-feria-de-tabasco-deja-5-muertos/",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Incendio en la Feria Tabasco deja 5 muertos",
-          "url": "https://www.eluniversal.com.mx/estados/incendio-en-la-feria-tabasco-deja-5-muertos/",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "El crimen ahora fabrica fichas de desaparecidos",
-          "url": "https://www.eluniversal.com.mx/estados/el-crimen-ahora-fabrica-fichas-de-desaparecidos/",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "“Terapia” provoca muerte en anexo en Coahuila; fue homicidio acusan",
-          "url": "https://www.razon.com.mx/estados/2026/05/07/terapia-provoca-muerte-en-anexo-en-coahuila-fue-homicidio-acusan/",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "¿Quién es José Manuel Rubio, presunto feminicida de Beany Lozano?",
-          "url": "https://www.razon.com.mx/mexico/2026/05/07/quien-es-jose-manuel-rubio-presunto-feminicida-de-beany-lozano/",
           "fecha": "2026-05-08"
         }
       ],
@@ -2603,6 +2608,18 @@
     "economia_hacienda": {
       "articulos_medios": [
         {
+          "fuente": "el_financiero",
+          "titulo": "Peso se perfila para ganancia semanal de más de 20 centavos ante el dólar",
+          "url": "https://www.elfinanciero.com.mx/mercados/2026/05/08/peso-dolar-precio-hoy-8-de-mayo-de-2026/",
+          "fecha": "2026-05-08"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Hay un aumento en la devolución del IVA, asegura Sheinbaum; \"se cumple siempre\", dice",
+          "url": "https://www.eluniversal.com.mx/nacion/hay-un-aumento-en-la-devolucion-del-iva-asegura-sheinbaum-se-cumple-siempre-dice/",
+          "fecha": "2026-05-08"
+        },
+        {
           "fuente": "cronica",
           "titulo": "Sheinbaum declara que el mejor símbolo de amistad entre México y Estados Unidos son los paisanos que fortalecen la economía",
           "url": "https://www.cronica.com.mx/nacional/2026/05/08/sheinbaum-declara-que-el-mejor-simbolo-de-amistad-entre-mexico-y-estados-unidos-son-los-paisanos-que-fortalecen-la-economia/",
@@ -2678,18 +2695,6 @@
           "fuente": "el_financiero",
           "titulo": "Banxico concluye ciclo de recortes a la tasa de referencia: Queda en 6.5 por ciento",
           "url": "https://www.elfinanciero.com.mx/economia/2026/05/08/banxico-concluye-ciclo-de-recortes-a-la-tasa-de-referencia-queda-en-65-por-ciento/",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "ovaciones",
-          "titulo": "Inflación baja ligeramente en abril a 4.45%: INEGI",
-          "url": "https://ovaciones.com/inflacion-baja-ligeramente-en-abril-a-4-45-inegi/?utm_source=rss&utm_medium=rss&utm_campaign=inflacion-baja-ligeramente-en-abril-a-4-45-inegi",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "ovaciones",
-          "titulo": "Día de las Madres 2026: la inflación encarece alimentos y flores en todo México",
-          "url": "https://ovaciones.com/dia-de-las-madres-2026-la-inflacion-encarece-alimentos-y-flores-en-todo-mexico/?utm_source=rss&utm_medium=rss&utm_campaign=dia-de-las-madres-2026-la-inflacion-encarece-alimentos-y-flores-en-todo-mexico",
           "fecha": "2026-05-08"
         }
       ],
@@ -4567,6 +4572,12 @@
       ],
       "tweets": [
         {
+          "usuario": "ManuelAnorve",
+          "nombre": "Manuel Añorve Baños",
+          "texto": "El secretario de Educación Pública, @mario_delgado, debe renunciar inmediatamente.\n\nMéxico enfrenta uno de los mayores rezagos educativos en décadas: millones de niños y jóvenes todavía tienen serias dificultades en lectura, matemáticas y comprensión básica luego de la pandemia h",
+          "fecha": "2026-05-08"
+        },
+        {
           "usuario": "Juan_OrtizMX",
           "nombre": "Juan Ortiz",
           "texto": "🗳️📌 ¿QUE ONDA CON ESTA DIPUTADA DE MORENA?\n\nHoy se dio a conocer que Hades Aguilar usó presupuesto del Congreso de Guanajuato para pagar:\n\n- Servicios médicos vinculados con cirugía plásticas (Blackpaper)\n- Medicamento para la diabetes (Contacto Noticias)\n- Dulces como Totis http",
@@ -4619,17 +4630,41 @@
           "nombre": "Manuel López San Martín",
           "texto": "Mueren 11 personas tras la volcadura de un autobus turistico en Amatlan de Canas, Nayarit\n\nLa mayoria de las victimas eran de Tlaquepaque\n\n21 heridos reciben atencion en hospitales\n\nEl accidente ocurrio esta mañana en la carretera San Marcos–Amatlan https://t.co/82B8N65tfd",
           "fecha": "2026-05-02"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "Primero votó contra que el IMSS otorgue prótesis y audífonos a menores\n\nAhora, contra compensaciones a pobladores de Atenco por la pérdida de sus parcelas \n\nLo de “ministra del pueblo” fue mentira https://t.co/zjHGk8ppfq",
-          "fecha": "2026-04-30"
         }
       ]
     },
     "educacion": {
       "articulos_medios": [
+        {
+          "fuente": "el_financiero",
+          "titulo": "‘Calendario de la SEP no está definido’, Sheinbaum sobre recorte de clases; ‘maestros lo pidieron’",
+          "url": "https://www.elfinanciero.com.mx/nacional/2026/05/08/maestros-pidieron-recorte-a-ciclo-escolar-de-la-sep-afirma-sheinbaum-calendario-no-esta-definido/",
+          "fecha": "2026-05-08"
+        },
+        {
+          "fuente": "cronica",
+          "titulo": "Tamaulipas anuncia modificaciones al calendario escolar 2025-2026",
+          "url": "https://www.cronica.com.mx/estados/2026/05/08/tamaulipas-anuncia-modificaciones-al-calendario-escolar-2025-2026/",
+          "fecha": "2026-05-08"
+        },
+        {
+          "fuente": "cronica",
+          "titulo": "Calendario oficial SEP: Sheinbaum pone freno a las vacaciones anticipadas por el Mundial 2026 y dice que “es una propuesta”",
+          "url": "https://www.cronica.com.mx/nacional/2026/05/08/calendario-oficial-sep-sheinbaum-pone-freno-a-las-vacaciones-anticipadas-por-el-mundial-2026-y-dice-que-es-una-propuesta/",
+          "fecha": "2026-05-08"
+        },
+        {
+          "fuente": "cronica",
+          "titulo": "Oferta cultural de la UNAM del 11 al 17 de mayo",
+          "url": "https://www.cronica.com.mx/cultura/2026/05/08/oferta-cultural-de-la-unam-del-11-al-17-de-mayo/",
+          "fecha": "2026-05-08"
+        },
+        {
+          "fuente": "ovaciones",
+          "titulo": "Sheinbaum aclara que el ajuste al calendario escolar de la SEP sigue en evaluación",
+          "url": "https://ovaciones.com/sep-analiza-ajuste-al-calendario-escolar-por-mundial-de-futbol/?utm_source=rss&utm_medium=rss&utm_campaign=sep-analiza-ajuste-al-calendario-escolar-por-mundial-de-futbol",
+          "fecha": "2026-05-08"
+        },
         {
           "fuente": "el_financiero",
           "titulo": "‘Calendario de la SEP no está definido’: Sheinbaum sobre recorte de clases; ‘maestros lo pidieron’",
@@ -4682,36 +4717,6 @@
           "fuente": "la_jornada",
           "titulo": "La SEP elimina 40 días de clases por el Mundial y las altas temperaturas",
           "url": "https://www.jornada.com.mx/2026/05/08/politica/009n1pol?partner=rss",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "La Fundación Politécnica y el IPN acuerdan renovar en breve su colaboración",
-          "url": "https://www.jornada.com.mx/2026/05/08/politica/009n4pol?partner=rss",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "La mandataria panista ratifica que no hablará sobre la investigación",
-          "url": "https://www.jornada.com.mx/2026/05/08/politica/005n3pol?partner=rss",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Jueza ampara a  ex director del CIDE para que le den la causa de su remoción",
-          "url": "https://www.jornada.com.mx/2026/05/08/politica/009n3pol?partner=rss",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Avala Corte acuerdo de la SEP que flexibiliza evaluación en educación básica",
-          "url": "https://www.jornada.com.mx/2026/05/08/politica/008n1pol?partner=rss",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "Por Mundial adelanta SEP fin de curso; da 3 meses de vacaciones",
-          "url": "https://www.razon.com.mx/mexico/2026/05/08/por-mundial-adelanta-sep-fin-de-curso-da-3-meses-de-vacaciones/",
           "fecha": "2026-05-08"
         }
       ],
@@ -5409,6 +5414,24 @@
       ],
       "tweets": [
         {
+          "usuario": "RicardoMonrealA",
+          "nombre": "Ricardo Monreal Ávila",
+          "texto": "Imparto clase en la División de Estudios de Posgrado de la @UNAM_MX. ¡Buen viernes! https://t.co/6jDIGGS1Qq",
+          "fecha": "2026-05-08"
+        },
+        {
+          "usuario": "RutaElectoralmx",
+          "nombre": "Ruta Electoral MX",
+          "texto": "🚨📚 Sheinbaum aclara recorte al ciclo escolar: “Vino de los maestros”\n\nLa presidenta @Claudiashein señaló que aunque @mario_delgado ya lo publicó en X, el calendario todavía no es oficial. https://t.co/Y3kbCA4dqA",
+          "fecha": "2026-05-08"
+        },
+        {
+          "usuario": "ManuelAnorve",
+          "nombre": "Manuel Añorve Baños",
+          "texto": "El secretario de Educación Pública, @mario_delgado, debe renunciar inmediatamente.\n\nMéxico enfrenta uno de los mayores rezagos educativos en décadas: millones de niños y jóvenes todavía tienen serias dificultades en lectura, matemáticas y comprensión básica luego de la pandemia h",
+          "fecha": "2026-05-08"
+        },
+        {
           "usuario": "Juan_OrtizMX",
           "nombre": "Juan Ortiz",
           "texto": "🗳️📌SHEINBAUM SE DESMARCA DE ADELANTAR VACACIONES A NIÑOS: FUE PROPUESTA DE ESTADOS Y MAESTROS\n\n¿No aguantaron el reclamo de madres y padres de familia?\n\nSheinbaum fue cuestionada sobre el posible adelanto de vacaciones por el Mundial.\n\nMario Delgado había informado que se https:/",
@@ -5449,29 +5472,17 @@
           "nombre": "Jorge Álvarez Máynez",
           "texto": "¿Qué piensas de la decisión de adelantar el cierre del ciclo escolar al 5 de junio?",
           "fecha": "2026-05-08"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "La @SEP_mx adelanta el fin del ciclo escolar al 5 de junio\n\nDicen que por calor y Mundial 2026\n\nCasi seis semanas menos de clases para 30 millones de estudiantes\n\nMás vacaciones, menos aprendizaje y más presión para padres de familia\n\n📹 @adnnoticiasmx https://t.co/3PjXcbizHg",
-          "fecha": "2026-05-08"
-        },
-        {
-          "usuario": "AlvarezMaynez",
-          "nombre": "Jorge Álvarez Máynez",
-          "texto": "- “El gobierno adelanta el fin del ciclo escolar por el mundial y una ola de calor”\n\nLa ola de calor: https://t.co/ZfBKIsmIOB",
-          "fecha": "2026-05-08"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "La Unión Nacional de Padres de Familia rechazó el recorte al ciclo escolar 2025-2026 \n\nAcusó a la SEP_mx de agravar el rezago educativo en México\n\nAdvirtió que quitar casi 6 semanas de clases es “un golpe directo al derecho a la educación” https://t.co/ckHDNYCEFs",
-          "fecha": "2026-05-08"
         }
       ]
     },
     "trabajo": {
       "articulos_medios": [
+        {
+          "fuente": "el_financiero",
+          "titulo": "Dato de empleo en EU ‘empuja’ a Wall Street: ¿Cuánto ganan HOY sus indicadores?",
+          "url": "https://www.elfinanciero.com.mx/mercados/2026/05/08/bmv-wall-street-acciones-hoy-8-de-mayo-de-2026/",
+          "fecha": "2026-05-08"
+        },
         {
           "fuente": "la_jornada",
           "titulo": "La mitad de las madres en México reciben hasta un salario mínimo: Inegi",
@@ -5554,12 +5565,6 @@
           "fuente": "el_heraldo",
           "titulo": "Suma HG “5 de Diciembre” del ISSSTE en Mexicali, BC, 480 procedimientos en cuatro quirófanos rehabilitados",
           "url": "https://heraldodemexico.com.mx/nacional/2026/5/7/suma-hg-5-de-diciembre-del-issste-en-mexicali-bc-480-procedimientos-en-cuatro-quirofanos-rehabilitados-808563.html",
-          "fecha": "2026-05-07"
-        },
-        {
-          "fuente": "excelsior",
-          "titulo": "ISSSTE recibe primer lote de camas hospitalarias nuevas",
-          "url": "https://www.excelsior.com.mx/nacional/issste-recibe-primer-lote-camas-hospitalarias-nuevas",
           "fecha": "2026-05-07"
         }
       ],
@@ -6205,6 +6210,24 @@
     "electoral_politico": {
       "articulos_medios": [
         {
+          "fuente": "politico_mx",
+          "titulo": "Sheinbaum revela cuál es su verdadera relación con AMLO",
+          "url": "https://www.politico.mx/2026/05/08/sheinbaum-revela-cual-es-su-verdadera-relacion-con-amlo/",
+          "fecha": "2026-05-08"
+        },
+        {
+          "fuente": "cronica",
+          "titulo": "IECM inicia procedimiento especial sancionador por presunta promoción personalizada",
+          "url": "https://www.cronica.com.mx/metropoli/2026/05/08/iecm-inicia-procedimiento-especial-sancionador-por-presunta-promocion-personalizada/",
+          "fecha": "2026-05-08"
+        },
+        {
+          "fuente": "la_razon",
+          "titulo": "Isabel Díaz Ayuso cancela gira en México; acusa ‘boicot’ del Gobierno de ‘ultraizquierda mexicano’",
+          "url": "https://www.razon.com.mx/mexico/2026/05/08/isabel-diaz-ayuso-cancela-gira-en-mexico-acusa-boicot-del-gobierno-de-ultraizquierda-mexicano/",
+          "fecha": "2026-05-08"
+        },
+        {
           "fuente": "la_razon",
           "titulo": "Gobierno de México, sin informes sobre revisión a consultados; ‘no tendría por qué ser’: Sheinbaum",
           "url": "https://www.razon.com.mx/mexico/2026/05/08/gobierno-de-mexico-sin-informes-sobre-revision-a-consultados-no-tendria-por-que-ser-sheinbaum/",
@@ -6274,24 +6297,6 @@
           "fuente": "la_jornada",
           "titulo": "Sin pruebas de ligas criminales, el INE no indaga a candidatos: Taddei",
           "url": "https://www.jornada.com.mx/2026/05/08/politica/007n1pol?partner=rss",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "La puerta de entrada a la justicia supervisada",
-          "url": "https://www.cronica.com.mx/opinion/2026/05/08/la-puerta-de-entrada-a-la-justicia-supervisada-2/",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "el_financiero",
-          "titulo": "Por no detener a Rocha Moya el Gobierno juega con fuego",
-          "url": "https://www.elfinanciero.com.mx/opinion/juan-antonio-garcia-villa/2026/05/08/por-no-detener-a-rocha-moya-el-gobierno-juega-con-fuego/",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "Presidenta pide jugar en  un solo bloque en 2027",
-          "url": "https://www.razon.com.mx/mexico/2026/05/08/presidenta-pide-jugar-en-un-solo-bloque-en-2027/",
           "fecha": "2026-05-08"
         }
       ],
@@ -7829,6 +7834,18 @@
     "infraestructura": {
       "articulos_medios": [
         {
+          "fuente": "cronica",
+          "titulo": "Edomex moderniza infraestructura vial en corredor Toluca-Metepec-Tenango",
+          "url": "https://www.cronica.com.mx/metropoli/2026/05/08/edomex-moderniza-infraestructura-vial-en-corredor-toluca-metepec-tenango/",
+          "fecha": "2026-05-08"
+        },
+        {
+          "fuente": "cronica",
+          "titulo": "Delfina Gómez supervisa avances de la Línea III del Mexicable en Naucalpan",
+          "url": "https://www.cronica.com.mx/metropoli/2026/05/08/delfina-gomez-supervisa-avances-de-la-linea-iii-del-mexicable-en-naucalpan/",
+          "fecha": "2026-05-08"
+        },
+        {
           "fuente": "el_universal",
           "titulo": "Adiós a los scooters y bicimotos sin placas a partir de septiembre",
           "url": "https://www.eluniversal.com.mx/autopistas/adios-a-los-scooters-y-bicimotos-sin-placas-a-partir-de-septiembre/",
@@ -7904,18 +7921,6 @@
           "fuente": "el_universal",
           "titulo": "Línea 3 del Mexicable en Naucalpan alcanza 67% de avance; prevén inice operaciones en 2027",
           "url": "https://www.eluniversal.com.mx/metropoli/linea-3-del-mexicable-en-naucalpan-alcanza-67-de-avance-preven-inice-operaciones-en-2027/",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "Reanudan servicio total en Línea 5 del Metro tras falla por calor",
-          "url": "https://24-horas.mx/cdmx/reanudan-servicio-total-en-linea-5-del-metro-tras-falla-por-calor/",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "Estaciones de la línea 5 del Metro cierran por fallas en sus instalaciones: esto fue lo que sucedió",
-          "url": "https://www.cronica.com.mx/metropoli/2026/05/07/estaciones-de-la-linea-5-del-metro-cierran-por-fallas-en-sus-instalaciones-esto-fue-lo-que-sucedio/",
           "fecha": "2026-05-08"
         }
       ],
@@ -9077,6 +9082,36 @@
     "relaciones_exteriores": {
       "articulos_medios": [
         {
+          "fuente": "el_universal",
+          "titulo": "Trump insiste en decir que \"los cárteles gobiernan México; nadie más lo hace\"",
+          "url": "https://www.eluniversal.com.mx/mundo/trump-insiste-en-decir-que-los-carteles-gobiernan-mexico-nadie-mas-lo-hace/",
+          "fecha": "2026-05-08"
+        },
+        {
+          "fuente": "ovaciones",
+          "titulo": "Propaganda, las acusaciones contra consulados mexicanos en EU: Sheinbaum",
+          "url": "https://ovaciones.com/propaganda-las-acusaciones-contra-consulados-mexicanos-en-eu-sheinbaum/?utm_source=rss&utm_medium=rss&utm_campaign=propaganda-las-acusaciones-contra-consulados-mexicanos-en-eu-sheinbaum",
+          "fecha": "2026-05-08"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Sheinbaum: siempre nos hemos manifestado en contra del genocidio en Gaza; hace un llamado a que se construya la paz",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-siempre-nos-hemos-manifestado-en-contra-del-genocidio-en-gaza-hace-un-llamado-a-que-se-construya-la-paz/",
+          "fecha": "2026-05-08"
+        },
+        {
+          "fuente": "cronica",
+          "titulo": "Sheinbaum niega que los consulados mexicanos estén  haciendo política en Estados Unidos",
+          "url": "https://www.cronica.com.mx/nacional/2026/05/08/sheinbaum-niega-que-los-consulados-mexicanos-estan-haciendo-politica-en-estados-unidos/",
+          "fecha": "2026-05-08"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Sheinbaum asegura que no hay incertidumbre por remesas; dice que cada vez menos mexicanos se van a EU",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-asegura-que-no-hay-incertidumbre-por-remesas-dice-que-cada-vez-menos-mexicanos-se-van-a-eu/",
+          "fecha": "2026-05-08"
+        },
+        {
           "fuente": "cronica",
           "titulo": "Sheinbaum declara que el mejor símbolo de amistad entre México y Estados Unidos son los paisanos que fortalecen la economía",
           "url": "https://www.cronica.com.mx/nacional/2026/05/08/sheinbaum-declara-que-el-mejor-simbolo-de-amistad-entre-mexico-y-estados-unidos-son-los-paisanos-que-fortalecen-la-economia/",
@@ -9134,36 +9169,6 @@
           "fuente": "ovaciones",
           "titulo": "Estados Unidos: el “10” que rescata el partido",
           "url": "https://ovaciones.com/estados-unidos-el-10-que-rescata-el-partido/?utm_source=rss&utm_medium=rss&utm_campaign=estados-unidos-el-10-que-rescata-el-partido",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "el_financiero",
-          "titulo": "La gira que ya huele a T-MEC",
-          "url": "https://www.elfinanciero.com.mx/opinion/jeanette-leyva/2026/05/08/la-gira-que-ya-huele-a-t-mec/",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Washington revisa los 53 consulados de México",
-          "url": "https://www.jornada.com.mx/2026/05/08/politica/003n2pol?partner=rss",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Hechos constatan nuestra lucha contra el crimen, revira Sheinbaum a Trump",
-          "url": "https://www.jornada.com.mx/2026/05/08/politica/003n1pol?partner=rss",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Aplaude Ronald Johnson desarticulación de red de narcotráfico en Kansas",
-          "url": "https://www.jornada.com.mx/2026/05/08/politica/006n1pol?partner=rss",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Electoreros, los dichos de Trump de intervenir en México: Monreal",
-          "url": "https://www.jornada.com.mx/2026/05/08/politica/004n2pol?partner=rss",
           "fecha": "2026-05-08"
         }
       ],
@@ -9665,6 +9670,11 @@
       ],
       "menciones_csp": [
         {
+          "fecha": "2026-05-08",
+          "fragmento": "Hoy vamos a acabar… Llegamos un poco tarde y vamos a acabar temprano, porque vamos a Sonora y el vuelo sale a las 10:00 de la mañana; entonces cerramos a las 09:00 y nos vamos corriendo. Bueno, hoy vamos a dedicar “La mañanera” a las y los paisanos que viven en Estados Unidos. La buena relación entre ambas naciones, entre México y Estados Unidos, se basa, entre otras cosas, en los mexicanos que viven ahí desde hace muchas generaciones.",
+          "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-08-de-mayo-de-2026"
+        },
+        {
           "fecha": "2026-05-07",
           "fragmento": "PREGUNTA: Espero yo que sí, pero no lo sé sinceramente, no tengo la prueba para decirle: si el Código Penal lo establece. Bueno: en Argentina, en México, en China, en Estados Unidos, en Guatemala, en Nicaragua, en Reino Unido, en Alemania, en España, en Emiratos Árabes, es ilegal entrar con un pasaporte falso. PREGUNTA: Hay países que no piden pasaporte.",
           "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-07-de-mayo-de-2026"
@@ -9708,14 +9718,15 @@
           "fecha": "2026-04-24",
           "fragmento": "Lo que tenemos que buscar nosotros es la permanencia del Tratado. Evidentemente, garantizar o buscar que no haya aranceles, pero frente a una determinación que tome el gobierno de los Estados Unidos, pues nosotros buscamos las mejores condiciones para nuestro país. Que de hecho las tenemos, por la cercanía territorial y la vinculación y la integración económica que ya existe entre ambos países.",
           "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-24-de-abril-de-2026"
-        },
-        {
-          "fecha": "2026-04-23",
-          "fragmento": "Y nosotros no. Nuestra visión la he dicho desde el primer momento; se le ha dicho en persona al presidente Trump, se le ha dicho por teléfono al presidente Trump, se le ha dicho al embajador de Estados Unidos. Pero, además, lo increíble es que hemos avanzado bajo esa característica: colaboración, coordinación, pero no subordinación.",
-          "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-23-de-abril-de-2026"
         }
       ],
       "tweets": [
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "🚨 De nuevo Trump: \n\n“Los carteles son los que gobiernan México, nadie más” https://t.co/h7g78SL05s",
+          "fecha": "2026-05-08"
+        },
         {
           "usuario": "MLopezSanMartin",
           "nombre": "Manuel López San Martín",
@@ -9769,12 +9780,6 @@
           "nombre": "Manuel López San Martín",
           "texto": "Se les acabaron las palabras... \n\nCuauhtémoc Blanco es otro de los que ya no habla\n\nSe fue sin decir nada cuando le preguntaron si no le daba temor estar en las listas de Estados Unidos 👇\n\n📹 @Reforma https://t.co/X8hPhGYRqG",
           "fecha": "2026-05-08"
-        },
-        {
-          "usuario": "Juan_OrtizMX",
-          "nombre": "Juan Ortiz",
-          "texto": "🗳️📌 EEUU INICIA REVISIÓN DE CONSULADOS MEXICANOS; PODRÍAN CERRAR ALGUNOS\n\n¿Cuál será el motivo?\n\nCBS News reporta que el Departamento de Estado revisa los 53 consulados mexicanos en Estados Unidos.\n\nLa revisión podría llevar al cierre de algunas oficinas diplomáticas.\n\nEl https:/",
-          "fecha": "2026-05-07"
         }
       ]
     },
@@ -9808,6 +9813,12 @@
           "fuente": "cronica",
           "titulo": "Congreso de Hidalgo recibe expediente para avanzar en prohibición de la tauromaquia",
           "url": "https://www.cronica.com.mx/estados/2026/05/07/congreso-de-hidalgo-recibe-expediente-para-avanzar-en-prohibicion-de-la-tauromaquia/",
+          "fecha": "2026-05-08"
+        },
+        {
+          "fuente": "milenio",
+          "titulo": "Cinco estados, con expedientes contra aspirantes de Morena",
+          "url": "https://www.milenio.com/politica/cinco-estados-con-expedientes-contra-aspirantes-de-morena-hacia-2027",
           "fecha": "2026-05-08"
         },
         {
@@ -9862,12 +9873,6 @@
           "fuente": "cronica",
           "titulo": "El expediente negro de la Corona contra Hernán Cortés en México: corrupción, esclavitud... y pleitos familiares",
           "url": "https://www.cronica.com.mx/cultura/2026/05/06/el-expediente-negro-de-la-corona-contra-hernan-cortes-en-mexico-corrupcion-esclavitud-y-pleitos-familiares/",
-          "fecha": "2026-05-06"
-        },
-        {
-          "fuente": "politico_mx",
-          "titulo": "El polémico yerno de Rocha Moya acusado de corrupción y financiar campañas de Morena",
-          "url": "https://www.politico.mx/2026/05/06/el-polemico-yerno-de-rocha-moya-acusado-de-corrupcion-y-financiar-campanas-de-morena/",
           "fecha": "2026-05-06"
         }
       ],
@@ -10177,6 +10182,12 @@
     "medio_ambiente": {
       "articulos_medios": [
         {
+          "fuente": "el_universal",
+          "titulo": "Suman 6 muertos por incendio en plaza comercial de Los Mochis, Sinaloa; gobernadora visita a lesionados",
+          "url": "https://www.eluniversal.com.mx/estados/suman-6-muertos-por-incendio-en-plaza-comercial-de-los-mochis-sinaloa-gobernadora-visita-a-lesionados/",
+          "fecha": "2026-05-08"
+        },
+        {
           "fuente": "el_financiero",
           "titulo": "Santa Marta: ¿El principio del fin de la era fósil?",
           "url": "https://www.elfinanciero.com.mx/opinion/raul-asis-monforte-gonzalez/2026/05/08/santa-marta-el-principio-del-fin-de-la-era-fosil/",
@@ -10237,6 +10248,12 @@
           "fecha": "2026-05-08"
         },
         {
+          "fuente": "excelsior",
+          "titulo": "Sube a 6 los muertos tras incendio en plaza comercial de Los Mochis, Sinaloa",
+          "url": "https://www.excelsior.com.mx/nacional/sube-6-muertos-tras-incendio-plaza-comercial-mochis-sinaloa",
+          "fecha": "2026-05-08"
+        },
+        {
           "fuente": "el_heraldo",
           "titulo": "Gobernadora de Sinaloa ordena atención inmediata tras incendio en Plaza Fiesta Las Palmas en Los Mochis",
           "url": "https://heraldodemexico.com.mx/nacional/2026/5/7/gobernadora-de-sinaloa-ordena-atencion-inmediata-tras-incendio-en-plaza-fiesta-las-palmas-en-los-mochis-808880.html",
@@ -10252,18 +10269,6 @@
           "fuente": "el_heraldo",
           "titulo": "Se registra fuerte incendio en plaza comercial de Sinaloa; hay 5 muertos y 10 personas intoxicadas | VIDEO",
           "url": "https://heraldodemexico.com.mx/nacional/2026/5/7/se-registra-fuerte-incendio-en-plaza-comercial-de-sinaloa-hay-muertos-10-personas-intoxicadas-video-808605.html",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "excelsior",
-          "titulo": "Siniestro en Sinaloa: Mueren 5 personas tras fuerte incendio en plaza comercial",
-          "url": "https://www.excelsior.com.mx/nacional/siniestro-sinaloa-mueren-5-personas-tras-fuerte-incendio-plaza-comercial",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "sol_de_mexico",
-          "titulo": "Semar descarta manchas de petróleo en costas de Champotón",
-          "url": "https://www.elsoldemexico.com.mx/elsoldemexico/mexico/semar-inspecciona-costas-de-champoton-y-no-detecta-contaminacion-por-hidrocarburo-29861624",
           "fecha": "2026-05-08"
         }
       ],
@@ -11839,6 +11844,12 @@
       ],
       "tweets": [
         {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "Así retoma la prensa española la decisión de Isabel Díaz Ayuso de suspender la última parte de su visita a México\n\nAcusa a Claudia Sheinbaum de amenazar con cerrar el hotel donde se llevarían a cabo los Premios Platino\n\n📹@rtve https://t.co/HowyHcvW3H",
+          "fecha": "2026-05-08"
+        },
+        {
           "usuario": "RutaElectoralmx",
           "nombre": "Ruta Electoral MX",
           "texto": "👨‍💻 #Puebla se mete de lleno en la carrera tecnológica: concentra 15 proyectos en ciencia e innovación, incluidos semiconductores y turismo científico.\n\nEl Gran Telescopio Milimétrico y el respaldo federal apuntalan su posicionamiento nacional. https://t.co/KHAB5TQUjQ",
@@ -11891,17 +11902,17 @@
           "nombre": "Leti Robles Rosa",
           "texto": "Ojo a este tardío, pero muy interesante comunicado oficial sobre lo ocurrido en Chihuahua.\n\nMantiene la crítica, matiza y, por primera vez en tantos días, aporta información sobre los agentes estadunidenses: uno entró como turista y otro con pasaporte diplomático. https://t.co/Q6",
           "fecha": "2026-04-25"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "\"El Tran Maya deja un rastro de promesas incumplidas en México\", @Reuters \n\nSeñala baja ventas de boletos, hoteles mayormente vacíos y gasto de 25 mil millones de dólares\n\nhttps://t.co/kQx7d6SFu7",
-          "fecha": "2026-04-24"
         }
       ]
     },
     "igualdad_genero": {
       "articulos_medios": [
+        {
+          "fuente": "cronica",
+          "titulo": "Registra FGJCDMX 0 denuncias por violencia vicaria; madres acusan inoperancia de servidores públicos",
+          "url": "https://www.cronica.com.mx/metropoli/2026/05/08/registra-fgjcdmx-0-denuncias-por-violencia-vicaria-madres-acusan-inoperancia-de-servidores-publicos/",
+          "fecha": "2026-05-08"
+        },
         {
           "fuente": "el_financiero",
           "titulo": "Ser mamá y profesionista: la ecuación que México no ha resuelto",
@@ -11984,12 +11995,6 @@
           "fuente": "talla_diputados",
           "titulo": "Urgente garantizar derechos reproductivos de sobrevivientes de cáncer: Herrera Villavicencio",
           "url": "https://www.tallapolitica.com.mx/urgente-garantizar-derechos-reproductivos-de-sobrevivientes-de-cancer-herrera-villavicencio/",
-          "fecha": "2026-05-04"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "Red Nacional de Abogadas de las Mujeres brinda más de 28 mil servicios en solo 9 meses",
-          "url": "https://www.cronica.com.mx/nacional/2026/05/04/red-nacional-de-abogadas-de-las-mujeres-brinda-mas-de-28-mil-servicios-en-solo-9-meses/",
           "fecha": "2026-05-04"
         }
       ],
@@ -14778,7 +14783,7 @@
           74.4,
           71.4,
           57.8,
-          73.1
+          74.3
         ],
         "colores": [
           "rojo",
@@ -15948,7 +15953,7 @@
           41.8,
           46.8,
           34.7,
-          34.6
+          35.3
         ],
         "colores": [
           "rojo",
@@ -16463,7 +16468,7 @@
       },
       {
         "fecha": "2024-11-20",
-        "count": 15
+        "count": 16
       },
       {
         "fecha": "2024-11-21",
@@ -16523,7 +16528,7 @@
       },
       {
         "fecha": "2024-12-05",
-        "count": 25
+        "count": 30
       },
       {
         "fecha": "2024-12-06",
@@ -16543,11 +16548,11 @@
       },
       {
         "fecha": "2024-12-10",
-        "count": 27
+        "count": 35
       },
       {
         "fecha": "2024-12-11",
-        "count": 43
+        "count": 46
       },
       {
         "fecha": "2024-12-12",
@@ -16711,7 +16716,7 @@
       },
       {
         "fecha": "2025-01-21",
-        "count": 37
+        "count": 43
       },
       {
         "fecha": "2025-01-22",
@@ -16855,7 +16860,7 @@
       },
       {
         "fecha": "2025-02-26",
-        "count": 19
+        "count": 20
       },
       {
         "fecha": "2025-02-27",
@@ -16879,11 +16884,11 @@
       },
       {
         "fecha": "2025-03-04",
-        "count": 44
+        "count": 45
       },
       {
         "fecha": "2025-03-05",
-        "count": 10
+        "count": 15
       },
       {
         "fecha": "2025-03-06",
@@ -16907,11 +16912,11 @@
       },
       {
         "fecha": "2025-03-11",
-        "count": 16
+        "count": 18
       },
       {
         "fecha": "2025-03-12",
-        "count": 25
+        "count": 27
       },
       {
         "fecha": "2025-03-13",
@@ -16939,11 +16944,11 @@
       },
       {
         "fecha": "2025-03-19",
-        "count": 50
+        "count": 51
       },
       {
         "fecha": "2025-03-20",
-        "count": 17
+        "count": 21
       },
       {
         "fecha": "2025-03-21",
@@ -16963,11 +16968,11 @@
       },
       {
         "fecha": "2025-03-25",
-        "count": 19
+        "count": 22
       },
       {
         "fecha": "2025-03-26",
-        "count": 11
+        "count": 13
       },
       {
         "fecha": "2025-03-27",
@@ -16991,7 +16996,7 @@
       },
       {
         "fecha": "2025-04-01",
-        "count": 53
+        "count": 54
       },
       {
         "fecha": "2025-04-02",
@@ -17019,15 +17024,15 @@
       },
       {
         "fecha": "2025-04-08",
-        "count": 25
+        "count": 27
       },
       {
         "fecha": "2025-04-09",
-        "count": 20
+        "count": 23
       },
       {
         "fecha": "2025-04-10",
-        "count": 16
+        "count": 19
       },
       {
         "fecha": "2025-04-11",
@@ -17075,15 +17080,15 @@
       },
       {
         "fecha": "2025-04-22",
-        "count": 40
+        "count": 43
       },
       {
         "fecha": "2025-04-23",
-        "count": 21
+        "count": 32
       },
       {
         "fecha": "2025-04-24",
-        "count": 50
+        "count": 53
       },
       {
         "fecha": "2025-04-25",
@@ -17099,15 +17104,15 @@
       },
       {
         "fecha": "2025-04-28",
-        "count": 12
+        "count": 18
       },
       {
         "fecha": "2025-04-29",
-        "count": 24
+        "count": 29
       },
       {
         "fecha": "2025-04-30",
-        "count": 189
+        "count": 192
       },
       {
         "fecha": "2025-05-01",
@@ -18625,7 +18630,7 @@
       },
       {
         "fecha": "2024-11-20",
-        "count": 31
+        "count": 33
       },
       {
         "fecha": "2024-11-21",
@@ -18649,11 +18654,11 @@
       },
       {
         "fecha": "2024-11-26",
-        "count": 23
+        "count": 24
       },
       {
         "fecha": "2024-11-27",
-        "count": 5
+        "count": 6
       },
       {
         "fecha": "2024-11-28",
@@ -18677,7 +18682,7 @@
       },
       {
         "fecha": "2024-12-03",
-        "count": 33
+        "count": 35
       },
       {
         "fecha": "2024-12-04",
@@ -18685,7 +18690,7 @@
       },
       {
         "fecha": "2024-12-05",
-        "count": 17
+        "count": 19
       },
       {
         "fecha": "2024-12-06",
@@ -18705,7 +18710,7 @@
       },
       {
         "fecha": "2024-12-10",
-        "count": 23
+        "count": 24
       },
       {
         "fecha": "2024-12-11",
@@ -18849,7 +18854,7 @@
       },
       {
         "fecha": "2025-01-15",
-        "count": 19
+        "count": 20
       },
       {
         "fecha": "2025-01-16",
@@ -18873,7 +18878,7 @@
       },
       {
         "fecha": "2025-01-21",
-        "count": 41
+        "count": 44
       },
       {
         "fecha": "2025-01-22",
@@ -19017,7 +19022,7 @@
       },
       {
         "fecha": "2025-02-26",
-        "count": 13
+        "count": 15
       },
       {
         "fecha": "2025-02-27",
@@ -19041,11 +19046,11 @@
       },
       {
         "fecha": "2025-03-04",
-        "count": 12
+        "count": 13
       },
       {
         "fecha": "2025-03-05",
-        "count": 6
+        "count": 9
       },
       {
         "fecha": "2025-03-06",
@@ -19069,11 +19074,11 @@
       },
       {
         "fecha": "2025-03-11",
-        "count": 13
+        "count": 14
       },
       {
         "fecha": "2025-03-12",
-        "count": 12
+        "count": 13
       },
       {
         "fecha": "2025-03-13",
@@ -19105,7 +19110,7 @@
       },
       {
         "fecha": "2025-03-20",
-        "count": 6
+        "count": 7
       },
       {
         "fecha": "2025-03-21",
@@ -19185,11 +19190,11 @@
       },
       {
         "fecha": "2025-04-09",
-        "count": 16
+        "count": 17
       },
       {
         "fecha": "2025-04-10",
-        "count": 13
+        "count": 15
       },
       {
         "fecha": "2025-04-11",
@@ -19237,15 +19242,15 @@
       },
       {
         "fecha": "2025-04-22",
-        "count": 20
+        "count": 21
       },
       {
         "fecha": "2025-04-23",
-        "count": 9
+        "count": 12
       },
       {
         "fecha": "2025-04-24",
-        "count": 22
+        "count": 23
       },
       {
         "fecha": "2025-04-25",
@@ -19261,7 +19266,7 @@
       },
       {
         "fecha": "2025-04-28",
-        "count": 8
+        "count": 10
       },
       {
         "fecha": "2025-04-29",
@@ -19269,7 +19274,7 @@
       },
       {
         "fecha": "2025-04-30",
-        "count": 69
+        "count": 70
       },
       {
         "fecha": "2025-05-01",
@@ -20871,7 +20876,7 @@
       },
       {
         "fecha": "2024-12-11",
-        "count": 5
+        "count": 6
       },
       {
         "fecha": "2024-12-12",
@@ -22973,7 +22978,7 @@
       },
       {
         "fecha": "2024-11-26",
-        "count": 3
+        "count": 4
       },
       {
         "fecha": "2024-11-27",
@@ -23001,7 +23006,7 @@
       },
       {
         "fecha": "2024-12-03",
-        "count": 7
+        "count": 10
       },
       {
         "fecha": "2024-12-04",
@@ -23009,7 +23014,7 @@
       },
       {
         "fecha": "2024-12-05",
-        "count": 15
+        "count": 16
       },
       {
         "fecha": "2024-12-06",
@@ -23029,7 +23034,7 @@
       },
       {
         "fecha": "2024-12-10",
-        "count": 15
+        "count": 19
       },
       {
         "fecha": "2024-12-11",
@@ -23197,7 +23202,7 @@
       },
       {
         "fecha": "2025-01-21",
-        "count": 23
+        "count": 35
       },
       {
         "fecha": "2025-01-22",
@@ -23281,7 +23286,7 @@
       },
       {
         "fecha": "2025-02-11",
-        "count": 20
+        "count": 21
       },
       {
         "fecha": "2025-02-12",
@@ -23313,7 +23318,7 @@
       },
       {
         "fecha": "2025-02-19",
-        "count": 10
+        "count": 11
       },
       {
         "fecha": "2025-02-20",
@@ -23429,7 +23434,7 @@
       },
       {
         "fecha": "2025-03-20",
-        "count": 20
+        "count": 22
       },
       {
         "fecha": "2025-03-21",
@@ -23453,7 +23458,7 @@
       },
       {
         "fecha": "2025-03-26",
-        "count": 8
+        "count": 9
       },
       {
         "fecha": "2025-03-27",
@@ -23477,7 +23482,7 @@
       },
       {
         "fecha": "2025-04-01",
-        "count": 16
+        "count": 18
       },
       {
         "fecha": "2025-04-02",
@@ -23505,7 +23510,7 @@
       },
       {
         "fecha": "2025-04-08",
-        "count": 11
+        "count": 12
       },
       {
         "fecha": "2025-04-09",
@@ -23513,7 +23518,7 @@
       },
       {
         "fecha": "2025-04-10",
-        "count": 16
+        "count": 17
       },
       {
         "fecha": "2025-04-11",
@@ -23561,11 +23566,11 @@
       },
       {
         "fecha": "2025-04-22",
-        "count": 16
+        "count": 17
       },
       {
         "fecha": "2025-04-23",
-        "count": 7
+        "count": 13
       },
       {
         "fecha": "2025-04-24",
@@ -23585,7 +23590,7 @@
       },
       {
         "fecha": "2025-04-28",
-        "count": 13
+        "count": 15
       },
       {
         "fecha": "2025-04-29",
@@ -23593,7 +23598,7 @@
       },
       {
         "fecha": "2025-04-30",
-        "count": 75
+        "count": 77
       },
       {
         "fecha": "2025-05-01",
@@ -25135,7 +25140,7 @@
       },
       {
         "fecha": "2024-11-26",
-        "count": 14
+        "count": 15
       },
       {
         "fecha": "2024-11-27",
@@ -25171,7 +25176,7 @@
       },
       {
         "fecha": "2024-12-05",
-        "count": 7
+        "count": 9
       },
       {
         "fecha": "2024-12-06",
@@ -25191,11 +25196,11 @@
       },
       {
         "fecha": "2024-12-10",
-        "count": 16
+        "count": 17
       },
       {
         "fecha": "2024-12-11",
-        "count": 21
+        "count": 22
       },
       {
         "fecha": "2024-12-12",
@@ -25359,7 +25364,7 @@
       },
       {
         "fecha": "2025-01-21",
-        "count": 18
+        "count": 19
       },
       {
         "fecha": "2025-01-22",
@@ -25527,11 +25532,11 @@
       },
       {
         "fecha": "2025-03-04",
-        "count": 17
+        "count": 20
       },
       {
         "fecha": "2025-03-05",
-        "count": 11
+        "count": 15
       },
       {
         "fecha": "2025-03-06",
@@ -25555,11 +25560,11 @@
       },
       {
         "fecha": "2025-03-11",
-        "count": 23
+        "count": 24
       },
       {
         "fecha": "2025-03-12",
-        "count": 13
+        "count": 14
       },
       {
         "fecha": "2025-03-13",
@@ -25587,11 +25592,11 @@
       },
       {
         "fecha": "2025-03-19",
-        "count": 14
+        "count": 15
       },
       {
         "fecha": "2025-03-20",
-        "count": 28
+        "count": 31
       },
       {
         "fecha": "2025-03-21",
@@ -25611,11 +25616,11 @@
       },
       {
         "fecha": "2025-03-25",
-        "count": 31
+        "count": 33
       },
       {
         "fecha": "2025-03-26",
-        "count": 12
+        "count": 15
       },
       {
         "fecha": "2025-03-27",
@@ -25639,7 +25644,7 @@
       },
       {
         "fecha": "2025-04-01",
-        "count": 21
+        "count": 22
       },
       {
         "fecha": "2025-04-02",
@@ -25667,15 +25672,15 @@
       },
       {
         "fecha": "2025-04-08",
-        "count": 12
+        "count": 14
       },
       {
         "fecha": "2025-04-09",
-        "count": 13
+        "count": 14
       },
       {
         "fecha": "2025-04-10",
-        "count": 9
+        "count": 10
       },
       {
         "fecha": "2025-04-11",
@@ -25727,11 +25732,11 @@
       },
       {
         "fecha": "2025-04-23",
-        "count": 18
+        "count": 24
       },
       {
         "fecha": "2025-04-24",
-        "count": 28
+        "count": 29
       },
       {
         "fecha": "2025-04-25",
@@ -25747,7 +25752,7 @@
       },
       {
         "fecha": "2025-04-28",
-        "count": 14
+        "count": 16
       },
       {
         "fecha": "2025-04-29",
@@ -25755,7 +25760,7 @@
       },
       {
         "fecha": "2025-04-30",
-        "count": 117
+        "count": 118
       },
       {
         "fecha": "2025-05-01",
@@ -27333,7 +27338,7 @@
       },
       {
         "fecha": "2024-12-05",
-        "count": 17
+        "count": 18
       },
       {
         "fecha": "2024-12-06",
@@ -27353,7 +27358,7 @@
       },
       {
         "fecha": "2024-12-10",
-        "count": 11
+        "count": 13
       },
       {
         "fecha": "2024-12-11",
@@ -27521,7 +27526,7 @@
       },
       {
         "fecha": "2025-01-21",
-        "count": 21
+        "count": 26
       },
       {
         "fecha": "2025-01-22",
@@ -27893,7 +27898,7 @@
       },
       {
         "fecha": "2025-04-24",
-        "count": 8
+        "count": 9
       },
       {
         "fecha": "2025-04-25",
@@ -27917,7 +27922,7 @@
       },
       {
         "fecha": "2025-04-30",
-        "count": 51
+        "count": 52
       },
       {
         "fecha": "2025-05-01",
@@ -29435,7 +29440,7 @@
       },
       {
         "fecha": "2024-11-20",
-        "count": 49
+        "count": 50
       },
       {
         "fecha": "2024-11-21",
@@ -29459,7 +29464,7 @@
       },
       {
         "fecha": "2024-11-26",
-        "count": 59
+        "count": 60
       },
       {
         "fecha": "2024-11-27",
@@ -29487,7 +29492,7 @@
       },
       {
         "fecha": "2024-12-03",
-        "count": 36
+        "count": 38
       },
       {
         "fecha": "2024-12-04",
@@ -29519,7 +29524,7 @@
       },
       {
         "fecha": "2024-12-11",
-        "count": 33
+        "count": 34
       },
       {
         "fecha": "2024-12-12",
@@ -29683,7 +29688,7 @@
       },
       {
         "fecha": "2025-01-21",
-        "count": 40
+        "count": 43
       },
       {
         "fecha": "2025-01-22",
@@ -29799,7 +29804,7 @@
       },
       {
         "fecha": "2025-02-19",
-        "count": 30
+        "count": 31
       },
       {
         "fecha": "2025-02-20",
@@ -30051,7 +30056,7 @@
       },
       {
         "fecha": "2025-04-23",
-        "count": 23
+        "count": 24
       },
       {
         "fecha": "2025-04-24",
@@ -30071,11 +30076,11 @@
       },
       {
         "fecha": "2025-04-28",
-        "count": 46
+        "count": 48
       },
       {
         "fecha": "2025-04-29",
-        "count": 33
+        "count": 35
       },
       {
         "fecha": "2025-04-30",
@@ -31677,11 +31682,11 @@
       },
       {
         "fecha": "2024-12-10",
-        "count": 13
+        "count": 15
       },
       {
         "fecha": "2024-12-11",
-        "count": 13
+        "count": 14
       },
       {
         "fecha": "2024-12-12",
@@ -31821,7 +31826,7 @@
       },
       {
         "fecha": "2025-01-15",
-        "count": 10
+        "count": 11
       },
       {
         "fecha": "2025-01-16",
@@ -31845,7 +31850,7 @@
       },
       {
         "fecha": "2025-01-21",
-        "count": 5
+        "count": 7
       },
       {
         "fecha": "2025-01-22",
@@ -31961,7 +31966,7 @@
       },
       {
         "fecha": "2025-02-19",
-        "count": 7
+        "count": 8
       },
       {
         "fecha": "2025-02-20",
@@ -31985,7 +31990,7 @@
       },
       {
         "fecha": "2025-02-25",
-        "count": 15
+        "count": 16
       },
       {
         "fecha": "2025-02-26",
@@ -32013,11 +32018,11 @@
       },
       {
         "fecha": "2025-03-04",
-        "count": 19
+        "count": 21
       },
       {
         "fecha": "2025-03-05",
-        "count": 9
+        "count": 10
       },
       {
         "fecha": "2025-03-06",
@@ -32041,7 +32046,7 @@
       },
       {
         "fecha": "2025-03-11",
-        "count": 11
+        "count": 12
       },
       {
         "fecha": "2025-03-12",
@@ -32073,7 +32078,7 @@
       },
       {
         "fecha": "2025-03-19",
-        "count": 15
+        "count": 16
       },
       {
         "fecha": "2025-03-20",
@@ -32101,7 +32106,7 @@
       },
       {
         "fecha": "2025-03-26",
-        "count": 4
+        "count": 5
       },
       {
         "fecha": "2025-03-27",
@@ -32153,15 +32158,15 @@
       },
       {
         "fecha": "2025-04-08",
-        "count": 10
+        "count": 11
       },
       {
         "fecha": "2025-04-09",
-        "count": 13
+        "count": 14
       },
       {
         "fecha": "2025-04-10",
-        "count": 7
+        "count": 8
       },
       {
         "fecha": "2025-04-11",
@@ -32209,11 +32214,11 @@
       },
       {
         "fecha": "2025-04-22",
-        "count": 10
+        "count": 11
       },
       {
         "fecha": "2025-04-23",
-        "count": 7
+        "count": 8
       },
       {
         "fecha": "2025-04-24",
@@ -32233,7 +32238,7 @@
       },
       {
         "fecha": "2025-04-28",
-        "count": 15
+        "count": 16
       },
       {
         "fecha": "2025-04-29",
@@ -33759,7 +33764,7 @@
       },
       {
         "fecha": "2024-11-20",
-        "count": 14
+        "count": 16
       },
       {
         "fecha": "2024-11-21",
@@ -33783,7 +33788,7 @@
       },
       {
         "fecha": "2024-11-26",
-        "count": 10
+        "count": 11
       },
       {
         "fecha": "2024-11-27",
@@ -33811,7 +33816,7 @@
       },
       {
         "fecha": "2024-12-03",
-        "count": 8
+        "count": 9
       },
       {
         "fecha": "2024-12-04",
@@ -33819,7 +33824,7 @@
       },
       {
         "fecha": "2024-12-05",
-        "count": 11
+        "count": 14
       },
       {
         "fecha": "2024-12-06",
@@ -33839,7 +33844,7 @@
       },
       {
         "fecha": "2024-12-10",
-        "count": 7
+        "count": 9
       },
       {
         "fecha": "2024-12-11",
@@ -33955,7 +33960,7 @@
       },
       {
         "fecha": "2025-01-08",
-        "count": 9
+        "count": 10
       },
       {
         "fecha": "2025-01-09",
@@ -34007,7 +34012,7 @@
       },
       {
         "fecha": "2025-01-21",
-        "count": 18
+        "count": 23
       },
       {
         "fecha": "2025-01-22",
@@ -34175,7 +34180,7 @@
       },
       {
         "fecha": "2025-03-04",
-        "count": 13
+        "count": 14
       },
       {
         "fecha": "2025-03-05",
@@ -34323,7 +34328,7 @@
       },
       {
         "fecha": "2025-04-10",
-        "count": 9
+        "count": 10
       },
       {
         "fecha": "2025-04-11",
@@ -34371,15 +34376,15 @@
       },
       {
         "fecha": "2025-04-22",
-        "count": 16
+        "count": 17
       },
       {
         "fecha": "2025-04-23",
-        "count": 10
+        "count": 14
       },
       {
         "fecha": "2025-04-24",
-        "count": 11
+        "count": 12
       },
       {
         "fecha": "2025-04-25",
@@ -34399,7 +34404,7 @@
       },
       {
         "fecha": "2025-04-29",
-        "count": 9
+        "count": 10
       },
       {
         "fecha": "2025-04-30",
@@ -35973,7 +35978,7 @@
       },
       {
         "fecha": "2024-12-03",
-        "count": 10
+        "count": 12
       },
       {
         "fecha": "2024-12-04",
@@ -36001,7 +36006,7 @@
       },
       {
         "fecha": "2024-12-10",
-        "count": 5
+        "count": 6
       },
       {
         "fecha": "2024-12-11",
@@ -36145,7 +36150,7 @@
       },
       {
         "fecha": "2025-01-15",
-        "count": 4
+        "count": 5
       },
       {
         "fecha": "2025-01-16",
@@ -36169,7 +36174,7 @@
       },
       {
         "fecha": "2025-01-21",
-        "count": 10
+        "count": 13
       },
       {
         "fecha": "2025-01-22",
@@ -36337,11 +36342,11 @@
       },
       {
         "fecha": "2025-03-04",
-        "count": 8
+        "count": 9
       },
       {
         "fecha": "2025-03-05",
-        "count": 3
+        "count": 4
       },
       {
         "fecha": "2025-03-06",
@@ -36401,7 +36406,7 @@
       },
       {
         "fecha": "2025-03-20",
-        "count": 5
+        "count": 6
       },
       {
         "fecha": "2025-03-21",
@@ -36421,7 +36426,7 @@
       },
       {
         "fecha": "2025-03-25",
-        "count": 6
+        "count": 8
       },
       {
         "fecha": "2025-03-26",
@@ -36481,7 +36486,7 @@
       },
       {
         "fecha": "2025-04-09",
-        "count": 5
+        "count": 6
       },
       {
         "fecha": "2025-04-10",
@@ -36537,7 +36542,7 @@
       },
       {
         "fecha": "2025-04-23",
-        "count": 4
+        "count": 6
       },
       {
         "fecha": "2025-04-24",
@@ -38083,7 +38088,7 @@
       },
       {
         "fecha": "2024-11-20",
-        "count": 7
+        "count": 8
       },
       {
         "fecha": "2024-11-21",
@@ -38107,11 +38112,11 @@
       },
       {
         "fecha": "2024-11-26",
-        "count": 8
+        "count": 10
       },
       {
         "fecha": "2024-11-27",
-        "count": 5
+        "count": 7
       },
       {
         "fecha": "2024-11-28",
@@ -38143,7 +38148,7 @@
       },
       {
         "fecha": "2024-12-05",
-        "count": 9
+        "count": 13
       },
       {
         "fecha": "2024-12-06",
@@ -38163,11 +38168,11 @@
       },
       {
         "fecha": "2024-12-10",
-        "count": 8
+        "count": 12
       },
       {
         "fecha": "2024-12-11",
-        "count": 7
+        "count": 9
       },
       {
         "fecha": "2024-12-12",
@@ -38331,7 +38336,7 @@
       },
       {
         "fecha": "2025-01-21",
-        "count": 12
+        "count": 13
       },
       {
         "fecha": "2025-01-22",
@@ -38447,7 +38452,7 @@
       },
       {
         "fecha": "2025-02-19",
-        "count": 11
+        "count": 12
       },
       {
         "fecha": "2025-02-20",
@@ -38503,7 +38508,7 @@
       },
       {
         "fecha": "2025-03-05",
-        "count": 16
+        "count": 18
       },
       {
         "fecha": "2025-03-06",
@@ -38531,7 +38536,7 @@
       },
       {
         "fecha": "2025-03-12",
-        "count": 5
+        "count": 6
       },
       {
         "fecha": "2025-03-13",
@@ -38563,7 +38568,7 @@
       },
       {
         "fecha": "2025-03-20",
-        "count": 8
+        "count": 9
       },
       {
         "fecha": "2025-03-21",
@@ -38643,7 +38648,7 @@
       },
       {
         "fecha": "2025-04-09",
-        "count": 10
+        "count": 12
       },
       {
         "fecha": "2025-04-10",
@@ -38699,7 +38704,7 @@
       },
       {
         "fecha": "2025-04-23",
-        "count": 8
+        "count": 13
       },
       {
         "fecha": "2025-04-24",
@@ -38719,11 +38724,11 @@
       },
       {
         "fecha": "2025-04-28",
-        "count": 9
+        "count": 10
       },
       {
         "fecha": "2025-04-29",
-        "count": 7
+        "count": 8
       },
       {
         "fecha": "2025-04-30",
@@ -40305,7 +40310,7 @@
       },
       {
         "fecha": "2024-12-05",
-        "count": 3
+        "count": 4
       },
       {
         "fecha": "2024-12-06",
@@ -40493,7 +40498,7 @@
       },
       {
         "fecha": "2025-01-21",
-        "count": 2
+        "count": 3
       },
       {
         "fecha": "2025-01-22",
@@ -40609,7 +40614,7 @@
       },
       {
         "fecha": "2025-02-19",
-        "count": 3
+        "count": 4
       },
       {
         "fecha": "2025-02-20",
@@ -40661,7 +40666,7 @@
       },
       {
         "fecha": "2025-03-04",
-        "count": 7
+        "count": 8
       },
       {
         "fecha": "2025-03-05",
@@ -40805,7 +40810,7 @@
       },
       {
         "fecha": "2025-04-09",
-        "count": 0
+        "count": 1
       },
       {
         "fecha": "2025-04-10",
@@ -40861,11 +40866,11 @@
       },
       {
         "fecha": "2025-04-23",
-        "count": 1
+        "count": 2
       },
       {
         "fecha": "2025-04-24",
-        "count": 3
+        "count": 4
       },
       {
         "fecha": "2025-04-25",
@@ -40889,7 +40894,7 @@
       },
       {
         "fecha": "2025-04-30",
-        "count": 15
+        "count": 16
       },
       {
         "fecha": "2025-05-01",
@@ -42655,7 +42660,7 @@
       },
       {
         "fecha": "2025-01-21",
-        "count": 5
+        "count": 7
       },
       {
         "fecha": "2025-01-22",
@@ -42823,7 +42828,7 @@
       },
       {
         "fecha": "2025-03-04",
-        "count": 12
+        "count": 13
       },
       {
         "fecha": "2025-03-05",
@@ -42883,11 +42888,11 @@
       },
       {
         "fecha": "2025-03-19",
-        "count": 5
+        "count": 6
       },
       {
         "fecha": "2025-03-20",
-        "count": 4
+        "count": 5
       },
       {
         "fecha": "2025-03-21",
@@ -42907,7 +42912,7 @@
       },
       {
         "fecha": "2025-03-25",
-        "count": 7
+        "count": 8
       },
       {
         "fecha": "2025-03-26",
@@ -43023,7 +43028,7 @@
       },
       {
         "fecha": "2025-04-23",
-        "count": 11
+        "count": 14
       },
       {
         "fecha": "2025-04-24",
@@ -43043,7 +43048,7 @@
       },
       {
         "fecha": "2025-04-28",
-        "count": 8
+        "count": 9
       },
       {
         "fecha": "2025-04-29",
@@ -43051,7 +43056,7 @@
       },
       {
         "fecha": "2025-04-30",
-        "count": 51
+        "count": 52
       },
       {
         "fecha": "2025-05-01",
@@ -44629,7 +44634,7 @@
       },
       {
         "fecha": "2024-12-05",
-        "count": 0
+        "count": 1
       },
       {
         "fecha": "2024-12-06",
@@ -44649,7 +44654,7 @@
       },
       {
         "fecha": "2024-12-10",
-        "count": 0
+        "count": 1
       },
       {
         "fecha": "2024-12-11",
@@ -45189,7 +45194,7 @@
       },
       {
         "fecha": "2025-04-24",
-        "count": 5
+        "count": 6
       },
       {
         "fecha": "2025-04-25",
@@ -46731,7 +46736,7 @@
       },
       {
         "fecha": "2024-11-20",
-        "count": 4
+        "count": 5
       },
       {
         "fecha": "2024-11-21",
@@ -46811,7 +46816,7 @@
       },
       {
         "fecha": "2024-12-10",
-        "count": 6
+        "count": 7
       },
       {
         "fecha": "2024-12-11",
@@ -46979,7 +46984,7 @@
       },
       {
         "fecha": "2025-01-21",
-        "count": 12
+        "count": 13
       },
       {
         "fecha": "2025-01-22",
@@ -47367,7 +47372,7 @@
       },
       {
         "fecha": "2025-04-28",
-        "count": 5
+        "count": 6
       },
       {
         "fecha": "2025-04-29",
@@ -49141,7 +49146,7 @@
       },
       {
         "fecha": "2025-01-21",
-        "count": 1
+        "count": 2
       },
       {
         "fecha": "2025-01-22",
@@ -49529,7 +49534,7 @@
       },
       {
         "fecha": "2025-04-28",
-        "count": 6
+        "count": 7
       },
       {
         "fecha": "2025-04-29",
@@ -51079,11 +51084,11 @@
       },
       {
         "fecha": "2024-11-26",
-        "count": 0
+        "count": 1
       },
       {
         "fecha": "2024-11-27",
-        "count": 0
+        "count": 1
       },
       {
         "fecha": "2024-11-28",
@@ -51107,7 +51112,7 @@
       },
       {
         "fecha": "2024-12-03",
-        "count": 0
+        "count": 1
       },
       {
         "fecha": "2024-12-04",
@@ -51115,7 +51120,7 @@
       },
       {
         "fecha": "2024-12-05",
-        "count": 4
+        "count": 5
       },
       {
         "fecha": "2024-12-06",
@@ -51135,11 +51140,11 @@
       },
       {
         "fecha": "2024-12-10",
-        "count": 3
+        "count": 4
       },
       {
         "fecha": "2024-12-11",
-        "count": 2
+        "count": 3
       },
       {
         "fecha": "2024-12-12",
@@ -53297,7 +53302,7 @@
       },
       {
         "fecha": "2024-12-10",
-        "count": 4
+        "count": 6
       },
       {
         "fecha": "2024-12-11",
@@ -53777,7 +53782,7 @@
       },
       {
         "fecha": "2025-04-09",
-        "count": 2
+        "count": 3
       },
       {
         "fecha": "2025-04-10",
@@ -53853,7 +53858,7 @@
       },
       {
         "fecha": "2025-04-28",
-        "count": 8
+        "count": 9
       },
       {
         "fecha": "2025-04-29",
@@ -55459,7 +55464,7 @@
       },
       {
         "fecha": "2024-12-10",
-        "count": 0
+        "count": 1
       },
       {
         "fecha": "2024-12-11",
@@ -55855,7 +55860,7 @@
       },
       {
         "fecha": "2025-03-19",
-        "count": 1
+        "count": 2
       },
       {
         "fecha": "2025-03-20",
@@ -55883,7 +55888,7 @@
       },
       {
         "fecha": "2025-03-26",
-        "count": 3
+        "count": 4
       },
       {
         "fecha": "2025-03-27",
@@ -55995,7 +56000,7 @@
       },
       {
         "fecha": "2025-04-23",
-        "count": 2
+        "count": 3
       },
       {
         "fecha": "2025-04-24",
@@ -57639,7 +57644,7 @@
       },
       {
         "fecha": "2026-05-08",
-        "count": 26
+        "count": 27
       }
     ],
     "economia_hacienda": [
@@ -57761,7 +57766,7 @@
       },
       {
         "fecha": "2026-05-08",
-        "count": 1
+        "count": 2
       }
     ],
     "energia": [
@@ -58127,7 +58132,7 @@
       },
       {
         "fecha": "2026-05-08",
-        "count": 14
+        "count": 18
       }
     ],
     "trabajo": [
@@ -58371,7 +58376,7 @@
       },
       {
         "fecha": "2026-05-08",
-        "count": 13
+        "count": 14
       }
     ],
     "derechos_humanos": [
@@ -58859,7 +58864,7 @@
       },
       {
         "fecha": "2026-05-08",
-        "count": 13
+        "count": 16
       }
     ],
     "anticorrupcion": [
@@ -58981,7 +58986,7 @@
       },
       {
         "fecha": "2026-05-08",
-        "count": 0
+        "count": 1
       }
     ],
     "medio_ambiente": [
@@ -59103,7 +59108,7 @@
       },
       {
         "fecha": "2026-05-08",
-        "count": 5
+        "count": 6
       }
     ],
     "inteligencia_artificial": [
@@ -59847,27 +59852,27 @@
       "por_categoria": {
         "seguridad_justicia": {
           "nombre": "Seguridad y Justicia",
-          "count": 779
+          "count": 787
         },
         "electoral_politico": {
           "nombre": "Electoral y Político",
-          "count": 636
+          "count": 638
         },
         "educacion": {
           "nombre": "Educación",
-          "count": 555
+          "count": 562
         },
         "economia_hacienda": {
           "nombre": "Economía y Hacienda",
-          "count": 410
+          "count": 411
         },
         "salud": {
           "nombre": "Salud",
-          "count": 387
+          "count": 389
         },
         "trabajo": {
           "nombre": "Trabajo",
-          "count": 343
+          "count": 344
         },
         "infraestructura": {
           "nombre": "Infraestructura",
@@ -59875,23 +59880,23 @@
         },
         "derechos_humanos": {
           "nombre": "Derechos Humanos",
-          "count": 316
+          "count": 319
         },
         "agro_rural": {
           "nombre": "Agro y Desarrollo Rural",
-          "count": 213
+          "count": 214
         },
         "administracion": {
           "nombre": "Administración",
-          "count": 151
+          "count": 153
         },
         "medio_ambiente": {
           "nombre": "Medio Ambiente y Cambio Climático",
-          "count": 137
+          "count": 138
         },
         "relaciones_exteriores": {
           "nombre": "Relaciones Exteriores",
-          "count": 132
+          "count": 137
         },
         "energia": {
           "nombre": "Energía",
@@ -59899,7 +59904,7 @@
         },
         "politica_social": {
           "nombre": "Política Social",
-          "count": 83
+          "count": 84
         },
         "anticorrupcion": {
           "nombre": "Anticorrupción",
@@ -59941,13 +59946,13 @@
           "nombre": "infraestructura:0.75",
           "count": 24
         },
+        "inteligencia_artificial": {
+          "nombre": "Inteligencia Artificial",
+          "count": 23
+        },
         "salud:0.75": {
           "nombre": "salud:0.75",
           "count": 22
-        },
-        "inteligencia_artificial": {
-          "nombre": "Inteligencia Artificial",
-          "count": 20
         },
         "educacion:0.75": {
           "nombre": "educacion:0.75",
@@ -66474,7 +66479,7 @@
       "top_categoria": {
         "categoria": "seguridad_justicia",
         "nombre": "Seguridad y Justicia",
-        "count": 779
+        "count": 787
       }
     },
     "PAN": {
@@ -66484,55 +66489,55 @@
       "por_categoria": {
         "seguridad_justicia": {
           "nombre": "Seguridad y Justicia",
-          "count": 620
+          "count": 675
         },
         "electoral_politico": {
           "nombre": "Electoral y Político",
-          "count": 519
+          "count": 531
         },
         "economia_hacienda": {
           "nombre": "Economía y Hacienda",
-          "count": 451
+          "count": 479
         },
         "educacion": {
           "nombre": "Educación",
-          "count": 446
+          "count": 470
         },
         "salud": {
           "nombre": "Salud",
-          "count": 332
+          "count": 355
         },
         "infraestructura": {
           "nombre": "Infraestructura",
-          "count": 312
+          "count": 326
         },
         "trabajo": {
           "nombre": "Trabajo",
-          "count": 229
+          "count": 234
         },
         "derechos_humanos": {
           "nombre": "Derechos Humanos",
-          "count": 194
+          "count": 206
         },
         "relaciones_exteriores": {
           "nombre": "Relaciones Exteriores",
-          "count": 170
-        },
-        "energia": {
-          "nombre": "Energía",
-          "count": 164
+          "count": 183
         },
         "agro_rural": {
           "nombre": "Agro y Desarrollo Rural",
-          "count": 160
+          "count": 167
+        },
+        "energia": {
+          "nombre": "Energía",
+          "count": 165
         },
         "medio_ambiente": {
           "nombre": "Medio Ambiente y Cambio Climático",
-          "count": 126
+          "count": 132
         },
         "administracion": {
           "nombre": "Administración",
-          "count": 123
+          "count": 124
         },
         "economia_hacienda:0.75": {
           "nombre": "economia_hacienda:0.75",
@@ -66540,7 +66545,7 @@
         },
         "politica_social": {
           "nombre": "Política Social",
-          "count": 80
+          "count": 82
         },
         "trabajo:0.75": {
           "nombre": "trabajo:0.75",
@@ -66548,15 +66553,15 @@
         },
         "anticorrupcion": {
           "nombre": "Anticorrupción",
-          "count": 60
+          "count": 61
         },
         "turismo": {
           "nombre": "Turismo",
-          "count": 54
+          "count": 60
         },
         "medios_comunicacion": {
           "nombre": "Medios de Comunicación",
-          "count": 47
+          "count": 48
         },
         "seguridad_justicia:0.75": {
           "nombre": "seguridad_justicia:0.75",
@@ -70848,7 +70853,7 @@
       "top_categoria": {
         "categoria": "seguridad_justicia",
         "nombre": "Seguridad y Justicia",
-        "count": 620
+        "count": 675
       }
     },
     "PRI": {
@@ -70858,7 +70863,7 @@
       "por_categoria": {
         "seguridad_justicia": {
           "nombre": "Seguridad y Justicia",
-          "count": 209
+          "count": 216
         },
         "economia_hacienda": {
           "nombre": "Economía y Hacienda",
@@ -70866,15 +70871,15 @@
         },
         "infraestructura": {
           "nombre": "Infraestructura",
-          "count": 102
+          "count": 104
         },
         "salud": {
           "nombre": "Salud",
-          "count": 78
+          "count": 84
         },
         "educacion": {
           "nombre": "Educación",
-          "count": 73
+          "count": 75
         },
         "derechos_humanos": {
           "nombre": "Derechos Humanos",
@@ -70890,27 +70895,27 @@
         },
         "trabajo": {
           "nombre": "Trabajo",
-          "count": 58
+          "count": 59
         },
         "economia_hacienda:0.75": {
           "nombre": "economia_hacienda:0.75",
           "count": 53
         },
-        "agro_rural": {
-          "nombre": "Agro y Desarrollo Rural",
-          "count": 31
-        },
         "relaciones_exteriores": {
           "nombre": "Relaciones Exteriores",
-          "count": 29
+          "count": 33
+        },
+        "agro_rural": {
+          "nombre": "Agro y Desarrollo Rural",
+          "count": 33
         },
         "igualdad_genero": {
           "nombre": "Igualdad de género",
-          "count": 27
+          "count": 30
         },
         "medio_ambiente": {
           "nombre": "Medio Ambiente y Cambio Climático",
-          "count": 25
+          "count": 26
         },
         "administracion": {
           "nombre": "Administración",
@@ -70944,13 +70949,13 @@
           "nombre": "medio_ambiente:0.75",
           "count": 10
         },
+        "politica_social": {
+          "nombre": "Política Social",
+          "count": 9
+        },
         "anticorrupcion:0.75": {
           "nombre": "anticorrupcion:0.75",
           "count": 9
-        },
-        "politica_social": {
-          "nombre": "Política Social",
-          "count": 8
         },
         "inteligencia_artificial": {
           "nombre": "Inteligencia Artificial",
@@ -74004,7 +74009,7 @@
       "top_categoria": {
         "categoria": "seguridad_justicia",
         "nombre": "Seguridad y Justicia",
-        "count": 209
+        "count": 216
       }
     },
     "PVEM": {
@@ -74014,43 +74019,47 @@
       "por_categoria": {
         "seguridad_justicia": {
           "nombre": "Seguridad y Justicia",
-          "count": 135
+          "count": 143
         },
         "salud": {
           "nombre": "Salud",
-          "count": 81
+          "count": 87
         },
         "infraestructura": {
           "nombre": "Infraestructura",
-          "count": 77
+          "count": 82
         },
         "educacion": {
           "nombre": "Educación",
-          "count": 62
+          "count": 67
         },
         "economia_hacienda": {
           "nombre": "Economía y Hacienda",
-          "count": 62
+          "count": 64
         },
         "derechos_humanos": {
           "nombre": "Derechos Humanos",
-          "count": 61
+          "count": 64
         },
         "electoral_politico": {
           "nombre": "Electoral y Político",
           "count": 60
         },
-        "trabajo": {
-          "nombre": "Trabajo",
-          "count": 52
-        },
         "medio_ambiente": {
           "nombre": "Medio Ambiente y Cambio Climático",
-          "count": 52
+          "count": 55
+        },
+        "trabajo": {
+          "nombre": "Trabajo",
+          "count": 54
         },
         "trabajo:0.75": {
           "nombre": "trabajo:0.75",
           "count": 36
+        },
+        "relaciones_exteriores": {
+          "nombre": "Relaciones Exteriores",
+          "count": 34
         },
         "economia_hacienda:0.75": {
           "nombre": "economia_hacienda:0.75",
@@ -74058,15 +74067,11 @@
         },
         "administracion": {
           "nombre": "Administración",
-          "count": 30
-        },
-        "relaciones_exteriores": {
-          "nombre": "Relaciones Exteriores",
-          "count": 29
+          "count": 31
         },
         "agro_rural": {
           "nombre": "Agro y Desarrollo Rural",
-          "count": 21
+          "count": 25
         },
         "politica_social": {
           "nombre": "Política Social",
@@ -74075,6 +74080,10 @@
         "igualdad_genero": {
           "nombre": "Igualdad de género",
           "count": 16
+        },
+        "anticorrupcion": {
+          "nombre": "Anticorrupción",
+          "count": 15
         },
         "seguridad_justicia:0.75": {
           "nombre": "seguridad_justicia:0.75",
@@ -74098,10 +74107,6 @@
         },
         "energia": {
           "nombre": "Energía",
-          "count": 11
-        },
-        "anticorrupcion": {
-          "nombre": "Anticorrupción",
           "count": 11
         },
         "salud:0.75": {
@@ -76651,7 +76656,7 @@
       "top_categoria": {
         "categoria": "seguridad_justicia",
         "nombre": "Seguridad y Justicia",
-        "count": 135
+        "count": 143
       }
     },
     "MC": {
@@ -76661,11 +76666,11 @@
       "por_categoria": {
         "seguridad_justicia": {
           "nombre": "Seguridad y Justicia",
-          "count": 104
+          "count": 108
         },
         "economia_hacienda": {
           "nombre": "Economía y Hacienda",
-          "count": 78
+          "count": 80
         },
         "electoral_politico": {
           "nombre": "Electoral y Político",
@@ -76677,23 +76682,23 @@
         },
         "trabajo": {
           "nombre": "Trabajo",
-          "count": 46
+          "count": 47
         },
         "salud": {
           "nombre": "Salud",
-          "count": 44
+          "count": 46
+        },
+        "educacion": {
+          "nombre": "Educación",
+          "count": 41
         },
         "trabajo:0.75": {
           "nombre": "trabajo:0.75",
           "count": 40
         },
-        "educacion": {
-          "nombre": "Educación",
-          "count": 40
-        },
         "infraestructura": {
           "nombre": "Infraestructura",
-          "count": 37
+          "count": 39
         },
         "derechos_humanos": {
           "nombre": "Derechos Humanos",
@@ -76701,7 +76706,7 @@
         },
         "relaciones_exteriores": {
           "nombre": "Relaciones Exteriores",
-          "count": 25
+          "count": 27
         },
         "medio_ambiente": {
           "nombre": "Medio Ambiente y Cambio Climático",
@@ -76727,12 +76732,12 @@
           "nombre": "derechos_humanos:0.75",
           "count": 11
         },
-        "energia": {
-          "nombre": "Energía",
-          "count": 10
-        },
         "agro_rural": {
           "nombre": "Agro y Desarrollo Rural",
+          "count": 11
+        },
+        "energia": {
+          "nombre": "Energía",
           "count": 10
         },
         "politica_social": {
@@ -78785,7 +78790,7 @@
       "top_categoria": {
         "categoria": "seguridad_justicia",
         "nombre": "Seguridad y Justicia",
-        "count": 104
+        "count": 108
       }
     },
     "PT": {
@@ -78795,30 +78800,30 @@
       "por_categoria": {
         "seguridad_justicia": {
           "nombre": "Seguridad y Justicia",
-          "count": 80
+          "count": 82
         },
         "electoral_politico": {
           "nombre": "Electoral y Político",
           "count": 46
         },
+        "salud": {
+          "nombre": "Salud",
+          "count": 39
+        },
         "educacion": {
           "nombre": "Educación",
           "count": 39
         },
-        "salud": {
-          "nombre": "Salud",
-          "count": 37
-        },
         "infraestructura": {
           "nombre": "Infraestructura",
-          "count": 35
-        },
-        "trabajo:0.75": {
-          "nombre": "trabajo:0.75",
-          "count": 30
+          "count": 36
         },
         "derechos_humanos": {
           "nombre": "Derechos Humanos",
+          "count": 32
+        },
+        "trabajo:0.75": {
+          "nombre": "trabajo:0.75",
           "count": 30
         },
         "economia_hacienda": {
@@ -78827,7 +78832,7 @@
         },
         "relaciones_exteriores": {
           "nombre": "Relaciones Exteriores",
-          "count": 25
+          "count": 26
         },
         "trabajo": {
           "nombre": "Trabajo",
@@ -78837,6 +78842,10 @@
           "nombre": "Agro y Desarrollo Rural",
           "count": 21
         },
+        "anticorrupcion": {
+          "nombre": "Anticorrupción",
+          "count": 16
+        },
         "salud:0.75": {
           "nombre": "salud:0.75",
           "count": 14
@@ -78845,17 +78854,13 @@
           "nombre": "Medio Ambiente y Cambio Climático",
           "count": 14
         },
-        "anticorrupcion": {
-          "nombre": "Anticorrupción",
-          "count": 13
+        "igualdad_genero": {
+          "nombre": "Igualdad de género",
+          "count": 11
         },
         "economia_hacienda:0.75": {
           "nombre": "economia_hacienda:0.75",
           "count": 11
-        },
-        "igualdad_genero": {
-          "nombre": "Igualdad de género",
-          "count": 10
         },
         "electoral_politico:0.75": {
           "nombre": "electoral_politico:0.75",
@@ -78867,7 +78872,7 @@
         },
         "medios_comunicacion": {
           "nombre": "Medios de Comunicación",
-          "count": 8
+          "count": 9
         },
         "seguridad_justicia:0.75": {
           "nombre": "seguridad_justicia:0.75",
@@ -80500,7 +80505,7 @@
       "top_categoria": {
         "categoria": "seguridad_justicia",
         "nombre": "Seguridad y Justicia",
-        "count": 80
+        "count": 82
       }
     }
   },
@@ -84849,15 +84854,28 @@
     "baja_california_sur": {
       "nombre": "Baja California Sur",
       "abreviatura": "BCS",
-      "total_articulos": 27,
+      "total_articulos": 29,
       "categorias": [
         "educacion:0.5675",
+        "relaciones_exteriores:0.75",
         "seguridad_justicia:0.5582",
         "seguridad_justicia:0.75",
         "seguridad_justicia:1.1633",
         "trabajo:0.4253"
       ],
       "articulos": [
+        {
+          "titulo": "Sheinbaum: siempre nos hemos manifestado en contra del genocidio en Gaza; hace un llamado a que se construya la paz",
+          "fecha": "2026-05-08 16:17:46",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-siempre-nos-hemos-manifestado-en-contra-del-genocidio-en-gaza-hace-un-llamado-a-que-se-construya-la-paz/",
+          "categorias": "relaciones_exteriores:0.75"
+        },
+        {
+          "titulo": "Relish the Heritage: diez años entre fogones, el mar y la música",
+          "fecha": "2026-05-08 16:12:38",
+          "url": "https://www.elfinanciero.com.mx/laura-rodriguez/2026/05/08/relish-the-heritage-diez-anos-entre-fogones-el-mar-y-la-musica/",
+          "categorias": ""
+        },
         {
           "titulo": "León XIV reza por el fin del \"odio fratricida\" en visita a Pompeya; conmemora su aniversario como Papa",
           "fecha": "2026-05-08 14:58:57",
@@ -84905,18 +84923,6 @@
           "fecha": "2026-05-07 07:00:00",
           "url": "https://www.razon.com.mx/estados/2026/05/07/gobernador-de-bcs-pide-a-eu-bajarle-dos-rayitas/",
           "categorias": ""
-        },
-        {
-          "titulo": "Alerta Baja California Sur por \"Niño Atípico\" para temporada de huracanes 2026",
-          "fecha": "2026-05-07",
-          "url": "https://heraldodemexico.com.mx/nacional/2026/5/7/alerta-baja-california-sur-por-nino-atipico-para-temporada-de-huracanes-2026-808573.html",
-          "categorias": ""
-        },
-        {
-          "titulo": "“Estoy lista para ser la primera gobernadora en Michoacán”: Gabriela Molina",
-          "fecha": "2026-05-06 07:27:47",
-          "url": "https://www.eluniversal.com.mx/estados/estoy-lista-para-ser-la-primera-gobernadora-en-michoacan-gabriela-molina/",
-          "categorias": "educacion:0.5675"
         }
       ]
     },
@@ -84958,7 +84964,7 @@
     "chiapas": {
       "nombre": "Chiapas",
       "abreviatura": "CHP",
-      "total_articulos": 30,
+      "total_articulos": 31,
       "categorias": [
         "agro_rural:0.3832",
         "derechos_humanos:0.48",
@@ -84982,6 +84988,12 @@
         "seguridad_justicia:0.889"
       ],
       "articulos": [
+        {
+          "titulo": "Fuertes lluvias dejan un muerto, autos varados e inundaciones en Monterrey; hallan restos humanos",
+          "fecha": "2026-05-08 16:31:54",
+          "url": "https://www.eluniversal.com.mx/estados/fuertes-lluvias-dejan-un-muerto-autos-varados-e-inundaciones-en-monterrey-hallan-restos-humanos/",
+          "categorias": ""
+        },
         {
           "titulo": "Sheinbaum destaca relación con EU a través de los mexicanos; dice que son héroes y heroínas en busca de \"una mejor vida\"",
           "fecha": "2026-05-08 14:41:37",
@@ -85035,19 +85047,13 @@
           "fecha": "2026-05-07 20:38:00",
           "url": "https://www.eluniversal.com.mx/espectaculos/li-cham-la-pelicula-en-lengua-tsotsil-que-llega-esta-semana-a-cines-mexicanos/",
           "categorias": "medios_comunicacion:1.0648"
-        },
-        {
-          "titulo": "En palenque",
-          "fecha": "2026-05-06 12:30:00",
-          "url": "https://ovaciones.com/en-palenque/?utm_source=rss&utm_medium=rss&utm_campaign=en-palenque",
-          "categorias": ""
         }
       ]
     },
     "chihuahua": {
       "nombre": "Chihuahua",
       "abreviatura": "CHH",
-      "total_articulos": 68,
+      "total_articulos": 69,
       "categorias": [
         "anticorrupcion:0.4201",
         "anticorrupcion:0.4501",
@@ -85128,6 +85134,12 @@
           "categorias": "seguridad_justicia:1.01,salud:0.5365"
         },
         {
+          "titulo": "Andrea fracasa en las afiliaciones en Chihuahua y ahora apunta a Juárez como premio consuelo",
+          "fecha": "2026-05-08",
+          "url": "https://www.lapoliticaonline.com/mexico/politica-mx/andrea-chavez-fracasa-en-las-afiliaciones-en-chihuahua-y-ahora-apunta-a-juarez-como-premio-consuelo-3204/",
+          "categorias": ""
+        },
+        {
           "titulo": "Maru Campos pide \"respeto mutuo\" a Sheinbaum; defiende reunión de gobernadores del PAN con Díaz Ayuso",
           "fecha": "2026-05-07 23:57:35",
           "url": "https://www.eluniversal.com.mx/estados/maru-campos-pide-respeto-mutuo-a-sheinbaum-defiende-reunion-de-gobernadores-del-pan-con-diaz-ayuso/",
@@ -85138,19 +85150,13 @@
           "fecha": "2026-05-07 23:10:52",
           "url": "https://www.politico.mx/2026/05/07/gabinete-de-seguridad-caen-dos-con-fentanilo-y-metanfetamina-en-ruta-chihuahua-juarez/",
           "categorias": "seguridad_justicia:0.75"
-        },
-        {
-          "titulo": "Aseguran 20 kilos de metanfetamina y 25 mil pastillas de fentanilo ocultas en automóvil en Chihuahua",
-          "fecha": "2026-05-07 22:53:40",
-          "url": "https://www.cronica.com.mx/nacional/2026/05/07/aseguran-20-kilos-de-metanfetamina-y-25-mil-pastillas-de-fentanilo-ocultas-en-automovil-en-chihuahua/",
-          "categorias": "seguridad_justicia:0.75"
         }
       ]
     },
     "ciudad_de_mexico": {
       "nombre": "Ciudad de Mexico",
       "abreviatura": "CMX",
-      "total_articulos": 428,
+      "total_articulos": 436,
       "categorias": [
         "agro_rural:0.75",
         "anticorrupcion:0.2475",
@@ -85262,6 +85268,7 @@
         "seguridad_justicia:0.7109",
         "seguridad_justicia:0.75",
         "seguridad_justicia:0.7629",
+        "seguridad_justicia:0.8812",
         "seguridad_justicia:0.889",
         "seguridad_justicia:0.9836",
         "trabajo:0.5294",
@@ -85275,6 +85282,48 @@
         "turismo:0.799"
       ],
       "articulos": [
+        {
+          "titulo": "Detienen a Víctor “N”, presunto integrante de Los Malportados; la banda está relacionada con un triple homicidio en Azcapotzalco",
+          "fecha": "2026-05-08 17:23:56",
+          "url": "https://www.eluniversal.com.mx/metropoli/detienen-a-victor-n-presunto-integrante-de-los-malportados-la-banda-esta-relacionada-con-un-triple-homicidio-en-azcapotzalco/",
+          "categorias": "seguridad_justicia:0.8812"
+        },
+        {
+          "titulo": "Vinculan a proceso a “El Shimon” de “Los Malportados”, principal narcomenudista y extorsionador en Azcapotzalco",
+          "fecha": "2026-05-08 17:21:34",
+          "url": "https://www.cronica.com.mx/metropoli/2026/05/08/vinculan-a-proceso-a-el-shimon-de-los-malportados-principal-narcomenudista-y-extorsionador-en-azcapotzalco/",
+          "categorias": "seguridad_justicia:0.75"
+        },
+        {
+          "titulo": "Sismo en México HOY 8 de mayo de 2026: así se sintió la actividad sísmica esta madrugada",
+          "fecha": "2026-05-08 17:13:02",
+          "url": "https://www.cronica.com.mx/nacional/2026/05/08/sismo-en-mexico-hoy-8-de-mayo-de-2026-asi-se-sintio-la-actividad-sismica-esta-madrugada/",
+          "categorias": ""
+        },
+        {
+          "titulo": "BTS conquista la CDMX; primer concierto en el Estadio GNP deja ola de memes; así reaccionaron usuarios en X",
+          "fecha": "2026-05-08 17:04:26",
+          "url": "https://www.eluniversal.com.mx/tendencias/bts-conquista-la-cdmx-primer-concierto-en-el-estadio-gnp-deja-ola-de-memes-asi-reaccionaron-usuarios-en-x/",
+          "categorias": ""
+        },
+        {
+          "titulo": "¡Toma en cuenta! Estas serán las marchas y concentraciones previstas para este 8 de mayo en la CDMX",
+          "fecha": "2026-05-08 16:54:31",
+          "url": "https://www.eluniversal.com.mx/metropoli/toma-en-cuenta-estas-seran-las-marchas-y-concentraciones-previstas-para-este-8-de-mayo-en-la-cdmx/",
+          "categorias": ""
+        },
+        {
+          "titulo": "¿BTS gratis en el Zócalo de la CDMX?; esto dice Sheinbaum sobre la presentación del grupo de k-pop",
+          "fecha": "2026-05-08 16:25:38",
+          "url": "https://www.eluniversal.com.mx/nacion/bts-gratis-en-el-zocalo-de-la-cdmx-esto-dice-sheinbaum-sobre-la-presentacion-del-grupo-de-k-pop/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Clima CDMX: pronostican ambiente caluroso y lluvias fuertes para este viernes 8 de mayo; termómetro llegará a los 30 grados",
+          "fecha": "2026-05-08 16:04:33",
+          "url": "https://www.eluniversal.com.mx/metropoli/clima-cdmx-pronostican-ambiente-caluroso-y-lluvias-fuertes-para-este-viernes-8-de-mayo-termometro-llegara-a-los-30-grados/",
+          "categorias": ""
+        },
         {
           "titulo": "Día de las Madres 2026: Alcaldías de la CDMX alistan celebraciones; anuncian conciertos, bailes y actividades culturales gratuitas",
           "fecha": "2026-05-08 15:50:18",
@@ -85292,48 +85341,6 @@
           "fecha": "2026-05-08 15:09:19",
           "url": "https://www.eluniversal.com.mx/autopistas/adios-a-los-scooters-y-bicimotos-sin-placas-a-partir-de-septiembre/",
           "categorias": "infraestructura:0.75"
-        },
-        {
-          "titulo": "‘Es una lástima que hayamos tardado tanto en volver’: Así fue el primer concierto de BTS en CDMX",
-          "fecha": "2026-05-08 14:53:31",
-          "url": "https://www.elfinanciero.com.mx/entretenimiento/2026/05/08/asi-fue-el-primer-concierto-de-bts-en-la-cdmx/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Brugada anuncia inversión de mil 200 millones de pesos en Iztapalapa; buscan mitigar inundaciones",
-          "fecha": "2026-05-08 14:44:26",
-          "url": "https://www.eluniversal.com.mx/metropoli/brugada-anuncia-inversion-de-mil-200-millones-de-pesos-en-iztapalapa-buscan-mitigar-inundaciones/",
-          "categorias": "infraestructura:0.75"
-        },
-        {
-          "titulo": "Marchas, concentraciones y rodadas hoy 8 de mayo en CDMX: dónde y a qué hora",
-          "fecha": "2026-05-08 14:40:00",
-          "url": "https://24-horas.mx/cdmx/marchas-concentraciones-y-rodadas-hoy-8-de-mayo-en-cdmx-donde-y-a-que-hora/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Marchas y bloqueos en CDMX HOY 8 de mayo: ¿Qué manifestaciones hay y qué calles están cerradas?",
-          "fecha": "2026-05-08 14:27:00",
-          "url": "https://www.razon.com.mx/ciudad/2026/05/08/marchas-y-bloqueos-en-cdmx-hoy-8-de-mayo-que-manifestaciones-hay-y-que-calles-estan-cerradas/",
-          "categorias": ""
-        },
-        {
-          "titulo": "La historia de Edgar Cadena: de chalán de mecánico a pedalista en Europa",
-          "fecha": "2026-05-08 13:52:22",
-          "url": "https://www.eluniversal.com.mx/deportes/la-historia-de-edgar-cadena-de-chalan-de-mecanico-a-pedalista-en-europa/",
-          "categorias": ""
-        },
-        {
-          "titulo": "“Coleccionistas mantienen viva la historia de la telefonía”",
-          "fecha": "2026-05-08 12:16:38",
-          "url": "https://www.eluniversal.com.mx/nacion/coleccionistas-mantienen-viva-la-historia-de-la-telefonia/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Hoy No Circula viernes 8 de mayo: Restricciones vehiculares CDMX y EDOMEX",
-          "fecha": "2026-05-08 12:11:18",
-          "url": "https://www.cronica.com.mx/metropoli/2026/05/08/hoy-no-circula-viernes-8-de-mayo-restricciones-vehiculares-cdmx-y-edomex/",
-          "categorias": ""
         }
       ]
     },
@@ -85417,7 +85424,7 @@
     "colima": {
       "nombre": "Colima",
       "abreviatura": "COL",
-      "total_articulos": 17,
+      "total_articulos": 18,
       "categorias": [
         "seguridad_justicia:0.5534",
         "seguridad_justicia:0.75"
@@ -85460,6 +85467,12 @@
           "categorias": ""
         },
         {
+          "titulo": "Ignacio Peralta enfrenta proceso y el destino de recursos de Colima se desconoce",
+          "fecha": "2026-05-08",
+          "url": "https://www.excelsior.com.mx/nacional/destinorecursos-colima-desconoce",
+          "categorias": ""
+        },
+        {
           "titulo": "¿Quién es ‘Nacho’ Peralta, exgobernador de Colima vinculado a proceso?",
           "fecha": "2026-05-07 21:39:20",
           "url": "https://www.politico.mx/2026/05/07/quien-es-nacho-peralta-exgobernador-de-colima-vinculado-a-proceso/",
@@ -85475,12 +85488,6 @@
           "titulo": "Vinculan a proceso por peculado a Ignacio Peralta, exgobernador de Colima; podrá seguir su proceso en libertad",
           "fecha": "2026-05-07 18:31:27",
           "url": "https://www.eluniversal.com.mx/estados/vinculan-a-proceso-por-peculado-a-ignacio-peralta-exgobernador-de-colima-podra-seguir-su-proceso-en-libertad/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Colima encabeza tasa de homicidios en el país, con 334% de incremento",
-          "fecha": "2026-05-07 07:00:00",
-          "url": "https://www.razon.com.mx/estados/2026/05/07/colima-encabeza-tasa-de-homicidios-en-el-pais-con-334-de-incremento/",
           "categorias": ""
         }
       ]
@@ -85552,7 +85559,7 @@
     "estado_de_mexico": {
       "nombre": "Estado de Mexico",
       "abreviatura": "MEX",
-      "total_articulos": 173,
+      "total_articulos": 175,
       "categorias": [
         "administracion:0.75",
         "anticorrupcion:0.4016",
@@ -85592,6 +85599,18 @@
         "turismo:0.7516"
       ],
       "articulos": [
+        {
+          "titulo": "Edomex moderniza infraestructura vial en corredor Toluca-Metepec-Tenango",
+          "fecha": "2026-05-08 16:45:19",
+          "url": "https://www.cronica.com.mx/metropoli/2026/05/08/edomex-moderniza-infraestructura-vial-en-corredor-toluca-metepec-tenango/",
+          "categorias": "infraestructura:0.75"
+        },
+        {
+          "titulo": "Delfina Gómez supervisa avances de la Línea III del Mexicable en Naucalpan",
+          "fecha": "2026-05-08 16:42:23",
+          "url": "https://www.cronica.com.mx/metropoli/2026/05/08/delfina-gomez-supervisa-avances-de-la-linea-iii-del-mexicable-en-naucalpan/",
+          "categorias": "infraestructura:0.75"
+        },
         {
           "titulo": "Brugada anuncia inversión de mil 200 millones de pesos en Iztapalapa; buscan mitigar inundaciones",
           "fecha": "2026-05-08 14:44:26",
@@ -85638,18 +85657,6 @@
           "titulo": "América golea y se enfila a una nueva final de la Liga Mx Femenil",
           "fecha": "2026-05-08 05:54:48",
           "url": "https://24-horas.mx/dxt/america-golea-y-se-enfila-a-una-nueva-final-de-la-liga-mx-femenil/",
-          "categorias": ""
-        },
-        {
-          "titulo": "América aplasta al Toluca en el infierno y está a 90 minutos de otra final en la Liga MX Femenil",
-          "fecha": "2026-05-08 05:15:37",
-          "url": "https://www.eluniversal.com.mx/deportes/america-aplasta-al-toluca-en-el-infierno-y-esta-a-90-minutos-de-otra-final-en-la-liga-mx-femenil/",
-          "categorias": ""
-        },
-        {
-          "titulo": "El infierno es azulcrema: América ‘aplasta’ a Toluca y pone un pie en la final de la Liga MX Femenil",
-          "fecha": "2026-05-08 05:10:23",
-          "url": "https://www.elfinanciero.com.mx/deportes/2026/05/07/liga-mx-femenil-toluca-vs-america-en-vivo-resultado-de-la-semifinal-de-ida/",
           "categorias": ""
         }
       ]
@@ -85732,7 +85739,7 @@
     "guerrero": {
       "nombre": "Guerrero",
       "abreviatura": "GRO",
-      "total_articulos": 58,
+      "total_articulos": 59,
       "categorias": [
         "educacion:0.4333",
         "educacion:0.6582",
@@ -85758,6 +85765,12 @@
         "turismo:0.75"
       ],
       "articulos": [
+        {
+          "titulo": "Evelyn Salgado coloca a Guerrero a la vanguardia en prevención ante la temporada de ciclones 2026",
+          "fecha": "2026-05-08 16:05:02",
+          "url": "https://www.elfinanciero.com.mx/estados/2026/05/08/evelyn-salgado-coloca-a-guerrero-a-la-vanguardia-en-prevencion-ante-la-temporada-de-ciclones-2026/",
+          "categorias": ""
+        },
         {
           "titulo": "BTS lleva a su Army mexicano al éxtasis y la victoria",
           "fecha": "2026-05-08 11:21:34",
@@ -85811,12 +85824,6 @@
           "fecha": "2026-05-08",
           "url": "https://www.elsoldemexico.com.mx/elsoldemexico/mexico/tierra-caliente-de-guerrero-la-zona-mas-calurosa-del-pais-29866021",
           "categorias": ""
-        },
-        {
-          "titulo": "Investiga Fiscalía de Guerrero hallazgo de feto humano en carretera de Taxco",
-          "fecha": "2026-05-08",
-          "url": "https://heraldodemexico.com.mx/nacional/2026/5/7/investiga-fiscalia-de-guerrero-hallazgo-de-feto-humano-en-carretera-de-taxco-808794.html",
-          "categorias": "infraestructura:0.4885,seguridad_justicia:0.4577"
         }
       ]
     },
@@ -86268,7 +86275,7 @@
     "nuevo_leon": {
       "nombre": "Nuevo Leon",
       "abreviatura": "NLE",
-      "total_articulos": 71,
+      "total_articulos": 74,
       "categorias": [
         "derechos_humanos:0.6046",
         "economia_hacienda:0.4609",
@@ -86298,6 +86305,12 @@
         "trabajo:0.75"
       ],
       "articulos": [
+        {
+          "titulo": "Fuertes lluvias dejan un muerto, autos varados e inundaciones en Monterrey; hallan restos humanos",
+          "fecha": "2026-05-08 16:31:54",
+          "url": "https://www.eluniversal.com.mx/estados/fuertes-lluvias-dejan-un-muerto-autos-varados-e-inundaciones-en-monterrey-hallan-restos-humanos/",
+          "categorias": ""
+        },
         {
           "titulo": "Sin pruebas de ligas criminales, el INE no indaga a candidatos: Taddei",
           "fecha": "2026-05-08 10:28:21",
@@ -86351,19 +86364,13 @@
           "fecha": "2026-05-08 03:02:15",
           "url": "https://www.razon.com.mx/deportes/2026/05/07/pachuca-derrota-al-monterrey-y-consigue-ventaja-en-las-semifinales-de-la-liga-mx-femenil/",
           "categorias": ""
-        },
-        {
-          "titulo": "Taddei rechaza denuncias tardías sobre elección de Sinaloa en 2021; \"no es correcto denunciar irregularidades 5 años después”",
-          "fecha": "2026-05-08 02:43:17",
-          "url": "https://www.eluniversal.com.mx/nacion/taddei-rechaza-denuncias-tardias-sobre-eleccion-de-sinaloa-en-2021-no-es-correcto-denunciar-irregularidades-5-anos-despues/",
-          "categorias": "electoral_politico:0.8481"
         }
       ]
     },
     "oaxaca": {
       "nombre": "Oaxaca",
       "abreviatura": "OAX",
-      "total_articulos": 55,
+      "total_articulos": 58,
       "categorias": [
         "derechos_humanos:0.1945",
         "derechos_humanos:0.5711",
@@ -86388,6 +86395,7 @@
         "infraestructura:0.5626",
         "infraestructura:0.576",
         "medio_ambiente:0.1895",
+        "medio_ambiente:0.5334",
         "medio_ambiente:1.2432",
         "salud:0.5318",
         "salud:1.6261",
@@ -86396,11 +86404,30 @@
         "seguridad_justicia:0.45",
         "seguridad_justicia:0.4697",
         "seguridad_justicia:0.5955",
+        "seguridad_justicia:0.6414",
         "seguridad_justicia:0.75",
         "seguridad_justicia:0.926",
         "trabajo:0.75"
       ],
       "articulos": [
+        {
+          "titulo": "Suman 6 muertos por incendio en plaza comercial de Los Mochis, Sinaloa; gobernadora visita a lesionados",
+          "fecha": "2026-05-08 17:11:50",
+          "url": "https://www.eluniversal.com.mx/estados/suman-6-muertos-por-incendio-en-plaza-comercial-de-los-mochis-sinaloa-gobernadora-visita-a-lesionados/",
+          "categorias": "seguridad_justicia:0.6414,medio_ambiente:0.5334"
+        },
+        {
+          "titulo": "Relish the Heritage: diez años entre fogones, el mar y la música",
+          "fecha": "2026-05-08 16:12:38",
+          "url": "https://www.elfinanciero.com.mx/laura-rodriguez/2026/05/08/relish-the-heritage-diez-anos-entre-fogones-el-mar-y-la-musica/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Exsecretario de la SEP acusa \"irresponsabilidad mayúscula\" en recorte de ciclo escolar; llama a protestar por la educación",
+          "fecha": "2026-05-08 16:05:41",
+          "url": "https://www.eluniversal.com.mx/nacion/exsecretario-de-la-sep-acusa-irresponsabilidad-mayuscula-en-recorte-de-ciclo-escolar-llama-a-protestar-por-la-educacion/",
+          "categorias": ""
+        },
         {
           "titulo": "CNTE ‘se rebela’ a recorte de ciclo escolar de la SEP: ‘Clases en Oaxaca terminarán hasta el 17 de julio’",
           "fecha": "2026-05-08 15:18:14",
@@ -86441,24 +86468,6 @@
           "titulo": "Localizan a seis adolescentes que escaparon de casa hogar del DIF en Oaxaca",
           "fecha": "2026-05-08",
           "url": "https://www.excelsior.com.mx/nacional/localizan-seis-adolescentes-escaparon-casa-hogar-dif-oaxaca",
-          "categorias": ""
-        },
-        {
-          "titulo": "Localizan a seis adolescentes que huyeron de casa hogar del DIF de Oaxaca",
-          "fecha": "2026-05-08",
-          "url": "https://www.proceso.com.mx/nacional/estados/2026/5/7/localizan-seis-adolescentes-que-huyeron-de-casa-hogar-del-dif-de-oaxaca-373655.html",
-          "categorias": ""
-        },
-        {
-          "titulo": "Sección 22 CNTE rechaza calendario de la SEP; clases en Oaxaca concluirán el 7 de julio",
-          "fecha": "2026-05-08",
-          "url": "https://www.milenio.com/politica/cnte-oaxaca-rechaza-calendario-sep-clases-en-terminarian-en-julio",
-          "categorias": "educacion:1.0815"
-        },
-        {
-          "titulo": "Descartan envenenamiento como causa de muerte de “Beny”; perrita ayudaba en labores de limpieza de presa de Oaxaca",
-          "fecha": "2026-05-07 18:07:55",
-          "url": "https://www.eluniversal.com.mx/estados/descartan-envenenamiento-como-causa-de-muerte-de-beny-perrita-ayudaba-en-labores-de-limpieza-de-presa-de-oaxaca/",
           "categorias": ""
         }
       ]
@@ -86742,7 +86751,7 @@
     "sinaloa": {
       "nombre": "Sinaloa",
       "abreviatura": "SIN",
-      "total_articulos": 255,
+      "total_articulos": 258,
       "categorias": [
         "anticorrupcion:0.3106",
         "anticorrupcion:0.4141",
@@ -86786,6 +86795,7 @@
         "medio_ambiente:0.5144",
         "medio_ambiente:0.5203",
         "medio_ambiente:0.5276",
+        "medio_ambiente:0.5334",
         "medio_ambiente:0.5366",
         "relaciones_exteriores:0.2601",
         "relaciones_exteriores:0.2633",
@@ -86852,6 +86862,7 @@
         "seguridad_justicia:0.5776",
         "seguridad_justicia:0.6142",
         "seguridad_justicia:0.633",
+        "seguridad_justicia:0.6414",
         "seguridad_justicia:0.6571",
         "seguridad_justicia:0.6582",
         "seguridad_justicia:0.6637",
@@ -86878,6 +86889,18 @@
         "turismo:0.4341"
       ],
       "articulos": [
+        {
+          "titulo": "Suman 6 muertos por incendio en plaza comercial de Los Mochis, Sinaloa; gobernadora visita a lesionados",
+          "fecha": "2026-05-08 17:11:50",
+          "url": "https://www.eluniversal.com.mx/estados/suman-6-muertos-por-incendio-en-plaza-comercial-de-los-mochis-sinaloa-gobernadora-visita-a-lesionados/",
+          "categorias": "seguridad_justicia:0.6414,medio_ambiente:0.5334"
+        },
+        {
+          "titulo": "Matan a hombre a puñaladas en Navolato, Sinaloa; señalan a su hijo como presunto responsable",
+          "fecha": "2026-05-08 16:04:05",
+          "url": "https://www.eluniversal.com.mx/estados/matan-a-hombre-a-punaladas-en-navolato-sinaloa-senalan-a-su-hijo-como-presunto-responsable/",
+          "categorias": ""
+        },
         {
           "titulo": "Reportan que suman 8 muertos por incendio en centro comercial de Los Mochis, Sinaloa",
           "fecha": "2026-05-08 15:27:03",
@@ -86925,18 +86948,6 @@
           "fecha": "2026-05-08 09:00:00",
           "url": "https://24-horas.mx/mexico/crisis-politica-en-sinaloa-ocurre-entre-narco-y-violencia/",
           "categorias": "electoral_politico:0.6672"
-        },
-        {
-          "titulo": "Denuncia ONG ante FGR a 55; los liga con Cártel de Sinaloa; incluye a Quirino Ordaz",
-          "fecha": "2026-05-08 08:24:51",
-          "url": "https://www.razon.com.mx/mexico/2026/05/08/denuncia-ong-ante-fgr-a-55-los-liga-con-cartel-de-sinaloa-incluye-a-quirino-ordaz/",
-          "categorias": "seguridad_justicia:0.75"
-        },
-        {
-          "titulo": "... Y en Los Mochis, fuego causa al menos 5 fallecidos",
-          "fecha": "2026-05-08 07:19:28",
-          "url": "https://www.eluniversal.com.mx/estados/y-en-los-mochis-fuego-causa-al-menos-5-fallecidos/",
-          "categorias": ""
         }
       ]
     },
@@ -87113,8 +87124,9 @@
     "tamaulipas": {
       "nombre": "Tamaulipas",
       "abreviatura": "TAM",
-      "total_articulos": 25,
+      "total_articulos": 27,
       "categorias": [
+        "educacion:0.7929",
         "electoral_politico:0.6078",
         "energia:0.5562",
         "igualdad_genero:0.3649",
@@ -87128,6 +87140,12 @@
         "seguridad_justicia:1.1004"
       ],
       "articulos": [
+        {
+          "titulo": "Tamaulipas anuncia modificaciones al calendario escolar 2025-2026",
+          "fecha": "2026-05-08 17:00:43",
+          "url": "https://www.cronica.com.mx/estados/2026/05/08/tamaulipas-anuncia-modificaciones-al-calendario-escolar-2025-2026/",
+          "categorias": "educacion:0.7929"
+        },
         {
           "titulo": "Américo y María de Villarreal entregan 3 mil 500 apoyos en Abasolo",
           "fecha": "2026-05-08 10:28:21",
@@ -87159,6 +87177,12 @@
           "categorias": "seguridad_justicia:0.4809"
         },
         {
+          "titulo": "Con retraso, el PAN va por relevo en dirigencia estatal en Tamaulipas",
+          "fecha": "2026-05-08",
+          "url": "https://www.milenio.com/politica/pan-tamaulipas-renovara-dirigencia-estatal-voto-directo",
+          "categorias": ""
+        },
+        {
           "titulo": "INJUVE fortalece prevención y bienestar emocional en comunidades rurales de Tamaulipas",
           "fecha": "2026-05-07 20:43:26",
           "url": "https://www.cronica.com.mx/estados/2026/05/07/injuve-fortalece-prevencion-y-bienestar-emocional-en-comunidades-rurales-de-tamaulipas/",
@@ -87175,18 +87199,6 @@
           "fecha": "2026-05-07 14:33:15",
           "url": "https://24-horas.mx/mexico/clima-hoy-7-de-mayo-tormentas-granizadas-y-calor-sofocante-golpearan-gran-parte-del-pais/",
           "categorias": ""
-        },
-        {
-          "titulo": "Construye Gobierno de Tamaulipas alumbrado público solar en carretera Tampico-Mante",
-          "fecha": "2026-05-07",
-          "url": "https://www.eleconomista.com.mx/politica/construye-gobierno-tamaulipas-alumbrado-publico-solar-carretera-tampico-mante-20260507-812386.html",
-          "categorias": "energia:0.5562,infraestructura:0.4803"
-        },
-        {
-          "titulo": "Construye Gobierno de Tamaulipas alumbrado público solar en carretera Tampico-Mante",
-          "fecha": "2026-05-07",
-          "url": "https://heraldodemexico.com.mx/nacional/2026/5/7/construye-gobierno-de-tamaulipas-alumbrado-publico-solar-en-carretera-tampico-mante-808561.html",
-          "categorias": "energia:0.5562,infraestructura:0.4803"
         }
       ]
     },
