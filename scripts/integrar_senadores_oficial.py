@@ -319,17 +319,26 @@ def main():
             except Exception as e:
                 print(f"ERROR enriqueciendo: {e}", file=sys.stderr)
         else:
-            # NO match → INSERT como SEN_*
+            # NO match → INSERT como SEN_* o UPDATE si ya existe
+            # ON CONFLICT DO UPDATE para que cuando re-corramos con
+            # JSON arreglado (partidos correctos), los SEN_ existentes
+            # se actualicen con presentador + url + partido nuevos.
             url_doc = primer.get("enlace_gaceta", "")
             try:
                 conn.execute("""
-                    INSERT OR IGNORE INTO sil_documentos
+                    INSERT INTO sil_documentos
                       (seguimiento_id, asunto_id, tipo, titulo, sinopsis, camara,
                        fecha_presentacion, legislatura, periodo, estatus, partido,
                        comision, categoria, fecha_scraping, presentador,
                        tipo_presentador, tipo_grupo, clasificacion,
                        n_firmantes, es_individual, url)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(seguimiento_id, asunto_id) DO UPDATE SET
+                      presentador=excluded.presentador,
+                      partido=excluded.partido,
+                      url=excluded.url,
+                      tipo_grupo=excluded.tipo_grupo,
+                      clasificacion=excluded.clasificacion
                 """, (
                     seg_id, asu_id, tipo_oficial,
                     primer.get("titulo", "")[:500],
