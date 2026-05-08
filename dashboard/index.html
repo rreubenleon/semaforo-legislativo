@@ -1775,12 +1775,16 @@
             const top5Legisladores = (() => {
                 if (!data.autoria || semaforo.length === 0) return [];
                 const enReceso = data.metadata?.modo_receso === true;
-                const permSet = (enReceso && data.permanente?.nombres_norm)
-                    ? new Set(data.permanente.nombres_norm)
-                    : null;
                 const norm = (s) => (s || '')
                     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
                     .toLowerCase().trim();
+                // Canoniza orden de palabras (mismo motivo que en RadarLegisladores):
+                // los nombres del roster vienen "Nombre Apellido" pero la BD de
+                // Diputados los guarda "Apellido Nombre". Match por multiset.
+                const tokenKey = (s) => norm(s).split(/\s+/).filter(Boolean).sort().join(' ');
+                const permSet = (enReceso && data.permanente?.nombres_norm)
+                    ? new Set(data.permanente.nombres_norm.map(tokenKey))
+                    : null;
                 // Top categorias por score del semaforo (donde hay mas probabilidad de accion)
                 const topCats = [...semaforo].sort((a, b) => b.score_total - a.score_total).slice(0, 5);
                 const seen = new Set();
@@ -1791,7 +1795,7 @@
                     for (const p of preds) {
                         if (seen.has(p.nombre)) continue;
                         // Filtro Permanente durante receso
-                        if (permSet && !permSet.has(norm(p.nombre))) continue;
+                        if (permSet && !permSet.has(tokenKey(p.nombre))) continue;
                         seen.add(p.nombre);
                         result.push({...p, categoria: catData.nombre, catScore: catData.score_total});
                         break;
@@ -2072,14 +2076,19 @@
             // integrantes oficiales de la Comisión Permanente del periodo activo)
             const enReceso = data.metadata?.modo_receso === true;
             const [vista, setVista] = useState(enReceso ? 'permanente' : 'todos');
-            const permanenteSet = useMemo(() => {
-                const norms = data.permanente?.nombres_norm;
-                return Array.isArray(norms) ? new Set(norms) : null;
-            }, [data]);
-            const permanenteCount = data.permanente?.integrantes?.length || 0;
             const normNombre = (s) => (s || '')
                 .normalize('NFD').replace(/[̀-ͯ]/g, '')
                 .toLowerCase().trim();
+            // Canoniza el orden de las palabras para que matchee igual
+            // "Rubén Ignacio Moreira Valdez" (formato Senado: nombre primero)
+            // que "Moreira Valdez Rubén Ignacio" (formato Diputados: apellido
+            // primero). Sin esto perdíamos 38/74 integrantes en el filtro.
+            const tokenKey = (s) => normNombre(s).split(/\s+/).filter(Boolean).sort().join(' ');
+            const permanenteSet = useMemo(() => {
+                const norms = data.permanente?.nombres_norm;
+                return Array.isArray(norms) ? new Set(norms.map(tokenKey)) : null;
+            }, [data]);
+            const permanenteCount = data.permanente?.integrantes?.length || 0;
 
             // Permanente son 74 integrantes pero el filtro es client-side
             // contra data.permanente.nombres_norm. Si pedimos solo los top 250
@@ -2118,7 +2127,7 @@
                         // El worker no conoce el roster Permanente; lo filtramos aquí
                         // contra data.permanente.nombres_norm. Por eso pedimos limite=250.
                         if (vista === 'permanente' && permanenteSet) {
-                            legs = legs.filter(l => permanenteSet.has(normNombre(l.nombre)));
+                            legs = legs.filter(l => permanenteSet.has(tokenKey(l.nombre)));
                             totalReal = legs.length;
                             pagsReal = 1;
                         }
