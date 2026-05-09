@@ -1369,6 +1369,11 @@ def obtener_fuentes_por_categoria():
                   AND COALESCE(presentador,'') NOT LIKE '%Ejecutivo Federal%'
                   AND COALESCE(presentador,'') NOT LIKE '%EJECUTIVO FEDERAL%'
                   AND tipo_presentador NOT IN ('ejecutivo', 'Ejecutivo')
+                  -- Dedupe SEN/PERM: cuando un instrumento aparece en
+                  -- Gaceta del Senado (SEN_) Y en Gaceta Permanente (PERM_)
+                  -- el SEN_ se marcó es_duplicado_cross_camara=1 y el
+                  -- PERM_ es la versión canónica con fecha real de sesión.
+                  AND COALESCE(es_duplicado_cross_camara, 0) = 0
                 ORDER BY fecha_presentacion DESC
             """, (cat_clave,)).fetchall()
 

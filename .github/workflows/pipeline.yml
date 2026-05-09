@@ -165,6 +165,15 @@ jobs:
         run: python scripts/scrape_urls_diputados.py
         continue-on-error: true
 
+      # 4c-sext. Dedupe SEN/PERM: marca docs SEN_ como duplicados de
+      #     PERM_ cuando son el mismo instrumento (firmante + ≥1
+      #     artículo común + ≥1 ley/materia común + fecha ±30 días).
+      #     Sin esto, Paloma Sánchez (y otros) aparece 2 veces: SEN
+      #     con fecha 4-28 y PERM con fecha 5-06.
+      - name: Dedupe SEN/PERM (idempotente)
+        run: python scripts/dedupe_sen_perm.py
+        continue-on-error: true
+
       # 4d. Reparar campo `partido` en sil_documentos. Bug: el scraper
       #     oficial del Senado asignaba 'PAN' a todos los opositores y
       #     'MORENA' a todos los oficialistas, sin distinguir PT, PRI,
