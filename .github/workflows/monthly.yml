@@ -1,0 +1,95 @@
+name: Refresh Mensual (JUCOPO + Roster + Limpieza)
+
+# Datos legislativos institucionales que cambian con baja frecuencia
+# (1-2 veces al año típicamente). Se ejecuta una vez al mes.
+#
+# Incluye:
+#   - JUCOPO + Mesa Directiva del Senado (scrape senado.gob.mx)
+#   - Sync legisladores comisiones a D1 (post-limpieza)
+#   - Limpieza de comisiones falsas (idempotente, barato)
+#
+# NO incluye scrapes de iniciativas/dictámenes (eso es semanal).
+
+on:
+  schedule:
+    # 1er día de cada mes a las 14:00 UTC (8am CDMX en CDT, 9am CST)
+    - cron: '0 14 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "monthly-refresh"
+  cancel-in-progress: false
+
+jobs:
+  refresh-mensual:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      # Restaurar BD del cache. Si no hay (raro), usar seed.
+      - name: Restaurar SQLite DB
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-monthly-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - name: Fallback a release si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+          npm install -g wrangler@3
+
+      # 1. Limpieza de comisiones falsas (idempotente)
+      - name: Limpiar comisiones falsas senadores
+        run: python scripts/limpiar_cargos_senadores.py
+        continue-on-error: true
+
+      - name: Limpiar comisiones falsas diputados
+        run: python scripts/limpiar_cargos_diputados.py
+        continue-on-error: true
+
+      # 2. Refresh JUCOPO + Mesa Directiva Senado (scrape + sync D1)
+      - name: Refresh JUCOPO Senado (sync a D1 al final)
+        run: python scripts/scrape_organos_senado.py
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      # 3. Sync comisiones limpias a D1
+      - name: Sync legisladores comisiones a D1
+        run: python scripts/sync_legisladores_cargo_d1.py
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+
+      # Guardar BD actualizada en cache
+      - name: Guardar SQLite DB en cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-monthly-${{ github.run_id }}
