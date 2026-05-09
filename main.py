@@ -1320,6 +1320,13 @@ def obtener_fuentes_por_categoria():
               AND fecha >= date('now', '-14 days')
               AND tipo != 'comunicacion'
               AND titulo NOT LIKE '%para referirse a la situación%'
+              -- Filtrar iniciativas de Ejecutivo Federal y similares
+              -- (no son legisladores → no entran al score legislativo).
+              AND COALESCE(autor,'') NOT LIKE '%Ejecutivo Federal%'
+              AND COALESCE(autor,'') NOT LIKE '%EJECUTIVO FEDERAL%'
+              AND COALESCE(autor,'') NOT LIKE '%Cámara de Diputados%'
+              AND COALESCE(autor,'') NOT LIKE '%Cámara de Senadores%'
+              AND COALESCE(autor,'') NOT LIKE '%Mesa Directiva%'
             ORDER BY fecha DESC
         """, (f"%{cat_clave}%",)).fetchall()
         for r in rows:
@@ -1357,6 +1364,11 @@ def obtener_fuentes_por_categoria():
                   AND fecha_presentacion >= date('now', '-14 days')
                   AND tipo_grupo IN ('Iniciativa', 'Proposición con Punto de Acuerdo',
                                      'Acuerdo Parlamentario', 'Dictamen')
+                  -- Filtrar iniciativas de Ejecutivo Federal y similares
+                  -- (no son legisladores).
+                  AND COALESCE(presentador,'') NOT LIKE '%Ejecutivo Federal%'
+                  AND COALESCE(presentador,'') NOT LIKE '%EJECUTIVO FEDERAL%'
+                  AND tipo_presentador NOT IN ('ejecutivo', 'Ejecutivo')
                 ORDER BY fecha_presentacion DESC
             """, (cat_clave,)).fetchall()
 
