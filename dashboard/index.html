@@ -4193,9 +4193,13 @@
                             <div onClick={() => setSelectedCom(isSelected ? null : i)}
                                 className={`grid items-center px-3 py-3 border-b border-gray-200 cursor-pointer transition-colors ${isSelected ? 'bg-acento/5 border-l-2 border-l-acento' : 'hover:bg-gray-50/50'}`}
                                 style={{gridTemplateColumns: 'minmax(0, 1fr) 56px 56px 56px 56px 64px 24px'}}>
-                                {/* Comisión nombre + categoría + cámara inline */}
+                                {/* Comisión nombre + categoría + cámara inline.
+                                    Quitamos prefijo "Comisión de " porque ya estamos
+                                    en pestaña de Comisiones — redundante. */}
                                 <div className="min-w-0 pr-3">
-                                    <div className="font-medium text-sm text-gray-800 truncate">{c.nombre}</div>
+                                    <div className="font-medium text-sm text-gray-800 truncate">
+                                        {(c.nombre || '').replace(/^Comisi[oó]n\s+(de|del|de\s+la|de\s+los|de\s+las)\s+/i, '').replace(/^Comisi[oó]n\s+/i, '')}
+                                    </div>
                                     <div className="flex items-center gap-2 mt-0.5">
                                         <span className={`text-[9px] font-mono ${c.camara === 'Senado' ? 'text-blue-600' : 'text-purple-600'}`}>{c.camara === 'Senado' ? 'Sen.' : 'Dip.'}</span>
                                         {c.categoria_nombre && (

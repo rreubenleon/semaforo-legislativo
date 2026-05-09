@@ -148,7 +148,6 @@ def main():
     conn.execute("PRAGMA journal_mode=WAL")
 
     cols = {r[1] for r in conn.execute("PRAGMA table_info(sil_documentos)").fetchall()}
-    # Schema migration idempotente — agregar columnas faltantes.
     for col, ddl in [
         ("tipo_grupo", "ALTER TABLE sil_documentos ADD COLUMN tipo_grupo TEXT DEFAULT ''"),
         ("clasificacion", "ALTER TABLE sil_documentos ADD COLUMN clasificacion TEXT DEFAULT ''"),
@@ -163,6 +162,26 @@ def main():
             logger.info(f"  Schema migration: agregando columna {col}")
             conn.execute(ddl)
             cols.add(col)
+
+    # Tabla relacional N:M para vincular legisladores con instrumentos
+    # según su ROL. Permite contar correctamente "Iniciativas vinculadas"
+    # por diputado sin duplicar el instrumento en sil_documentos.
+    # Ej. Gibrán Ramírez (MC): 6 Iniciante + 2 Adherente + 47 De Grupo = 55.
+    # En sil_documentos solo viven los instrumentos como Iniciante; los
+    # roles Adherente/De Grupo se registran aquí.
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS diputado_instrumento (
+            legislador_id INTEGER NOT NULL,
+            sitl_id_dip TEXT NOT NULL,
+            seguimiento_id TEXT NOT NULL,
+            rol TEXT NOT NULL,
+            tipo TEXT NOT NULL,
+            fecha TEXT,
+            PRIMARY KEY (legislador_id, seguimiento_id, rol)
+        )
+    """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_di_legislador ON diputado_instrumento(legislador_id)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_di_seg ON diputado_instrumento(seguimiento_id)")
     conn.commit()
 
     rows = conn.execute("""
@@ -204,13 +223,24 @@ def main():
     if args.limit > 0:
         instrumentos = instrumentos[: args.limit]
 
+    # Mapping sitl_id_dip → legislador_id (BD) para tabla relacional
+    sitl_to_leg = {}
+    for r in conn.execute(
+        "SELECT sitl_id, id FROM legisladores WHERE camara='Cámara de Diputados' AND sitl_id IS NOT NULL"
+    ).fetchall():
+        sitl_to_leg[str(r[0])] = r[1]
+
     ahora = datetime.now().isoformat(timespec="seconds")
     matched = 0
     inserted = 0
     skipped_sin_fecha = 0
     ambiguos = 0
+    relacional_inserted = 0
     inserted_por_tipo = {"Iniciativa": 0, "Proposición con Punto de Acuerdo": 0}
-    seg_ids_creados = set()  # para no contar 2 veces el mismo instrumento colectivo
+    seg_ids_creados = set()
+    # Tracking de roles por (legislador, seg_id) para mostrar conteo final
+    rol_por_leg = {}  # leg_id → Counter(rol → n)
+    from collections import defaultdict, Counter
 
     for inst in instrumentos:
         titulo = inst.get("titulo", "")
@@ -218,10 +248,41 @@ def main():
         tipo = inst.get("tipo", "")
         sitl_id_dip = str(inst.get("sitl_id_dip", ""))
         rol_valor = inst.get("rol_valor", "")
+        rol = inst.get("rol", "Iniciante")
 
         if not fecha:
             skipped_sin_fecha += 1
             continue
+
+        # Roles que NO son "Iniciante/Promovente/Proponente" (los principales)
+        # se registran SOLO en diputado_instrumento sin tocar sil_documentos.
+        # Esto evita inflar conteos globales con docs duplicados.
+        es_principal = rol in ("Iniciante", "Promovente", "Proponente")
+
+        # Si el rol es Adherente/De Grupo/Suscriptor: solo registrar la
+        # vinculación N:M. NO tocar sil_documentos.
+        if not es_principal:
+            leg_id = sitl_to_leg.get(sitl_id_dip)
+            if leg_id and not args.dry_run:
+                # Construir seg_id determinístico para que el INSERT/UPSERT
+                # converja al mismo doc del Iniciante principal.
+                seed = f"{titulo[:80]}|{fecha}|{tipo}"
+                sid_h = hashlib.md5(seed.encode("utf-8")).hexdigest()[:14]
+                seg_target = f"DIP_{sid_h}"
+                try:
+                    conn.execute(
+                        """
+                        INSERT OR REPLACE INTO diputado_instrumento
+                          (legislador_id, sitl_id_dip, seguimiento_id, rol, tipo, fecha)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        """,
+                        (leg_id, sitl_id_dip, seg_target, rol, tipo, fecha),
+                    )
+                    relacional_inserted += 1
+                except Exception as e:
+                    logger.warning(f"  rel insert fail: {e}")
+            rol_por_leg.setdefault(leg_id, Counter())[rol] += 1
+            continue  # ya registrado, no procesar como sil_documentos
 
         apellido = rol_valor.split()[0].lower() if rol_valor else ""
         apellido_norm = normalizar(apellido)
@@ -338,6 +399,19 @@ def main():
                 if es_nuevo_seg_id:
                     inserted += 1
                     inserted_por_tipo[tipo_grupo] = inserted_por_tipo.get(tipo_grupo, 0) + 1
+                # También registrar en tabla relacional como Iniciante
+                leg_id = sitl_to_leg.get(sitl_id_dip)
+                if leg_id:
+                    conn.execute(
+                        """
+                        INSERT OR REPLACE INTO diputado_instrumento
+                          (legislador_id, sitl_id_dip, seguimiento_id, rol, tipo, fecha)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        """,
+                        (leg_id, sitl_id_dip, seg_id, rol, tipo, fecha),
+                    )
+                    relacional_inserted += 1
+                    rol_por_leg.setdefault(leg_id, Counter())[rol] += 1
             except Exception as e:
                 logger.warning(f"Error insertando {seg_id}: {e}")
 
@@ -356,6 +430,18 @@ def main():
     print(f"    · Proposiciones:           {inserted_por_tipo.get('Proposición con Punto de Acuerdo', 0)}")
     print(f"  Skipped (sin fecha):         {skipped_sin_fecha}")
     print(f"  Ambiguos (mismo apellido+fecha en BD, skip): {ambiguos}")
+    print(f"  Relacional diputado_instrumento inserted:    {relacional_inserted}")
+    # Top 5 diputados con más vinculaciones
+    if rol_por_leg:
+        print()
+        print("  Top 5 diputados por vinculaciones:")
+        top5 = sorted(rol_por_leg.items(), key=lambda x: -sum(x[1].values()))[:5]
+        for leg_id, counter in top5:
+            r = conn.execute("SELECT nombre FROM legisladores WHERE id=?", (leg_id,)).fetchone()
+            nombre = r[0] if r else f"id={leg_id}"
+            total = sum(counter.values())
+            roles_str = " + ".join(f"{n} {rol}" for rol, n in counter.most_common())
+            print(f"    {nombre[:40]:40} total={total} ({roles_str})")
     if args.dry_run:
         print("\n  *** DRY RUN — no se escribió la BD ***")
 
