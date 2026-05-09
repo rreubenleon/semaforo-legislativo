@@ -37,6 +37,8 @@ import time
 import unicodedata
 from pathlib import Path
 
+from datetime import datetime
+
 import requests
 import urllib3
 from bs4 import BeautifulSoup
@@ -112,27 +114,17 @@ def scrape_comision(comt: int) -> list[dict]:
         return []
 
     items = []
-    # Approach: scrape por bloques de texto alrededor de cada init=. La
-    # estructura del HTML del SITL es complicada (tables anidadas), así
-    # que partimos el HTML en secciones de "<TR>...</TR>" y procesamos.
-    # Buscar todos los init= y su gaceta URL asociada cerca.
-    # Estrategia simple: por cada init= encontrado, escanear hacia atrás
-    # 2KB y hacia adelante 1KB para extraer título y URL gaceta.
-
     init_positions = [(m.start(), m.group(1)) for m in re.finditer(r"init=(\d+)", r.text)]
     seen_ids = set()
     for pos, init_id in init_positions:
         if init_id in seen_ids:
             continue
         seen_ids.add(init_id)
-        chunk = r.text[max(0, pos - 4000): pos + 2500]
+        chunk = r.text[max(0, pos - 4000): pos + 3000]
         # URL gaceta cerca
         m_gac = re.search(r"https?://gaceta\.diputados\.gob\.mx/Gaceta/[^\s\"'>]+", chunk)
         url_gaceta = m_gac.group(0) if m_gac else ""
-        # Título: buscar texto largo dentro de <span class="Estilo71"> o similar
-        # cercano antes del init=
-        # Más simple: extraer primer texto de longitud razonable después
-        # del último <td antes del init=
+        # Título
         titulos_chunk = re.findall(
             r'class="Estilo7\d"[^>]*>(?:<[^>]+>)*([^<]{40,500})',
             chunk
@@ -144,7 +136,6 @@ def scrape_comision(comt: int) -> list[dict]:
                 titulo = t_clean
                 break
         if not titulo:
-            # Fallback: primer texto de >50 chars en chunk
             for m in re.finditer(r">([^<]{60,400})<", chunk):
                 t_clean = re.sub(r"\s+", " ", m.group(1)).strip()
                 if len(t_clean) > 60 and not t_clean.startswith("Publicación"):
@@ -152,14 +143,64 @@ def scrape_comision(comt: int) -> list[dict]:
                     break
         if not titulo:
             continue
+
+        # Texto plano del bloque para extraer estado y fechas
+        chunk_plain = re.sub(r"<[^>]+>", " ", chunk)
+        chunk_plain = re.sub(r"\s+", " ", chunk_plain)
+
+        # Estado: "Aprobada con fecha DD-Mes-YYYY" / "Pendiente" / "Desechada" / "Retirada"
+        estado = "Pendiente"
+        fecha_dictamen = ""
+        m_aprobada = re.search(
+            r"Aprobada\s+(?:con\s+fecha\s+)?(\d{1,2}-[A-Za-z]+-\d{4})",
+            chunk_plain,
+        )
+        if m_aprobada:
+            estado = "Aprobada"
+            fecha_dictamen = fecha_iso(m_aprobada.group(1))
+        elif "Desechada" in chunk_plain:
+            estado = "Desechada"
+        elif "Retirada" in chunk_plain:
+            estado = "Retirada"
+
+        # Comisión dictaminadora: aparece como "Cambio Climático y Sostenibilidad -->"
+        # antes del título. Y a veces es "Comisiones Unidas de X y de Y -->".
+        # Patrón: "- {COMISIÓN} -->" justo antes del texto explicativo.
+        m_com = re.search(r"-\s+([A-ZÁÉÍÓÚÑa-záéíóúñ,\s]{6,150}?)\s+-->", chunk_plain)
+        comision = m_com.group(1).strip() if m_com else ""
+
+        # Proponente: "Proponente: Apellido Nombre (PARTIDO)"
+        m_prop = re.search(r"Proponente:\s*([^\n]+?\([^)]+\))", chunk_plain)
+        proponente = m_prop.group(1).strip() if m_prop else ""
+
+        # Fecha de presentación: "Fecha de presentación: DD-Mes-YYYY"
+        m_fpres = re.search(
+            r"Fecha\s+de\s+presentación:\s*(\d{1,2}-[A-Za-z]+-\d{4})",
+            chunk_plain,
+        )
+        fecha_pres = fecha_iso(m_fpres.group(1)) if m_fpres else ""
+
+        # Publicación en Gaceta: "Publicación en Gaceta: DD-Mes-YYYY"
+        m_fgac = re.search(
+            r"Publicaci[óo]n\s+en\s+Gaceta:\s*(\d{1,2}-[A-Za-z]+-\d{4})",
+            chunk_plain,
+        )
+        fecha_gaceta = fecha_iso(m_fgac.group(1)) if m_fgac else ""
+
         url_sitl = f"{BASE}/dictameneslxvi_ld.php?tipot=&pert=0&init={init_id}"
         items.append({
             "init_id": init_id,
             "titulo": titulo[:500],
-            "comision": comt,
+            "comision_dictaminadora": comision,
+            "proponente": proponente,
+            "fecha_presentacion": fecha_pres,
+            "fecha_dictamen": fecha_dictamen,
+            "fecha_gaceta": fecha_gaceta,
+            "estado": estado,
             "url": url_gaceta or url_sitl,
             "url_gaceta": url_gaceta,
             "url_sitl": url_sitl,
+            "comt": comt,
         })
     return items
 
@@ -244,7 +285,75 @@ def main():
         matched += 1
     if not args.dry_run:
         conn.commit()
-    logger.info(f"BD updates: {matched}/{len(rows)} ({100*matched/max(len(rows),1):.1f}%)")
+    logger.info(f"BD updates sil_documentos URL: {matched}/{len(rows)} ({100*matched/max(len(rows),1):.1f}%)")
+
+    # ── Insertar/actualizar dictámenes APROBADOS en tabla `gaceta` ──
+    # Esto alimenta el tab Comisiones (refresh_comisiones_sitl.py lee
+    # de tabla gaceta para "Último dictamen" e histórico mensual).
+    # Antes solo había comunicaciones; ahora agregamos los dictámenes
+    # que el SITL Diputados marcó como "Aprobada con fecha X".
+    aprobadas = [it for it in todos_items if it["estado"] == "Aprobada" and it["fecha_dictamen"]]
+    logger.info(f"\nDictámenes aprobados a sincronizar en gaceta: {len(aprobadas)}")
+    inserted_dict = 0
+    if not args.dry_run and aprobadas:
+        ahora_iso = datetime.now().isoformat()
+        # UNIQUE en gaceta puede ser url+fecha+camara o numero_doc.
+        # Usamos SELECT primero para evitar IntegrityError si ya existe.
+        # La columna `gaceta.url` tiene UNIQUE constraint. Múltiples
+        # dictámenes pueden compartir el URL (mismo número de gaceta del
+        # día con varios dictámenes adentro). Para evitar colisión:
+        # cada init_id tiene URL distinta (anchor del SITL).
+        for it in aprobadas:
+            url_gaceta = it["url_gaceta"]
+            # URL única por instrumento usando init_id como anchor
+            url_unico = f"{url_gaceta}#init{it['init_id']}" if url_gaceta else it["url_sitl"]
+            numero_doc = f"SITL_{it['init_id']}"
+            existing = conn.execute(
+                "SELECT id FROM gaceta WHERE numero_doc = ?",
+                (numero_doc,),
+            ).fetchone()
+            try:
+                if existing:
+                    conn.execute("""
+                        UPDATE gaceta SET
+                          titulo = ?, resumen = ?, fecha = ?, tipo = 'dictamen',
+                          comision = ?, autor = ?, camara = 'Diputados',
+                          url = ?, url_pdf = ?
+                        WHERE id = ?
+                    """, (
+                        it["titulo"][:500],
+                        it["titulo"][:1000],
+                        it["fecha_dictamen"],
+                        it["comision_dictaminadora"][:200],
+                        it["proponente"][:200],
+                        url_unico, url_gaceta or it["url_sitl"],
+                        existing[0],
+                    ))
+                else:
+                    conn.execute("""
+                        INSERT INTO gaceta
+                          (titulo, resumen, fecha, tipo, comision, autor, camara,
+                           url, url_pdf, numero_doc, categorias, fecha_scraping)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        it["titulo"][:500],
+                        it["titulo"][:1000],
+                        it["fecha_dictamen"],
+                        "dictamen",
+                        it["comision_dictaminadora"][:200],
+                        it["proponente"][:200],
+                        "Diputados",
+                        url_unico,
+                        url_gaceta or it["url_sitl"],
+                        numero_doc,
+                        "",
+                        ahora_iso,
+                    ))
+                inserted_dict += 1
+            except Exception as e:
+                logger.warning(f"  insert/update gaceta dictamen fail (init={it['init_id']}): {e}")
+        conn.commit()
+    logger.info(f"Dictámenes insertados en tabla gaceta: {inserted_dict}/{len(aprobadas)}")
 
     if args.dry_run:
         logger.info("*** DRY RUN ***")
