@@ -120,49 +120,108 @@ def clasificar_tipo(titulo: str) -> tuple[str, str]:
     return "Otro", "Otro"
 
 
-def obtener_listado() -> list[dict]:
-    """Descarga la página principal y extrae los documentos enlazados."""
-    r = requests.get(LISTADO_URL, headers=HEADERS, timeout=30)
-    r.raise_for_status()
-    soup = BeautifulSoup(r.text, "html.parser")
+MESES_ES = {
+    "enero": "01", "febrero": "02", "marzo": "03", "abril": "04",
+    "mayo": "05", "junio": "06", "julio": "07", "agosto": "08",
+    "septiembre": "09", "octubre": "10", "noviembre": "11", "diciembre": "12",
+}
 
+
+def _parsear_fecha_es(s: str) -> str:
+    """'Miércoles 06 de mayo de 2026 / Gaceta: …' → '2026-05-06'."""
+    if not s:
+        return ""
+    m = re.search(r"(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4})", s.lower())
+    if not m:
+        return ""
+    mes = MESES_ES.get(m.group(2), "")
+    if not mes:
+        return ""
+    return f"{m.group(3)}-{mes}-{m.group(1).zfill(2)}"
+
+
+def obtener_listado() -> list[dict]:
+    """
+    Descarga la página principal y extrae los documentos con su FECHA REAL
+    de sesión (no la fecha de instalación por defecto).
+
+    La página agrupa docs por sesión con headers tipo
+      "Miércoles 06 de mayo de 2026 / Gaceta: LXVI/2SPR-4"
+    Cada doc bajo ese header pertenece a esa sesión.
+
+    Approach:
+      1. WAF Imperva: usar Session + retry hasta obtener HTML real (~200KB).
+      2. Recorrer el árbol DOM en orden, trackear el header de fecha más
+         reciente, asociar cada link <a href=".../documento/N"> a esa fecha.
+    """
+    sess = requests.Session()
+    sess.headers.update(HEADERS)
+    html = ""
+    for attempt in range(4):
+        r = sess.get(LISTADO_URL, timeout=30)
+        if len(r.text) > 10000:
+            html = r.text
+            break
+        time.sleep(2 + attempt)
+    if not html:
+        logger.warning(f"Listado Permanente vacío tras retries (WAF?)")
+        return []
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    # Caminar el HTML en orden, manteniendo última fecha vista.
     docs = []
     seen = set()
-    for a in soup.find_all("a", href=True):
-        href = a.get("href", "")
-        m = re.search(r"/gaceta_comision_permanente/documento/(\d+)", href)
-        if not m:
+    fecha_actual = ""
+    re_fecha = re.compile(
+        r"(?:Lunes|Martes|Mi[ée]rcoles|Jueves|Viernes|S[áa]bado|Domingo)\s+\d{1,2}\s+de\s+\w+\s+de\s+\d{4}",
+        re.IGNORECASE,
+    )
+
+    # Iterar sobre descendientes del body en orden. Solo actualizar
+    # `fecha_actual` cuando el texto del header SE INICIA con un día de
+    # la semana (ej "Miércoles 06 de mayo de 2026 / Gaceta..."). Ignorar
+    # textos como "ACTA DE LA SESIÓN DE INSTALACIÓN DEL MIÉRCOLES 29 DE
+    # ABRIL DE 2026" que mencionan fechas pero no son headers de sesión.
+    re_fecha_header = re.compile(
+        r"^(?:Lunes|Martes|Mi[ée]rcoles|Jueves|Viernes|S[áa]bado|Domingo)\s+\d{1,2}\s+de\s+\w+\s+de\s+\d{4}",
+        re.IGNORECASE,
+    )
+
+    body = soup.body or soup
+    for elem in body.descendants:
+        # Headers con fecha — solo si el texto INICIA con día de semana
+        if hasattr(elem, "name") and elem.name in ("h1", "h2", "h3", "h4", "h5", "strong", "b"):
+            txt = elem.get_text(" ", strip=True)
+            if re_fecha_header.match(txt):
+                f_iso = _parsear_fecha_es(txt)
+                if f_iso:
+                    fecha_actual = f_iso
             continue
-        doc_id = m.group(1)
-        if doc_id in seen:
-            continue
-        seen.add(doc_id)
-        titulo = a.get_text(strip=True)
-        if not titulo or len(titulo) < 5:
-            continue
-        docs.append({
-            "doc_id": doc_id,
-            "titulo": titulo[:500],
-            "url": href if href.startswith("http") else f"{BASE}{href}",
-        })
+        # Si es link a doc
+        if hasattr(elem, "name") and elem.name == "a":
+            href = elem.get("href", "")
+            m = re.search(r"/gaceta_comision_permanente/documento/(\d+)", href)
+            if not m:
+                continue
+            doc_id = m.group(1)
+            if doc_id in seen:
+                continue
+            seen.add(doc_id)
+            titulo = elem.get_text(strip=True)
+            if not titulo or len(titulo) < 5:
+                continue
+            docs.append({
+                "doc_id": doc_id,
+                "titulo": titulo[:500],
+                "url": href if href.startswith("http") else f"{BASE}{href}",
+                "fecha": fecha_actual,  # fecha REAL de la sesión
+            })
     return docs
 
 
-def parsear_fecha_seccion(soup: BeautifulSoup, doc_id: str) -> str:
-    """Extrae fecha de publicación buscando 'Fecha:' o headers de día cerca del doc."""
-    # Buscar en la página principal: a menudo agrupa docs por día con header tipo
-    # "Miércoles 29 de abril de 2026"
-    # Por ahora: usar fecha de instalación (29-abr-2026) como default si no se encuentra
-    return ""
-
-
 def fecha_default_para_id(doc_id: int) -> str:
-    """
-    Heurística: ID 158927 es del Acta de Instalación (29-abr-2026).
-    IDs cercanos son del mismo día. Sin metadata exacta, usar 29-abr-2026
-    como fecha default para todos los docs LXVI 2do receso 2do año.
-    Esto se afina cuando se scrape el detalle de cada doc.
-    """
+    """Fallback solo si scrape no encontró la fecha real de la sesión."""
     return "2026-04-29"
 
 
@@ -189,7 +248,9 @@ def scrape(solo_count: bool = False) -> dict:
         asu_id = seg_id
         tipo, tipo_grupo = clasificar_tipo(doc["titulo"])
         distribucion_tipo[tipo] = distribucion_tipo.get(tipo, 0) + 1
-        fecha = fecha_default_para_id(int(doc["doc_id"]))
+        # Usar fecha REAL extraída del header de la sesión.
+        # Fallback solo si el scraper no encontró el header (raro).
+        fecha = doc.get("fecha") or fecha_default_para_id(int(doc["doc_id"]))
         clasificacion = "legislativo_sustantivo" if tipo_grupo in ("Iniciativa", "Proposición con PA") else ""
         try:
             cur = conn.execute("""
@@ -203,7 +264,8 @@ def scrape(solo_count: bool = False) -> dict:
                     tipo=excluded.tipo,
                     tipo_grupo=excluded.tipo_grupo,
                     clasificacion=excluded.clasificacion,
-                    titulo=excluded.titulo
+                    titulo=excluded.titulo,
+                    fecha_presentacion=excluded.fecha_presentacion
             """, (
                 seg_id, asu_id, tipo,
                 doc["titulo"][:500],
