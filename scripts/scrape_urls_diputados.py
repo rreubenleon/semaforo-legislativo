@@ -506,6 +506,21 @@ def main():
     if "url" not in cols:
         conn.execute("ALTER TABLE sil_documentos ADD COLUMN url TEXT DEFAULT ''")
 
+    # Migración retroactiva: agregar prefijo "Comisión de " a docs SITL_*
+    # antiguos que se insertaron sin prefijo (antes del fix de
+    # normalizar_comision_dip). Idempotente.
+    fix_prefijo = conn.execute("""
+        UPDATE gaceta
+           SET comision = 'Comisión de ' || comision
+         WHERE numero_doc LIKE 'SITL_%'
+           AND camara='Diputados'
+           AND comision NOT LIKE 'Comisión%'
+           AND comision != ''
+    """).rowcount
+    if fix_prefijo > 0:
+        logger.info(f"Migración retroactiva: {fix_prefijo} docs Diputados con prefijo 'Comisión de' agregado")
+    conn.commit()
+
     # Index por core_titulo[:60]. La página por comisión solo tiene fecha
     # del dictamen, no de la presentación, así que el match cross-fuente
     # tiene que ser por título. Riesgo de falso positivo bajo: el título
