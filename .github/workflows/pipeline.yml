@@ -28,10 +28,10 @@ concurrency:
 jobs:
   pipeline:
     runs-on: ubuntu-latest
-    timeout-minutes: 60  # bajado de 90 → 60 tras incidente abr 25 2026.
-                         # Pipeline normal tarda 25-35 min; deja 25 min de margen.
-                         # Si Haiku se cuelga, el cap por run de 40 calls + sleep
-                         # 0.5s = max +20s. Si excede 60min, cancelar es lo correcto.
+    timeout-minutes: 75  # subido de 60 → 75 (8-may-2026) tras agregar
+                         # scrape_urls_diputados.py (960 reqs SITL) + scripts
+                         # de conteos por rol. Pipeline normal ahora 30-50 min;
+                         # deja 25 min de margen. Si excede 75 min, cancelar.
 
     steps:
       # 1. Descargar el código
@@ -313,6 +313,12 @@ jobs:
           key: semaforo-db-${{ github.run_id }}
 
       # 6. Commit y push de datos actualizados (solo JSON — DB persiste en cache)
+      #
+      # IMPORTANTE: stash de cambios NO-data.json antes de pull --rebase.
+      # Los scripts del paso 4c (scrape_urls_diputados, etc) modifican
+      # otros JSONs que NO queremos commitear (regenerados cada run desde
+      # SITL — no son fuente de verdad). Sin stash, `git pull --rebase`
+      # falla con exit 128 "cannot pull with rebase: unstaged changes".
       - name: Commit datos actualizados
         run: |
           git config user.name "FIAT Bot"
@@ -324,14 +330,19 @@ jobs:
             HAIKU_STATUS=" · $(cat haiku_status.txt)"
           fi
           git diff --staged --quiet || git commit -m "🔄 Actualización automática $(date -u '+%Y-%m-%d %H:%M UTC')${HAIKU_STATUS}"
+          # Stash cualquier cambio sin staged (regenerados por scripts de scrape)
+          # para que pull --rebase no falle.
+          git stash --include-untracked || true
           # Pull con rebase para resolver si alguien pusheó durante el pipeline
           git pull --rebase origin main || {
-            # Si rebase falla, abortar y usar merge strategy
             git rebase --abort 2>/dev/null
             git pull --no-rebase -X theirs origin main
             git add dashboard/data.json 2>/dev/null
             git diff --staged --quiet || git commit -m "🔄 Merge automático con cambios remotos"
           }
+          # Descartar stash (no lo necesitamos — los JSONs scrapeados se
+          # regeneran en cada run idempotente).
+          git stash drop 2>/dev/null || true
           git push
 
   # Deploy a GitHub Pages después del pipeline
