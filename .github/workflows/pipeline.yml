@@ -85,132 +85,45 @@ jobs:
         run: pip install -r requirements.txt
 
       # 4a. Cargar roster oficial de la Comisión Permanente.
-      #     Idempotente (UPSERT). Solo escribe en SQLite local — sin red.
+      #     Idempotente (UPSERT). Datos hardcoded en el script — sin red.
       #     Necesario para que main.py lo exporte en data.json.permanente
       #     y el frontend pueda filtrar widgets durante receso.
+      #     Es BARATO (~2s) así que se mantiene en el pipeline.
       - name: Cargar Comisión Permanente (idempotente)
         run: python scripts/cargar_permanente_lxvi.py
-        continue-on-error: true   # No bloquear pipeline si el roster falla
-
-      # 4b. Integrar SITL Diputados oficial al sil_documentos.
-      #     Idempotente (UPSERT por seg_id determinístico). Lee
-      #     dashboard/diputados_lxvi_oficial.json (committeado en repo)
-      #     y completa los ~2,000 docs de Diputados que SIL Gobernación
-      #     no exponía pero SITL Diputados sí (gap de ~30% en proposiciones).
-      #     No re-scrape: el JSON se actualiza manualmente cuando hay
-      #     nuevos periodos (2-3 veces por año). Sin red.
-      - name: Integrar SITL Diputados oficial (idempotente)
-        run: python scripts/integrar_diputados_oficial.py
         continue-on-error: true
 
-      # 4c. Limpiar comisiones falsas de senadores. El scraper original
-      #     parseó mal el HTML del Senado y metió items del menú lateral
-      #     ('Diario de los Debates', 'Documentos de Apoyo Parlamentario',
-      #     'Expedientes Legislativos Digitales', 'Iniciativas, Minutas,
-      #     Instrumentos', etc.) como falsas comisiones. Eso inflaba el
-      #     índice de efectividad por comisión. El script filtra contra
-      #     CATALOGO_LXVI (las 68 comisiones reales del Senado) y descarta
-      #     todo lo demás. Idempotente.
-      - name: Limpiar comisiones falsas senadores (idempotente)
-        run: python scripts/limpiar_cargos_senadores.py
-        continue-on-error: true
-
-      # 4c-2. Limpiar comisiones falsas de diputados. Bug equivalente al
-      #     del Senado: el scraper SITL Diputados metía 'A LAS QUE
-      #     PERTENECE', 'COMITÉ', 'ESCOLARIDAD', 'TRAYECTORIA POLÍTICA'
-      #     y partidos como MORENA/PVEM como falsas comisiones (500 de
-      #     532 diputados afectados). El script filtra contra blacklist
-      #     explícita + heurísticas de fechas. Idempotente.
-      - name: Limpiar comisiones falsas diputados (idempotente)
-        run: python scripts/limpiar_cargos_diputados.py
-        continue-on-error: true
-
-      # 4c-bis. Sync de comisiones limpias a Cloudflare D1. Sin esto, el
-      #     Worker /radar (que el frontend consume) sigue sirviendo las
-      #     falsas comisiones aunque la BD local del CI ya esté limpia.
-      - name: Sync comisiones a D1 (post-limpieza)
-        run: python scripts/sync_legisladores_cargo_d1.py
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        continue-on-error: true
-
-      # 4c-ter. Re-scrape Mesa Directiva + JUCOPO Senado para que
-      #     organos_gobierno tenga roles correctos (Coordinador vs
-      #     Vicecoordinador). Bug fixed: el HTML del Senado pone H3
-      #     "GRUPO PARLAMENTARIO X" para vicecoordinadores y "COORDINADOR
-      #     DEL GRUPO PARLAMENTARIO X" para coordinadores titulares; el
-      #     scraper colapsaba ambos a 'Coordinador'. Sincroniza a D1 al
-      #     final automáticamente.
-      - name: Refresh JUCOPO Senado (idempotente, syncs a D1)
-        run: python scripts/scrape_organos_senado.py
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        continue-on-error: true
-
-      # 4c-quad. Resolver URLs faltantes de docs SEN_ presentados durante
-      #     Permanente. Cruza con
-      #     senado.gob.mx/66/gaceta_comision_permanente/ (sesión actual
-      #     con 112 docs) por (fecha + apellido firmante + tipo + tokens
-      #     título). Match 1:1.
-      - name: Resolver URLs Permanente (idempotente)
-        run: python scripts/fix_urls_permanente.py
-        continue-on-error: true
-
-      # 4c-quint. Resolver URLs + dictámenes + iniciativas + proposiciones
-      #     LXVI Diputados desde SITL (60 comisiones × 4 estados × 2 turnot
-      #     × 2 endpoints = 960 reqs, mayoría hit cache).
-      #     Inserta en tabla `gaceta` con tipo correcto (dictamen/iniciativa/
-      #     proposicion). Resultado: ~5,883 instrumentos LXVI Diputados con
-      #     URL canónica de gaceta.diputados.gob.mx + estado + comisión
-      #     dictaminadora. Esto alimenta:
-      #       - Tab Comisiones (histórico mensual real)
-      #       - URLs Diputados (cobertura ~70%+)
-      - name: Scrape LXVI completa Diputados (idempotente)
-        run: python scripts/scrape_urls_diputados.py
-        continue-on-error: true
-
-      # 4c-sept. Calcular conteos por rol (Iniciante/Adherente/De Grupo)
-      #     desde tabla diputado_instrumento. Popula columnas en
-      #     `legisladores` para que el worker /radar las exponga.
-      - name: Calcular conteos por rol (Diputados)
-        run: python scripts/calcular_conteos_roles_diputados.py
-        continue-on-error: true
-
-      # 4c-octa. Migración D1: asegurar columnas n_ini_iniciante etc.
-      #     Idempotente — si ya existen, no-op.
-      - name: Migración D1 — columnas conteos por rol (idempotente)
-        run: python scripts/migrar_d1_conteos_roles.py
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        continue-on-error: true
-
-      # 4c-sext. Dedupe SEN/PERM: marca docs SEN_ como duplicados de
-      #     PERM_ cuando son el mismo instrumento (firmante + ≥1
-      #     artículo común + ≥1 ley/materia común + fecha ±30 días).
-      #     Sin esto, Paloma Sánchez (y otros) aparece 2 veces: SEN
-      #     con fecha 4-28 y PERM con fecha 5-06.
-      - name: Dedupe SEN/PERM (idempotente)
-        run: python scripts/dedupe_sen_perm.py
-        continue-on-error: true
-
-      # 4d. Reparar campo `partido` en sil_documentos. Bug: el scraper
-      #     oficial del Senado asignaba 'PAN' a todos los opositores y
-      #     'MORENA' a todos los oficialistas, sin distinguir PT, PRI,
-      #     PVEM, MC. El script cruza presentador con tabla legisladores
-      #     (que sí tiene partidos correctos) usando utils.matcher central.
-      #     Solo aplica cuando hay match único. Idempotente.
-      - name: Fix partido en sil_documentos (idempotente)
-        run: python scripts/fix_partido_sil.py
-        continue-on-error: true
-
-      # 4e. Re-integrar Senado para asegurar URLs y partidos correctos.
-      #     El paso 4d arregla partido en sil_documentos, pero los
-      #     SEN_* existentes pueden quedarse sin URL si el seed de la BD
-      #     fue creado antes del fix. Esto re-integra desde el JSON que
-      #     YA tiene partidos+URLs correctas. Idempotente (UPSERT).
-      - name: Re-integrar Senado oficial (URLs + partidos)
-        run: python scripts/integrar_senadores_oficial.py
-        continue-on-error: true
+      # ─────────────────────────────────────────────────────────────────
+      # NOTA DE DISEÑO (rediseño 9-may-2026):
+      # El pipeline cada 4h debe ser LIGERO — solo datos dinámicos:
+      # medios, tweets, mañanera, gaceta del día, NLP, scoring.
+      #
+      # Movidos a workflows específicos por frecuencia natural de cambio:
+      #   · monthly.yml (1er día del mes 14:00 UTC):
+      #       scrape_organos_senado.py (JUCOPO/Mesa Dir cambia 1-2x/año)
+      #       limpiar_cargos_senadores.py + limpiar_cargos_diputados.py
+      #       sync_legisladores_cargo_d1.py
+      #
+      #   · permanente_weekly.yml (miércoles 19:00 UTC = 1pm CDMX):
+      #       fix_urls_permanente.py (Permanente sesiona miércoles)
+      #       scrape_urls_diputados.py --solo-mes-actual (datos nuevos)
+      #
+      #   · comisiones.yml (lunes/martes 14:00 UTC) — ya existía:
+      #       refresh_comisiones_sitl.py (gaceta/SITL → D1)
+      #
+      # Datos históricos (dictámenes pasados, iniciativas archivadas)
+      # viven en BD/D1 y NO se re-scrapean. Solo migración inicial
+      # (one-shot) y datos del mes actual cada miércoles.
+      #
+      # Scripts ELIMINADOS del pipeline cada-4h porque son idempotentes
+      # sobre datos estáticos (no hay nada que actualizar entre runs):
+      #   · integrar_diputados_oficial.py (sólo cuando JSON cambia)
+      #   · integrar_senadores_oficial.py (sólo cuando JSON cambia)
+      #   · dedupe_sen_perm.py (sólo después de scrape Senado)
+      #   · fix_partido_sil.py (sólo después de scrape Senado)
+      #   · calcular_conteos_roles_diputados.py (sólo después de scrape)
+      #   · migrar_d1_conteos_roles.py (one-shot, ya corrió)
+      # ─────────────────────────────────────────────────────────────────
 
       # 5. Ejecutar el pipeline completo
       #    Modo local: SQLite puro, sin dependencia de Turso

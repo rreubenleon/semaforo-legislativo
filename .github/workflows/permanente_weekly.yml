@@ -1,0 +1,114 @@
+name: Refresh Semanal (Permanente + Diputados mes actual)
+
+# Captura datos legislativos NUEVOS:
+#   - Sesión de Comisión Permanente (típicamente miércoles durante receso)
+#   - Iniciativas/Proposiciones del MES ACTUAL en SITL Diputados
+#     (Pendientes que pueden cambiar de estado, dictámenes nuevos)
+#
+# Datos históricos viejos (dictámenes pasados, iniciativas archivadas)
+# NO se re-scrapean — viven en BD/D1.
+
+on:
+  schedule:
+    # Miércoles 19:00 UTC = 1:00pm CDMX (CDT) / 12:00pm CST
+    # La sesión de la Permanente típicamente se publica al medio día.
+    - cron: '0 19 * * 3'
+  workflow_dispatch:
+    inputs:
+      mes_completo:
+        description: 'Scrape de mes completo en lugar de últimos 30 días'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['true', 'false']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "permanente-weekly"
+  cancel-in-progress: false
+
+jobs:
+  refresh-semanal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Restaurar SQLite DB
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-perm-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - name: Fallback a release si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+          npm install -g wrangler@3
+
+      # 1. URLs Permanente (si hubo sesión hoy)
+      - name: Resolver URLs Permanente
+        run: python scripts/fix_urls_permanente.py
+        continue-on-error: true
+
+      # 2. Scrape Diputados — mes actual (estado puede cambiar:
+      #    Pendiente → Aprobada/Desechada). El histórico no se toca.
+      - name: Scrape Diputados mes actual (SITL)
+        run: |
+          if [ "${{ github.event.inputs.mes_completo }}" = "true" ]; then
+            python scripts/scrape_urls_diputados.py
+          else
+            python scripts/scrape_urls_diputados.py --solo-mes-actual
+          fi
+        continue-on-error: true
+
+      # 3. Calcular conteos por rol (Iniciante/Adherente/De Grupo)
+      #    Solo refresca con datos nuevos del scrape anterior.
+      - name: Calcular conteos por rol Diputados
+        run: python scripts/calcular_conteos_roles_diputados.py
+        continue-on-error: true
+
+      # 4. Sync conteos a D1 (parte del sync_legisladores_cargo_d1)
+      - name: Sync legisladores a D1
+        run: python scripts/sync_legisladores_cargo_d1.py
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        continue-on-error: true
+
+      # 5. Refresh comisiones gaceta → D1 (popular tab Comisiones)
+      - name: Refresh comisiones gaceta a D1
+        run: python scripts/refresh_comisiones_sitl.py --paso gaceta --ignorar-modo-receso
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        continue-on-error: true
+
+      - name: Guardar SQLite DB en cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-perm-${{ github.run_id }}
