@@ -76,13 +76,23 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Forzar DB en modo solo lectura
-        run: chmod 0444 semaforo.db
-
       - name: Instalar dependencias
         run: |
           pip install -r requirements.txt
           npm install -g wrangler@3
+
+      # Pre-scrape dictámenes Diputados ANTES del chmod read-only.
+      # Inserta dictámenes aprobados en tabla `gaceta` para que
+      # refresh_comisiones_sitl.py los pueda leer en el siguiente paso.
+      # Sin esto el tab Comisiones de Diputados muestra "Sin dictámenes
+      # registrados en Gaceta" porque el scraper original no captura
+      # dictámenes individuales.
+      - name: Pre-scrape dictámenes Diputados (escribe a BD)
+        run: python scripts/scrape_urls_diputados.py
+        continue-on-error: true
+
+      - name: Forzar DB en modo solo lectura
+        run: chmod 0444 semaforo.db
 
       - name: Decidir paso
         id: paso
@@ -96,17 +106,6 @@ jobs:
           fi
           echo "paso=$PASO" >> $GITHUB_OUTPUT
           echo "Paso resuelto: $PASO"
-
-      # PRE-Gaceta: scrape de dictámenes Diputados desde SITL.
-      # Inserta dictámenes aprobados en tabla `gaceta` con tipo='dictamen'
-      # antes del paso refresh_comisiones que LEE de tabla gaceta. Sin
-      # esto el tab Comisiones de Diputados muestra "Sin dictámenes
-      # registrados en Gaceta" porque el scraper original no captura
-      # dictámenes individuales.
-      - name: Pre-Gaceta — Scrape dictámenes Diputados (idempotente)
-        if: steps.paso.outputs.paso == 'lunes' || steps.paso.outputs.paso == 'gaceta' || steps.paso.outputs.paso == 'todo'
-        run: python scripts/scrape_urls_diputados.py
-        continue-on-error: true
 
       # Lunes: primero gaceta, luego SITL batch 1
       - name: Paso Gaceta (datos SQLite → D1)
