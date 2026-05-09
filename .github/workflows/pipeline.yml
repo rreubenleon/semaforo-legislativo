@@ -156,6 +156,15 @@ jobs:
         run: python scripts/fix_urls_permanente.py
         continue-on-error: true
 
+      # 4c-quint. Resolver URLs Diputados desde SITL (60 comisiones).
+      #     Scrapea iniciativaslxvi.php?comt=N y extrae URLs canónicas
+      #     de gaceta.diputados.gob.mx para los dictámenes. Match con
+      #     sil_documentos por core_titulo. Cubre ~742 docs (las
+      #     iniciativas dictaminadas; las pendientes no aparecen aquí).
+      - name: Resolver URLs Diputados (idempotente)
+        run: python scripts/scrape_urls_diputados.py
+        continue-on-error: true
+
       # 4d. Reparar campo `partido` en sil_documentos. Bug: el scraper
       #     oficial del Senado asignaba 'PAN' a todos los opositores y
       #     'MORENA' a todos los oficialistas, sin distinguir PT, PRI,
