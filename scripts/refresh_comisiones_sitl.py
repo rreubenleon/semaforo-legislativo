@@ -364,6 +364,24 @@ def paso_gaceta(dry_run=False):
             logger.info(f"  {c['nombre'][:35]} ({c['camara'][:3]}) score={c['score_actividad']} int={c['total_integrantes']}")
         return {"ok": len(resultado), "errores": 0}
 
+    # ── Cleanup duplicados Diputados sin prefijo "Comisión de" ──
+    # Bug: scrape_urls_diputados.py inicialmente insertó docs en `gaceta`
+    # con nombre raw ("Cambio Climático y Sostenibilidad") sin prefijo.
+    # Eso generó filas duplicadas en comisiones_stats. Ahora normalizamos
+    # con "Comisión de X" pero las viejas siguen en D1 como huérfanas.
+    # Las borramos antes del INSERT.
+    logger.info("Cleanup D1: borrar comisiones Diputados sin prefijo 'Comisión'…")
+    cleanup_sql = (
+        "DELETE FROM comisiones_stats "
+        "WHERE camara = 'Diputados' "
+        "  AND nombre NOT LIKE 'Comisión%';"
+    )
+    try:
+        ejecutar_sql_d1(cleanup_sql)
+        logger.info("  ✅ Cleanup OK")
+    except Exception as e:
+        logger.warning(f"  Cleanup falló (no bloqueante): {e}")
+
     # ── Escribir a D1 ──
     sqls = []
     for c in resultado:

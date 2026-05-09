@@ -103,6 +103,67 @@ def fecha_iso(f):
 
 CACHE_DIR_URL = ROOT / "eval" / "diputados" / "cache_urls"
 CACHE_DIR_URL.mkdir(parents=True, exist_ok=True)
+CACHE_DIR_DICT = ROOT / "eval" / "diputados" / "cache_dictamen"
+CACHE_DIR_DICT.mkdir(parents=True, exist_ok=True)
+
+
+def fetch_url_dictamen(init_id: str) -> str:
+    """
+    Fetcha página dictameneslxvi_ld.php?init=N para obtener URL del PDF
+    del DICTAMEN aprobado en la Gaceta Parlamentaria. Esta URL es DISTINTA
+    a la URL de la iniciativa original.
+
+      - URL iniciativa: gaceta.diputados.gob.mx/Gaceta/.../#IniciativaN
+        → texto de la iniciativa presentada
+      - URL dictamen:   gaceta.diputados.gob.mx/PDF/.../YYYYMMDD-V.pdf#page=N
+        → texto del dictamen aprobado por la comisión
+
+    Cachea por init_id.
+    """
+    cache_path = CACHE_DIR_DICT / f"{init_id}.html"
+    if cache_path.exists() and cache_path.stat().st_size > 100:
+        html = cache_path.read_text(encoding="utf-8")
+    else:
+        url = f"{BASE}/dictameneslxvi_ld.php?tipot=&pert=0&init={init_id}"
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=15, verify=False)
+            r.encoding = "utf-8"
+        except Exception:
+            return ""
+        if r.status_code != 200:
+            return ""
+        html = r.text
+        cache_path.write_text(html, encoding="utf-8")
+        time.sleep(DELAY)
+    # Buscar URL del PDF del dictamen
+    m = re.search(
+        r'https?://gaceta\.diputados\.gob\.mx/PDF/[^\s"\'>]+\.pdf(?:#page=\d+)?',
+        html,
+    )
+    return m.group(0) if m else ""
+
+
+def normalizar_comision_dip(nombre: str) -> str:
+    """
+    Normaliza el nombre de comisión Diputados al formato canónico que ya
+    usa la BD: con prefijo "Comisión de ".
+
+    El scraper anterior (scrapers/comisiones_sitl.py) inserta con prefijo.
+    Mi scrape_urls_diputados.py inserta sin prefijo → causaba duplicación
+    en comisiones_stats al hacer GROUP BY.
+
+    Ejemplos:
+      "Cambio Climático y Sostenibilidad" → "Comisión de Cambio Climático y Sostenibilidad"
+      "Comisión de Justicia" (ya con prefijo) → mismo
+      "Comisión Jurisdiccional" (sin "de") → mismo
+    """
+    if not nombre:
+        return ""
+    n = nombre.strip()
+    # Si ya empieza con "Comisión", no tocar
+    if n.startswith("Comisión "):
+        return n
+    return f"Comisión de {n}"
 
 
 def scrape_comision(comt: int, endpoint: str = "iniciativaslxvi.php",
@@ -510,12 +571,29 @@ def main():
         ahora_iso = datetime.now().isoformat()
         # UNIQUE en gaceta puede ser url+fecha+camara o numero_doc.
         # Usamos SELECT primero para evitar IntegrityError si ya existe.
+        # Para los DICTÁMENES aprobados, fetchar URL del PDF del dictamen
+        # (distinta a la URL de la iniciativa original). El user reportó:
+        # "click en Último Dictamen me lleva a una iniciativa, no al
+        # dictamen que se vota". El URL real del DICTAMEN está solo en
+        # la página de detalle dictameneslxvi_ld.php?init=N.
+        logger.info("Resolviendo URLs de DICTÁMENES (PDF Gaceta)...")
+        dictamenes_resolved = 0
+        for it, tipo_gaceta, _ in candidatos:
+            if tipo_gaceta == "dictamen" and not it["init_id"].startswith(("PEND_", "DESC_")):
+                url_pdf_dict = fetch_url_dictamen(it["init_id"])
+                if url_pdf_dict:
+                    it["url_pdf_dictamen"] = url_pdf_dict
+                    dictamenes_resolved += 1
+        logger.info(f"  URLs PDF dictamen resueltas: {dictamenes_resolved}/{len(aprobadas)}")
+
         for it, tipo_gaceta, fecha_target in candidatos:
             url_gaceta = it["url_gaceta"]
-            # URL única: si hay url_gaceta usar #init{N}, si no usar
-            # url_sitl + ?id={init_id} para evitar UNIQUE constraint
-            # cuando varias pendientes comparten el url del cuadro.
-            if url_gaceta:
+            # Para DICTÁMENES preferir url_pdf_dictamen (texto del dictamen
+            # aprobado) sobre url_gaceta (texto de iniciativa original).
+            url_pdf_dict = it.get("url_pdf_dictamen", "")
+            if tipo_gaceta == "dictamen" and url_pdf_dict:
+                url_unico = url_pdf_dict
+            elif url_gaceta:
                 url_unico = f"{url_gaceta}#init{it['init_id']}"
             else:
                 url_unico = f"{it['url_sitl']}#{it['init_id']}"
@@ -537,7 +615,7 @@ def main():
                         it["titulo"][:1000],
                         fecha_target,
                         tipo_gaceta,
-                        it["comision_dictaminadora"][:200],
+                        normalizar_comision_dip(it["comision_dictaminadora"])[:200],
                         it["proponente"][:200],
                         url_unico, url_gaceta or it["url_sitl"],
                         existing[0],
@@ -553,7 +631,7 @@ def main():
                         it["titulo"][:1000],
                         fecha_target,
                         tipo_gaceta,
-                        it["comision_dictaminadora"][:200],
+                        normalizar_comision_dip(it["comision_dictaminadora"])[:200],
                         it["proponente"][:200],
                         "Diputados",
                         url_unico,
