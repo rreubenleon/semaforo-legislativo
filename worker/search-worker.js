@@ -356,7 +356,12 @@ async function handleRadar(request, env) {
             WHERE o.legislador_id = l.id) as organos_gobierno,
           /* Asociación cargo-dictámenes: cuántos de los aprobados del legislador
              pasaron por la comisión que preside. NULL si no preside nada. */
-          l.aprobados_total, l.aprobados_en_propia, l.comision_presidida
+          l.aprobados_total, l.aprobados_en_propia, l.comision_presidida,
+          /* Conteos por rol de iniciativas vinculadas (LXVI) — solo Diputados.
+             Permite al frontend mostrar "Vinculadas: 55 (6 iniciante + 2 adh + 47 grupo)" */
+          l.n_ini_iniciante, l.n_ini_adherente, l.n_ini_de_grupo,
+          l.n_prop_proponente, l.n_prop_adherente, l.n_prop_de_grupo,
+          l.n_total_vinculadas
         FROM legisladores l
         LEFT JOIN legisladores_perfil p ON p.legislador_id = l.id
         LEFT JOIN legisladores_stats s ON s.legislador_id = l.id
@@ -436,6 +441,14 @@ async function handleRadar(request, env) {
       aprobados_total: r.aprobados_total,
       aprobados_en_propia: r.aprobados_en_propia,
       comision_presidida: r.comision_presidida,
+      /* Conteos LXVI por rol — solo Diputados. Total vinculadas = ini+adh+grupo. */
+      n_ini_iniciante: r.n_ini_iniciante,
+      n_ini_adherente: r.n_ini_adherente,
+      n_ini_de_grupo: r.n_ini_de_grupo,
+      n_prop_proponente: r.n_prop_proponente,
+      n_prop_adherente: r.n_prop_adherente,
+      n_prop_de_grupo: r.n_prop_de_grupo,
+      n_total_vinculadas: r.n_total_vinculadas,
     }));
 
     // Meta agregada (útil para poblar filtros en el cliente)

@@ -101,19 +101,158 @@ def fecha_iso(f):
     return ""
 
 
-def scrape_comision(comt: int) -> list[dict]:
-    """Scrape iniciativaslxvi.php para una comisión + parsear filas."""
-    url = f"{BASE}/iniciativaslxvi.php?comt={comt}&tipo_turnot=1&edot=T"
-    try:
-        r = requests.get(url, headers=HEADERS, timeout=30, verify=False)
-        r.encoding = "utf-8"
-    except Exception as e:
-        logger.warning(f"  comt={comt} fail: {e}")
-        return []
-    if r.status_code != 200:
-        return []
+CACHE_DIR_URL = ROOT / "eval" / "diputados" / "cache_urls"
+CACHE_DIR_URL.mkdir(parents=True, exist_ok=True)
+
+
+def scrape_comision(comt: int, endpoint: str = "iniciativaslxvi.php",
+                    tipo_doc: str = "iniciativa", tipo_turnot: int = 1,
+                    edot: str = "T") -> list[dict]:
+    """
+    Scrape `iniciativaslxvi.php` o `proposicioneslxvi.php` para una
+    combinación específica (comisión × tipo_turnot × estado).
+
+    Args:
+      comt: ID de comisión LXVI (1-60)
+      endpoint: 'iniciativaslxvi.php' o 'proposicioneslxvi.php'
+      tipo_doc: 'iniciativa' o 'proposicion'
+      tipo_turnot: 1=Única, 2=Unidas
+      edot: T=Turnadas, P=Pendientes, A=Aprobadas, B=Bajadas/Desechadas
+
+    Cachea HTML por combo en eval/diputados/cache_urls/ para que
+    re-corridas sean instantáneas.
+    """
+    url = f"{BASE}/{endpoint}?comt={comt}&tipo_turnot={tipo_turnot}&edot={edot}"
+    cache_path = CACHE_DIR_URL / f"{comt}_{tipo_doc[:3]}_t{tipo_turnot}_{edot}.html"
+
+    if cache_path.exists() and cache_path.stat().st_size > 100:
+        html = cache_path.read_text(encoding="utf-8")
+    else:
+        try:
+            r = requests.get(url, headers=HEADERS, timeout=30, verify=False)
+            r.encoding = "utf-8"
+        except Exception as e:
+            logger.warning(f"  comt={comt} {tipo_doc[:3]} t{tipo_turnot} {edot} fail: {e}")
+            return []
+        if r.status_code != 200:
+            return []
+        html = r.text
+        cache_path.write_text(html, encoding="utf-8")
+
+    # Mapeo edot → estado humano
+    edot_to_estado = {"T": "Turnada", "P": "Pendiente", "A": "Aprobada", "B": "Desechada/Retirada"}
+    estado_default = edot_to_estado.get(edot, "Turnada")
 
     items = []
+    r_text = html
+    class FakeR:
+        def __init__(self, t): self.text = t
+    r = FakeR(html)
+
+    # ── Parser de Pendientes y otros edot sin init= ──
+    # El HTML tiene bloques con estructura: número + título + Proponente
+    # + fechas + comisión. Para iniciativas: "Proyecto de decreto...".
+    # Para proposiciones: "Por el que..." / "Por la que..." (no usa
+    # "Proposición con punto"). Usamos "Proponente:" como ancla.
+    if edot in ("P", "B"):
+        # Limpiar HTML
+        text_clean = re.sub(r"<script.*?</script>", " ", html, flags=re.DOTALL)
+        text_clean = re.sub(r"<style.*?</style>", " ", text_clean, flags=re.DOTALL)
+        text_clean = re.sub(r"<[^>]+>", " ", text_clean)
+        text_clean = re.sub(r"&nbsp;", " ", text_clean)
+        text_clean = re.sub(r"\s+", " ", text_clean)
+
+        # Cada bloque: ANCLA "Proponente:" — antes está el título,
+        # después está el resto (Publicación en Gaceta, Fecha, Comisión).
+        # Splitear por "Proponente:" da N+1 piezas.
+        partes = re.split(r"\bProponente:\s*", text_clean)
+        for idx in range(len(partes) - 1):
+            antes = partes[idx]      # contiene el título al final
+            despues = partes[idx + 1]  # empieza con el proponente
+
+            # Proponente: hasta el primer "(...)"
+            m_prop = re.match(r"([^()]+\([^)]+\))", despues)
+            if not m_prop:
+                continue
+            proponente = m_prop.group(1).strip()
+
+            # Después del proponente: fechas, comisión, estado
+            resto = despues[m_prop.end():]
+
+            # Publicación en Gaceta y Fecha de presentación
+            m_fpub = re.search(
+                r"Publicaci[óo]n\s+en\s+Gaceta:\s*(\d{1,2}-[A-Za-zñÑáéíóú]+-\d{4})",
+                resto,
+            )
+            fecha_pub_iso = fecha_iso(m_fpub.group(1)) if m_fpub else ""
+
+            m_fpres = re.search(
+                r"Fecha\s+de\s+presentaci[óo]n:\s*(\d{1,2}-[A-Za-zñÑáéíóú]+-\d{4})",
+                resto,
+            )
+            fecha_pres_iso = fecha_iso(m_fpres.group(1)) if m_fpres else ""
+
+            # Comisión: "- {COMISIÓN}" después de las fechas
+            m_com = re.search(
+                r"-\s+([A-ZÁÉÍÓÚÑa-záéíóúñ,\s]{6,150}?)\s+(?:-->|Único\.|Primero\.|La\s+Cámara|La\s+Comisión)",
+                resto,
+            )
+            comision = m_com.group(1).strip() if m_com else ""
+
+            # Título: en "antes" — buscar el último número de orden
+            # ("\d+ TÍTULO Proponente:") y tomar lo que sigue
+            # Para iniciativas: "Proyecto de decreto..."
+            # Para proposiciones: "Por el que..." / "Por la que..."
+            m_titulo_ini = re.search(
+                r"((?:Proyecto\s+de\s+decreto|Iniciativa)[^\.]+?)$",
+                antes.strip(),
+            )
+            m_titulo_prop = re.search(
+                r"((?:Por\s+(?:el|la|los|las)\s+que|Que\s+exhorta|Por\s+la\s+que\s+se\s+solicita|Por\s+el\s+cual)[^\.]+?)$",
+                antes.strip(),
+            )
+            titulo = ""
+            if m_titulo_ini:
+                titulo = m_titulo_ini.group(1).strip()
+            elif m_titulo_prop:
+                titulo = m_titulo_prop.group(1).strip()
+            else:
+                # Fallback: tomar últimos 200 chars de antes (contienen número + título)
+                antes_clean = antes.strip()
+                m_num = re.search(r"\d+\s+(.+)$", antes_clean[-300:])
+                if m_num:
+                    titulo = m_num.group(1).strip()
+            titulo = re.sub(r"\s+", " ", titulo)[:500]
+            if len(titulo) < 30:
+                continue
+
+            # ID sintético
+            import hashlib
+            seed = f"{titulo[:80]}|{fecha_pres_iso or fecha_pub_iso}|{tipo_doc}"
+            sid = hashlib.md5(seed.encode("utf-8")).hexdigest()[:12]
+            prefix = "PEND" if edot == "P" else "DESC"
+            init_id = f"{prefix}_{sid}"
+
+            estado_val = "Pendiente" if edot == "P" else "Desechada/Retirada"
+
+            items.append({
+                "init_id": init_id,
+                "titulo": titulo,
+                "tipo_doc": tipo_doc,
+                "comision_dictaminadora": comision,
+                "proponente": proponente,
+                "fecha_presentacion": fecha_pres_iso,
+                "fecha_dictamen": "",
+                "fecha_gaceta": fecha_pub_iso,
+                "estado": estado_val,
+                "url": f"{BASE}/cuadro_asuntos_por_comisionlxvi.php?comt={comt}",
+                "url_gaceta": "",
+                "url_sitl": f"{BASE}/cuadro_asuntos_por_comisionlxvi.php?comt={comt}",
+                "comt": comt,
+                "tipo_turnot": tipo_turnot,
+                "edot": edot,
+            })
+        return items
     init_positions = [(m.start(), m.group(1)) for m in re.finditer(r"init=(\d+)", r.text)]
     seen_ids = set()
     for pos, init_id in init_positions:
@@ -187,10 +326,15 @@ def scrape_comision(comt: int) -> list[dict]:
         )
         fecha_gaceta = fecha_iso(m_fgac.group(1)) if m_fgac else ""
 
+        # Si no extrajo estado del HTML, usar el default del query (edot)
+        if estado == "Pendiente" and not fecha_dictamen and edot != "P":
+            estado = estado_default
+
         url_sitl = f"{BASE}/dictameneslxvi_ld.php?tipot=&pert=0&init={init_id}"
         items.append({
             "init_id": init_id,
             "titulo": titulo[:500],
+            "tipo_doc": tipo_doc,
             "comision_dictaminadora": comision,
             "proponente": proponente,
             "fecha_presentacion": fecha_pres,
@@ -201,6 +345,8 @@ def scrape_comision(comt: int) -> list[dict]:
             "url_gaceta": url_gaceta,
             "url_sitl": url_sitl,
             "comt": comt,
+            "tipo_turnot": tipo_turnot,
+            "edot": edot,
         })
     return items
 
@@ -213,29 +359,65 @@ def main():
     args = ap.parse_args()
 
     # IDs de las 53 comisiones LXVI Diputados (rango 1-60 con gaps)
-    # Probamos 1-60 — los que no existan devolverán fila vacía o error.
     comisiones = list(range(1, 61))
     if args.limit_comisiones:
         comisiones = comisiones[: args.limit_comisiones]
 
-    logger.info(f"Scrapeando {len(comisiones)} comisiones LXVI Diputados…")
+    # Iteración completa LXVI:
+    #   2 endpoints (iniciativas + proposiciones)
+    #   × 2 tipos de turnot (1=Única, 2=Unidas)
+    #   × 4 estados (T=Turnadas, P=Pendientes, A=Aprobadas, B=Bajadas)
+    # = 16 combinaciones por comisión × 53 = 848 requests.
+    # Con cache local (eval/diputados/cache_sitl/) las re-corridas son ~instantáneas.
+    combos = []
+    for endpoint, tipo_doc in [
+        ("iniciativaslxvi.php", "iniciativa"),
+        ("proposicioneslxvi.php", "proposicion"),
+    ]:
+        for tipo_turnot in [1, 2]:
+            for edot in ["T", "P", "A", "B"]:
+                combos.append((endpoint, tipo_doc, tipo_turnot, edot))
+
+    logger.info(f"Scrapeando {len(comisiones)} comisiones × {len(combos)} combinaciones = "
+                f"{len(comisiones) * len(combos)} reqs LXVI Diputados…")
 
     todos_items = []
+    total_reqs = len(comisiones) * len(combos)
+    done = 0
     for i, comt in enumerate(comisiones, 1):
-        items = scrape_comision(comt)
-        if items:
-            todos_items.extend(items)
-        if i % 10 == 0:
-            logger.info(f"  [{i}/{len(comisiones)}] +{len(items)} (acumulados {len(todos_items)})")
-        time.sleep(DELAY)
+        for endpoint, tipo_doc, tipo_turnot, edot in combos:
+            items = scrape_comision(comt, endpoint=endpoint, tipo_doc=tipo_doc,
+                                    tipo_turnot=tipo_turnot, edot=edot)
+            if items:
+                todos_items.extend(items)
+            done += 1
+            time.sleep(DELAY)
+        if i % 5 == 0:
+            logger.info(f"  [{i}/{len(comisiones)}] reqs {done}/{total_reqs} · acumulados {len(todos_items)}")
 
-    # Dedupe por init_id
+    # Dedupe por init_id. Cuando un mismo init aparece en varios edot
+    # (ej. Aprobada Y Turnada), preferir el que tiene fecha_dictamen
+    # (= estado más informativo).
     seen = {}
     for it in todos_items:
-        if it["init_id"] not in seen:
+        existing = seen.get(it["init_id"])
+        if existing is None:
             seen[it["init_id"]] = it
+        else:
+            # Preferir el que tiene fecha_dictamen (Aprobada > Pendiente)
+            if it["fecha_dictamen"] and not existing["fecha_dictamen"]:
+                seen[it["init_id"]] = it
+            # Preferir el que tiene comisión específica
+            elif it["comision_dictaminadora"] and not existing["comision_dictaminadora"]:
+                seen[it["init_id"]] = it
     todos_items = list(seen.values())
     logger.info(f"Total instrumentos únicos: {len(todos_items)}")
+    # Stats por estado
+    from collections import Counter
+    por_estado = Counter(it["estado"] for it in todos_items)
+    logger.info(f"  Por estado: {dict(por_estado)}")
+    por_tipo = Counter(it["tipo_doc"] for it in todos_items)
+    logger.info(f"  Por tipo: {dict(por_tipo)}")
 
     # Guardar JSON
     if not args.dry_run:
@@ -287,26 +469,56 @@ def main():
         conn.commit()
     logger.info(f"BD updates sil_documentos URL: {matched}/{len(rows)} ({100*matched/max(len(rows),1):.1f}%)")
 
-    # ── Insertar/actualizar dictámenes APROBADOS en tabla `gaceta` ──
-    # Esto alimenta el tab Comisiones (refresh_comisiones_sitl.py lee
-    # de tabla gaceta para "Último dictamen" e histórico mensual).
-    # Antes solo había comunicaciones; ahora agregamos los dictámenes
-    # que el SITL Diputados marcó como "Aprobada con fecha X".
-    aprobadas = [it for it in todos_items if it["estado"] == "Aprobada" and it["fecha_dictamen"]]
-    logger.info(f"\nDictámenes aprobados a sincronizar en gaceta: {len(aprobadas)}")
+    # ── Insertar/actualizar TODOS los instrumentos LXVI en tabla `gaceta` ──
+    # Antes: solo Aprobadas (322). Ahora: TODOS los estados (~6,000+ esperados).
+    # Cada uno con su tipo correcto:
+    #   - Aprobada (con fecha_dictamen) → tipo='dictamen'
+    #   - Pendiente / Turnada / Desechada → tipo='iniciativa' o 'proposicion'
+    # Esto alimenta:
+    #   1. Tab Comisiones — histórico mensual real de toda la legislatura
+    #   2. URLs Diputados — todos los instrumentos tienen url canónica
+    #      de gaceta.diputados.gob.mx
+    #
+    # Filtros: solo instrumentos con título Y fecha (presentación o gaceta)
+    candidatos = []
+    for it in todos_items:
+        if not it["titulo"]:
+            continue
+        # Determinar fecha relevante (la del dictamen si existe, si no fecha_pres)
+        fecha = it["fecha_dictamen"] or it["fecha_presentacion"] or it["fecha_gaceta"]
+        if not fecha:
+            continue
+        # Determinar tipo en tabla gaceta
+        if it["estado"] == "Aprobada" and it["fecha_dictamen"]:
+            tipo_gaceta = "dictamen"
+            fecha_gaceta_target = it["fecha_dictamen"]
+        else:
+            tipo_gaceta = "iniciativa" if it["tipo_doc"] == "iniciativa" else "proposicion"
+            fecha_gaceta_target = it["fecha_presentacion"] or fecha
+        candidatos.append((it, tipo_gaceta, fecha_gaceta_target))
+
+    logger.info(f"\nCandidatos a insertar/actualizar en gaceta: {len(candidatos)}")
+    aprobadas = [c for c in candidatos if c[1] == "dictamen"]
+    iniciativas = [c for c in candidatos if c[1] == "iniciativa"]
+    proposiciones = [c for c in candidatos if c[1] == "proposicion"]
+    logger.info(f"  · Dictámenes:    {len(aprobadas)}")
+    logger.info(f"  · Iniciativas:   {len(iniciativas)}")
+    logger.info(f"  · Proposiciones: {len(proposiciones)}")
+
     inserted_dict = 0
-    if not args.dry_run and aprobadas:
+    if not args.dry_run and candidatos:
         ahora_iso = datetime.now().isoformat()
         # UNIQUE en gaceta puede ser url+fecha+camara o numero_doc.
         # Usamos SELECT primero para evitar IntegrityError si ya existe.
-        # La columna `gaceta.url` tiene UNIQUE constraint. Múltiples
-        # dictámenes pueden compartir el URL (mismo número de gaceta del
-        # día con varios dictámenes adentro). Para evitar colisión:
-        # cada init_id tiene URL distinta (anchor del SITL).
-        for it in aprobadas:
+        for it, tipo_gaceta, fecha_target in candidatos:
             url_gaceta = it["url_gaceta"]
-            # URL única por instrumento usando init_id como anchor
-            url_unico = f"{url_gaceta}#init{it['init_id']}" if url_gaceta else it["url_sitl"]
+            # URL única: si hay url_gaceta usar #init{N}, si no usar
+            # url_sitl + ?id={init_id} para evitar UNIQUE constraint
+            # cuando varias pendientes comparten el url del cuadro.
+            if url_gaceta:
+                url_unico = f"{url_gaceta}#init{it['init_id']}"
+            else:
+                url_unico = f"{it['url_sitl']}#{it['init_id']}"
             numero_doc = f"SITL_{it['init_id']}"
             existing = conn.execute(
                 "SELECT id FROM gaceta WHERE numero_doc = ?",
@@ -316,14 +528,15 @@ def main():
                 if existing:
                     conn.execute("""
                         UPDATE gaceta SET
-                          titulo = ?, resumen = ?, fecha = ?, tipo = 'dictamen',
+                          titulo = ?, resumen = ?, fecha = ?, tipo = ?,
                           comision = ?, autor = ?, camara = 'Diputados',
                           url = ?, url_pdf = ?
                         WHERE id = ?
                     """, (
                         it["titulo"][:500],
                         it["titulo"][:1000],
-                        it["fecha_dictamen"],
+                        fecha_target,
+                        tipo_gaceta,
                         it["comision_dictaminadora"][:200],
                         it["proponente"][:200],
                         url_unico, url_gaceta or it["url_sitl"],
@@ -338,8 +551,8 @@ def main():
                     """, (
                         it["titulo"][:500],
                         it["titulo"][:1000],
-                        it["fecha_dictamen"],
-                        "dictamen",
+                        fecha_target,
+                        tipo_gaceta,
                         it["comision_dictaminadora"][:200],
                         it["proponente"][:200],
                         "Diputados",
@@ -351,9 +564,9 @@ def main():
                     ))
                 inserted_dict += 1
             except Exception as e:
-                logger.warning(f"  insert/update gaceta dictamen fail (init={it['init_id']}): {e}")
+                logger.warning(f"  insert/update gaceta fail (init={it['init_id']}, tipo={tipo_gaceta}): {e}")
         conn.commit()
-    logger.info(f"Dictámenes insertados en tabla gaceta: {inserted_dict}/{len(aprobadas)}")
+    logger.info(f"\nInstrumentos insertados/actualizados en tabla gaceta: {inserted_dict}/{len(candidatos)}")
 
     if args.dry_run:
         logger.info("*** DRY RUN ***")

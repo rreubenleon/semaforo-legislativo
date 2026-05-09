@@ -2591,9 +2591,27 @@
                     <div className="hidden md:block text-center">
                         <div className="text-base font-bold text-gray-800 leading-tight font-mono">{propProy}</div>
                     </div>
-                    <div className="hidden md:block text-center" title={`Solo individuales: ${l3pTotal}. Con bancada: +${(leg.l3p_iniciativas_col ?? 0) + (leg.l3p_proposiciones_col ?? 0)}`}>
-                        <div className="text-base font-bold text-gray-800 leading-tight font-mono">{l3pTotal}</div>
-                        <div className="text-[9px] text-gray-400 font-mono leading-none">+{(leg.l3p_iniciativas_col ?? 0) + (leg.l3p_proposiciones_col ?? 0)} banc.</div>
+                    <div className="hidden md:block text-center" title={(() => {
+                        const ini = leg.n_ini_iniciante ?? leg.l3p_iniciativas ?? 0;
+                        const adh = leg.n_ini_adherente ?? 0;
+                        const grp = leg.n_ini_de_grupo ?? 0;
+                        const total = ini + adh + grp;
+                        if (total === 0) return `Solo individuales: ${l3pTotal}`;
+                        return `Vinculadas: ${total}\n• Iniciante: ${ini}\n• Adherente: ${adh}\n• De Grupo: ${grp}`;
+                    })()}>
+                        <div className="text-base font-bold text-gray-800 leading-tight font-mono">
+                            {leg.n_ini_iniciante ?? leg.l3p_iniciativas ?? 0}
+                        </div>
+                        <div className="text-[9px] text-gray-400 font-mono leading-none">
+                            {(() => {
+                                const adh = leg.n_ini_adherente ?? 0;
+                                const grp = leg.n_ini_de_grupo ?? 0;
+                                const extra = adh + grp;
+                                if (extra > 0) return `+${extra} firma`;
+                                const col = (leg.l3p_iniciativas_col ?? 0) + (leg.l3p_proposiciones_col ?? 0);
+                                return col > 0 ? `+${col} banc.` : '';
+                            })()}
+                        </div>
                     </div>
                     <div className="hidden md:flex flex-col items-center justify-center gap-0.5">
                         <div className={`text-lg font-black font-mono ${gradeStyle}`}

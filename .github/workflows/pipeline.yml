@@ -156,13 +156,32 @@ jobs:
         run: python scripts/fix_urls_permanente.py
         continue-on-error: true
 
-      # 4c-quint. Resolver URLs Diputados desde SITL (60 comisiones).
-      #     Scrapea iniciativaslxvi.php?comt=N y extrae URLs canónicas
-      #     de gaceta.diputados.gob.mx para los dictámenes. Match con
-      #     sil_documentos por core_titulo. Cubre ~742 docs (las
-      #     iniciativas dictaminadas; las pendientes no aparecen aquí).
-      - name: Resolver URLs Diputados (idempotente)
+      # 4c-quint. Resolver URLs + dictámenes + iniciativas + proposiciones
+      #     LXVI Diputados desde SITL (60 comisiones × 4 estados × 2 turnot
+      #     × 2 endpoints = 960 reqs, mayoría hit cache).
+      #     Inserta en tabla `gaceta` con tipo correcto (dictamen/iniciativa/
+      #     proposicion). Resultado: ~5,883 instrumentos LXVI Diputados con
+      #     URL canónica de gaceta.diputados.gob.mx + estado + comisión
+      #     dictaminadora. Esto alimenta:
+      #       - Tab Comisiones (histórico mensual real)
+      #       - URLs Diputados (cobertura ~70%+)
+      - name: Scrape LXVI completa Diputados (idempotente)
         run: python scripts/scrape_urls_diputados.py
+        continue-on-error: true
+
+      # 4c-sept. Calcular conteos por rol (Iniciante/Adherente/De Grupo)
+      #     desde tabla diputado_instrumento. Popula columnas en
+      #     `legisladores` para que el worker /radar las exponga.
+      - name: Calcular conteos por rol (Diputados)
+        run: python scripts/calcular_conteos_roles_diputados.py
+        continue-on-error: true
+
+      # 4c-octa. Migración D1: asegurar columnas n_ini_iniciante etc.
+      #     Idempotente — si ya existen, no-op.
+      - name: Migración D1 — columnas conteos por rol (idempotente)
+        run: python scripts/migrar_d1_conteos_roles.py
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         continue-on-error: true
 
       # 4c-sext. Dedupe SEN/PERM: marca docs SEN_ como duplicados de

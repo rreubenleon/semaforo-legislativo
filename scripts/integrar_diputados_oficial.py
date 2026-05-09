@@ -339,6 +339,22 @@ def main():
 
         if match:
             matched += 1
+            # También registrar Iniciante en tabla relacional
+            leg_id = sitl_to_leg.get(sitl_id_dip)
+            if leg_id and not args.dry_run:
+                try:
+                    conn.execute(
+                        """
+                        INSERT OR REPLACE INTO diputado_instrumento
+                          (legislador_id, sitl_id_dip, seguimiento_id, rol, tipo, fecha)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        """,
+                        (leg_id, sitl_id_dip, match["seg_id"], rol, tipo, fecha),
+                    )
+                    relacional_inserted += 1
+                except Exception:
+                    pass
+                rol_por_leg.setdefault(leg_id, Counter())[rol] += 1
             continue
 
         # CONSERVATIVO: Si HAY candidatos por (fecha, apellido) pero el

@@ -50,26 +50,39 @@ def main():
     if args.solo_senado:
         where = "camara LIKE '%enado%'"
     sql = f"""
-        SELECT id, comisiones_cargo, comisiones
+        SELECT id, comisiones_cargo, comisiones,
+               COALESCE(n_ini_iniciante, 0), COALESCE(n_ini_adherente, 0),
+               COALESCE(n_ini_de_grupo, 0), COALESCE(n_prop_proponente, 0),
+               COALESCE(n_prop_adherente, 0), COALESCE(n_prop_de_grupo, 0),
+               COALESCE(n_total_vinculadas, 0)
           FROM legisladores
          WHERE {where}
-           AND (comisiones_cargo IS NOT NULL AND comisiones_cargo <> '')
+           AND (
+             (comisiones_cargo IS NOT NULL AND comisiones_cargo <> '')
+             OR n_total_vinculadas > 0
+           )
     """
     if args.limit:
         sql += f" LIMIT {int(args.limit)}"
     rows = conn.execute(sql).fetchall()
-    logger.info(f"A sincronizar: {len(rows)} legisladores con cargo no vacío")
+    logger.info(f"A sincronizar: {len(rows)} legisladores")
 
     if not rows:
         return
 
+    # IMPORTANTE: las columnas n_ini_iniciante, n_ini_adherente, etc. deben
+    # existir previamente en D1. Crearlas con migración aparte (un solo run):
+    #   wrangler d1 execute fiat-busqueda --remote --command \
+    #     "ALTER TABLE legisladores ADD COLUMN n_ini_iniciante INTEGER DEFAULT 0; ..."
+    # Si no existen, los UPDATE aquí van a fallar.
     statements = []
-    for leg_id, cc, _com in rows:
-        # Solo sync comisiones_cargo (la columna `comisiones` no existe en D1
-        # por diseño — el frontend la deriva del cargo)
+    for leg_id, cc, _com, n1, n2, n3, n4, n5, n6, n7 in rows:
         statements.append(
             f"UPDATE legisladores SET "
-            f"comisiones_cargo = {esc(cc)} "
+            f"comisiones_cargo = {esc(cc or '')}, "
+            f"n_ini_iniciante = {n1}, n_ini_adherente = {n2}, n_ini_de_grupo = {n3}, "
+            f"n_prop_proponente = {n4}, n_prop_adherente = {n5}, n_prop_de_grupo = {n6}, "
+            f"n_total_vinculadas = {n7} "
             f"WHERE id = {leg_id};"
         )
 
