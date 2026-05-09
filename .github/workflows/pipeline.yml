@@ -115,6 +115,16 @@ jobs:
         run: python scripts/limpiar_cargos_senadores.py
         continue-on-error: true
 
+      # 4c-2. Limpiar comisiones falsas de diputados. Bug equivalente al
+      #     del Senado: el scraper SITL Diputados metía 'A LAS QUE
+      #     PERTENECE', 'COMITÉ', 'ESCOLARIDAD', 'TRAYECTORIA POLÍTICA'
+      #     y partidos como MORENA/PVEM como falsas comisiones (500 de
+      #     532 diputados afectados). El script filtra contra blacklist
+      #     explícita + heurísticas de fechas. Idempotente.
+      - name: Limpiar comisiones falsas diputados (idempotente)
+        run: python scripts/limpiar_cargos_diputados.py
+        continue-on-error: true
+
       # 4c-bis. Sync de comisiones limpias a Cloudflare D1. Sin esto, el
       #     Worker /radar (que el frontend consume) sigue sirviendo las
       #     falsas comisiones aunque la BD local del CI ya esté limpia.
@@ -135,6 +145,15 @@ jobs:
         run: python scripts/scrape_organos_senado.py
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        continue-on-error: true
+
+      # 4c-quad. Resolver URLs faltantes de docs SEN_ presentados durante
+      #     Permanente. Cruza con
+      #     senado.gob.mx/66/gaceta_comision_permanente/ (sesión actual
+      #     con 112 docs) por (fecha + apellido firmante + tipo + tokens
+      #     título). Match 1:1.
+      - name: Resolver URLs Permanente (idempotente)
+        run: python scripts/fix_urls_permanente.py
         continue-on-error: true
 
       # 4d. Reparar campo `partido` en sil_documentos. Bug: el scraper
