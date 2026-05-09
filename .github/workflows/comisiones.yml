@@ -97,10 +97,21 @@ jobs:
           echo "paso=$PASO" >> $GITHUB_OUTPUT
           echo "Paso resuelto: $PASO"
 
+      # PRE-Gaceta: scrape de dictámenes Diputados desde SITL.
+      # Inserta dictámenes aprobados en tabla `gaceta` con tipo='dictamen'
+      # antes del paso refresh_comisiones que LEE de tabla gaceta. Sin
+      # esto el tab Comisiones de Diputados muestra "Sin dictámenes
+      # registrados en Gaceta" porque el scraper original no captura
+      # dictámenes individuales.
+      - name: Pre-Gaceta — Scrape dictámenes Diputados (idempotente)
+        if: steps.paso.outputs.paso == 'lunes' || steps.paso.outputs.paso == 'gaceta' || steps.paso.outputs.paso == 'todo'
+        run: python scripts/scrape_urls_diputados.py
+        continue-on-error: true
+
       # Lunes: primero gaceta, luego SITL batch 1
       - name: Paso Gaceta (datos SQLite → D1)
         if: steps.paso.outputs.paso == 'lunes' || steps.paso.outputs.paso == 'gaceta' || steps.paso.outputs.paso == 'todo'
-        run: python scripts/refresh_comisiones_sitl.py --paso gaceta
+        run: python scripts/refresh_comisiones_sitl.py --paso gaceta --ignorar-modo-receso
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
