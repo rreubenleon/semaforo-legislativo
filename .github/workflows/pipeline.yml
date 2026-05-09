@@ -115,6 +115,28 @@ jobs:
         run: python scripts/limpiar_cargos_senadores.py
         continue-on-error: true
 
+      # 4c-bis. Sync de comisiones limpias a Cloudflare D1. Sin esto, el
+      #     Worker /radar (que el frontend consume) sigue sirviendo las
+      #     falsas comisiones aunque la BD local del CI ya esté limpia.
+      - name: Sync comisiones a D1 (post-limpieza)
+        run: python scripts/sync_legisladores_cargo_d1.py
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        continue-on-error: true
+
+      # 4c-ter. Re-scrape Mesa Directiva + JUCOPO Senado para que
+      #     organos_gobierno tenga roles correctos (Coordinador vs
+      #     Vicecoordinador). Bug fixed: el HTML del Senado pone H3
+      #     "GRUPO PARLAMENTARIO X" para vicecoordinadores y "COORDINADOR
+      #     DEL GRUPO PARLAMENTARIO X" para coordinadores titulares; el
+      #     scraper colapsaba ambos a 'Coordinador'. Sincroniza a D1 al
+      #     final automáticamente.
+      - name: Refresh JUCOPO Senado (idempotente, syncs a D1)
+        run: python scripts/scrape_organos_senado.py
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        continue-on-error: true
+
       # 4d. Reparar campo `partido` en sil_documentos. Bug: el scraper
       #     oficial del Senado asignaba 'PAN' a todos los opositores y
       #     'MORENA' a todos los oficialistas, sin distinguir PT, PRI,

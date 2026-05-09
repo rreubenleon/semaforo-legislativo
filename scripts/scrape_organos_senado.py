@@ -122,10 +122,33 @@ def _normalizar_cargo_mesa(txt):
 
 
 def _normalizar_cargo_jucopo(txt):
+    """
+    Distingue rol JUCOPO según el header H3 del HTML del Senado.
+
+    Patrones observados (https://www.senado.gob.mx/66/junta_de_coordinacion_politica/):
+      "PRESIDENCIA DE LA JUNTA"           → Presidencia
+      "COORDINADOR DEL GRUPO PARL. {X}"   → Coordinador (titular bancada)
+      "GRUPO PARLAMENTARIO {X}"           → Vicecoordinador
+        (header sin prefijo COORDINADOR; aparece para bancadas que tienen
+         más de 1 miembro en JUCOPO. Las grandes — MORENA, PAN — listan
+         vicecoordinador adicional. Antes el scraper los colapsaba a
+         'Coordinador' lo que era incorrecto, p.ej. Vargas (PAN) es
+         vicecoord, no coord; Anaya Cortés es el coord PAN).
+      Casos VICECOORDINADOR/SUBCOORDINADOR explícitos: respetar.
+
+    CRÍTICO: ordenar de más específico a menos. 'COORDINADOR' es
+    substring de 'VICECOORDINADOR' / 'SUBCOORDINADOR'.
+    """
     t = txt.strip().upper()
     if t.startswith("PRESIDENCIA"): return "Presidencia"
+    if "VICECOORDINADOR" in t or "VICE COORDINADOR" in t or "VICE-COORDINADOR" in t:
+        return "Vicecoordinador"
+    if "SUBCOORDINADOR" in t or "SUB COORDINADOR" in t or "SUB-COORDINADOR" in t:
+        return "Subcoordinador"
     if "COORDINADOR" in t: return "Coordinador"
-    if "GRUPO PARLAMENTARIO" in t: return "Coordinador"   # listing por bancada
+    # Header sin prefijo "COORDINADOR": listing adicional. La práctica del
+    # Senado es que sea Vicecoordinador (segundo en mando de bancada).
+    if "GRUPO PARLAMENTARIO" in t: return "Vicecoordinador"
     return txt.strip().title()
 
 

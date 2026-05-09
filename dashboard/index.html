@@ -2460,6 +2460,12 @@
           if (find('jucopo', 'Coordinador'))
             return { label: `Coordinador ${leg.partido || 'Bancada'} en JUCOPO ${camLabel}`,
                      tooltip: `Coordinador del Grupo Parlamentario en JUCOPO ${camLabel}.` };
+          if (find('jucopo', 'Vicecoordinador'))
+            return { label: `Vicecoord. ${leg.partido || 'Bancada'} en JUCOPO ${camLabel}`,
+                     tooltip: `Vicecoordinador del Grupo Parlamentario en JUCOPO ${camLabel}.` };
+          if (find('jucopo', 'Subcoordinador'))
+            return { label: `Subcoord. ${leg.partido || 'Bancada'} en JUCOPO ${camLabel}`,
+                     tooltip: `Subcoordinador del Grupo Parlamentario en JUCOPO ${camLabel}.` };
           if (find('mesa_directiva', 'Secretaría'))
             return { label: `Secretaría Mesa ${camLabel}`,
                      tooltip: `Secretaría de la Mesa Directiva del ${camLabel}.` };
