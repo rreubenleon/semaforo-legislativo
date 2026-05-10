@@ -297,7 +297,12 @@ def paso_gaceta(dry_run=False):
         fecha = r["fecha"]
         if key not in ultimo_dict or (fecha and fecha > ultimo_dict[key]):
             ultimo_dict[key] = fecha
-            ultimo_dict_url[key] = r["url_pdf"] or r["url"] or ""
+            # Para dictámenes Diputados SITL la semántica está invertida vs
+            # intuición: `url` contiene el PDF del dictamen aprobado (lo que
+            # queremos linkear) y `url_pdf` contiene la URL de la iniciativa
+            # original. Preferimos `url` para que "Último dictamen" lleve al
+            # texto del dictamen votado, no al de la iniciativa.
+            ultimo_dict_url[key] = r["url"] or r["url_pdf"] or ""
 
     # ── 4. Histórico mensual ──
     # Nota: el GROUP BY SQL agrupa por nombre RAW de comisión. Para Senado,
