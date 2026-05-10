@@ -627,11 +627,20 @@ def main():
 
         for it, tipo_gaceta, fecha_target in candidatos:
             url_gaceta = it["url_gaceta"]
-            # Para DICTÁMENES preferir url_pdf_dictamen (texto del dictamen
-            # aprobado) sobre url_gaceta (texto de iniciativa original).
             url_pdf_dict = it.get("url_pdf_dictamen", "")
+            # URL única por init: agregar suffix de fragment para evitar
+            # UNIQUE constraint cuando varios dictámenes comparten mismo
+            # PDF del día (tabla gaceta tiene UNIQUE en url). Los PDF
+            # readers ignoran fragments adicionales después de #page=N.
             if tipo_gaceta == "dictamen" and url_pdf_dict:
-                url_unico = url_pdf_dict
+                # PDF del dictamen aprobado (lo que el user quiere ver).
+                # Si url_pdf_dict ya tiene #page=N, le agregamos &init=N
+                # como query-style después del fragment para hacerla única
+                # (los browsers solo usan el primer fragment).
+                if "#" in url_pdf_dict:
+                    url_unico = f"{url_pdf_dict}-init{it['init_id']}"
+                else:
+                    url_unico = f"{url_pdf_dict}#init{it['init_id']}"
             elif url_gaceta:
                 url_unico = f"{url_gaceta}#init{it['init_id']}"
             else:
