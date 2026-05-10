@@ -608,6 +608,18 @@ def main():
     inserted_dict = 0
     if not args.dry_run and candidatos:
         ahora_iso = datetime.now().isoformat()
+        # CLEANUP CRÍTICO: borrar dictámenes Diputados SITL_* viejos que
+        # tienen URL sin suffix -initN. En runs anteriores el UPDATE fallaba
+        # con UNIQUE constraint cuando dos init compartían mismo PDF#page.
+        # Re-creamos limpio para que el INSERT con suffix -initN no choque.
+        n_borrados = conn.execute("""
+            DELETE FROM gaceta
+            WHERE numero_doc LIKE 'SITL_%'
+              AND camara='Diputados'
+              AND tipo='dictamen'
+        """).rowcount
+        logger.info(f"  Cleanup: {n_borrados} dictámenes Diputados borrados para re-insert limpio")
+        conn.commit()
         # UNIQUE en gaceta puede ser url+fecha+camara o numero_doc.
         # Usamos SELECT primero para evitar IntegrityError si ya existe.
         # Para los DICTÁMENES aprobados, fetchar URL del PDF del dictamen
