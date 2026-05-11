@@ -308,7 +308,7 @@ def paso_gaceta(dry_run=False):
             # evitar UNIQUE constraint cuando múltiples dictámenes comparten
             # el mismo PDF#page=N. El sufijo no es válido como anchor de PDF
             # y rompería la navegación en el frontend.
-            url_dict = re.sub(r"-init\d+$", "", url_dict)
+            url_dict = re.sub(r"[-#]init\d+$", "", url_dict)
             ultimo_dict_url[key] = url_dict
 
     # ── 4. Histórico mensual ──
