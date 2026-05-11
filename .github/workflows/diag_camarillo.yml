@@ -1,0 +1,48 @@
+name: Diagnóstico Camarillo (one-off)
+
+# Workflow de uso único para diagnosticar el inflado de conteos de
+# Néstor Camarillo (161 ini + 763 prop en FIAT vs 73+140 oficial Senado).
+# Lee la BD viva del cache de GH Actions y reporta el origen del inflado.
+# No escribe nada. Después de correr, este archivo puede eliminarse.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Restaurar SQLite DB (cualquier cache)
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: diag-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - name: Fallback a release si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Correr diagnóstico
+        run: python scripts/diagnostico_camarillo.py
