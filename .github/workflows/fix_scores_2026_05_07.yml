@@ -1,0 +1,116 @@
+name: Fix Scores 2026-05-07 (one-off)
+
+# Workflow de uso único para arreglar el bajón espurio del 7 de mayo
+# (bug de integración Senado que se rollbackeó horas después).
+# Interpola entre 6-mayo y 8-mayo, guarda en BD, regenera data.json,
+# commit + push.
+#
+# Después de correr exitosamente, este archivo puede eliminarse.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Solo reportar, no escribir a BD'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['true', 'false']
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "fix-scores-2026-05-07"
+  cancel-in-progress: false
+
+jobs:
+  fix-scores:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      # Restaurar la BD más reciente del cache (cualquier key con prefijo semaforo-db-)
+      - name: Restaurar SQLite DB
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-fix-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - name: Fallback a release si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      # 1. Fix scores
+      - name: Fix scores 2026-05-07 (dry-run)
+        if: ${{ inputs.dry_run == 'true' }}
+        run: python scripts/fix_scores_2026_05_07.py --dry-run
+
+      - name: Fix scores 2026-05-07
+        if: ${{ inputs.dry_run != 'true' }}
+        run: python scripts/fix_scores_2026_05_07.py
+
+      # 2. Regenerar data.json (solo el historial, que es lo que cambió)
+      - name: Regenerar data.json con scores corregidos
+        if: ${{ inputs.dry_run != 'true' }}
+        env:
+          SEMAFORO_DB_MODE: local
+        run: |
+          python -c "
+          import json
+          from api.correlacion import obtener_historial_scores_todas
+          with open('dashboard/data.json') as f:
+              d = json.load(f)
+          d['historial_scores'] = obtener_historial_scores_todas(dias=60)
+          with open('dashboard/data.json', 'w') as f:
+              json.dump(d, f, ensure_ascii=False, indent=2)
+          print('data.json regenerado con historial_scores actualizado')
+          "
+
+      # 3. Commit data.json (BD vive en cache, no se commitea)
+      - name: Commit data.json
+        if: ${{ inputs.dry_run != 'true' }}
+        run: |
+          git config user.name "FIAT Bot"
+          git config user.email "fiat-bot@users.noreply.github.com"
+          git add dashboard/data.json
+          if git diff --staged --quiet; then
+            echo "No hay cambios en data.json"
+          else
+            git commit -m "fix(scores): interpolar 2026-05-07 (bug integración Senado)"
+            git stash --include-untracked || true
+            git pull --rebase origin main || true
+            git stash drop 2>/dev/null || true
+            git push origin main
+          fi
+
+      # 4. Guardar BD actualizada en cache
+      - name: Guardar SQLite DB en cache
+        if: ${{ inputs.dry_run != 'true' && always() }}
+        uses: actions/cache/save@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-fix-${{ github.run_id }}
