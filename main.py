@@ -1673,8 +1673,11 @@ def paso_7_exportar_dashboard():
     except Exception:
         sil_stats = {"total": 0, "con_partido": 0, "con_fecha": 0}
 
-    # Historial de scores para gráfica temporal (tipo Polymarket)
-    historial_scores = obtener_historial_scores_todas()
+    # Historial de scores para gráfica temporal (tipo Polymarket).
+    # 60 días = ventana relevante (~2 meses). El histórico completo vive
+    # en la tabla `scores` de SQLite (~140 fechas, desde sept 2024) y se
+    # puede ampliar la ventana en el futuro si hace falta.
+    historial_scores = obtener_historial_scores_todas(dias=60)
 
     # Predicciones de autoría legislativa (¿quién presenta?)
     autoria = {}
