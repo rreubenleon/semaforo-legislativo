@@ -39,6 +39,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import sqlite3
 import subprocess
 import sys
@@ -302,7 +303,13 @@ def paso_gaceta(dry_run=False):
             # queremos linkear) y `url_pdf` contiene la URL de la iniciativa
             # original. Preferimos `url` para que "Último dictamen" lleve al
             # texto del dictamen votado, no al de la iniciativa.
-            ultimo_dict_url[key] = r["url"] or r["url_pdf"] or ""
+            url_dict = r["url"] or r["url_pdf"] or ""
+            # Strip sufijo `-initN` que añade scrape_urls_diputados.py para
+            # evitar UNIQUE constraint cuando múltiples dictámenes comparten
+            # el mismo PDF#page=N. El sufijo no es válido como anchor de PDF
+            # y rompería la navegación en el frontend.
+            url_dict = re.sub(r"-init\d+$", "", url_dict)
+            ultimo_dict_url[key] = url_dict
 
     # ── 4. Histórico mensual ──
     # Nota: el GROUP BY SQL agrupa por nombre RAW de comisión. Para Senado,
