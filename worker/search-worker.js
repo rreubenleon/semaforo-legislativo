@@ -342,6 +342,14 @@ async function handleRadar(request, env) {
           s.iniciativas_proy_15d, s.proposiciones_proy_15d,
           s.promedio_l3p_iniciativas, s.promedio_l3p_proposiciones,
           s.promedio_l3p_iniciativas_col, s.promedio_l3p_proposiciones_col,
+          /* Conteos por estado x individual/colectivo (LXVI) — todos los legisladores.
+             Frontend usa para mostrar desglose claro: "16 indiv (3 aprob · 11 pend · 2 desech) + 56 col (...)" */
+          s.n_ini_aprob_ind, s.n_ini_aprob_col,
+          s.n_ini_pend_ind, s.n_ini_pend_col,
+          s.n_ini_desech_ind, s.n_ini_desech_col,
+          s.n_prop_aprob_ind, s.n_prop_aprob_col,
+          s.n_prop_pend_ind, s.n_prop_pend_col,
+          s.n_prop_desech_ind, s.n_prop_desech_col,
           s.matchup_grade, s.matchup_comision_target, s.matchup_tasa_dictamen,
           s.narrativa,
           hr.respondio, hr.total_oportunidades,
@@ -449,6 +457,20 @@ async function handleRadar(request, env) {
       n_prop_adherente: r.n_prop_adherente,
       n_prop_de_grupo: r.n_prop_de_grupo,
       n_total_vinculadas: r.n_total_vinculadas,
+      /* Conteos LXVI por estado x individual/colectivo — todos los legisladores.
+         Permite al frontend mostrar desglose por estado de cada categoría. */
+      n_ini_aprob_ind: r.n_ini_aprob_ind || 0,
+      n_ini_aprob_col: r.n_ini_aprob_col || 0,
+      n_ini_pend_ind: r.n_ini_pend_ind || 0,
+      n_ini_pend_col: r.n_ini_pend_col || 0,
+      n_ini_desech_ind: r.n_ini_desech_ind || 0,
+      n_ini_desech_col: r.n_ini_desech_col || 0,
+      n_prop_aprob_ind: r.n_prop_aprob_ind || 0,
+      n_prop_aprob_col: r.n_prop_aprob_col || 0,
+      n_prop_pend_ind: r.n_prop_pend_ind || 0,
+      n_prop_pend_col: r.n_prop_pend_col || 0,
+      n_prop_desech_ind: r.n_prop_desech_ind || 0,
+      n_prop_desech_col: r.n_prop_desech_col || 0,
     }));
 
     // Meta agregada (útil para poblar filtros en el cliente)

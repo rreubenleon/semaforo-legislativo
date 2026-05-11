@@ -2288,7 +2288,7 @@
                             <div><span className="font-semibold">Hit Rate</span> — % de los 20 picos mediáticos más recientes en la categoría dominante del legislador donde presentó un instrumento dentro de 7 días. Verde ≥70%, ámbar ≥40%, rojo &lt;40%.</div>
                             <div><span className="font-semibold">INI 15D</span> — Iniciativas de ley proyectadas en los próximos 15 días, calculadas sobre el ritmo legislativo del periodo LXVI.</div>
                             <div><span className="font-semibold">PROP 15D</span> — Proposiciones con punto de acuerdo proyectadas en los próximos 15 días, misma metodología que INI 15D.</div>
-                            <div><span className="font-semibold">L3P Total</span> — Iniciativas + proposiciones presentadas <strong>como promovente único</strong> durante la LXVI. El "+N banc." separa las firmadas con bancada (acción colectiva del partido) que no se cuentan para Hit Rate ni Efectividad personal porque mezclan trabajo individual con presión de grupo.</div>
+                            <div><span className="font-semibold">Ind / Grupo</span> — Instrumentos legislativos presentados durante la LXVI. <strong>Individuales</strong>: firmados como único promovente. <strong>De grupo</strong>: firmados con bancada o como co-firmante (acción colectiva del partido). Las de grupo no cuentan para Hit Rate ni Efectividad personal porque mezclan trabajo individual con presión de grupo. Hover sobre cada celda para ver desglose por estado (aprobadas, pendientes, desechadas).</div>
                             <div><span className="font-semibold">Por qué la distinción</span> — Una iniciativa firmada por 13 senadores es acción colectiva, no del legislador en lo personal. Robles de la Rosa (Excélsior, 4-may-2026) usa el mismo criterio. La distinción se infiere del texto del Senado y puede tener error ±15-25% por legislador; para casos críticos validar contra senado.gob.mx/66/senador/&#123;id&#125;.</div>
                             <div><span className="font-semibold">Matchup</span> — Calificación (A–F) que mide qué tan activamente dictamina la comisión principal del legislador. A = la comisión resuelve rápido, F = la mayoría de asuntos se quedan en pendiente. Basada en tasa de dictamen relativa entre comisiones.</div>
                         </div>
@@ -2418,8 +2418,8 @@
                                     Prop 15d
                                 </div>
                                 <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2 font-mono"
-                                    title="Total de instrumentos (iniciativas + proposiciones) presentados durante la LXVI Legislatura (sep 2024 – hoy).">
-                                    L3P total
+                                    title="Instrumentos LXVI (sep 2024 – hoy): individuales / de grupo. Individuales = firmados como único promovente. De grupo = firmados con bancada (acción colectiva del partido). Hover sobre cada celda para ver desglose por estado.">
+                                    Ind / Grupo
                                 </div>
                                 <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2 font-mono"
                                     title="Matchup grade vs. la comisión a la que más turnan sus instrumentos. A = comisión que dictamina rápido; F = comisión donde los asuntos se quedan en pendiente. Grading relativo entre comisiones.">
@@ -2592,26 +2592,60 @@
                         <div className="text-base font-bold text-gray-800 leading-tight font-mono">{propProy}</div>
                     </div>
                     <div className="hidden md:block text-center" title={(() => {
-                        const ini = leg.n_ini_iniciante ?? leg.l3p_iniciativas ?? 0;
-                        const adh = leg.n_ini_adherente ?? 0;
-                        const grp = leg.n_ini_de_grupo ?? 0;
-                        const total = ini + adh + grp;
-                        if (total === 0) return `Solo individuales: ${l3pTotal}`;
-                        return `Vinculadas: ${total}\n• Iniciante: ${ini}\n• Adherente: ${adh}\n• De Grupo: ${grp}`;
+                        /* Desglose unificado: individuales vs grupo, con detalle por estado.
+                           Para senadores usa l3p_*_col + n_*_aprob_ind/col (radar_pipeline).
+                           Para diputados usa n_ini_iniciante / n_ini_de_grupo (calcular_conteos_roles).
+                           El tooltip muestra ini/prop separadas + Aprobada/Pendiente/Desechada. */
+                        const isDip = (leg.n_ini_iniciante ?? 0) > 0 || (leg.n_prop_proponente ?? 0) > 0;
+                        if (isDip) {
+                            const ini_ind = leg.n_ini_iniciante ?? 0;
+                            const ini_grp = (leg.n_ini_de_grupo ?? 0) + (leg.n_ini_adherente ?? 0);
+                            const prop_ind = leg.n_prop_proponente ?? 0;
+                            const prop_grp = (leg.n_prop_de_grupo ?? 0) + (leg.n_prop_adherente ?? 0);
+                            return `LXVI — desglose por rol\n` +
+                                `Iniciativas: ${ini_ind} iniciante + ${ini_grp} con bancada\n` +
+                                `Proposiciones: ${prop_ind} proponente + ${prop_grp} con bancada`;
+                        }
+                        // Senadores: usar individual/colectivo + estado
+                        const ini_ind = Math.round(leg.l3p_iniciativas ?? 0);
+                        const ini_col = Math.round(leg.l3p_iniciativas_col ?? 0);
+                        const prop_ind = Math.round(leg.l3p_proposiciones ?? 0);
+                        const prop_col = Math.round(leg.l3p_proposiciones_col ?? 0);
+                        const ia_i = leg.n_ini_aprob_ind ?? 0, ia_c = leg.n_ini_aprob_col ?? 0;
+                        const ip_i = leg.n_ini_pend_ind ?? 0, ip_c = leg.n_ini_pend_col ?? 0;
+                        const id_i = leg.n_ini_desech_ind ?? 0, id_c = leg.n_ini_desech_col ?? 0;
+                        const pa_i = leg.n_prop_aprob_ind ?? 0, pa_c = leg.n_prop_aprob_col ?? 0;
+                        const pp_i = leg.n_prop_pend_ind ?? 0, pp_c = leg.n_prop_pend_col ?? 0;
+                        const pd_i = leg.n_prop_desech_ind ?? 0, pd_c = leg.n_prop_desech_col ?? 0;
+                        return `LXVI — Individuales / De grupo\n` +
+                            `Iniciativas: ${ini_ind} / ${ini_col}\n` +
+                            `  Aprobadas: ${ia_i} / ${ia_c}\n` +
+                            `  Pendientes: ${ip_i} / ${ip_c}\n` +
+                            `  Desechadas: ${id_i} / ${id_c}\n` +
+                            `Proposiciones: ${prop_ind} / ${prop_col}\n` +
+                            `  Aprobadas: ${pa_i} / ${pa_c}\n` +
+                            `  Pendientes: ${pp_i} / ${pp_c}\n` +
+                            `  Desechadas: ${pd_i} / ${pd_c}`;
                     })()}>
-                        <div className="text-base font-bold text-gray-800 leading-tight font-mono">
-                            {leg.n_ini_iniciante ?? leg.l3p_iniciativas ?? 0}
-                        </div>
-                        <div className="text-[9px] text-gray-400 font-mono leading-none">
-                            {(() => {
-                                const adh = leg.n_ini_adherente ?? 0;
-                                const grp = leg.n_ini_de_grupo ?? 0;
-                                const extra = adh + grp;
-                                if (extra > 0) return `+${extra} firma`;
-                                const col = (leg.l3p_iniciativas_col ?? 0) + (leg.l3p_proposiciones_col ?? 0);
-                                return col > 0 ? `+${col} banc.` : '';
-                            })()}
-                        </div>
+                        {(() => {
+                            const isDip = (leg.n_ini_iniciante ?? 0) > 0 || (leg.n_prop_proponente ?? 0) > 0;
+                            const ind = isDip
+                                ? (leg.n_ini_iniciante ?? 0) + (leg.n_prop_proponente ?? 0)
+                                : Math.round((leg.l3p_iniciativas ?? 0) + (leg.l3p_proposiciones ?? 0));
+                            const grp = isDip
+                                ? (leg.n_ini_adherente ?? 0) + (leg.n_ini_de_grupo ?? 0) + (leg.n_prop_adherente ?? 0) + (leg.n_prop_de_grupo ?? 0)
+                                : Math.round((leg.l3p_iniciativas_col ?? 0) + (leg.l3p_proposiciones_col ?? 0));
+                            return (
+                                <>
+                                    <div className="text-base font-bold text-gray-800 leading-tight font-mono">
+                                        {ind} <span className="text-gray-400 font-normal">/</span> {grp}
+                                    </div>
+                                    <div className="text-[9px] text-gray-400 font-mono leading-none">
+                                        indiv / grupo
+                                    </div>
+                                </>
+                            );
+                        })()}
                     </div>
                     <div className="hidden md:flex flex-col items-center justify-center gap-0.5">
                         <div className={`text-lg font-black font-mono ${gradeStyle}`}

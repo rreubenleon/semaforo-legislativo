@@ -1116,6 +1116,129 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
 
 
 # ────────────────────────────────────────────
+# Paso 5: Conteos por estado (Aprobada/Pendiente/Desechada)
+# ────────────────────────────────────────────
+def paso_conteos_estado(db_ro: sqlite3.Connection) -> dict:
+    """
+    Cuenta instrumentos por (tipo, estado, individual/colectivo) por
+    legislador en LXVI. Resultado: 12 columnas en legisladores_stats que
+    el frontend usará para mostrar desglose claro:
+
+      n_ini_aprob_ind, n_ini_aprob_col      — iniciativas aprobadas
+      n_ini_pend_ind,  n_ini_pend_col       — iniciativas pendientes
+      n_ini_desech_ind,n_ini_desech_col     — iniciativas desechadas/retiradas
+      n_prop_aprob_ind, n_prop_aprob_col    — proposiciones aprobadas
+      n_prop_pend_ind,  n_prop_pend_col     — proposiciones pendientes
+      n_prop_desech_ind,n_prop_desech_col   — proposiciones desechadas/retiradas
+
+    Individual = co_firmantes IS NULL OR co_firmantes = ''
+    Colectivo  = co_firmantes != ''
+    """
+    logger.info("Cálculo de conteos por estado…")
+
+    # Migration: añadir columnas (idempotente).
+    cols_nuevas = [
+        "n_ini_aprob_ind", "n_ini_aprob_col",
+        "n_ini_pend_ind", "n_ini_pend_col",
+        "n_ini_desech_ind", "n_ini_desech_col",
+        "n_prop_aprob_ind", "n_prop_aprob_col",
+        "n_prop_pend_ind", "n_prop_pend_col",
+        "n_prop_desech_ind", "n_prop_desech_col",
+    ]
+    for col in cols_nuevas:
+        try:
+            ejecutar_sql_d1(
+                f"ALTER TABLE legisladores_stats ADD COLUMN {col} INTEGER DEFAULT 0;"
+            )
+        except Exception:
+            pass  # ya existe
+
+    # Query consolidada: una fila por legislador con los 12 conteos
+    rows = db_ro.execute(
+        """
+        SELECT al.legislador_id,
+          SUM(CASE WHEN LOWER(al.tipo_instrumento) LIKE '%iniciativ%'
+                    AND sd.estatus LIKE '%Aprobado%'
+                    AND (al.co_firmantes IS NULL OR al.co_firmantes = '')
+                   THEN 1 ELSE 0 END) AS n_ini_aprob_ind,
+          SUM(CASE WHEN LOWER(al.tipo_instrumento) LIKE '%iniciativ%'
+                    AND sd.estatus LIKE '%Aprobado%'
+                    AND al.co_firmantes != ''
+                   THEN 1 ELSE 0 END) AS n_ini_aprob_col,
+          SUM(CASE WHEN LOWER(al.tipo_instrumento) LIKE '%iniciativ%'
+                    AND sd.estatus LIKE 'Pendiente%'
+                    AND (al.co_firmantes IS NULL OR al.co_firmantes = '')
+                   THEN 1 ELSE 0 END) AS n_ini_pend_ind,
+          SUM(CASE WHEN LOWER(al.tipo_instrumento) LIKE '%iniciativ%'
+                    AND sd.estatus LIKE 'Pendiente%'
+                    AND al.co_firmantes != ''
+                   THEN 1 ELSE 0 END) AS n_ini_pend_col,
+          SUM(CASE WHEN LOWER(al.tipo_instrumento) LIKE '%iniciativ%'
+                    AND (sd.estatus LIKE 'Desechado%' OR sd.estatus LIKE 'Retirad%')
+                    AND (al.co_firmantes IS NULL OR al.co_firmantes = '')
+                   THEN 1 ELSE 0 END) AS n_ini_desech_ind,
+          SUM(CASE WHEN LOWER(al.tipo_instrumento) LIKE '%iniciativ%'
+                    AND (sd.estatus LIKE 'Desechado%' OR sd.estatus LIKE 'Retirad%')
+                    AND al.co_firmantes != ''
+                   THEN 1 ELSE 0 END) AS n_ini_desech_col,
+          SUM(CASE WHEN LOWER(al.tipo_instrumento) LIKE '%proposici%'
+                    AND sd.estatus LIKE '%Aprobado%'
+                    AND (al.co_firmantes IS NULL OR al.co_firmantes = '')
+                   THEN 1 ELSE 0 END) AS n_prop_aprob_ind,
+          SUM(CASE WHEN LOWER(al.tipo_instrumento) LIKE '%proposici%'
+                    AND sd.estatus LIKE '%Aprobado%'
+                    AND al.co_firmantes != ''
+                   THEN 1 ELSE 0 END) AS n_prop_aprob_col,
+          SUM(CASE WHEN LOWER(al.tipo_instrumento) LIKE '%proposici%'
+                    AND sd.estatus LIKE 'Pendiente%'
+                    AND (al.co_firmantes IS NULL OR al.co_firmantes = '')
+                   THEN 1 ELSE 0 END) AS n_prop_pend_ind,
+          SUM(CASE WHEN LOWER(al.tipo_instrumento) LIKE '%proposici%'
+                    AND sd.estatus LIKE 'Pendiente%'
+                    AND al.co_firmantes != ''
+                   THEN 1 ELSE 0 END) AS n_prop_pend_col,
+          SUM(CASE WHEN LOWER(al.tipo_instrumento) LIKE '%proposici%'
+                    AND (sd.estatus LIKE 'Desechado%' OR sd.estatus LIKE 'Retirad%')
+                    AND (al.co_firmantes IS NULL OR al.co_firmantes = '')
+                   THEN 1 ELSE 0 END) AS n_prop_desech_ind,
+          SUM(CASE WHEN LOWER(al.tipo_instrumento) LIKE '%proposici%'
+                    AND (sd.estatus LIKE 'Desechado%' OR sd.estatus LIKE 'Retirad%')
+                    AND al.co_firmantes != ''
+                   THEN 1 ELSE 0 END) AS n_prop_desech_col
+        FROM actividad_legislador al
+        JOIN sil_documentos sd ON al.sil_documento_id = sd.id
+        WHERE al.legislador_id IS NOT NULL
+          AND al.fecha_presentacion >= ?
+        GROUP BY al.legislador_id
+        """,
+        (FECHA_INICIO_LXVI,),
+    ).fetchall()
+
+    ahora = datetime.utcnow().isoformat()
+    batch_sql: list[str] = []
+    calculados = 0
+    for r in rows:
+        valores = ", ".join(str(r[c] or 0) for c in cols_nuevas)
+        cols_str = ", ".join(cols_nuevas)
+        sets = ", ".join(f"{c}=excluded.{c}" for c in cols_nuevas)
+        batch_sql.append(
+            f"INSERT INTO legisladores_stats (legislador_id, fecha_calculo, {cols_str}) "
+            f"VALUES ({r['legislador_id']}, {_sql_escape(ahora)}, {valores}) "
+            f"ON CONFLICT(legislador_id) DO UPDATE SET "
+            f"fecha_calculo=excluded.fecha_calculo, {sets};"
+        )
+        calculados += 1
+        if len(batch_sql) >= 200:
+            ejecutar_sql_d1("\n".join(batch_sql))
+            batch_sql = []
+    if batch_sql:
+        ejecutar_sql_d1("\n".join(batch_sql))
+
+    logger.info(f"Conteos por estado: {calculados} legisladores → D1")
+    return {"calculados": calculados}
+
+
+# ────────────────────────────────────────────
 # Orquestador
 # ────────────────────────────────────────────
 def main(
@@ -1169,6 +1292,7 @@ def main(
         paso_hit_rate(db_ro)
         paso_matchup_grade(db_ro)
         paso_proyecciones(db_ro)
+        paso_conteos_estado(db_ro)
     finally:
         db_ro.close()
 
