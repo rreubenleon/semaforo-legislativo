@@ -692,20 +692,44 @@ def obtener_serie_temporal_legislativa(categoria=None, dias=540):
 def obtener_stats_por_partido(dias=180):
     """
     Estadísticas de instrumentos legislativos por partido político real.
-    Solo incluye partidos de PARTIDOS_MEXICO (excluye ejecutivo, gobiernos estatales, etc.).
-    Retorna dict para el dashboard.
+
+    Alcance LXVI (sept 2024 → hoy) limitado a **sustantivos**:
+      - Iniciativas
+      - Proposiciones con Punto de Acuerdo
+    Excluye comunicados, efemérides, licencias, intervenciones, agendas,
+    excitativas (que inflan totales sin valor sustantivo).
+
+    Retorna por partido:
+      - total: docs sustantivos
+      - por_categoria: {cat: {nombre, count}}
+      - por_tipo: {Iniciativa: N, Proposición con PA: N}
+      - por_camara: {Senado: N, Diputados: N, Permanente: N}
+      - por_estado: {Aprobado: N, Pendiente: N, Desechado: N, SinEstado: N}
+      - individuales: docs como promovente único
+      - colectivas: docs firmados con bancada
+      - n_legisladores: legisladores activos del partido
+      - serie_semanal: {YYYY-WSS: n}
+      - top_categoria
+
+    El parámetro `dias` ya no se usa para fecha_limite (LXVI fija) pero
+    se mantiene en signatura por retrocompat.
     """
     conn = get_connection()
-    fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
+    # LXVI start (coherente con resto del dashboard)
+    fecha_limite = "2024-09-01"
 
-    # Construir filtro de partidos válidos
     placeholders = ",".join(["?"] * len(PARTIDOS_VALIDOS))
+    # Filtro de sustantivos: SOLO iniciativas y proposiciones
+    TIPO_FILTRO = (
+        "(LOWER(tipo) LIKE '%iniciativ%' OR LOWER(tipo) LIKE '%proposici%')"
+    )
 
-    # Total por partido (solo partidos reales)
+    # Total por partido (sustantivos LXVI)
     rows_total = conn.execute(f"""
         SELECT partido, COUNT(*) as total
         FROM sil_documentos
         WHERE fecha_presentacion >= ? AND partido IN ({placeholders})
+          AND {TIPO_FILTRO}
         GROUP BY partido ORDER BY total DESC
     """, (fecha_limite, *PARTIDOS_VALIDOS)).fetchall()
 
@@ -715,25 +739,91 @@ def obtener_stats_por_partido(dias=180):
         FROM sil_documentos
         WHERE fecha_presentacion >= ? AND partido IN ({placeholders})
           AND categoria != '' AND categoria IS NOT NULL
+          AND {TIPO_FILTRO}
         GROUP BY partido, categoria ORDER BY partido, n DESC
     """, (fecha_limite, *PARTIDOS_VALIDOS)).fetchall()
 
-    # Por partido y tipo de instrumento
+    # Por partido y tipo (agrupado canónicamente: Iniciativa / Proposición)
     rows_tipo = conn.execute(f"""
-        SELECT partido, tipo, COUNT(*) as n
+        SELECT partido,
+               CASE WHEN LOWER(tipo) LIKE '%iniciativ%' THEN 'Iniciativa'
+                    WHEN LOWER(tipo) LIKE '%proposici%' THEN 'Proposición con PA'
+                    ELSE tipo END as tipo_canon,
+               COUNT(*) as n
         FROM sil_documentos
         WHERE fecha_presentacion >= ? AND partido IN ({placeholders})
-          AND tipo != '' AND tipo IS NOT NULL
-        GROUP BY partido, tipo ORDER BY partido, n DESC
+          AND {TIPO_FILTRO}
+        GROUP BY partido, tipo_canon
     """, (fecha_limite, *PARTIDOS_VALIDOS)).fetchall()
 
-    # Serie temporal por partido (últimos 6 meses, por semana)
+    # Por partido y cámara (canonical: Senado / Diputados / Permanente)
+    rows_cam = conn.execute(f"""
+        SELECT partido,
+               CASE
+                 WHEN camara LIKE '%Senad%' THEN 'Senado'
+                 WHEN camara LIKE '%Diputad%' THEN 'Diputados'
+                 WHEN camara LIKE '%Permanente%' THEN 'Permanente'
+                 ELSE 'Otra'
+               END as cam_canon,
+               COUNT(*) as n
+        FROM sil_documentos
+        WHERE fecha_presentacion >= ? AND partido IN ({placeholders})
+          AND {TIPO_FILTRO}
+        GROUP BY partido, cam_canon
+    """, (fecha_limite, *PARTIDOS_VALIDOS)).fetchall()
+
+    # Por partido y estado canonicalizado
+    rows_est = conn.execute(f"""
+        SELECT partido,
+               CASE
+                 WHEN estatus LIKE '%Aprobado%' OR estatus LIKE '%DOF%'
+                      OR estatus LIKE '%Resuelt%' THEN 'Aprobado'
+                 WHEN estatus LIKE 'Desechado%' OR estatus LIKE 'Concluido%'
+                      THEN 'Desechado'
+                 WHEN estatus LIKE 'Retirad%' THEN 'Retirada'
+                 WHEN estatus LIKE 'Pendiente%' THEN 'Pendiente'
+                 WHEN estatus IS NULL OR estatus = '' THEN 'SinEstado'
+                 ELSE 'Otro'
+               END as estado_canon,
+               COUNT(*) as n
+        FROM sil_documentos
+        WHERE fecha_presentacion >= ? AND partido IN ({placeholders})
+          AND {TIPO_FILTRO}
+        GROUP BY partido, estado_canon
+    """, (fecha_limite, *PARTIDOS_VALIDOS)).fetchall()
+
+    # Individuales vs colectivas (por es_individual cuando existe, sino
+    # heurística: presentador contiene varios 'Sen.'/'Dip.' = colectivo)
+    rows_indcol = conn.execute(f"""
+        SELECT partido,
+               CASE WHEN es_individual = 1 THEN 'individual'
+                    ELSE 'colectiva' END as bucket,
+               COUNT(*) as n
+        FROM sil_documentos
+        WHERE fecha_presentacion >= ? AND partido IN ({placeholders})
+          AND {TIPO_FILTRO}
+        GROUP BY partido, bucket
+    """, (fecha_limite, *PARTIDOS_VALIDOS)).fetchall()
+
+    # Legisladores activos por partido (con ≥1 acto individual en LXVI)
+    rows_legs = conn.execute(f"""
+        SELECT l.partido, COUNT(DISTINCT al.legislador_id) as n
+        FROM actividad_legislador al
+        JOIN legisladores l ON l.id = al.legislador_id
+        WHERE al.fecha_presentacion >= ?
+          AND (al.co_firmantes IS NULL OR al.co_firmantes = '')
+          AND l.partido IN ({placeholders})
+        GROUP BY l.partido
+    """, (fecha_limite, *PARTIDOS_VALIDOS)).fetchall()
+
+    # Serie temporal semanal
     rows_temporal = conn.execute(f"""
         SELECT partido,
                strftime('%Y-W%W', fecha_presentacion) as semana,
                COUNT(*) as n
         FROM sil_documentos
         WHERE fecha_presentacion >= ? AND partido IN ({placeholders})
+          AND {TIPO_FILTRO}
         GROUP BY partido, semana
         ORDER BY partido, semana
     """, (fecha_limite, *PARTIDOS_VALIDOS)).fetchall()
@@ -747,26 +837,48 @@ def obtener_stats_por_partido(dias=180):
             "color": meta["color"],
             "total": row[1],
             "por_categoria": {},
-            "por_tipo": {},
+            "por_tipo": {"Iniciativa": 0, "Proposición con PA": 0},
+            "por_camara": {"Senado": 0, "Diputados": 0, "Permanente": 0, "Otra": 0},
+            "por_estado": {"Aprobado": 0, "Pendiente": 0, "Desechado": 0,
+                            "Retirada": 0, "SinEstado": 0, "Otro": 0},
+            "individuales": 0,
+            "colectivas": 0,
+            "n_legisladores": 0,
             "serie_semanal": {},
             "top_categoria": None,
         }
 
-    for row in rows_cat:
-        p, cat, n = row
+    for p, cat, n in rows_cat:
         if p in partidos:
             cat_nombre = CATEGORIAS.get(cat, {}).get("nombre", cat)
             partidos[p]["por_categoria"][cat] = {"nombre": cat_nombre, "count": n}
             if not partidos[p]["top_categoria"]:
                 partidos[p]["top_categoria"] = {"categoria": cat, "nombre": cat_nombre, "count": n}
 
-    for row in rows_tipo:
-        p, tipo, n = row
-        if p in partidos and tipo:
+    for p, tipo, n in rows_tipo:
+        if p in partidos and tipo in partidos[p]["por_tipo"]:
             partidos[p]["por_tipo"][tipo] = n
 
-    for row in rows_temporal:
-        p, semana, n = row
+    for p, cam, n in rows_cam:
+        if p in partidos and cam in partidos[p]["por_camara"]:
+            partidos[p]["por_camara"][cam] = n
+
+    for p, est, n in rows_est:
+        if p in partidos and est in partidos[p]["por_estado"]:
+            partidos[p]["por_estado"][est] = n
+
+    for p, bucket, n in rows_indcol:
+        if p in partidos:
+            if bucket == "individual":
+                partidos[p]["individuales"] = n
+            else:
+                partidos[p]["colectivas"] = n
+
+    for p, n in rows_legs:
+        if p in partidos:
+            partidos[p]["n_legisladores"] = n
+
+    for p, semana, n in rows_temporal:
         if p in partidos:
             partidos[p]["serie_semanal"][semana] = n
 
