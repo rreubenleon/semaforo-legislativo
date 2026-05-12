@@ -2920,16 +2920,109 @@
 
                     <div>
                         <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-2">Totales LXVI</div>
-                        <div className="grid grid-cols-2 gap-2">
-                            <div className="bg-gray-50 rounded-lg p-3">
-                                <div className="text-[10px] text-gray-500">Iniciativas presentadas</div>
-                                <div className="text-xl font-bold text-gray-800 font-mono">{l3pIni}</div>
-                            </div>
-                            <div className="bg-gray-50 rounded-lg p-3">
-                                <div className="text-[10px] text-gray-500">Proposiciones presentadas</div>
-                                <div className="text-xl font-bold text-gray-800 font-mono">{l3pProp}</div>
-                            </div>
-                        </div>
+                        {(() => {
+                            /* Para senadores los conteos vienen de l3p_* + n_*_aprob/pend/desech.
+                               Para diputados de n_ini_iniciante etc (todavía sin desglose por estado).
+                               El isDip activa la vista alterna por rol. */
+                            const isDip = (leg.n_ini_iniciante ?? 0) > 0 || (leg.n_prop_proponente ?? 0) > 0;
+                            if (isDip) {
+                                const iniInd = leg.n_ini_iniciante ?? 0;
+                                const iniAdh = leg.n_ini_adherente ?? 0;
+                                const iniGrp = leg.n_ini_de_grupo ?? 0;
+                                const propProp = leg.n_prop_proponente ?? 0;
+                                const propAdh = leg.n_prop_adherente ?? 0;
+                                const propGrp = leg.n_prop_de_grupo ?? 0;
+                                return (
+                                    <div className="space-y-2">
+                                        <div className="bg-gray-50 rounded-lg p-3">
+                                            <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-1.5">Iniciativas</div>
+                                            <div className="grid grid-cols-3 gap-2 text-center">
+                                                <div><div className="text-lg font-bold text-gray-800 font-mono">{iniInd}</div><div className="text-[10px] text-gray-500">Iniciante</div></div>
+                                                <div><div className="text-lg font-bold text-gray-800 font-mono">{iniAdh}</div><div className="text-[10px] text-gray-500">Adherente</div></div>
+                                                <div><div className="text-lg font-bold text-gray-800 font-mono">{iniGrp}</div><div className="text-[10px] text-gray-500">De grupo</div></div>
+                                            </div>
+                                        </div>
+                                        <div className="bg-gray-50 rounded-lg p-3">
+                                            <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-1.5">Proposiciones</div>
+                                            <div className="grid grid-cols-3 gap-2 text-center">
+                                                <div><div className="text-lg font-bold text-gray-800 font-mono">{propProp}</div><div className="text-[10px] text-gray-500">Proponente</div></div>
+                                                <div><div className="text-lg font-bold text-gray-800 font-mono">{propAdh}</div><div className="text-[10px] text-gray-500">Adherente</div></div>
+                                                <div><div className="text-lg font-bold text-gray-800 font-mono">{propGrp}</div><div className="text-[10px] text-gray-500">De grupo</div></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            }
+                            // Senadores: usar l3p_* + conteos por estado
+                            const iniInd = Math.round(leg.l3p_iniciativas ?? 0);
+                            const iniGrp = Math.round(leg.l3p_iniciativas_col ?? 0);
+                            const propInd = Math.round(leg.l3p_proposiciones ?? 0);
+                            const propGrp = Math.round(leg.l3p_proposiciones_col ?? 0);
+                            const ia_i = leg.n_ini_aprob_ind ?? 0, ia_c = leg.n_ini_aprob_col ?? 0;
+                            const ip_i = leg.n_ini_pend_ind ?? 0, ip_c = leg.n_ini_pend_col ?? 0;
+                            const id_i = leg.n_ini_desech_ind ?? 0, id_c = leg.n_ini_desech_col ?? 0;
+                            const pa_i = leg.n_prop_aprob_ind ?? 0, pa_c = leg.n_prop_aprob_col ?? 0;
+                            const pp_i = leg.n_prop_pend_ind ?? 0, pp_c = leg.n_prop_pend_col ?? 0;
+                            const pd_i = leg.n_prop_desech_ind ?? 0, pd_c = leg.n_prop_desech_col ?? 0;
+                            const sinEstadoIni = (iniInd + iniGrp) - (ia_i+ia_c+ip_i+ip_c+id_i+id_c);
+                            const sinEstadoProp = (propInd + propGrp) - (pa_i+pa_c+pp_i+pp_c+pd_i+pd_c);
+                            return (
+                                <div className="space-y-3">
+                                    {/* INICIATIVAS */}
+                                    <div className="bg-gray-50 rounded-lg p-3">
+                                        <div className="flex items-baseline justify-between mb-2">
+                                            <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Iniciativas LXVI</div>
+                                            <div className="text-base font-bold text-gray-800 font-mono">{iniInd + iniGrp}<span className="text-[10px] text-gray-400 font-normal ml-1">total</span></div>
+                                        </div>
+                                        <div className="space-y-1.5 text-[12px]">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-700">Como promovente único</span>
+                                                <span className="font-mono font-bold text-gray-800">{iniInd}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-[10px] text-gray-500 pl-3">
+                                                <span><span className="text-emerald-600 font-semibold">{ia_i}</span> aprobada{ia_i!==1?'s':''} · <span className="text-amber-600 font-semibold">{ip_i}</span> pendiente{ip_i!==1?'s':''} · <span className="text-red-500 font-semibold">{id_i}</span> desechada{id_i!==1?'s':''}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center pt-1 border-t border-gray-200">
+                                                <span className="text-gray-700">Firmando con bancada</span>
+                                                <span className="font-mono font-bold text-gray-800">{iniGrp}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-[10px] text-gray-500 pl-3">
+                                                <span><span className="text-emerald-600 font-semibold">{ia_c}</span> aprobada{ia_c!==1?'s':''} · <span className="text-amber-600 font-semibold">{ip_c}</span> pendiente{ip_c!==1?'s':''} · <span className="text-red-500 font-semibold">{id_c}</span> desechada{id_c!==1?'s':''}</span>
+                                            </div>
+                                            {sinEstadoIni > 0 && (
+                                                <div className="text-[10px] text-gray-400 italic pt-1">{sinEstadoIni} sin estado disponible en Senado.gob.mx</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                    {/* PROPOSICIONES */}
+                                    <div className="bg-gray-50 rounded-lg p-3">
+                                        <div className="flex items-baseline justify-between mb-2">
+                                            <div className="text-[11px] uppercase tracking-wider text-gray-500 font-semibold">Proposiciones LXVI</div>
+                                            <div className="text-base font-bold text-gray-800 font-mono">{propInd + propGrp}<span className="text-[10px] text-gray-400 font-normal ml-1">total</span></div>
+                                        </div>
+                                        <div className="space-y-1.5 text-[12px]">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-700">Como promovente único</span>
+                                                <span className="font-mono font-bold text-gray-800">{propInd}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-[10px] text-gray-500 pl-3">
+                                                <span><span className="text-emerald-600 font-semibold">{pa_i}</span> aprobada{pa_i!==1?'s':''} · <span className="text-amber-600 font-semibold">{pp_i}</span> pendiente{pp_i!==1?'s':''} · <span className="text-red-500 font-semibold">{pd_i}</span> desechada{pd_i!==1?'s':''}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center pt-1 border-t border-gray-200">
+                                                <span className="text-gray-700">Firmando con bancada</span>
+                                                <span className="font-mono font-bold text-gray-800">{propGrp}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center text-[10px] text-gray-500 pl-3">
+                                                <span><span className="text-emerald-600 font-semibold">{pa_c}</span> aprobada{pa_c!==1?'s':''} · <span className="text-amber-600 font-semibold">{pp_c}</span> pendiente{pp_c!==1?'s':''} · <span className="text-red-500 font-semibold">{pd_c}</span> desechada{pd_c!==1?'s':''}</span>
+                                            </div>
+                                            {sinEstadoProp > 0 && (
+                                                <div className="text-[10px] text-gray-400 italic pt-1">{sinEstadoProp} sin estado disponible en Senado.gob.mx</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
                     </div>
                 </div>
             );
