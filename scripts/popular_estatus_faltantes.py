@@ -24,6 +24,7 @@ import logging
 import sqlite3
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -37,16 +38,25 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def _fetch_doc(doc):
+    """Worker: fetch detalle SIL para un doc. Retorna (doc, detalle|None, err|None)."""
+    from scrapers.sil import _obtener_detalle
+    try:
+        det = _obtener_detalle(doc["seguimiento_id"], doc["asunto_id"])
+        return (doc, det, None)
+    except Exception as e:
+        return (doc, None, str(e))
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limit", type=int, default=None,
                     help="Max docs a procesar (debug)")
-    ap.add_argument("--delay", type=float, default=0.3,
-                    help="Segundos entre requests")
+    ap.add_argument("--workers", type=int, default=8,
+                    help="Threads concurrentes para fetch SIL")
     args = ap.parse_args()
 
     from db import get_connection
-    from scrapers.sil import _obtener_detalle
 
     conn = get_connection()
     conn.row_factory = sqlite3.Row
@@ -63,51 +73,51 @@ def main():
     if args.limit:
         query += f" LIMIT {args.limit}"
 
-    docs = conn.execute(query).fetchall()
-    logger.info(f"Docs sin estatus a procesar: {len(docs)}")
+    docs = [dict(r) for r in conn.execute(query).fetchall()]
+    logger.info(f"Docs sin estatus a procesar: {len(docs)} (workers={args.workers})")
 
     ok = 0
     sin_data = 0
     errores = 0
+    procesados = 0
 
-    for i, doc in enumerate(docs):
-        if i and i % 50 == 0:
-            logger.info(f"  Progreso: {i}/{len(docs)} (ok={ok}, sin_data={sin_data}, err={errores})")
-            conn.commit()
+    # Fetch concurrente, UPDATE serializado en el thread principal
+    with ThreadPoolExecutor(max_workers=args.workers) as pool:
+        futs = {pool.submit(_fetch_doc, d): d for d in docs}
+        for fut in as_completed(futs):
+            doc, det, err = fut.result()
+            procesados += 1
+            if procesados % 100 == 0:
+                logger.info(f"  Progreso: {procesados}/{len(docs)} "
+                            f"(ok={ok}, sin_data={sin_data}, err={errores})")
+                conn.commit()
 
-        try:
-            detalle = _obtener_detalle(doc["seguimiento_id"], doc["asunto_id"])
-        except Exception as e:
-            logger.debug(f"  Error doc id={doc['id']}: {e}")
-            errores += 1
-            time.sleep(args.delay)
-            continue
+            if err:
+                errores += 1
+                continue
+            if not det or not det.get("estatus"):
+                sin_data += 1
+                continue
 
-        if not detalle or not detalle.get("estatus"):
-            sin_data += 1
-            time.sleep(args.delay)
-            continue
-
-        conn.execute("""
-            UPDATE sil_documentos
-            SET estatus = COALESCE(NULLIF(estatus, ''), ?),
-                comision = COALESCE(NULLIF(comision, ''), ?),
-                tipo = COALESCE(NULLIF(tipo, ''), ?),
-                fecha_presentacion = COALESCE(NULLIF(fecha_presentacion, ''),
-                                              NULLIF(?, '')),
-                presentador = COALESCE(NULLIF(presentador, ''),
-                                        NULLIF(?, ''))
-            WHERE id = ?
-        """, (
-            detalle.get("estatus", ""),
-            detalle.get("comision", ""),
-            detalle.get("tipo", ""),
-            detalle.get("fecha_presentacion", ""),
-            detalle.get("presentador", ""),
-            doc["id"],
-        ))
-        ok += 1
-        time.sleep(args.delay)
+            conn.execute("""
+                UPDATE sil_documentos
+                SET estatus = COALESCE(NULLIF(estatus, ''), ?),
+                    comision = COALESCE(NULLIF(comision, ''), ?),
+                    tipo = COALESCE(NULLIF(tipo, ''), ?),
+                    fecha_presentacion = COALESCE(NULLIF(fecha_presentacion, ''),
+                                                  NULLIF(?, '')),
+                    presentador = COALESCE(NULLIF(presentador, ''),
+                                            NULLIF(?, ''))
+                WHERE id = ?
+            """, (
+                det.get("estatus", ""),
+                det.get("comision", ""),
+                det.get("tipo", ""),
+                det.get("fecha_presentacion", ""),
+                det.get("presentador", ""),
+                doc["id"],
+            ))
+            ok += 1
 
     conn.commit()
     logger.info(f"\nFinal: {ok} actualizados, {sin_data} sin data en SIL, {errores} errores")
