@@ -1,0 +1,26 @@
+name: Diag ELO Bajo (one-off)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: diag-elo-${{ github.run_id }}
+          restore-keys: semaforo-db-
+      - run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: pip install -r requirements.txt
+      - run: python scripts/diag_elo_bajo.py
