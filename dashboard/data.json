@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generado": "2026-05-12T15:18:14.982607+00:00",
+    "generado": "2026-05-12T18:38:13.150767+00:00",
     "version": "3.3",
     "formula": "SCORE = (0.20*Media) + (0.15*Trends) + (0.25*Congreso) + (0.10*Mañanera) + (0.15*Urgencia) + (0.15*Dominancia)",
     "umbrales": {
@@ -17,11 +17,11 @@
     {
       "categoria": "seguridad_justicia",
       "nombre": "Seguridad y Justicia",
-      "score_total": 73.2,
+      "score_total": 74.4,
       "score_media": 100.0,
       "score_trends": 19.25,
       "score_congreso": 100.0,
-      "score_mananera": 32.6,
+      "score_mananera": 44.6,
       "score_urgencia": 46.99,
       "score_dominancia": 100.0,
       "color": "verde",
@@ -34,38 +34,43 @@
       },
       "subcategorias_activas": [
         {
-          "clave": "justicia_penal",
-          "nombre": "Justicia penal y reforma judicial",
+          "clave": "crimen_organizado",
+          "nombre": "Crimen organizado",
           "peso": 1.0
         },
         {
           "clave": "violencia_victimas",
           "nombre": "Violencia y víctimas",
-          "peso": 0.89
+          "peso": 0.86
         },
         {
-          "clave": "crimen_organizado",
-          "nombre": "Crimen organizado",
-          "peso": 0.77
+          "clave": "justicia_penal",
+          "nombre": "Justicia penal y reforma judicial",
+          "peso": 0.74
         },
         {
           "clave": "seguridad_publica",
           "nombre": "Seguridad pública y policía",
-          "peso": 0.53
-        },
-        {
-          "clave": "justicia_constitucional",
-          "nombre": "Justicia constitucional",
-          "peso": 0.3
+          "peso": 0.44
         },
         {
           "clave": "fuerzas_armadas",
           "nombre": "Fuerzas armadas y defensa",
-          "peso": 0.08
+          "peso": 0.22
+        },
+        {
+          "clave": "sistema_penitenciario",
+          "nombre": "Sistema penitenciario",
+          "peso": 0.21
+        },
+        {
+          "clave": "justicia_constitucional",
+          "nombre": "Justicia constitucional",
+          "peso": 0.13
         }
       ],
       "divergencia": {
-        "indice": 0.082,
+        "indice": 0.071,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -76,7 +81,7 @@
         "count": 0,
         "items": []
       },
-      "prob_extraordinario": 49.8
+      "prob_extraordinario": 52.2
     },
     {
       "categoria": "infraestructura",
@@ -110,27 +115,27 @@
         {
           "clave": "obra_publica",
           "nombre": "Obra pública",
-          "peso": 0.41
-        },
-        {
-          "clave": "proteccion_civil",
-          "nombre": "Protección civil y desastres",
-          "peso": 0.3
+          "peso": 0.43
         },
         {
           "clave": "megaproyectos",
           "nombre": "Megaproyectos federales",
-          "peso": 0.24
+          "peso": 0.32
+        },
+        {
+          "clave": "proteccion_civil",
+          "nombre": "Protección civil y desastres",
+          "peso": 0.31
         },
         {
           "clave": "vivienda_urbano",
           "nombre": "Vivienda y desarrollo urbano",
-          "peso": 0.1
+          "peso": 0.11
         },
         {
           "clave": "telecomunicaciones",
           "nombre": "Telecomunicaciones",
-          "peso": 0.08
+          "peso": 0.09
         }
       ],
       "divergencia": {
@@ -212,6 +217,60 @@
       "prob_extraordinario": 49.9
     },
     {
+      "categoria": "relaciones_exteriores",
+      "nombre": "Relaciones Exteriores",
+      "score_total": 71.48,
+      "score_media": 100.0,
+      "score_trends": 14.97,
+      "score_congreso": 100.0,
+      "score_mananera": 50.18,
+      "score_urgencia": 28.08,
+      "score_dominancia": 100.0,
+      "color": "verde",
+      "fecha": "2026-05-12",
+      "momentum": {
+        "dias_consecutivos": 30,
+        "semanas_en_agenda": 4,
+        "tendencia": "stable",
+        "etiqueta": "Semana 4 en agenda"
+      },
+      "subcategorias_activas": [
+        {
+          "clave": "relacion_eeuu",
+          "nombre": "Relación con EE.UU.",
+          "peso": 1.0
+        },
+        {
+          "clave": "diplomacia_organismos",
+          "nombre": "Diplomacia y organismos",
+          "peso": 0.61
+        },
+        {
+          "clave": "soberania_fronteras",
+          "nombre": "Soberanía y fronteras",
+          "peso": 0.08
+        },
+        {
+          "clave": "america_latina",
+          "nombre": "América Latina",
+          "peso": 0.02
+        }
+      ],
+      "divergencia": {
+        "indice": 0.062,
+        "patron_id": "rebalanceo_tecnico",
+        "patron_label": "Rebalanceo del modelo",
+        "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
+        "sobre_representada": "Dominancia",
+        "sub_representada": "Urgencia"
+      },
+      "aprobados_14d": {
+        "count": 0,
+        "items": []
+      },
+      "prob_extraordinario": 52.4
+    },
+    {
       "categoria": "electoral_politico",
       "nombre": "Electoral y Político",
       "score_total": 70.5,
@@ -238,17 +297,17 @@
         {
           "clave": "participacion_ciudadana",
           "nombre": "Participación ciudadana",
-          "peso": 0.6
+          "peso": 0.77
         },
         {
           "clave": "partidos_coaliciones",
           "nombre": "Partidos y coaliciones",
-          "peso": 0.38
+          "peso": 0.35
         },
         {
           "clave": "reforma_electoral",
           "nombre": "Reforma electoral",
-          "peso": 0.31
+          "peso": 0.27
         }
       ],
       "divergencia": {
@@ -266,65 +325,16 @@
       "prob_extraordinario": 47.6
     },
     {
-      "categoria": "relaciones_exteriores",
-      "nombre": "Relaciones Exteriores",
-      "score_total": 70.28,
-      "score_media": 100.0,
-      "score_trends": 14.97,
-      "score_congreso": 100.0,
-      "score_mananera": 38.18,
-      "score_urgencia": 28.08,
-      "score_dominancia": 100.0,
-      "color": "verde",
-      "fecha": "2026-05-12",
-      "momentum": {
-        "dias_consecutivos": 30,
-        "semanas_en_agenda": 4,
-        "tendencia": "down",
-        "etiqueta": "Semana 4 en agenda"
-      },
-      "subcategorias_activas": [
-        {
-          "clave": "relacion_eeuu",
-          "nombre": "Relación con EE.UU.",
-          "peso": 1.0
-        },
-        {
-          "clave": "diplomacia_organismos",
-          "nombre": "Diplomacia y organismos",
-          "peso": 0.4
-        },
-        {
-          "clave": "soberania_fronteras",
-          "nombre": "Soberanía y fronteras",
-          "peso": 0.05
-        }
-      ],
-      "divergencia": {
-        "indice": 0.065,
-        "patron_id": "rebalanceo_tecnico",
-        "patron_label": "Rebalanceo del modelo",
-        "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
-        "sobre_representada": "Dominancia",
-        "sub_representada": "Urgencia"
-      },
-      "aprobados_14d": {
-        "count": 0,
-        "items": []
-      },
-      "prob_extraordinario": 50.0
-    },
-    {
       "categoria": "educacion",
       "nombre": "Educación",
-      "score_total": 69.07,
+      "score_total": 70.27,
       "score_media": 100.0,
       "score_trends": 12.6,
       "score_congreso": 100.0,
-      "score_mananera": 33.29,
+      "score_mananera": 45.29,
       "score_urgencia": 25.65,
       "score_dominancia": 100.0,
-      "color": "amarillo",
+      "color": "verde",
       "fecha": "2026-05-12",
       "momentum": {
         "dias_consecutivos": 30,
@@ -341,12 +351,12 @@
         {
           "clave": "educacion_superior",
           "nombre": "Educación superior e investigación",
-          "peso": 0.08
+          "peso": 0.1
         },
         {
           "clave": "ciencia_tecnologia",
           "nombre": "Ciencia y tecnología",
-          "peso": 0.05
+          "peso": 0.06
         },
         {
           "clave": "cultura_deporte",
@@ -355,7 +365,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.133,
+        "indice": 0.131,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -366,17 +376,17 @@
         "count": 0,
         "items": []
       },
-      "prob_extraordinario": 48.9
+      "prob_extraordinario": 51.3
     },
     {
       "categoria": "medio_ambiente",
       "nombre": "Medio Ambiente y Cambio Climático",
-      "score_total": 65.1,
-      "score_media": 91.44,
+      "score_total": 65.13,
+      "score_media": 91.58,
       "score_trends": 8.55,
       "score_congreso": 100.0,
       "score_mananera": 0.0,
-      "score_urgencia": 36.87,
+      "score_urgencia": 36.9,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-05-12",
@@ -395,22 +405,22 @@
         {
           "clave": "contaminacion_residuos",
           "nombre": "Contaminación y residuos",
-          "peso": 0.35
+          "peso": 0.62
         },
         {
           "clave": "fenomenos_naturales",
           "nombre": "Fenómenos naturales",
-          "peso": 0.23
+          "peso": 0.35
         },
         {
           "clave": "conservacion_biodiversidad",
           "nombre": "Conservación y biodiversidad",
-          "peso": 0.22
+          "peso": 0.32
         },
         {
           "clave": "cambio_climatico",
           "nombre": "Cambio climático",
-          "peso": 0.07
+          "peso": 0.09
         }
       ],
       "divergencia": {
@@ -430,12 +440,12 @@
     {
       "categoria": "agro_rural",
       "nombre": "Agro y Desarrollo Rural",
-      "score_total": 64.72,
-      "score_media": 79.69999999999999,
+      "score_total": 64.73,
+      "score_media": 79.75999999999999,
       "score_trends": 15.0,
       "score_congreso": 100.0,
       "score_mananera": 4.89,
-      "score_urgencia": 40.26,
+      "score_urgencia": 40.27,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-05-12",
@@ -468,7 +478,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.095,
+        "indice": 0.094,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -484,8 +494,8 @@
     {
       "categoria": "salud",
       "nombre": "Salud",
-      "score_total": 64.57,
-      "score_media": 93.43,
+      "score_total": 64.56,
+      "score_media": 93.39,
       "score_trends": 12.78,
       "score_congreso": 100.0,
       "score_mananera": 3.43,
@@ -508,17 +518,17 @@
         {
           "clave": "epidemiologia",
           "nombre": "Epidemiología",
-          "peso": 0.56
+          "peso": 0.52
         },
         {
           "clave": "salud_mental_adicciones",
           "nombre": "Salud mental y adicciones",
-          "peso": 0.19
+          "peso": 0.23
         },
         {
           "clave": "medicamentos_abasto",
           "nombre": "Medicamentos y abasto",
-          "peso": 0.05
+          "peso": 0.08
         }
       ],
       "divergencia": {
@@ -538,12 +548,12 @@
     {
       "categoria": "anticorrupcion",
       "nombre": "Anticorrupción",
-      "score_total": 57.68,
-      "score_media": 83.95,
+      "score_total": 58.27,
+      "score_media": 83.9,
       "score_trends": 14.72,
-      "score_congreso": 70.67,
+      "score_congreso": 72.64,
       "score_mananera": 3.96,
-      "score_urgencia": 37.47,
+      "score_urgencia": 38.14,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-05-12",
@@ -576,7 +586,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.127,
+        "indice": 0.124,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -592,12 +602,12 @@
     {
       "categoria": "derechos_humanos",
       "nombre": "Derechos Humanos",
-      "score_total": 57.45,
-      "score_media": 90.52,
+      "score_total": 57.47,
+      "score_media": 90.64,
       "score_trends": 18.1,
       "score_congreso": 57.080000000000005,
       "score_mananera": 21.79,
-      "score_urgencia": 34.52,
+      "score_urgencia": 34.53,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-05-12",
@@ -616,17 +626,17 @@
         {
           "clave": "pueblos_indigenas",
           "nombre": "Pueblos indígenas",
-          "peso": 0.4
+          "peso": 0.39
         },
         {
           "clave": "migracion_refugio",
           "nombre": "Migración y refugio",
-          "peso": 0.25
+          "peso": 0.31
         },
         {
           "clave": "genero_diversidad",
           "nombre": "Género y diversidad",
-          "peso": 0.11
+          "peso": 0.12
         },
         {
           "clave": "derechos_ninez",
@@ -651,10 +661,10 @@
     {
       "categoria": "trabajo",
       "nombre": "Trabajo",
-      "score_total": 50.66,
-      "score_media": 79.28,
+      "score_total": 50.94,
+      "score_media": 79.33,
       "score_trends": 17.27,
-      "score_congreso": 46.970000000000006,
+      "score_congreso": 48.040000000000006,
       "score_mananera": 14.0,
       "score_urgencia": 27.16,
       "score_dominancia": 100.0,
@@ -675,12 +685,12 @@
         {
           "clave": "seguridad_social_pensiones",
           "nombre": "Seguridad social y pensiones",
-          "peso": 0.7
+          "peso": 0.73
         },
         {
           "clave": "relaciones_laborales",
           "nombre": "Relaciones laborales",
-          "peso": 0.32
+          "peso": 0.42
         },
         {
           "clave": "derechos_laborales",
@@ -689,7 +699,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.18,
+        "indice": 0.177,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -700,17 +710,17 @@
         "count": 0,
         "items": []
       },
-      "prob_extraordinario": 59.5
+      "prob_extraordinario": 59.6
     },
     {
       "categoria": "energia",
       "nombre": "Energía",
-      "score_total": 49.56,
-      "score_media": 86.32,
+      "score_total": 49.57,
+      "score_media": 86.38,
       "score_trends": 13.03,
       "score_congreso": 34.6,
       "score_mananera": 14.07,
-      "score_urgencia": 35.24,
+      "score_urgencia": 35.25,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-05-12",
@@ -729,21 +739,21 @@
         {
           "clave": "cfe_electricidad",
           "nombre": "CFE y electricidad",
-          "peso": 0.22
-        },
-        {
-          "clave": "mineria_recursos",
-          "nombre": "Minería y recursos",
-          "peso": 0.02
+          "peso": 0.21
         },
         {
           "clave": "energias_renovables",
           "nombre": "Energías renovables",
-          "peso": 0.02
+          "peso": 0.01
+        },
+        {
+          "clave": "mineria_recursos",
+          "nombre": "Minería y recursos",
+          "peso": 0.01
         }
       ],
       "divergencia": {
-        "indice": 0.135,
+        "indice": 0.134,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -760,7 +770,7 @@
       "categoria": "inteligencia_artificial",
       "nombre": "Inteligencia Artificial",
       "score_total": 43.38,
-      "score_media": 60.91,
+      "score_media": 60.94,
       "score_trends": 13.25,
       "score_congreso": 38.16,
       "score_mananera": 0.0,
@@ -808,12 +818,12 @@
     {
       "categoria": "igualdad_genero",
       "nombre": "Igualdad de género",
-      "score_total": 41.69,
-      "score_media": 64.3,
+      "score_total": 42.65,
+      "score_media": 68.77,
       "score_trends": 8.57,
       "score_congreso": 30.900000000000002,
       "score_mananera": 0.0,
-      "score_urgencia": 32.16,
+      "score_urgencia": 32.57,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-05-12",
@@ -862,17 +872,17 @@
         "count": 0,
         "items": []
       },
-      "prob_extraordinario": 26.8
+      "prob_extraordinario": 28.4
     },
     {
       "categoria": "politica_social",
       "nombre": "Política Social",
-      "score_total": 41.59,
-      "score_media": 66.89,
+      "score_total": 41.57,
+      "score_media": 66.83,
       "score_trends": 12.4,
       "score_congreso": 28.81,
       "score_mananera": 2.61,
-      "score_urgencia": 25.91,
+      "score_urgencia": 25.9,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-05-12",
@@ -891,17 +901,17 @@
         {
           "clave": "programas_federales",
           "nombre": "Programas federales",
-          "peso": 0.95
+          "peso": 0.91
         },
         {
           "clave": "pobreza_desigualdad",
           "nombre": "Pobreza y desigualdad",
-          "peso": 0.8
+          "peso": 0.79
         },
         {
           "clave": "bienestar_desarrollo",
           "nombre": "Bienestar y desarrollo social",
-          "peso": 0.49
+          "peso": 0.48
         }
       ],
       "divergencia": {
@@ -921,10 +931,10 @@
     {
       "categoria": "turismo",
       "nombre": "Turismo",
-      "score_total": 37.08,
-      "score_media": 67.87,
+      "score_total": 37.36,
+      "score_media": 67.92,
       "score_trends": 11.47,
-      "score_congreso": 9.459999999999999,
+      "score_congreso": 10.54,
       "score_mananera": 0.0,
       "score_urgencia": 29.47,
       "score_dominancia": 100.0,
@@ -945,21 +955,21 @@
         {
           "clave": "infraestructura_turistica",
           "nombre": "Infraestructura turística",
-          "peso": 0.52
+          "peso": 0.49
         },
         {
           "clave": "economia_turistica",
           "nombre": "Economía turística",
-          "peso": 0.43
+          "peso": 0.41
         },
         {
           "clave": "destinos_programas",
           "nombre": "Destinos y programas",
-          "peso": 0.38
+          "peso": 0.37
         }
       ],
       "divergencia": {
-        "indice": 0.281,
+        "indice": 0.275,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -975,13 +985,13 @@
     {
       "categoria": "medios_comunicacion",
       "nombre": "Medios de Comunicación",
-      "score_total": 33.76,
-      "score_media": 64.33,
+      "score_total": 33.8,
+      "score_media": 64.34,
       "score_trends": 11.75,
       "score_congreso": 4.46,
       "score_mananera": 0.0,
       "score_urgencia": 39.15,
-      "score_dominancia": 80.93,
+      "score_dominancia": 81.23,
       "color": "rojo",
       "fecha": "2026-05-12",
       "momentum": {
@@ -999,7 +1009,7 @@
         {
           "clave": "libertad_prensa",
           "nombre": "Libertad de prensa",
-          "peso": 0.13
+          "peso": 0.12
         },
         {
           "clave": "television_radio",
@@ -1008,7 +1018,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.271,
+        "indice": 0.272,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -1041,24 +1051,24 @@
       },
       "subcategorias_activas": [
         {
+          "clave": "estructura_estado",
+          "nombre": "Estructura del Estado",
+          "peso": 1.0
+        },
+        {
           "clave": "procedimiento_administrativo",
           "nombre": "Procedimiento administrativo y trámites",
-          "peso": 1.0
+          "peso": 0.95
         },
         {
           "clave": "administracion_publica_federal",
           "nombre": "Administración pública federal",
-          "peso": 0.71
-        },
-        {
-          "clave": "estructura_estado",
-          "nombre": "Estructura del Estado",
-          "peso": 0.46
+          "peso": 0.94
         },
         {
           "clave": "servicio_civil",
           "nombre": "Servicio civil de carrera",
-          "peso": 0.34
+          "peso": 0.24
         }
       ],
       "divergencia": {
@@ -1077,6 +1087,60 @@
     }
   ],
   "alertas": [
+    {
+      "id": 1839,
+      "categoria": "relaciones_exteriores",
+      "tipo_alerta": "score_alto",
+      "score": 71.48,
+      "color": "verde",
+      "mensaje": "ALERTA: Relaciones Exteriores con score 71.5 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-05-12T18:38:03.742457"
+    },
+    {
+      "id": 1838,
+      "categoria": "infraestructura",
+      "tipo_alerta": "score_alto",
+      "score": 71.95,
+      "color": "verde",
+      "mensaje": "ALERTA: Infraestructura con score 72.0 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-05-12T18:38:02.761826"
+    },
+    {
+      "id": 1837,
+      "categoria": "electoral_politico",
+      "tipo_alerta": "score_alto",
+      "score": 70.5,
+      "color": "verde",
+      "mensaje": "ALERTA: Electoral y Político con score 70.5 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-05-12T18:38:01.498019"
+    },
+    {
+      "id": 1836,
+      "categoria": "educacion",
+      "tipo_alerta": "score_alto",
+      "score": 70.27,
+      "color": "verde",
+      "mensaje": "ALERTA: Educación con score 70.3 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-05-12T18:38:00.340934"
+    },
+    {
+      "id": 1835,
+      "categoria": "economia_hacienda",
+      "tipo_alerta": "score_alto",
+      "score": 71.65,
+      "color": "verde",
+      "mensaje": "ALERTA: Economía y Hacienda con score 71.7 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-05-12T18:37:58.866960"
+    },
+    {
+      "id": 1834,
+      "categoria": "seguridad_justicia",
+      "tipo_alerta": "score_alto",
+      "score": 74.4,
+      "color": "verde",
+      "mensaje": "ALERTA: Seguridad y Justicia con score 74.4 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-05-12T18:37:57.820323"
+    },
     {
       "id": 1833,
       "categoria": "relaciones_exteriores",
@@ -1472,81 +1536,27 @@
       "color": "verde",
       "mensaje": "ALERTA: Relaciones Exteriores con score 70.2 - Alta probabilidad de actividad legislativa",
       "fecha": "2026-05-10T21:28:21.391358"
-    },
-    {
-      "id": 1789,
-      "categoria": "infraestructura",
-      "tipo_alerta": "score_alto",
-      "score": 71.86,
-      "color": "verde",
-      "mensaje": "ALERTA: Infraestructura con score 71.9 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-05-10T21:28:20.332730"
-    },
-    {
-      "id": 1788,
-      "categoria": "economia_hacienda",
-      "tipo_alerta": "score_alto",
-      "score": 72.37,
-      "color": "verde",
-      "mensaje": "ALERTA: Economía y Hacienda con score 72.4 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-05-10T21:28:16.153857"
-    },
-    {
-      "id": 1787,
-      "categoria": "seguridad_justicia",
-      "tipo_alerta": "score_alto",
-      "score": 73.06,
-      "color": "verde",
-      "mensaje": "ALERTA: Seguridad y Justicia con score 73.1 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-05-10T21:28:15.033731"
-    },
-    {
-      "id": 1786,
-      "categoria": "relaciones_exteriores",
-      "tipo_alerta": "score_alto",
-      "score": 70.21,
-      "color": "verde",
-      "mensaje": "ALERTA: Relaciones Exteriores con score 70.2 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-05-10T17:33:43.121689"
-    },
-    {
-      "id": 1785,
-      "categoria": "infraestructura",
-      "tipo_alerta": "score_alto",
-      "score": 71.86,
-      "color": "verde",
-      "mensaje": "ALERTA: Infraestructura con score 71.9 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-05-10T17:33:42.173533"
-    },
-    {
-      "id": 1784,
-      "categoria": "economia_hacienda",
-      "tipo_alerta": "score_alto",
-      "score": 72.37,
-      "color": "verde",
-      "mensaje": "ALERTA: Economía y Hacienda con score 72.4 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-05-10T17:33:38.430298"
     }
   ],
   "distribucion_categorias": {
-    "turismo": 41,
-    "politica_social": 51,
-    "trabajo": 93,
-    "energia": 107,
-    "seguridad_justicia": 700,
-    "medio_ambiente": 97,
-    "infraestructura": 216,
-    "educacion": 381,
-    "relaciones_exteriores": 325,
+    "turismo": 42,
+    "politica_social": 52,
+    "trabajo": 94,
+    "energia": 108,
+    "seguridad_justicia": 727,
+    "medio_ambiente": 105,
+    "infraestructura": 220,
+    "educacion": 391,
+    "relaciones_exteriores": 338,
     "economia_hacienda": 175,
-    "administracion": 13,
-    "salud": 139,
-    "electoral_politico": 386,
-    "derechos_humanos": 138,
+    "administracion": 15,
+    "salud": 142,
+    "electoral_politico": 391,
+    "derechos_humanos": 142,
     "inteligencia_artificial": 25,
     "agro_rural": 36,
     "anticorrupcion": 56,
-    "medios_comunicacion": 33,
+    "medios_comunicacion": 34,
     "igualdad_genero": 46
   },
   "predicciones": {
@@ -1746,92 +1756,92 @@
       "articulos_medios": [
         {
           "fuente": "el_universal",
-          "titulo": "Harfuch reporta aseguramiento de 28 mil armas y desmantelamiento de 2 mil laboratorios en el país; destaca acciones en Sinaloa",
-          "url": "https://www.eluniversal.com.mx/nacion/harfuch-reporta-aseguramiento-de-28-mil-armas-y-desmantelamiento-de-2-mil-laboratorios-en-el-pais-destaca-acciones-en-sinaloa/",
+          "titulo": "Fiscalía de Sonora ofrece recompensa para localizar a médico ligado a 8 muertes por sueros vitaminados; autoridades continúan investigaciones",
+          "url": "https://www.eluniversal.com.mx/estados/fiscalia-de-sonora-ofrece-recompensa-para-localizar-a-medico-ligado-a-8-muertes-por-sueros-vitaminados-autoridades-continuan-investigaciones/",
           "fecha": "2026-05-12"
         },
         {
           "fuente": "el_universal",
-          "titulo": "VIDEO Presunto acosador golpea a policía en Metro Pantitlán; SSC confirma detención tras denuncia de una usuaria",
-          "url": "https://www.eluniversal.com.mx/metropoli/video-presunto-acosador-golpea-a-policia-en-pantitlan-ssc-confirma-detencion-tras-denuncia-de-una-usuaria/",
+          "titulo": "Vinculan a proceso a extorsionadora en Álvaro Obregón; amenazaba a comerciante",
+          "url": "https://www.eluniversal.com.mx/metropoli/vinculan-a-proceso-a-extorsionadora-en-alvaro-obregon-amenazaba-a-comerciante/",
           "fecha": "2026-05-12"
         },
         {
           "fuente": "la_razon",
-          "titulo": "Suman más de 52 mil delincuentes detenidos en sexenio de Presidenta Claudia Sheinbaum",
-          "url": "https://www.razon.com.mx/mexico/2026/05/12/suman-mas-de-52-mil-delincuentes-detenidos-en-sexenio-de-presidenta-claudia-sheinbaum/",
+          "titulo": "Son 96 desplazados por violencia de Ardillos y Tlacos en Chilapa; gobierno ‘dialoga’ con ‘policías comunitarios’",
+          "url": "https://www.razon.com.mx/mexico/2026/05/12/son-96-desplazados-por-violencia-de-ardillos-y-tlacos-en-chilapa-gobierno-dialoga-con-policias-comunitarios/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "cronica",
+          "titulo": "Segob interviene en conflicto de Chilapa; buscan retirar bloqueos y atender a desplazados en Guerrero",
+          "url": "https://www.cronica.com.mx/nacional/2026/05/12/segob-interviene-en-conflicto-de-chilapa-buscan-retirar-bloqueos-y-atender-a-desplazados-en-guerrero/",
           "fecha": "2026-05-12"
         },
         {
           "fuente": "el_universal",
-          "titulo": "Continúan peritajes para determinar origen de incendio en plaza comercial Fiesta Las Palmas en Los Mochis, Sinaloa; 12 personas siguen hospitalizadas",
-          "url": "https://www.eluniversal.com.mx/estados/continuan-peritajes-para-determinar-origen-de-incendio-en-plaza-comercial-fiesta-las-palmas-en-los-mochis-sinaloa-12-personas-siguen-hospitalizadas/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "Homicidios en México disminuyen 40% durante gobierno de Claudia Sheinbaum: SESNSP",
-          "url": "https://www.razon.com.mx/mexico/2026/05/12/homicidios-en-mexico-disminuyen-40-durante-gobierno-de-claudia-sheinbaum-sesnsp/",
+          "titulo": "\"Nos han destinado a la muerte\": poblador de Chilapa denuncia violencia y ausencia de seguridad; refugiados en la localidad de Alcozacán huyen al mont",
+          "url": "https://www.eluniversal.com.mx/estados/nos-han-destinado-a-la-muerte-poblador-de-chilapa-denuncia-violencia-y-ausencia-de-seguridad-refugiados-en-la-localidad-de-alcozacan-huyen-al-monte/",
           "fecha": "2026-05-12"
         },
         {
           "fuente": "el_financiero",
-          "titulo": "Penal",
-          "url": "https://www.elfinanciero.com.mx/cartones/antonio-garci/2026/05/12/penal/",
+          "titulo": "Sheinbaum contesta a Manuel ‘N’ por caso de huachicol fiscal: ‘No lo defino yo, lo define la Fiscalía’",
+          "url": "https://www.elfinanciero.com.mx/nacional/2026/05/12/sheinbaum-contesta-a-exmarino-involucrado-en-caso-de-huachicol-no-lo-defino-yo-lo-define-la-fiscalia/",
           "fecha": "2026-05-12"
         },
         {
           "fuente": "el_universal",
-          "titulo": "Dimite otro secretario de Estado de Keir Starmer; crece presión para que el primer ministro británico deje el cargo",
-          "url": "https://www.eluniversal.com.mx/mundo/dimite-otro-secretario-de-estado-de-keir-starmer-crece-presion-para-que-el-primer-ministro-britanico-deje-el-cargo/",
+          "titulo": "Segob moviliza funcionarios a Chilapa para atender crisis de violencia; va por \"restablecer el orden\"",
+          "url": "https://www.eluniversal.com.mx/nacion/segob-moviliza-funcionarios-a-chilapa-para-atender-crisis-de-violencia-va-por-restablecer-el-orden/",
           "fecha": "2026-05-12"
         },
         {
           "fuente": "el_universal",
-          "titulo": "Vinculan por homicidio a presuntos asaltantes de presidente de Cruz Roja Celaya; murió tras sufrir infarto",
-          "url": "https://www.eluniversal.com.mx/estados/vinculan-por-homicidio-a-presuntos-asaltantes-de-presidente-de-cruz-roja-celaya-murio-tras-sufrir-infarto/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "EU reduce 68% la incautación de fentanilo, destaca",
-          "url": "https://www.razon.com.mx/mexico/2026/05/12/eu-reduce-68-la-incautacion-de-fentanilo-destaca/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Proponen reformar la ley para que la búsqueda comience de inmediato",
-          "url": "https://www.eluniversal.com.mx/nacion/proponen-reformar-la-ley-para-que-la-busqueda-comience-de-inmediato/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Se disparan asesinatos de policías durante la gestión de Rocha Moya",
-          "url": "https://www.eluniversal.com.mx/nacion/se-disparan-asesinatos-de-policias-durante-la-gestion-de-rocha-moya/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Extorsión, devastadora para empresas, acusa Coparmex",
-          "url": "https://www.eluniversal.com.mx/cartera/extorsion-devastadora-para-empresas-acusa-coparmex/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Bajan 30% las pérdidas por huachicol en 2026",
-          "url": "https://www.eluniversal.com.mx/cartera/bajan-30-las-perdidas-por-huachicol-en-2026/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "En México, 128 mil desaparecidos y 70 mil cuerpos sin identificar: CIDH",
-          "url": "https://www.razon.com.mx/mexico/2026/05/12/en-mexico-128-mil-desaparecidos-y-70-mil-cuerpos-sin-identificar-cidh/",
+          "titulo": "Sentencian a mexicana en Texas por tráfico de personas; pasará más de 3 años en prisión",
+          "url": "https://www.eluniversal.com.mx/mundo/sentencian-a-mexicana-en-texas-por-trafico-de-personas-pasara-mas-de-3-anos-en-prision/",
           "fecha": "2026-05-12"
         },
         {
           "fuente": "24_horas",
-          "titulo": "CIDH destaca 70 mil cadáveres sin identificar en México",
-          "url": "https://24-horas.mx/mexico/cidh-destaca-70-mil-cadaveres-sin-identificar-en-mexico/",
+          "titulo": "Dan 12 años de prisión a Cuatrero por tentativa de feminicidio contra Stephanie Vaquer",
+          "url": "https://24-horas.mx/dxt/dan-12-anos-de-prision-a-cuatrero-por-tentativa-de-feminicidio-contra-stephanie-vaquer/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Sheinbaum afirma que investigación por caso de huachicol fiscal sigue en curso; FGR debe dar información, señala",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-afirma-que-investigacion-por-caso-de-huachicol-fiscal-sigue-en-curso-fgr-debe-dar-informacion-senala/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "EU demanda a empresas de Singapur e India por choque de buque en puente de Baltimore; accidente dejó 6 muertos, incluidos 2 mexicanos",
+          "url": "https://www.eluniversal.com.mx/mundo/eu-demanda-a-empresas-de-singapur-e-india-por-choque-de-buque-en-puente-de-baltimore-accidente-dejo-6-muertos-incluidos-2-mexicanos/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "24_horas",
+          "titulo": "Homicidio doloso baja 40% en promedio diario en México: Marcela Figueroa",
+          "url": "https://24-horas.mx/mexico/resaltan-la-reduccion-de-40-por-ciento-de-homicidio-doloso/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "la_razon",
+          "titulo": "Guerrero avanza en seguridad: bajan 33.3% los homicidios dolosos en el primer cuatrimestre de 2026",
+          "url": "https://www.razon.com.mx/estados/2026/05/12/guerrero-avanza-en-seguridad-bajan-333-los-homicidios-dolosos-en-el-primer-cuatrimestre-de-2026/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Harfuch reporta 96 personas desplazadas en Chilapa ante violencia; autoridades identifican a \"Los Ardillos\" y \"Los Tlacos\"",
+          "url": "https://www.eluniversal.com.mx/nacion/harfuch-reporta-96-personas-desplazadas-en-chilapa-ante-violencia-autoridades-identifican-a-los-ardillos-y-los-tlacos/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "politico_mx",
+          "titulo": "FGR liga a Rafael Ojeda con protección a los Farías Laguna, señalados por huachicol fiscal",
+          "url": "https://www.politico.mx/2026/05/12/fgr-liga-a-rafael-ojeda-con-proteccion-a-los-farias-laguna-senalados-por-huachicol-fiscal/",
           "fecha": "2026-05-12"
         }
       ],
@@ -2497,6 +2507,11 @@
       ],
       "menciones_csp": [
         {
+          "fecha": "2026-05-12",
+          "fragmento": "Buenos días. Bueno, hoy tenemos con nosotros al General Ricardo Trevilla Trejo, secretario de la Defensa Nacional; —siéntense, por favor—; al almirante Raymundo Pedro Morales Ángeles, secretario de Marina; el General Guillermo Briseño, comandante de la Guardia Nacional; el secretario de Seguridad y Protección Ciudadana, Omar García Harfuch; está el secretario de Relaciones Exteriores, Roberto Vela...",
+          "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-12-de-mayo-de-2026"
+        },
+        {
           "fecha": "2026-05-11",
           "fragmento": "Entonces, hay resultados. Y vamos a seguir trabajando, porque evidentemente lo que nos interesa es que las y los mexicanos vivan tranquilos, sin violencia, en un proceso de construcción de la paz, que va desde la Atención a las Causas hasta la cero impunidad. Entonces, se está trabajando conjuntamente.",
           "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-11-de-mayo-de-2026"
@@ -2540,72 +2555,67 @@
           "fecha": "2026-04-24",
           "fragmento": "Entonces, no tiene nada que ver con eso. El tema central es la presencia de agentes extranjeros en un operativo, en un estado de la República, sin haber solicitado los permisos que establece la Constitución y la Ley de Seguridad Nacional. Y en eso todas y todos deberíamos de ser muy firmes, porque hay algo que no se negocia, se llama: soberanía y principios.",
           "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-24-de-abril-de-2026"
-        },
-        {
-          "fecha": "2026-04-23",
-          "fragmento": "Entonces, eso es lo primero. Y después de ahí, ya viene la parte que tiene que ver con el cumplimiento de las leyes, la Constitución y la Ley de Seguridad Nacional, que es: en qué condiciones estas personas estaban trabajando en colaboración con la Fiscalía General de Justicia del gobierno de Chihuahua o del estado de Chihuahua. Y eso es lo que hemos estado comentando.",
-          "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-23-de-abril-de-2026"
         }
       ],
       "tweets": [
         {
           "usuario": "Juan_OrtizMX",
           "nombre": "Juan Ortiz",
-          "texto": "🗳️📌 MUCHO HERNÁN CORTÉS, PERO... ¿Y LOS PUEBLOS INDÍGENAS DESPLAZADOS?\n\nEl gobierno federal lleva días hablando de Hernán Cortés.\n\nPero hoy hay pueblos indígenas huyendo por violencia criminal.\n\nEl caso más reciente está en Guerrero.\n\nComunidades nahuas de la Montaña Baja https:/",
+          "texto": "🗳️📌 MORENA VA POR JUICIO POLÍTICO CONTRA MARU CAMPOS\n\nEl caso viene del operativo que desmanteló un narcolaboratorio en Chihuahua.\n\nAhí murieron dos agentes estadounidenses, en un accidente carretero. https://t.co/CyPxi39Uvl",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "🚨 Exige EU que Fuerzas Armadas de México intensifiquen su lucha contra los cárteles\n\nO de lo contrario la administración Trump tendrá que hacerlo\n\nAdvierte el secretario de Guerra, Pete Hegseth\n\n📹 @Reforma https://t.co/ffdj3wqYIA",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "“Cuba es una amenaza para la seguridad nacional de EU” \n\nAsí lo reconoce el secretario de Guerra, Pete Hegseth, durante una comparecencia ante el Congreso de su país https://t.co/YZAJm2zzW4",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "Harfuch asegura que el sistema de inteligencia no encontró delitos vinculados con Rocha Moya\n\nTampoco existe, dice, una investigación de la SSPC contra el gobernador con licencia\n\nEU lo acusa por narco, solicita su detención... pero siguen pidiendo \"pruebas\" https://t.co/FPGKxlff",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "NachoMierV",
+          "nombre": "Ignacio Mier Velazco",
+          "texto": "En la #MañaneraDelPueblo, la presidenta @Claudiashein destacó un paso firme hacia la justicia: la reforma constitucional para crear una Ley General contra el Feminicidio.\n\nUn avance necesario para proteger la vida de las mujeres y fortalecer la respuesta del Estado frente a este ",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "Durante la gestión del narcogobernador de Sinaloa, Rubén Rocha Moya se disparó el asesinato de policías \n\nEn 2022 fueron 4 elementos caídos, en 2025 la cifra subió a 48 \n\nY de enero a abril de 2026 ya suman 15 más \n\n@El_Universal_Mx https://t.co/PcsOT1EaoQ",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "Sobre los hermanos Farías Laguna y el caso de huachicol fiscal, Sheinbaum se deslinda\n\nDice que la FGR debe informar si hubo protección de autoridades\n\nDurante años entró combustible ilícito a México sin que nadie “se diera cuenta”... https://t.co/XeEdUaIMgb",
           "fecha": "2026-05-12"
         },
         {
           "usuario": "Juan_OrtizMX",
           "nombre": "Juan Ortiz",
-          "texto": "🗳️📌 MUCHO HERNÁN CORTÉS, PERO... ¿Y LOS PUEBLOS INDÍGENAS DESPLAZADOS?\n\nhttps://t.co/n46a82HJr5",
+          "texto": "🗳️📌ASIGNAN A ROSA ICELA CRISIS DE COMUNIDADES INDÍGENAS DESPLAZADAS POR EL NARCO\n\nSheinbaum informó que Rosa Icela Rodríguez no acudió a la mañanera.\n\nLa secretaria de Gobernación estará atendiendo el caso de Chilapa, Guerrero.\n\nEl tema son los ataques armados y con drones https:",
           "fecha": "2026-05-12"
         },
         {
-          "usuario": "RutaElectoralmx",
-          "nombre": "Ruta Electoral MX",
-          "texto": "⚖️ La @SCJN frenó parte de la reforma judicial de Sinaloa.\n\nInvalidó las reglas que permitían a magistrados elegir internamente las presidencias del Supremo Tribunal y del Tribunal de Disciplina Judicial: esos cargos deben definirse conforme a los votos en la elección judicial. h",
+          "usuario": "PollsMX_",
+          "nombre": "Polls MX",
+          "texto": "🚨 6 de cada 10 mexicanos creen que acusaciones de EUA sobre que Rocha Moya está ligado al narco, son verdaderas \n\n👉🏼 https://t.co/Qt3EPbWdCK\n\nLa opinión pública le da la espalda a la narrativa oficial: 6 de cada 10 mexicanos consideran que las acusaciones de narcotráfico contra h",
           "fecha": "2026-05-12"
         },
         {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "“El crimen organizado se apoderó de estructuras del Estado”, @J_Fdz_Menendez\n\nMenciona que ya no son casos aislados de corrupción, sino gobiernos operando en complicidad con el narco\n\nSeñala que Morena obtuvo triunfos apoyados por estructuras criminales\n\n📹 @adnnoticiasmx https://",
-          "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "“Parece haber un patrón de conducta”, @SergioSarmiento\n\nAfirma que los casos de corrupción ligados a Morena ya no parecen hechos aislados, sino una cadena de colusiones con el crimen organizado\n\nSostiene que las acusaciones comienzan a volverse difíciles de descartar\n\n📹 https://t",
-          "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "Muchas no tienen nada que festejar\n\nMiles de madres buscadoras marcharon este 10 de mayo en más de 35 ciudades\n\nMéxico supera los 133 mil desaparecidos y la crisis se agravó durante el sexenio de Andrés Manuel López Obrador\n\nCada día, 40 personas desaparecen\n\n📹 @adnnoticiasmx htt",
-          "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "En entrevista con Ramón Alberto Garza para Código Magenta (@CodigoMagentaMx)\n\nEl contraalmirante Fernando Farías Laguna aseguró que el huachicol fiscal es una “operación de Estado” y que él y su hermano son chivos expiatorios\n\n📹 @adnnoticiasmx https://t.co/yLBRJtxKDc",
-          "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "rubenmoreiravdz",
-          "nombre": "Rubén Moreira Valdez",
-          "texto": "🔴En #Sinaloa quedó claro cómo el crimen organizado interviene en favor del partido en el poder.\n\n🔴Platiqué con @Yoeliramirez en @Meganoticias_MX sobre la petición del @PRI_Nacional para retirar el registro de Morena.\n\n🔴Para resolver la crisis de #inseguridad se requiere una https",
-          "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "“Sheinbaum dice que nos protege… ¿dónde está esa protección?”\n\nNiñas, niños y familias de Chilapa de Álvarez, Guerrero, denuncian ataques y violencia de Los Ardillos\n\nClaman ayuda: “Nos están matando” https://t.co/XsUptCfZyK",
-          "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "Advierte @Coparmex que la autoridad se ha convertido en “el mayor extorsionador”\n\nEn su rueda de prensa Monitor de Seguridad, Juan José Sierra aseguró que la extorsión es hoy el impuesto más caro para empresas\n\n“Tiene de rodillas a miles de empresarios en el país” https://t.co/AO",
+          "usuario": "Juan_OrtizMX",
+          "nombre": "Juan Ortiz",
+          "texto": "🗳️📌 MUCHO HERNÁN CORTÉS, PERO... ¿Y LOS PUEBLOS INDÍGENAS DESPLAZADOS?\n\nEl gobierno federal lleva días hablando de Hernán Cortés.\n\nPero hoy hay pueblos indígenas huyendo por violencia criminal.\n\nEl caso más reciente está en Guerrero.\n\nComunidades nahuas de la Montaña Baja https:/",
           "fecha": "2026-05-12"
         }
       ]
@@ -3433,6 +3443,18 @@
       ],
       "tweets": [
         {
+          "usuario": "AlvarezMaynez",
+          "nombre": "Jorge Álvarez Máynez",
+          "texto": "Este debería ser un gran debate nacional. \n\nTenemos perfiles como @SYLVIASCHMELKES y @ManuelGilAnton. Incluso, en el propio gobierno está @rvillanueval y perfiles jóvenes como @sebasgueco. \n\nUn equipo completísimo para echar a andar una verdadera revolución educativa. https://t.c",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "PollsMX_",
+          "nombre": "Polls MX",
+          "texto": "🚨 6 de cada 10 mexicanos creen que acusaciones de EUA sobre que Rocha Moya está ligado al narco, son verdaderas \n\n👉🏼 https://t.co/Qt3EPbWdCK\n\nLa opinión pública le da la espalda a la narrativa oficial: 6 de cada 10 mexicanos consideran que las acusaciones de narcotráfico contra h",
+          "fecha": "2026-05-12"
+        },
+        {
           "usuario": "RutaElectoralmx",
           "nombre": "Ruta Electoral MX",
           "texto": "📚 La SEP dio marcha atrás al recorte del ciclo escolar 2025-2026.\n\nTras críticas de organizaciones educativas y familias, autoridades federales y estatales acordaron mantener los 185 días de clase, por lo que el ciclo concluirá el 15 de julio y no el 5 de junio. https://t.co/ioax",
@@ -3478,18 +3500,6 @@
           "usuario": "rubenmoreiravdz",
           "nombre": "Rubén Moreira Valdez",
           "texto": "Para #Morena la educación no es prioridad: no hay evaluación, no hay inversión y #México arrastra una crisis alarmante en lectura y matemáticas, según la OCDE.\n\nQuieren modificar el calendario escolar por el #Mundial , pero ignoran la verdadera tragedia educativa.\n\nLo platiqué ht",
-          "fecha": "2026-05-11"
-        },
-        {
-          "usuario": "ManuelAnorve",
-          "nombre": "Manuel Añorve Baños",
-          "texto": "¡Mario Delgado debe renunciar YA!\n\nNo solo está haciendo el ridículo a nivel nacional, sino que está dañando el futuro educativo de millones de niñas y niños.\n\nEs increíble que @mario_delgado, el responsable de la política educativa de México, solo piense en como tener más https:",
-          "fecha": "2026-05-11"
-        },
-        {
-          "usuario": "RicardoMonrealA",
-          "nombre": "Ricardo Monreal Ávila",
-          "texto": "La propuesta de ajustar el fin de cursos en el calendario escolar ha generado polémica e inconformidad. Con sensibilidad, la Presidenta @Claudiashein señaló que la @SEP_mx atenderá las posturas y resolverá satisfactoriamente en beneficio de la población. https://t.co/ckV6O26WhX",
           "fecha": "2026-05-11"
         }
       ]
@@ -3873,6 +3883,18 @@
     "salud": {
       "articulos_medios": [
         {
+          "fuente": "el_universal",
+          "titulo": "EU sanciona a responsables de farmacéutica india ligada al tráfico de fentanilo; los acusa de suministrar medicamentos adulterados",
+          "url": "https://www.eluniversal.com.mx/mundo/eu-sanciona-a-responsables-de-farmaceutica-india-ligada-al-trafico-de-fentanilo-los-acusa-de-suministrar-medicamentos-adulterados/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "OMS eleva a 11 los casos positivos por hantavirus; \"el trabajo no ha terminado\"",
+          "url": "https://www.eluniversal.com.mx/mundo/oms-eleva-a-11-los-casos-positivos-por-hantavirus-el-trabajo-no-ha-terminado/",
+          "fecha": "2026-05-12"
+        },
+        {
           "fuente": "24_horas",
           "titulo": "OMS pide a países que sigan 'directrices' para frenar hantavirus",
           "url": "https://24-horas.mx/mundo/oms-pide-a-paises-que-sigan-directrices-para-frenar-hantavirus/",
@@ -3900,6 +3922,12 @@
           "fuente": "el_universal",
           "titulo": "Vinculan a proceso a camillero del IMSS Tlalnepantla; está acusado de abuso sexual",
           "url": "https://www.eluniversal.com.mx/metropoli/vinculan-a-proceso-a-camillero-del-imss-tlalnepantla-esta-acusado-de-abuso-sexual/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "excelsior",
+          "titulo": "Fiscalía de Sonora ofrece 500 mil pesos por captura del médico de sueros vitaminados",
+          "url": "https://www.excelsior.com.mx/nacional/fiscalia-sonora-ofrece-500-mil-pesos-por-captura-medico-sueros-vitaminados",
           "fecha": "2026-05-12"
         },
         {
@@ -3942,24 +3970,6 @@
           "fuente": "el_universal",
           "titulo": "Dos pasajeras dan positivo a hantavirus y otro muestra síntomas tras desembarque; OMS mantendrá vigilancia a repatriados",
           "url": "https://www.eluniversal.com.mx/mundo/dos-pasajeras-dan-positivo-a-hantavirus-y-otro-muestra-sintomas-tras-desembarque-oms-mantendra-vigilancia-a-repatriados/",
-          "fecha": "2026-05-11"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Muere Kevin González, joven con cáncer terminal, tras reencontrarse con sus padres en Durango; caso exhibe dureza migratoria en EU",
-          "url": "https://www.eluniversal.com.mx/mundo/muere-kevin-gonzalez-joven-con-cancer-terminal-tras-reencontrarse-con-sus-padres-en-durango-caso-exhibe-dureza-migratoria-en-eu/",
-          "fecha": "2026-05-11"
-        },
-        {
-          "fuente": "milenio",
-          "titulo": "Sheinbaum destaca reducción de aseguramientos de fentanilo en EU: \"Estamos haciendo muchísimo\"",
-          "url": "https://www.milenio.com/politica/sheinbaum-destaca-reduccion-aseguramientos-fentanilo-eu",
-          "fecha": "2026-05-11"
-        },
-        {
-          "fuente": "excelsior",
-          "titulo": "HR “Lic. Adolfo López Mateos” del ISSSTE recibe 56 nuevas camas hospitalarias",
-          "url": "https://www.excelsior.com.mx/nacional/hospital-regional-adolfo-lopez-mateos-camas-nuevas",
           "fecha": "2026-05-11"
         }
       ],
@@ -4761,6 +4771,36 @@
     "educacion": {
       "articulos_medios": [
         {
+          "fuente": "el_universal",
+          "titulo": "¡Megapuente magisterial en la CDMX!; SEP otorga día de descanso a personal docente previo al Día del Maestro y la Maestra",
+          "url": "https://www.eluniversal.com.mx/nacion/megapuente-magisterial-en-la-cdmx-sep-otorga-dia-de-descanso-a-personal-docente-previo-al-dia-del-maestro-y-la-maestra/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "24_horas",
+          "titulo": "Encabezan en rezago educativo Chiapas, Michoacán y Guerrero",
+          "url": "https://24-horas.mx/estados/encabezan-en-rezago-educativo-chiapas-michoacan-y-guerrero/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Nuevo León mantiene calendario escolar 2025-2026; ciclo concluirá el 8 de julio sin cambios",
+          "url": "https://www.eluniversal.com.mx/estados/nuevo-leon-mantiene-calendario-escolar-2025-2026-ciclo-concluira-el-8-de-julio-sin-cambios/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Sheinbaum afirma que investigación por caso de huachicol fiscal sigue en curso; FGR debe dar información, señala",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-afirma-que-investigacion-por-caso-de-huachicol-fiscal-sigue-en-curso-fgr-debe-dar-informacion-senala/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_financiero",
+          "titulo": "Habrá excepción para estados que decidan recortar clases: Sheinbaum sobre acuerdo de la SEP",
+          "url": "https://www.elfinanciero.com.mx/nacional/2026/05/12/claudia-sheinbaum-mananera-temas-hoy-12-de-mayo-de-2026-en-vivo/",
+          "fecha": "2026-05-12"
+        },
+        {
           "fuente": "cronica",
           "titulo": "Tlaquepaque se suma al programa federal “La Escuela es Nuestra” para beneficiar a 75 planteles",
           "url": "https://www.cronica.com.mx/jalisco/guadalajara/2026/05/12/tlaquepaque-se-suma-al-programa-federal-la-escuela-es-nuestra-para-beneficiar-a-75-planteles/",
@@ -4812,42 +4852,6 @@
           "fuente": "la_razon",
           "titulo": "Presidenta recibe a una comisión de la CNTE",
           "url": "https://www.razon.com.mx/mexico/2026/05/12/presidenta-recibe-a-una-comision-de-la-cnte/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "Ven medidas educativas improvisadas",
-          "url": "https://www.razon.com.mx/mexico/2026/05/12/ven-medidas-educativas-improvisadas/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Científicos celebran 200 años de relación México-Francia",
-          "url": "https://www.jornada.com.mx/2026/05/12/politica/010n4pol?partner=rss",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Próximo director del IPN se elegirá en una consulta: Presidencia",
-          "url": "https://www.jornada.com.mx/2026/05/12/politica/010n3pol?partner=rss",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Maestros de Tamazula piden ser evacuados ante la violencia",
-          "url": "https://www.jornada.com.mx/2026/05/12/estados/025n4est?partner=rss",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Expone CNTE-Chiapas exigencias a Sheinbaum en Palacio Nacional",
-          "url": "https://www.jornada.com.mx/2026/05/12/politica/007n1pol?partner=rss",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Editorial:     Ciclo escolar: la virtud de rectificar",
-          "url": "https://www.jornada.com.mx/2026/05/12/opinion/002a1edi?partner=rss",
           "fecha": "2026-05-12"
         }
       ],
@@ -5551,6 +5555,11 @@
       ],
       "menciones_csp": [
         {
+          "fecha": "2026-05-12",
+          "fragmento": "(FINALIZA VIDEO) (INICIA VIDEO) VOZ MUJER: Atender las causas que generan la violencia significa devolver paz, tranquilidad y justicia. Con Jóvenes Transformando México garantizamos sus derechos a la educación, trabajo, deporte y cultura, y les abrimos nuevos horizontes. Para ello: Se otorga la Beca “Margarita Maza”.",
+          "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-12-de-mayo-de-2026"
+        },
+        {
           "fecha": "2026-05-11",
           "fragmento": "Miren, lo primero, que es importante —porque el fin de semana, ya saben, todo mundo opinó y…— lo primero que es muy importante es que el calendario escolar que anunció el secretario de Educación, Mario Delgado, fue aprobado por unanimidad de todos los secretarios de Educación de los 32, o de los 31 estados y la Ciudad de México.",
           "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-11-de-mayo-de-2026"
@@ -5594,14 +5603,33 @@
           "fecha": "2026-04-22",
           "fragmento": "Le llamamos “El ABC de las emociones”. Está con nosotros, para ello: David Kershenobich, el secretario de Salud; Mario Delgado, secretario de Educación; Tania Rodríguez, subsecretaria de Educación Media Superior; Yerania Enríquez López, titular de la Comisión Nacional de Salud Mental y Adicciones; la maestra Lety Ramírez, que es la coordinadora de Asuntos Gubernamentales de Presidencia; y está Mar...",
           "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-22-de-abril-de-2026"
-        },
-        {
-          "fecha": "2026-04-21",
-          "fragmento": "Buenos días a todos y a todas. Informar la actuación de la Guardia Nacional el día de ayer en esta zona arqueológica de Teotihuacán: Indicarles que tenemos un destacamento de seguridad compuesto por 30 elementos que se encargan de la protección del patrimonio cultural en esa zona arqueológica.",
-          "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-21-de-abril-de-2026"
         }
       ],
       "tweets": [
+        {
+          "usuario": "AlvarezMaynez",
+          "nombre": "Jorge Álvarez Máynez",
+          "texto": "El debate sobre el calendario escolar generó en redes sociales un falso debate entre los padres de familia y grupos de maestras y maestros. Algunas anotaciones:\n\n1. “La escuela no es una guardería”. Es obvio. No se debe culpar a los maestros ni a los padres de familia por la",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "Harfuch asegura que el sistema de inteligencia no encontró delitos vinculados con Rocha Moya\n\nTampoco existe, dice, una investigación de la SSPC contra el gobernador con licencia\n\nEU lo acusa por narco, solicita su detención... pero siguen pidiendo \"pruebas\" https://t.co/FPGKxlff",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "Juan_OrtizMX",
+          "nombre": "Juan Ortiz",
+          "texto": "🗳️📌 HARFUCH DICE QUE INTELIGENCIA NO DETECTÓ ILÍCITOS DE ROCHA MOYA\n\nOmar García Harfuch dijo que el sistema de inteligencia no detectó conductas ilícitas del gobernador con licencia.\n\nTambién afirmó que la SSPC no tiene una investigación en su contra. https://t.co/00VrvzjBXG",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "ManuelAnorve",
+          "nombre": "Manuel Añorve Baños",
+          "texto": "Mario Delgado debe renunciar a la @SEP_mx.\n\nMéxico ocupa el lugar 35 de 37 países de la OCDE en educación, y aun así el secretario minimiza el aprendizaje diciendo que después del 15 de junio los niños “ya no aprenden nada” y que las escuelas son “guarderías”.\n\nEs una falta de ht",
+          "fecha": "2026-05-12"
+        },
         {
           "usuario": "Juan_OrtizMX",
           "nombre": "Juan Ortiz",
@@ -5637,35 +5665,17 @@
           "nombre": "Rubén Moreira Valdez",
           "texto": "El debate sobre adelantar el fin del ciclo escolar 2026 es otro distractor.\nMientras #Morena genera ruido político, la inflación y la canasta básica siguen golpeando a las familias mexicanas.\nPor otro lado, #México vive una crisis en salud, seguridad y economía…\n\nEn https://t.co/",
           "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "Que dice Mario Delgado que siempre no\n\nMuchos brincos y ridículos después, la SEP terminó echándose para atrás y dejó el calendario escolar como estaba\n\nPasaron del ridículo a la grosería: ahora insultan a millones de padres de familia\n\n[📹 @adnnoticiasmx] https://t.co/2MaGAngzBE",
-          "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "ClementeCH",
-          "nombre": "Clemente Castañeda Hoeflich",
-          "texto": "En Jalisco nos mantuvimos firmes: adelantar el calendario escolar, como pretendía la SEP, afectaría el aprendizaje de las y los estudiantes y provocaría una crisis de cuidados en millones de hogares.\n\n​Las clases se mantienen hasta el 15 de julio. Les comparto el mensaje del http",
-          "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "ivonnemelgar",
-          "nombre": "Ivonne Melgar",
-          "texto": "El cambio del calendario escolar es una cortina de humo, declaró este mediodía @JorgeRoHe en conferencia en @Mx_Diputados. \n\nCuatro horas más tarde... los hechos le dieron la razón.\n\n\"Si bien todos los temas de la agenda pública lo son, y por lo tanto son importantes, también se",
-          "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "Juan_OrtizMX",
-          "nombre": "Juan Ortiz",
-          "texto": "🗳️📌GOBIERNO FEDERAL RECULA Y MANTIENE FIN DE CLASES EL 15 DE JULIO\n\nLa SEP corrigió el calendario escolar.\n\nEl ciclo 2025-2026 ya no terminará el 5 de junio.\n\nSe mantiene la fecha original.\n\n15 de julio.\n\nLa decisión llegó después de críticas de madres, padres, estados y https://",
-          "fecha": "2026-05-11"
         }
       ]
     },
     "trabajo": {
       "articulos_medios": [
+        {
+          "fuente": "cronica",
+          "titulo": "Avance en la huelga del Monte de Piedad: sindicato tendrá nueva consulta para definir la reapertura de sucursales",
+          "url": "https://www.cronica.com.mx/nacional/2026/05/12/avance-en-la-huelga-del-monte-de-piedad-sindicato-tendra-nueva-consulta-para-definir-la-reapertura-de-sucursales/",
+          "fecha": "2026-05-12"
+        },
         {
           "fuente": "la_razon",
           "titulo": "Acusan a Finabien de precariedad laboral",
@@ -5748,12 +5758,6 @@
           "fuente": "el_heraldo",
           "titulo": "En Sonora 70 mil mexicanas ya reciben la Pensión Mujeres Bienestar: Leticia Ramírez",
           "url": "https://heraldodemexico.com.mx/nacional/2026/5/10/en-sonora-70-mil-mexicanas-ya-reciben-la-pension-mujeres-bienestar-leticia-ramirez-810109.html",
-          "fecha": "2026-05-11"
-        },
-        {
-          "fuente": "excelsior",
-          "titulo": "HR “Lic. Adolfo López Mateos” del ISSSTE recibe 56 nuevas camas hospitalarias",
-          "url": "https://www.excelsior.com.mx/nacional/hospital-regional-adolfo-lopez-mateos-camas-nuevas",
           "fecha": "2026-05-11"
         }
       ],
@@ -6497,6 +6501,24 @@
     "electoral_politico": {
       "articulos_medios": [
         {
+          "fuente": "24_horas",
+          "titulo": "'No tenemos conocimiento de investigaciones a políticos', afirma Sheinbaum",
+          "url": "https://24-horas.mx/mexico/no-tenemos-conocimiento-de-investigaciones-a-politicos-afirma-sheinbaum/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Morena va por desafuero de Maru Campos; acusa \"atropello a la soberanía nacional\" por caso de agentes de la CIA en Chihuahua",
+          "url": "https://www.eluniversal.com.mx/nacion/morena-en-chihuahua-va-por-desafuero-de-maru-campos-acusa-atropello-a-la-soberania-nacional-por-caso-de-agentes-de-la-cia/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Alcalde exhibe crisis de salud pública en EU por consumo de drogas; 73.6 millones de estadounidenses consumen narcóticos, dice",
+          "url": "https://www.eluniversal.com.mx/nacion/alcalde-advierte-crisis-de-salud-publica-en-eu-por-consumo-de-drogas-736-millones-de-estadounidenses-consumen-narcoticos-dice/",
+          "fecha": "2026-05-12"
+        },
+        {
           "fuente": "el_universal",
           "titulo": "Isabel Díaz Ayuso dice que Sheinbaum y Sánchez la pusieron \"en peligro\"; califica a México como \"profundamente violento y peligroso\"",
           "url": "https://www.eluniversal.com.mx/mundo/isabel-diaz-ayuso-dice-que-sheinbaum-y-sanchez-la-pusieron-en-peligro-califica-a-mexico-como-profundamente-violento-y-peligroso/",
@@ -6566,24 +6588,6 @@
           "fuente": "la_razon",
           "titulo": "Miles marchan contra gobierno represor de Monreal en Zacatecas",
           "url": "https://www.razon.com.mx/estados/2026/05/12/miles-marchan-contra-gobierno-represor-de-monreal-en-zacatecas/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "Brugada defiende la ajolotización de la ciudad",
-          "url": "https://24-horas.mx/cdmx/brugada-defiende-la-ajolotizacion-de-la-ciudad/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "PAN pide juicio político contra el morenista",
-          "url": "https://www.jornada.com.mx/2026/05/12/politica/005n2pol?partner=rss",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "Sinaloa y la comunicación política",
-          "url": "https://24-horas.mx/columnas/politica-columnas/hechos-y-susurros/sinaloa-y-la-comunicacion-politica/",
           "fecha": "2026-05-12"
         }
       ],
@@ -7309,69 +7313,87 @@
       ],
       "tweets": [
         {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "La presidenta de Morena, Ariadna Montiel dice que harán una marcha para pedir juicio político contra @MaruCampos_G por perseguir criminales \n\n¿Cuándo armarán una protesta contra los narcopolíticos de Morena?\n\n https://t.co/vKqdlMqSdc",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "Juan_OrtizMX",
+          "nombre": "Juan Ortiz",
+          "texto": "🗳️📌 MORENA VA POR JUICIO POLÍTICO CONTRA MARU CAMPOS\n\nEl caso viene del operativo que desmanteló un narcolaboratorio en Chihuahua.\n\nAhí murieron dos agentes estadounidenses, en un accidente carretero. https://t.co/CyPxi39Uvl",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "Morena va por desafuero y juicio político contra @MaruCampos_G \n\nA su narcogobernador Rocha Moya lo protegen con toda la fuerza del Estado \n\nY a la gobernador de Chihuahua la persiguen \n\nEsta es la 4T https://t.co/IB5dyTYw13",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "AlvarezMaynez",
+          "nombre": "Jorge Álvarez Máynez",
+          "texto": "Este debería ser un gran debate nacional. \n\nTenemos perfiles como @SYLVIASCHMELKES y @ManuelGilAnton. Incluso, en el propio gobierno está @rvillanueval y perfiles jóvenes como @sebasgueco. \n\nUn equipo completísimo para echar a andar una verdadera revolución educativa. https://t.c",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "AlvarezMaynez",
+          "nombre": "Jorge Álvarez Máynez",
+          "texto": "El debate sobre el calendario escolar generó en redes sociales un falso debate entre los padres de familia y grupos de maestras y maestros. Algunas anotaciones:\n\n1. “La escuela no es una guardería”. Es obvio. No se debe culpar a los maestros ni a los padres de familia por la",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "Harfuch asegura que el sistema de inteligencia no encontró delitos vinculados con Rocha Moya\n\nTampoco existe, dice, una investigación de la SSPC contra el gobernador con licencia\n\nEU lo acusa por narco, solicita su detención... pero siguen pidiendo \"pruebas\" https://t.co/FPGKxlff",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "Acusan diputados del PAN que el gobierno de la 4T usa consulados mexicanos en EU con fines políticos \n\n@FDoringCasar y @raultorres_mx señalaron que los 53 consulados se han convertido en “casas de campaña” de Morena https://t.co/exXbYe66ug",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "Durante la gestión del narcogobernador de Sinaloa, Rubén Rocha Moya se disparó el asesinato de policías \n\nEn 2022 fueron 4 elementos caídos, en 2025 la cifra subió a 48 \n\nY de enero a abril de 2026 ya suman 15 más \n\n@El_Universal_Mx https://t.co/PcsOT1EaoQ",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "Juan_OrtizMX",
+          "nombre": "Juan Ortiz",
+          "texto": "🗳️📌 HARFUCH DICE QUE INTELIGENCIA NO DETECTÓ ILÍCITOS DE ROCHA MOYA\n\nOmar García Harfuch dijo que el sistema de inteligencia no detectó conductas ilícitas del gobernador con licencia.\n\nTambién afirmó que la SSPC no tiene una investigación en su contra. https://t.co/00VrvzjBXG",
+          "fecha": "2026-05-12"
+        },
+        {
           "usuario": "PollsMX_",
           "nombre": "Polls MX",
           "texto": "❌👎🏼 Layda, Monreal y Rocha entre los peores gobernadores del país \n\n👉🏼 https://t.co/gaHd1pIUJX\n\nEl último informe del Ranking de @PollsMX_ revela una caída estrepitosa en la confianza ciudadana hacia varios mandatarios estatales. La lista negra la encabezan perfiles que han https",
           "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "RutaElectoralmx",
-          "nombre": "Ruta Electoral MX",
-          "texto": "⚖️ La @SCJN frenó parte de la reforma judicial de Sinaloa.\n\nInvalidó las reglas que permitían a magistrados elegir internamente las presidencias del Supremo Tribunal y del Tribunal de Disciplina Judicial: esos cargos deben definirse conforme a los votos en la elección judicial. h",
-          "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "“Ya no hay manera de saber dónde termina la política y dónde comienza el crimen”, @hdemauleon\n\nDice que el narco dejó de desafiar al Estado para incrustarse dentro de los gobiernos\n\nAcusa que Morena quedó rodeada de señales de colusión y enriquecimiento inexplicable\n\n📹 https://t.",
-          "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "🚨 Continúa el incendio en la refinería de Salina Cruz, Oaxaca \n\nUna enorme bola de fuego es visible desde la distancia en lo que parece ser una de las chimeneas https://t.co/GwyB1CvZdw",
-          "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "🚨 Reportan explosión en refinería de Salina Cruz, Oaxaca https://t.co/u8huNKBHU1",
-          "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "Todos los caminos llevan a Rocha Moya \n\nLa Constructora Chocosa, ligada a los hijos del narcogobernador de Sinaloa, tuvo operaciones con nueve empresas fantasma por más de 136 mdp\n\nDocumentos del SAT muestran inconsistencias financieras \n\n@jorgegogdl @EmeEquis https://t.co/1q39ak",
-          "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "rubenmoreiravdz",
-          "nombre": "Rubén Moreira Valdez",
-          "texto": "Mientras prominentes miembros de @PartidoMorenaMx arremeten contra Hernán Cortés y España; las comunidades indígenas de #Guerrero son desplazadas por la delincuencia.\n\nUrge proteger a las comunidades afectadas y dejar las discusiones demagogicas a un lado. https://t.co/aHhRw2VoP5",
-          "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "rubenmoreiravdz",
-          "nombre": "Rubén Moreira Valdez",
-          "texto": "El debate sobre adelantar el fin del ciclo escolar 2026 es otro distractor.\nMientras #Morena genera ruido político, la inflación y la canasta básica siguen golpeando a las familias mexicanas.\nPor otro lado, #México vive una crisis en salud, seguridad y economía…\n\nEn https://t.co/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "El alcalde morenista de Pachuca, Jorge Reyes, amenazó a funcionarios con despedirlos si no dan “like” y comparten sus publicaciones \n\nLo hizo a través de un mensaje de Whatsapp 👇 \n\n📹 @IrvingPineda https://t.co/QZHcgQAzAZ",
-          "fecha": "2026-05-12"
-        },
-        {
-          "usuario": "PollsMX_",
-          "nombre": "Polls MX",
-          "texto": "📊✅ Janecarlo Lozano lidera ranking de alcaldes mejor evaluados en CDMX\n\n🏙️ Con 68.6% de aprobación, el alcalde de Gustavo A. Madero, @yancolozano , encabeza el ranking de @DemoscopiaDigit sobre desempeño de alcaldes en la capital. Le siguen @LopezCasarinJ, de Álvaro Obregón, http",
-          "fecha": "2026-05-11"
         }
       ]
     },
     "derechos_humanos": {
       "articulos_medios": [
+        {
+          "fuente": "el_universal",
+          "titulo": "Sentencian a mexicana en Texas por tráfico de personas; pasará más de 3 años en prisión",
+          "url": "https://www.eluniversal.com.mx/mundo/sentencian-a-mexicana-en-texas-por-trafico-de-personas-pasara-mas-de-3-anos-en-prision/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "SRE perfila acciones para proteger flotillas de ayuda humanitaria; \"no hay justificación para violar derechos humanos\", dice",
+          "url": "https://www.eluniversal.com.mx/nacion/sre-perfila-acciones-para-proteger-flotillas-de-ayuda-humanitaria-no-hay-justificacion-para-violar-derechos-humanos-dice/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "cronica",
+          "titulo": "Rosa Icela se reunió con la vicepresidenta de CIDH para presentar las acciones de fortalecimiento de los derechos humanos",
+          "url": "https://www.cronica.com.mx/nacional/2026/05/12/rosa-icela-se-reunio-con-la-vicepresidenta-de-cich-para-presentar-las-acciones-de-fortalecimiento-de-los-derechos-humanos/",
+          "fecha": "2026-05-12"
+        },
         {
           "fuente": "ovaciones",
           "titulo": "Mucho Hernán Cortés, pero… ¿y los pueblos indígenas desplazados?",
@@ -7442,24 +7464,6 @@
           "fuente": "24_horas",
           "titulo": "Cancillería confirma muerte de tres migrantes mexicanos en Laredo, Texas",
           "url": "https://24-horas.mx/mexico/cancilleria-confirma-muerte-de-tres-migrantes-mexicanos-en-laredo-texas/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Identifican a tres mexicanos entre migrantes hallados muertos en tren de Texas; SRE brinda asistencia consular a familias",
-          "url": "https://www.eluniversal.com.mx/nacion/sre-atiende-muerte-de-tres-mexicanos-al-interior-de-una-caja-de-tren-en-texas-gobierno-de-mexico-expresa-sus-condolencias/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "Convocan a vigilia en Guadalajara para recordar a víctimas de VIH-Sida y combatir la discriminación",
-          "url": "https://www.cronica.com.mx/jalisco/guadalajara/2026/05/11/convocan-a-vigilia-en-guadalajara-para-recordar-a-victimas-de-vih-sida-y-combatir-la-discriminacion/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "Tres mexicanos, entre los seis migrantes localizados sin vida en Laredo, Texas: SRE",
-          "url": "https://www.razon.com.mx/mexico/2026/05/11/tres-mexicanos-entre-los-seis-migrantes-localizados-sin-vida-en-laredo-texas-sre/",
           "fecha": "2026-05-12"
         }
       ],
@@ -8175,6 +8179,12 @@
         {
           "usuario": "Juan_OrtizMX",
           "nombre": "Juan Ortiz",
+          "texto": "🗳️📌ASIGNAN A ROSA ICELA CRISIS DE COMUNIDADES INDÍGENAS DESPLAZADAS POR EL NARCO\n\nSheinbaum informó que Rosa Icela Rodríguez no acudió a la mañanera.\n\nLa secretaria de Gobernación estará atendiendo el caso de Chilapa, Guerrero.\n\nEl tema son los ataques armados y con drones https:",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "Juan_OrtizMX",
+          "nombre": "Juan Ortiz",
           "texto": "🗳️📌 MUCHO HERNÁN CORTÉS, PERO... ¿Y LOS PUEBLOS INDÍGENAS DESPLAZADOS?\n\nEl gobierno federal lleva días hablando de Hernán Cortés.\n\nPero hoy hay pueblos indígenas huyendo por violencia criminal.\n\nEl caso más reciente está en Guerrero.\n\nComunidades nahuas de la Montaña Baja https:/",
           "fecha": "2026-05-12"
         },
@@ -8225,17 +8235,23 @@
           "nombre": "Juan Ortiz",
           "texto": "🗳️📌NARCO HACE HUIR A FAMILIAS INDÍGENAS\n\n¿Cómo responderá el Gobierno de Sheinbaum?\n\nFamilias indígenas de la Montaña baja de Guerrero denunciaron ataques armados y con drones.\n\nAtribuyen la ofensiva al grupo criminal Los Ardillos.\n\nEl Consejo Indígena y Popular de Guerrero https",
           "fecha": "2026-05-10"
-        },
-        {
-          "usuario": "NachoMierV",
-          "nombre": "Ignacio Mier Velazco",
-          "texto": "No hubo boicot ni intolerancia durante la inicua visita de Isabel Díaz Ayuso, quien vino a México invitada por la derecha y el PAN para reivindicar a Hernán Cortés, triste personaje cuya historia está marcada por la violencia contra los pueblos originarios; hechos documentados ht",
-          "fecha": "2026-05-09"
         }
       ]
     },
     "infraestructura": {
       "articulos_medios": [
+        {
+          "fuente": "24_horas",
+          "titulo": "Metro CDMX: este es el motivo del cierre de estaciones en las Líneas 2 y 7",
+          "url": "https://24-horas.mx/cdmx/metro-cdmx-este-es-el-motivo-del-cierre-de-estaciones-en-las-lineas-2-y-7/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "EU demanda a empresas de Singapur e India por choque de buque en puente de Baltimore; accidente dejó 6 muertos, incluidos 2 mexicanos",
+          "url": "https://www.eluniversal.com.mx/mundo/eu-demanda-a-empresas-de-singapur-e-india-por-choque-de-buque-en-puente-de-baltimore-accidente-dejo-6-muertos-incluidos-2-mexicanos/",
+          "fecha": "2026-05-12"
+        },
         {
           "fuente": "el_universal",
           "titulo": "Reestrenan el Tren Ligero; “hay mejor distribución”",
@@ -8285,6 +8301,18 @@
           "fecha": "2026-05-12"
         },
         {
+          "fuente": "proceso",
+          "titulo": "Hallan seis cuerpos desmembrados y otros cuatro con huellas de tortura en carreteras de Guerrero",
+          "url": "https://www.proceso.com.mx/nacional/estados/2026/5/12/hallan-seis-cuerpos-desmembrados-otros-cuatro-con-huellas-de-tortura-en-carreteras-de-guerrero-373885.html",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_economista",
+          "titulo": "Bloqueos en accesos al AIFA cumplen 24 horas; prevén más afectaciones por marchas y protestas en CDMX",
+          "url": "https://www.eleconomista.com.mx/politica/bloqueos-accesos-aifa-cumplen-24-horas-preven-afectaciones-marchas-protestas-cdmx-20260512-813117.html",
+          "fecha": "2026-05-12"
+        },
+        {
           "fuente": "el_heraldo",
           "titulo": "Estas son las carreteras y autopistas BLOQUEADAS o CERRADAS hoy martes 12 de mayo | EN VIVO",
           "url": "https://heraldodemexico.com.mx/nacional/2026/5/12/estas-son-las-carreteras-autopistas-bloqueadas-cerradas-hoy-martes-12-de-mayo-en-vivo-811068.html",
@@ -8300,30 +8328,6 @@
           "fuente": "el_universal",
           "titulo": "Sindicato del Metro logra acuerdos con gobierno de la CDMX; autoriza retabulaciones y compactación de plazas",
           "url": "https://www.eluniversal.com.mx/metropoli/sindicato-del-metro-logra-acuerdos-con-gobierno-de-la-cdmx-autoriza-retabulaciones-y-compactacion-de-plazas/",
-          "fecha": "2026-05-11"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "Concluye SICT reconstrucción del Puente Presa Las Trancas en Colima",
-          "url": "https://www.cronica.com.mx/estados/2026/05/11/concluye-sict-reconstruccion-del-puente-presa-las-trancas-en-colima/",
-          "fecha": "2026-05-11"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "Crisis hídrica requiere estrategia a largo plazo: especialistas ante Congreso CDMX",
-          "url": "https://24-horas.mx/cdmx/crisis-hidrica-requiere-estrategia-a-largo-plazo-especialistas-ante-congreso-cdmx/",
-          "fecha": "2026-05-11"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Guía de vivienda 2026: ¿En qué colonias de la CDMX todavía puedes rentar por menos de 10 mil pesos?",
-          "url": "https://www.eluniversal.com.mx/tendencias/guia-de-vivienda-2026-en-que-colonias-de-la-cdmx-todavia-puedes-rentar-por-menos-de-10-mil-pesos/",
-          "fecha": "2026-05-11"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "México habilita espectro temporal para garantizar conectividad en el Mundial",
-          "url": "https://24-horas.mx/negocios/mexico-habilita-espectro-temporal-para-garantizar-conectividad-en-el-mundial/",
           "fecha": "2026-05-11"
         }
       ],
@@ -9057,6 +9061,12 @@
       ],
       "tweets": [
         {
+          "usuario": "Juan_OrtizMX",
+          "nombre": "Juan Ortiz",
+          "texto": "🗳️📌 MORENA VA POR JUICIO POLÍTICO CONTRA MARU CAMPOS\n\nEl caso viene del operativo que desmanteló un narcolaboratorio en Chihuahua.\n\nAhí murieron dos agentes estadounidenses, en un accidente carretero. https://t.co/CyPxi39Uvl",
+          "fecha": "2026-05-12"
+        },
+        {
           "usuario": "MLopezSanMartin",
           "nombre": "Manuel López San Martín",
           "texto": "⚠️ Las fuertes lluvias provocaron inundaciones y peligrosas bajadas de agua en la carretera Picacho-Ajusco, en Tlalpan\n\nProtección Civil activó la Alerta Naranja y pidió evitar zonas afectadas ante riesgo de deslaves y bloqueos\n\n📹 @AztecaNoticias / @TlalpanVecinos https://t.co/t2",
@@ -9109,12 +9119,6 @@
           "nombre": "Polls MX",
           "texto": "⚽🇵🇹🇦🇷🇫🇷 Cristiano Ronaldo, Messi o Mbappé, la afición ya habló y así pintan las cosas para el MVP del Mundial\n\n👉🏽 https://t.co/PadMazzxBf\n\nDentro de 106 días rodará el balón en la cancha del Estadio Azteca para dar inicio con el Mundial de futbol 2026, donde se podrá ver por http",
           "fecha": "2026-05-11"
-        },
-        {
-          "usuario": "ClementeCH",
-          "nombre": "Clemente Castañeda Hoeflich",
-          "texto": "La especulación inmobiliaria encarece la vivienda y expulsa a las familias de zonas bien conectadas.\n\nEn la #BancadaNaranja impulsamos una iniciativa de vivienda digna con planeación urbana responsable. Queremos ordenar el crecimiento, frenar los abusos y garantizar hogares https",
-          "fecha": "2026-05-10"
         }
       ]
     },
@@ -9666,6 +9670,66 @@
       "articulos_medios": [
         {
           "fuente": "el_universal",
+          "titulo": "Exige Hegseth a México hacer más contra las drogas “para que nosotros no tengamos que hacerlo”; reconoce \"colaboración sin precedentes”",
+          "url": "https://www.eluniversal.com.mx/mundo/exige-hegseth-a-mexico-hacer-mas-contra-las-drogas-para-que-nosotros-no-tengamos-que-hacerlo-reconoce-colaboracion-sin-precedentes/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Roberto Velasco expone beneficios por acuerdo entre México y la Unión Europea; celebra \"nuevas oportunidades comerciales\"",
+          "url": "https://www.eluniversal.com.mx/nacion/roberto-velasco-expone-beneficios-por-acuerdo-entre-mexico-y-la-union-europea-celebra-nuevas-oportunidades-comerciales/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "ovaciones",
+          "titulo": "Sheinbaum resalta que EU reconoce el tráfico de armas y el consumo de drogas",
+          "url": "https://ovaciones.com/sheinbaum-resalta-que-eu-reconoce-el-trafico-de-armas-y-el-consumo-de-drogas/?utm_source=rss&utm_medium=rss&utm_campaign=sheinbaum-resalta-que-eu-reconoce-el-trafico-de-armas-y-el-consumo-de-drogas",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Sentencian a mexicana en Texas por tráfico de personas; pasará más de 3 años en prisión",
+          "url": "https://www.eluniversal.com.mx/mundo/sentencian-a-mexicana-en-texas-por-trafico-de-personas-pasara-mas-de-3-anos-en-prision/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "24_horas",
+          "titulo": "SRE pide a EU pruebas contundentes para detener y extraditar a Rubén Rocha Moya",
+          "url": "https://24-horas.mx/mexico/sre-pide-a-eu-pruebas-contundentes-para-detener-y-extraditar-a-ruben-rocha-moya/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "SRE perfila acciones para proteger flotillas de ayuda humanitaria; \"no hay justificación para violar derechos humanos\", dice",
+          "url": "https://www.eluniversal.com.mx/nacion/sre-perfila-acciones-para-proteger-flotillas-de-ayuda-humanitaria-no-hay-justificacion-para-violar-derechos-humanos-dice/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "politico_mx",
+          "titulo": "(VIDEO) SRE insiste: EUA todavía no entrega pruebas vs Rocha Moya",
+          "url": "https://www.politico.mx/2026/05/12/video-sre-insiste-eua-todavia-no-entrega-pruebas-vs-rocha-moya/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Morena va por desafuero de Maru Campos; acusa \"atropello a la soberanía nacional\" por caso de agentes de la CIA en Chihuahua",
+          "url": "https://www.eluniversal.com.mx/nacion/morena-en-chihuahua-va-por-desafuero-de-maru-campos-acusa-atropello-a-la-soberania-nacional-por-caso-de-agentes-de-la-cia/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "No se detectó alguna \"conducta ilícita\" a Rocha Moya, asegura Harfuch; EU no ha presentado pruebas, dice canciller Velasco",
+          "url": "https://www.eluniversal.com.mx/nacion/harfuch-asegura-que-no-se-detecto-alguna-conducta-ilicita-a-rocha-moya-eu-no-ha-presentado-pruebas-dice-canciller-velasco/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "politico_mx",
+          "titulo": "Nombramiento de Roberto Lazzeri enfrentaría trabas para ocupar la embajada de México en EUA",
+          "url": "https://www.politico.mx/2026/05/12/nombramiento-de-roberto-lazzeri-enfrentaria-trabas-para-ocupar-la-embajada-de-mexico-en-eua/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
           "titulo": "Qué hacer si pierdes tu pasaporte mexicano en otro país",
           "url": "https://www.eluniversal.com.mx/destinos/que-hacer-si-pierdes-tu-pasaporte-mexicano-en-otro-pais/",
           "fecha": "2026-05-12"
@@ -9692,66 +9756,6 @@
           "fuente": "la_razon",
           "titulo": "Rechaza que EU extraiga a Rocha como a El Mayo",
           "url": "https://www.razon.com.mx/mexico/2026/05/12/rechaza-que-eu-extraiga-a-rocha-como-a-el-mayo/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "Modernizan acuerdo comercial entre México y la Unión Europea",
-          "url": "https://24-horas.mx/negocios/modernizan-acuerdo-comercial-entre-mexico-y-la-union-europea/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "el_financiero",
-          "titulo": "México ‘rebasa’ a los aranceles: Exportación de autos aumenta 11.43% y la producción 2.1% en abril",
-          "url": "https://www.elfinanciero.com.mx/empresas/2026/05/12/exportacion-de-autos-de-mexico-aumenta-11-43-por-ceinto-y-la-produccion-2-1-por-ciento-en-abril/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "T-MEC bajo presión",
-          "url": "https://www.cronica.com.mx/opinion/2026/05/12/t-mec-bajo-presion/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Entre creciente presión para Cuba, la ONU descarta solución militar",
-          "url": "https://www.jornada.com.mx/2026/05/12/mundo/019n1mun?partner=rss",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Ante fracaso hacia Cuba, Trump podría iniciar algo más peligroso",
-          "url": "https://www.jornada.com.mx/2026/05/12/mundo/018n1mun?partner=rss",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Ante aumento, Trump busca subsidio para la gasolina",
-          "url": "https://www.jornada.com.mx/2026/05/12/economia/016n1eco?partner=rss",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "el_financiero",
-          "titulo": "Más allá del T-MEC: por qué el Acuerdo Global Modernizado con UE importa ahora",
-          "url": "https://www.elfinanciero.com.mx/opinion/colaborador-invitado/2026/05/12/mas-alla-del-t-mec-por-que-el-acuerdo-global-modernizado-con-ue-importa-ahora/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "CIDH y ONU coinciden en crisis de desapariciones en México, señalan colectivos; convocan mesas de trabajo con organismos internacionales",
-          "url": "https://www.eluniversal.com.mx/nacion/cidh-y-onu-coinciden-en-crisis-de-desapariciones-en-mexico-senalan-colectivos-convocan-mesas-de-trabajo-con-organismos-internacionales/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "Mueren tres migrantes mexicanos en tren de Texas; SRE ya atiende el caso",
-          "url": "https://www.cronica.com.mx/nacional/2026/05/11/mueren-tres-migrantes-mexicanos-en-tren-de-texas-sre-ya-atiende-el-caso/",
-          "fecha": "2026-05-12"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "Cancillería confirma muerte de tres migrantes mexicanos en Laredo, Texas",
-          "url": "https://24-horas.mx/mexico/cancilleria-confirma-muerte-de-tres-migrantes-mexicanos-en-laredo-texas/",
           "fecha": "2026-05-12"
         }
       ],
@@ -10357,6 +10361,11 @@
       ],
       "menciones_csp": [
         {
+          "fecha": "2026-05-12",
+          "fragmento": "Como ven, muy interesante este documento publicado por el gobierno de Estados Unidos, firmado por el presidente Trump. Y es importante reconocerlo, porque ha sido una buena parte del diálogo que hemos tenido con el gobierno de Estados Unidos: atender las causas, particularmente el consumo de drogas.",
+          "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-12-de-mayo-de-2026"
+        },
+        {
           "fecha": "2026-05-11",
           "fragmento": "Porque los avances en año y medio son muchísimos, o desde que entró el presidente Trump en febrero a la fecha, son muchísimos. Entonces, ¿qué sentido tiene minar esa relación si estamos dando resultados de ambos lados de la frontera?, cada uno con nuestra propia visión y encontrándonos ahí donde tenemos coincidencias, y buscando siempre la seguridad y la paz del lado de México y del lado de Estados Unidos. INTERVENCIÓN: ―La gráfica―.",
           "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-11-de-mayo-de-2026"
@@ -10400,14 +10409,21 @@
           "fecha": "2026-04-28",
           "fragmento": "Bueno, no sé; ya, que vea la Fiscalía. La Fiscalía es quien lleva el caso y ya… Lo que se está pidiendo es la deportación, porque entró con pasaporte falso; o la extradición, en todo caso. Entonces, ya la Fiscalía tendría que determinarlo.",
           "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-28-de-abril-de-2026"
-        },
-        {
-          "fecha": "2026-04-27",
-          "fragmento": "Hay cosas que están definidas, pero hay otras que no. Entonces, es muy importante que quede muy claro, las Embajadas de México, los Consulados de México en el exterior: qué normas deben seguir los embajadores, las embajadoras o el secretario de Relaciones Exteriores, o cualquier otro secretario que quiera hacer uso de las instalaciones de la Embajada.",
-          "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-27-de-abril-de-2026"
         }
       ],
       "tweets": [
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "🚨 Exige EU que Fuerzas Armadas de México intensifiquen su lucha contra los cárteles\n\nO de lo contrario la administración Trump tendrá que hacerlo\n\nAdvierte el secretario de Guerra, Pete Hegseth\n\n📹 @Reforma https://t.co/ffdj3wqYIA",
+          "fecha": "2026-05-12"
+        },
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "Acusan diputados del PAN que el gobierno de la 4T usa consulados mexicanos en EU con fines políticos \n\n@FDoringCasar y @raultorres_mx señalaron que los 53 consulados se han convertido en “casas de campaña” de Morena https://t.co/exXbYe66ug",
+          "fecha": "2026-05-12"
+        },
         {
           "usuario": "PollsMX_",
           "nombre": "Polls MX",
@@ -10454,18 +10470,6 @@
           "usuario": "MLopezSanMartin",
           "nombre": "Manuel López San Martín",
           "texto": "➡️Cole Allen, acusado de intentar asesinar a Donald Trump durante la cena de corresponsales de la Casa Blanca, se declaró no culpable https://t.co/Xaeudsg9UU",
-          "fecha": "2026-05-11"
-        },
-        {
-          "usuario": "RutaElectoralmx",
-          "nombre": "Ruta Electoral MX",
-          "texto": "🌍 La Unión Europea dio luz verde a la firma del nuevo pacto comercial con México, previo a la cumbre bilateral del 22 de mayo.\n\nEl acuerdo busca modernizar la relación México-UE y podrá avanzar tras la firma, aunque todavía requiere ratificación del Parlamento Europeo y de los ht",
-          "fecha": "2026-05-11"
-        },
-        {
-          "usuario": "Juan_OrtizMX",
-          "nombre": "Juan Ortiz",
-          "texto": "🗳️📌CASO ROCHA MOYA ES CUESTIÓN DE SOBERANÍA, DICE SHEINBAUM\n\nSheinbaum volvió a hablar del caso Rubén Rocha Moya.\n\nRocha es gobernador con licencia de Sinaloa.\n\nFue señalado por Estados Unidos junto con otros nueve mexicanos.\n\nEntre ellos un senador y otras ocho personas.\n\nLa htt",
           "fecha": "2026-05-11"
         }
       ]
@@ -10901,6 +10905,48 @@
     "medio_ambiente": {
       "articulos_medios": [
         {
+          "fuente": "la_razon",
+          "titulo": "Semarnat, CDMX y Edomex coordinan acciones para mejorar la gestión de la calidad del aire en la ZMVM",
+          "url": "https://www.razon.com.mx/mexico/2026/05/12/semarnat-cdmx-y-edomex-coordinan-acciones-para-mejorar-la-gestion-de-la-calidad-del-aire-en-la-zmvm/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "24_horas",
+          "titulo": "CDMX y Edomex coordinan agenda contra mala calidad del aire",
+          "url": "https://24-horas.mx/cdmx/cdmx-y-edomex-coordinan-agenda-contra-mala-calidad-de-aire/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "politico_mx",
+          "titulo": "PVEM celebra reforma que prohíbe la venta de animales en las calles del Edomex",
+          "url": "https://www.politico.mx/2026/05/12/pvem-celebra-aval-a-reforma-que-prohibe-la-venta-de-animales-en-las-calles-del-edomex/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "cronica",
+          "titulo": "Semarnat, CDMX y Edomex revisan medidas para mejorar la calidad del aire en la ZMVM",
+          "url": "https://www.cronica.com.mx/metropoli/2026/05/12/semarnat-cdmx-y-edomex-revisan-medidas-para-mejorar-la-calidad-del-aire-en-la-zmvm/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Greenpeace despliega manta en Bellas Artes contra \"Perfect Day\" en Quintana Roo; proyecto no cuenta con autorización: Semarnat",
+          "url": "https://www.eluniversal.com.mx/nacion/greenpeace-despliega-manta-en-bellas-artes-contra-perfect-day-en-quintana-roo-proyecto-no-cuenta-con-autorizacion-semarnat/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Profepa clausura predios en Edomex por daño ambiental; detectan tala y remoción ilegal de vegetación",
+          "url": "https://www.eluniversal.com.mx/metropoli/profepa-clausura-predios-en-edomex-por-dano-ambiental-detectan-tala-y-remocion-ilegal-de-vegetacion/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Se registra incendio en relleno sanitario del Piggy Back en Sinaloa; autoridades cierran la circulación en la zona",
+          "url": "https://www.eluniversal.com.mx/estados/se-registra-incendio-en-relleno-sanitario-del-piggy-back-en-sinaloa-autoridades-cierran-la-circulacion-en-la-zona/",
+          "fecha": "2026-05-12"
+        },
+        {
           "fuente": "el_financiero",
           "titulo": "La transición climática dejó de ser narrativa",
           "url": "https://www.elfinanciero.com.mx/opinion/nelly-ramirez-moncada/2026/05/12/la-transicion-climatica-dejo-de-ser-narrativa/",
@@ -10941,48 +10987,6 @@
           "titulo": "CDMX registra BUENA calidad del aire hoy 11 de mayo: ¿se activará la Contingencia Ambiental?",
           "url": "https://www.razon.com.mx/ciudad/2026/05/11/calidad-del-aire-en-cdmx-hoy-lunes-11-de-mayo-de-2026-se-activa-la-contingencia-ambiental/",
           "fecha": "2026-05-11"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "Denuncian contaminación del relleno sanitario de Chiltepeque en Puebla",
-          "url": "https://24-horas.mx/estados/denuncian-contaminacion-del-relleno-sanitario-de-chiltepeque-en-puebla/",
-          "fecha": "2026-05-11"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "Desechos orgánicos, enemigos a vencer durante el Mundial",
-          "url": "https://24-horas.mx/cdmx/desechos-organicos-enemigos-a-vencer-durante-el-mundial/",
-          "fecha": "2026-05-11"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Continúa remediación del derrame de combustible en Chichicaspa",
-          "url": "https://www.eluniversal.com.mx/metropoli/continua-remediacion-del-derrame-de-combustible-en-chichicaspa/",
-          "fecha": "2026-05-11"
-        },
-        {
-          "fuente": "la_razon",
-          "titulo": "CDMX registra calidad del aire ACEPTABLE hoy 10 de mayo: ¿se activará la Contingencia Ambiental?",
-          "url": "https://www.razon.com.mx/ciudad/2026/05/10/calidad-del-aire-en-cdmx-hoy-domingo-10-de-mayo-de-2026-se-activara-la-contingencia-ambiental/",
-          "fecha": "2026-05-10"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Profepa realiza operativo contra tráfico ilegal de vida silvestre; rescata 11 ejemplares",
-          "url": "https://www.eluniversal.com.mx/nacion/profepa-realiza-operativo-contra-trafico-ilegal-de-vida-silvestre-rescata-11-ejemplares/",
-          "fecha": "2026-05-10"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Clausuran fundidora de aluminio en Acolman, Edomex; detectan emisiones contaminantes y presuntamente operan sin licencia",
-          "url": "https://www.eluniversal.com.mx/metropoli/clausuran-fundidora-de-aluminio-en-acolman-edomex-detectan-emisiones-contaminantes-y-presuntamente-operan-sin-licencia/",
-          "fecha": "2026-05-10"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Piden proteger la Selva Maya",
-          "url": "https://www.jornada.com.mx/2026/05/10/sociedad/027n2soc?partner=rss",
-          "fecha": "2026-05-10"
         }
       ],
       "documentos_gaceta": [
@@ -11808,6 +11812,12 @@
     "politica_social": {
       "articulos_medios": [
         {
+          "fuente": "el_universal",
+          "titulo": "Pensión Bienestar 2026: revisa si HOY 12 de mayo te cae el depósito; ¿qué letra cobra este martes?",
+          "url": "https://www.eluniversal.com.mx/tendencias/pension-bienestar-2026-revisa-si-hoy-12-de-mayo-te-cae-el-deposito-que-letra-cobra-este-martes/",
+          "fecha": "2026-05-12"
+        },
+        {
           "fuente": "bloomberg_linea",
           "titulo": "Canasta alimentaria en México costó más en abril y Gobierno sugiere cocinar sin jitomate",
           "url": "https://www.bloomberglinea.com/latinoamerica/mexico/canasta-alimentaria-en-mexico-costo-mas-en-abril-y-gobierno-sugiere-cocinar-sin-jitomate/",
@@ -11889,12 +11899,6 @@
           "fuente": "el_universal",
           "titulo": "Darán 1 millón de pesos a familiares de fallecidos",
           "url": "https://www.eluniversal.com.mx/estados/daran-1-millon-de-pesos-a-familiares-de-fallecidos/",
-          "fecha": "2026-05-09"
-        },
-        {
-          "fuente": "bloomberg_linea",
-          "titulo": "Subsidio a la gasolina premium se dispara en México",
-          "url": "https://www.bloomberglinea.com/latinoamerica/mexico/subsidio-a-la-gasolina-premium-se-dispara-en-mexico/",
           "fecha": "2026-05-09"
         }
       ],
@@ -12166,6 +12170,12 @@
       "articulos_medios": [
         {
           "fuente": "el_universal",
+          "titulo": "100 años de Teodoro González de León: una calle, cine y muestras",
+          "url": "https://www.eluniversal.com.mx/cultura/100-anos-de-gonzalez-de-leon-una-calle-cine-y-muestras/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
           "titulo": "100 años de González de León: una calle, cine y muestras",
           "url": "https://www.eluniversal.com.mx/cultura/100-anos-de-gonzalez-de-leon-una-calle-cine-y-muestras/",
           "fecha": "2026-05-12"
@@ -12246,12 +12256,6 @@
           "fuente": "el_universal",
           "titulo": "Guillermo del Toro recuerda cómo \"El laberinto del fauno\" lo hizo dudar de su futuro en el cine",
           "url": "https://www.eluniversal.com.mx/espectaculos/guillermo-del-toro-recuerda-como-el-laberinto-del-fauno-lo-hizo-dudar-de-su-futuro-en-el-cine/",
-          "fecha": "2026-05-08"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Acción con \"Mortal Kombat II\" y erotismo con “Deseo”: los estrenos en cine para este fin de semana",
-          "url": "https://www.eluniversal.com.mx/espectaculos/accion-con-mortal-kombat-ii-y-erotismo-con-deseo-los-estrenos-en-cine-para-este-fin-de-semana/",
           "fecha": "2026-05-08"
         }
       ],
@@ -12477,6 +12481,12 @@
     "turismo": {
       "articulos_medios": [
         {
+          "fuente": "el_universal",
+          "titulo": "Turismo internacional en México crece 11.9%; el país recibió más de 9 millones de visitantes extranjeros en marzo",
+          "url": "https://www.eluniversal.com.mx/cartera/turismo-internacional-en-mexico-crece-119-el-pais-recibio-mas-de-9-millones-de-visitantes-extranjeros-en-marzo/",
+          "fecha": "2026-05-12"
+        },
+        {
           "fuente": "cronica",
           "titulo": "Investigación documental fortalecerá la identidad y el turismo en Hidalgo",
           "url": "https://www.cronica.com.mx/academia/2026/05/11/investigacion-documental-fortalecera-la-identidad-y-el-turismo-en-hidalgo/",
@@ -12552,12 +12562,6 @@
           "fuente": "el_universal",
           "titulo": "Así será el nuevo museo MUNET en Chapultepec",
           "url": "https://www.eluniversal.com.mx/destinos/asi-sera-el-nuevo-museo-munet-en-chapultepec/",
-          "fecha": "2026-05-09"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Abren convocatoria para crear proyectos culturales sostenibles",
-          "url": "https://www.jornada.com.mx/2026/05/09/economia/013n1eco?partner=rss",
           "fecha": "2026-05-09"
         }
       ],
@@ -13231,6 +13235,12 @@
       ],
       "tweets": [
         {
+          "usuario": "NachoMierV",
+          "nombre": "Ignacio Mier Velazco",
+          "texto": "En la #MañaneraDelPueblo, la presidenta @Claudiashein destacó un paso firme hacia la justicia: la reforma constitucional para crear una Ley General contra el Feminicidio.\n\nUn avance necesario para proteger la vida de las mujeres y fortalecer la respuesta del Estado frente a este ",
+          "fecha": "2026-05-12"
+        },
+        {
           "usuario": "PollsMX_",
           "nombre": "Polls MX",
           "texto": "🚨🤰 Más del 37% de mujeres son madres antes de los 20 años\n\nDatos del INEGI revelan cifras alarmantes sobre maternidad adolescente en México: el 0.8% de las mujeres se convierte en madre antes de los 15 años, mientras que el 36.9% tiene hijos entre los 15 y 19 años.\n\nLa mayor http",
@@ -13283,17 +13293,23 @@
           "nombre": "Manuel López San Martín",
           "texto": "Médico forense presentado por la defensa de Juan Jesús \"N\" abre dudas sobre el feminicidio de Edith Guadalupe\n\nCuestiona versión sobre desarmador\n\nPone en entredicho lo planteado por la Fiscalía capitalina\n\n📹 @AztecaNoticias https://t.co/A2lRrdLbSz",
           "fecha": "2026-04-23"
-        },
-        {
-          "usuario": "PollsMX_",
-          "nombre": "Polls MX",
-          "texto": "🚨⚖️ Caso Edith Guadalupe desata crisis de confianza en la Fiscalía de la CDMX\n\nEl feminicidio de Edith Guadalupe escaló de caso criminal a crisis institucional. Un análisis de más de 245 mil conversaciones en redes sociales, realizado por Dinamic Company, refleja un fuerte https:",
-          "fecha": "2026-04-22"
         }
       ]
     },
     "administracion": {
       "articulos_medios": [
+        {
+          "fuente": "la_razon",
+          "titulo": "Diálogo y el apego a la normativa consolidan un acopio histórico en Zacatecas, destaca Federación",
+          "url": "https://www.razon.com.mx/mexico/2026/05/12/dialogo-y-el-apego-a-la-normativa-consolidan-un-acopio-historico-en-zacatecas-destaca-federacion/",
+          "fecha": "2026-05-12"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Sheinbaum alista acciones para acelerar trámites en materia de inversión; destaca instalación de ventanilla digital",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-alista-acciones-para-acelerar-tramites-en-materia-de-inversion-destaca-instalacion-de-ventanilla-digital/",
+          "fecha": "2026-05-12"
+        },
         {
           "fuente": "la_razon",
           "titulo": "‘Consejo Interinstitucional vigilará entrega de concesiones de transporte en Puebla’, afirma Armenta",
@@ -13371,18 +13387,6 @@
           "titulo": "Ventanilla Única de Comercio Exterior: qué es, cómo funciona y cuándo entra en operación en México",
           "url": "https://heraldodemexico.com.mx/nacional/2026/5/4/ventanilla-unica-de-comercio-exterior-que-es-como-funciona-cuando-entra-en-operacion-en-mexico-806722.html",
           "fecha": "2026-05-05"
-        },
-        {
-          "fuente": "talla_senadores",
-          "titulo": "Castillo Juárez celebra publicación en el Diario Oficial de la Federación de reforma histórica para reducir jornada laboral",
-          "url": "https://www.tallapolitica.com.mx/castillo-juarez-celebra-publicacion-en-el-diario-oficial-de-la-federacion-de-reforma-historica-para-reducir-jornada-laboral/",
-          "fecha": "2026-05-04"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Gobierno impulsa inversión con menos trámites y nuevos decretos; promete resolver permisos en menor tiempo",
-          "url": "https://www.eluniversal.com.mx/cartera/gobierno-impulsa-inversion-con-menos-tramites-y-nuevos-decretos-promete-resolver-permisos-en-menor-tiempo/",
-          "fecha": "2026-05-04"
         }
       ],
       "documentos_gaceta": [
@@ -13888,7 +13892,7 @@
           72.6,
           73.1,
           73.2,
-          73.2
+          74.4
         ],
         "colores": [
           "amarillo",
@@ -14388,7 +14392,7 @@
           70.4,
           69.5,
           71.0,
-          69.1
+          70.3
         ],
         "colores": [
           "amarillo",
@@ -14449,7 +14453,7 @@
           "verde",
           "amarillo",
           "verde",
-          "amarillo"
+          "verde"
         ]
       },
       "trabajo": {
@@ -14513,7 +14517,7 @@
           56.2,
           55.3,
           53.1,
-          50.7
+          50.9
         ],
         "colores": [
           "rojo",
@@ -15138,7 +15142,7 @@
           73.3,
           70.2,
           70.8,
-          70.3
+          71.5
         ],
         "colores": [
           "amarillo",
@@ -15263,7 +15267,7 @@
           56.4,
           55.8,
           55.8,
-          57.7
+          58.3
         ],
         "colores": [
           "rojo",
@@ -15888,7 +15892,7 @@
           39.8,
           39.0,
           39.8,
-          37.1
+          37.4
         ],
         "colores": [
           "rojo",
@@ -16013,7 +16017,7 @@
           38.9,
           40.1,
           36.9,
-          41.7
+          42.6
         ],
         "colores": [
           "amarillo",
@@ -57404,7 +57408,7 @@
       },
       {
         "fecha": "2026-05-12",
-        "count": 18
+        "count": 26
       }
     ],
     "economia_hacienda": [
@@ -57648,7 +57652,7 @@
       },
       {
         "fecha": "2026-05-12",
-        "count": 8
+        "count": 9
       }
     ],
     "salud": [
@@ -57770,7 +57774,7 @@
       },
       {
         "fecha": "2026-05-12",
-        "count": 4
+        "count": 5
       }
     ],
     "educacion": [
@@ -57892,7 +57896,7 @@
       },
       {
         "fecha": "2026-05-12",
-        "count": 17
+        "count": 21
       }
     ],
     "trabajo": [
@@ -58136,7 +58140,7 @@
       },
       {
         "fecha": "2026-05-12",
-        "count": 8
+        "count": 10
       }
     ],
     "derechos_humanos": [
@@ -58258,7 +58262,7 @@
       },
       {
         "fecha": "2026-05-12",
-        "count": 11
+        "count": 12
       }
     ],
     "infraestructura": [
@@ -58380,7 +58384,7 @@
       },
       {
         "fecha": "2026-05-12",
-        "count": 2
+        "count": 4
       }
     ],
     "agro_rural": [
@@ -58624,7 +58628,7 @@
       },
       {
         "fecha": "2026-05-12",
-        "count": 4
+        "count": 7
       }
     ],
     "anticorrupcion": [
@@ -85212,7 +85216,7 @@
         "partido": "MC",
         "camara": "Cámara de Diputados",
         "estado": "Aguascalientes",
-        "score": 49.09,
+        "score": 48.93,
         "docs_categoria": 5,
         "comisiones_afines": [
           "Igualdad de Género",
@@ -85220,7 +85224,7 @@
           "Género"
         ],
         "desglose": {
-          "correlacion_reactiva": 15.2,
+          "correlacion_reactiva": 14.7,
           "especializacion_tematica": 15.2,
           "comision_agenda": 100,
           "patron_instrumento": 100.0,
@@ -85269,7 +85273,7 @@
         "partido": "MORENA",
         "camara": "Cámara de Diputados",
         "estado": "México",
-        "score": 48.71,
+        "score": 48.56,
         "docs_categoria": 3,
         "comisiones_afines": [
           "Igualdad de Género",
@@ -85277,7 +85281,7 @@
           "Género"
         ],
         "desglose": {
-          "correlacion_reactiva": 15.2,
+          "correlacion_reactiva": 14.7,
           "especializacion_tematica": 13.6,
           "comision_agenda": 100,
           "patron_instrumento": 100.0,
@@ -85312,7 +85316,7 @@
         "partido": "MORENA",
         "camara": "Cámara de Diputados",
         "estado": "Guanajuato",
-        "score": 42.76,
+        "score": 42.7,
         "docs_categoria": 1,
         "comisiones_afines": [
           "Igualdad de Género",
@@ -85320,7 +85324,7 @@
           "Género"
         ],
         "desglose": {
-          "correlacion_reactiva": 6.1,
+          "correlacion_reactiva": 5.9,
           "especializacion_tematica": 2.6,
           "comision_agenda": 100,
           "patron_instrumento": 100.0,
@@ -85341,7 +85345,7 @@
         "partido": "MORENA",
         "camara": "Cámara de Diputados",
         "estado": "Puebla",
-        "score": 42.61,
+        "score": 42.55,
         "docs_categoria": 1,
         "comisiones_afines": [
           "Igualdad de Género",
@@ -85349,7 +85353,7 @@
           "Género"
         ],
         "desglose": {
-          "correlacion_reactiva": 6.1,
+          "correlacion_reactiva": 5.9,
           "especializacion_tematica": 2.0,
           "comision_agenda": 100,
           "patron_instrumento": 100.0,
@@ -85370,7 +85374,7 @@
         "partido": "MORENA",
         "camara": "Cámara de Diputados",
         "estado": "Ciudad de México",
-        "score": 42.06,
+        "score": 41.9,
         "docs_categoria": 5,
         "comisiones_afines": [
           "Igualdad de Género",
@@ -85378,7 +85382,7 @@
           "Género"
         ],
         "desglose": {
-          "correlacion_reactiva": 15.2,
+          "correlacion_reactiva": 14.7,
           "especializacion_tematica": 4.6,
           "comision_agenda": 78.0,
           "patron_instrumento": 100.0,
@@ -85658,7 +85662,7 @@
       "politica_social": 34,
       "medios_comunicacion": 28,
       "turismo": 22,
-      "igualdad_genero": 33,
+      "igualdad_genero": 34,
       "administracion": 2
     },
     "por_partido": [
@@ -85728,11 +85732,18 @@
     "baja_california": {
       "nombre": "Baja California",
       "abreviatura": "BCN",
-      "total_articulos": 10,
+      "total_articulos": 12,
       "categorias": [
-        "infraestructura:0.75"
+        "infraestructura:0.75",
+        "seguridad_justicia:0.5339"
       ],
       "articulos": [
+        {
+          "titulo": "Él es Roberto Blanco Cantú, pieza clave en caso de huachicol fiscal; \"El Señor de los Buques\" operaba red de empresas fachada",
+          "fecha": "2026-05-12 15:23:30",
+          "url": "https://www.eluniversal.com.mx/nacion/el-es-roberto-blanco-cantu-pieza-clave-en-caso-de-huachicol-fiscal-el-senor-de-los-buques-operaba-red-de-empresas-fachada/",
+          "categorias": "seguridad_justicia:0.5339"
+        },
         {
           "titulo": "Refuerza gobernadora de BC vigilancia y conectividad en Valle de Guadalupe",
           "fecha": "2026-05-12 08:41:32",
@@ -85758,6 +85769,12 @@
           "categorias": ""
         },
         {
+          "titulo": "NiûÝo de 7 aûÝos se quita la vida en Mexicali tras enterarse de la muerte de su abuelo",
+          "fecha": "2026-05-12",
+          "url": "https://www.proceso.com.mx/nacional/estados/2026/5/12/nino-de-anos-se-quita-la-vida-en-mexicali-tras-enterarse-de-la-muerte-de-su-abuelo-373890.html",
+          "categorias": ""
+        },
+        {
           "titulo": "Marina del Pilar anuncia obras viales en Valle de Guadalupe, Baja California; reforzarán seguridad turística",
           "fecha": "2026-05-11 21:11:14",
           "url": "https://www.eluniversal.com.mx/estados/marina-del-pilar-anuncia-obras-viales-en-valle-de-guadalupe-baja-california-reforzaran-seguridad-turistica/",
@@ -85780,31 +85797,32 @@
           "fecha": "2026-05-11 08:27:27",
           "url": "https://www.jornada.com.mx/2026/05/11/estados/026n3est?partner=rss",
           "categorias": ""
-        },
-        {
-          "titulo": "Madres marchan en 7 estados; exigen apoyo para localizar a sus seres queridos",
-          "fecha": "2026-05-11 08:27:27",
-          "url": "https://www.jornada.com.mx/2026/05/11/estados/025n2est?partner=rss",
-          "categorias": ""
-        },
-        {
-          "titulo": "Gobierno de Marina del Pilar refuerza conectividad y vigilancia en el Valle de Guadalupe",
-          "fecha": "2026-05-11 00:49:53",
-          "url": "https://www.razon.com.mx/estados/2026/05/10/gobierno-de-marina-del-pilar-refuerza-conectividad-y-vigilancia-en-el-valle-de-guadalupe/",
-          "categorias": ""
         }
       ]
     },
     "baja_california_sur": {
       "nombre": "Baja California Sur",
       "abreviatura": "BCS",
-      "total_articulos": 8,
+      "total_articulos": 10,
       "categorias": [
         "medios_comunicacion:0.75",
         "seguridad_justicia:0.4388",
+        "seguridad_justicia:0.75",
         "seguridad_justicia:1.0723"
       ],
       "articulos": [
+        {
+          "titulo": "Segob moviliza funcionarios a Chilapa para atender crisis de violencia; va por \"restablecer el orden\"",
+          "fecha": "2026-05-12 17:28:14",
+          "url": "https://www.eluniversal.com.mx/nacion/segob-moviliza-funcionarios-a-chilapa-para-atender-crisis-de-violencia-va-por-restablecer-el-orden/",
+          "categorias": "seguridad_justicia:0.75"
+        },
+        {
+          "titulo": "Entre las vistas de Chapultepec y peonias rosas, Smiljam Radić Clarke recibió el Premio Pritzker en Ciudad de México",
+          "fecha": "2026-05-12 15:48:04",
+          "url": "https://www.eluniversal.com.mx/cultura/entre-las-vistas-de-chapultepec-y-peonias-rosas-smiljam-radic-clarke-recibio-el-premio-pritzker-en-ciudad-de-mexico/",
+          "categorias": ""
+        },
         {
           "titulo": "Promoverán campañas sociales por la unidad y contra el racismo",
           "fecha": "2026-05-12 08:41:32",
@@ -85874,12 +85892,13 @@
     "chiapas": {
       "nombre": "Chiapas",
       "abreviatura": "CHP",
-      "total_articulos": 11,
+      "total_articulos": 12,
       "categorias": [
         "derechos_humanos:0.4819",
         "derechos_humanos:0.75",
         "educacion:0.2676",
         "educacion:0.7348",
+        "educacion:0.75",
         "educacion:0.8405",
         "educacion:1.0545",
         "educacion:1.083",
@@ -85895,6 +85914,12 @@
         "trabajo:0.75"
       ],
       "articulos": [
+        {
+          "titulo": "Encabezan en rezago educativo Chiapas, Michoacán y Guerrero",
+          "fecha": "2026-05-12 17:12:41",
+          "url": "https://24-horas.mx/estados/encabezan-en-rezago-educativo-chiapas-michoacan-y-guerrero/",
+          "categorias": "educacion:0.75"
+        },
         {
           "titulo": "Expone CNTE-Chiapas exigencias a Sheinbaum en Palacio Nacional",
           "fecha": "2026-05-12 08:41:32",
@@ -85948,24 +85973,26 @@
           "fecha": "2026-05-12",
           "url": "https://www.elsoldemexico.com.mx/elsoldemexico/mexico/seccion-7-de-la-cnte-pide-garantizar-servicios-basicos-y-abrir-plazas-docentes-en-escuelas-de-chiapas-29929284",
           "categorias": "educacion:1.0545,seguridad_justicia:0.4388"
-        },
-        {
-          "titulo": "Denuncian arresto y tortura a Carlos Chávez, en Tuxtla Gutiérrez",
-          "fecha": "2026-05-11 02:14:18",
-          "url": "https://24-horas.mx/estados/denuncian-arresto-y-tortura-a-carlos-chavez-en-tuxtla-gutierrez/",
-          "categorias": "seguridad_justicia:0.4565"
         }
       ]
     },
     "chihuahua": {
       "nombre": "Chihuahua",
       "abreviatura": "CHH",
-      "total_articulos": 5,
+      "total_articulos": 6,
       "categorias": [
+        "electoral_politico:0.606",
+        "relaciones_exteriores:0.6631",
         "seguridad_justicia:0.4378",
         "seguridad_justicia:0.6381"
       ],
       "articulos": [
+        {
+          "titulo": "Morena va por desafuero de Maru Campos; acusa \"atropello a la soberanía nacional\" por caso de agentes de la CIA en Chihuahua",
+          "fecha": "2026-05-12 16:55:02",
+          "url": "https://www.eluniversal.com.mx/nacion/morena-en-chihuahua-va-por-desafuero-de-maru-campos-acusa-atropello-a-la-soberania-nacional-por-caso-de-agentes-de-la-cia/",
+          "categorias": "relaciones_exteriores:0.6631,electoral_politico:0.606"
+        },
         {
           "titulo": "Víctor M. Quintana S.: ¡Los buscamos porque los amamos!",
           "fecha": "2026-05-12 08:41:32",
@@ -86001,7 +86028,7 @@
     "ciudad_de_mexico": {
       "nombre": "Ciudad de Mexico",
       "abreviatura": "CMX",
-      "total_articulos": 132,
+      "total_articulos": 155,
       "categorias": [
         "anticorrupcion:0.4051",
         "derechos_humanos:0.5667",
@@ -86011,15 +86038,22 @@
         "educacion:0.8213",
         "educacion:1.0815",
         "educacion:1.2654",
+        "educacion:1.318",
         "electoral_politico:0.4349",
         "electoral_politico:0.4938",
+        "infraestructura:0.4737",
         "infraestructura:0.5132",
         "infraestructura:0.5446",
+        "infraestructura:0.5837",
         "infraestructura:0.5851",
         "infraestructura:0.75",
         "medio_ambiente:0.75",
+        "medio_ambiente:0.7968",
         "medio_ambiente:0.9205",
+        "medio_ambiente:1.0128",
+        "medio_ambiente:1.2591",
         "medio_ambiente:1.2683",
+        "medios_comunicacion:0.6831",
         "medios_comunicacion:0.7304",
         "seguridad_justicia:0.4152",
         "seguridad_justicia:0.4643",
@@ -86033,77 +86067,86 @@
       ],
       "articulos": [
         {
-          "titulo": "Marchas en la CDMX este 12 de mayo de 2026. ¿Dónde y a qué hora habrá?",
-          "fecha": "2026-05-12 14:17:41",
-          "url": "https://ovaciones.com/marchas-en-la-cdmx-este-12-de-mayo-de-2026-donde-y-a-que-hora-habra/?utm_source=rss&utm_medium=rss&utm_campaign=marchas-en-la-cdmx-este-12-de-mayo-de-2026-donde-y-a-que-hora-habra",
+          "titulo": "¡Megapuente magisterial en la CDMX!; SEP otorga día de descanso a personal docente previo al Día del Maestro y la Maestra",
+          "fecha": "2026-05-12 17:57:31",
+          "url": "https://www.eluniversal.com.mx/nacion/megapuente-magisterial-en-la-cdmx-sep-otorga-dia-de-descanso-a-personal-docente-previo-al-dia-del-maestro-y-la-maestra/",
+          "categorias": "educacion:1.318"
+        },
+        {
+          "titulo": "Semarnat, CDMX y Edomex coordinan acciones para mejorar la gestión de la calidad del aire en la ZMVM",
+          "fecha": "2026-05-12 17:49:02",
+          "url": "https://www.razon.com.mx/mexico/2026/05/12/semarnat-cdmx-y-edomex-coordinan-acciones-para-mejorar-la-gestion-de-la-calidad-del-aire-en-la-zmvm/",
+          "categorias": "medio_ambiente:0.7968"
+        },
+        {
+          "titulo": "CDMX y Edomex coordinan agenda contra mala calidad del aire",
+          "fecha": "2026-05-12 17:39:02",
+          "url": "https://24-horas.mx/cdmx/cdmx-y-edomex-coordinan-agenda-contra-mala-calidad-de-aire/",
+          "categorias": "medio_ambiente:1.2591"
+        },
+        {
+          "titulo": "Sotheby’s exhibe cartas inéditas del poeta inglés John Keats",
+          "fecha": "2026-05-12 17:32:21",
+          "url": "https://www.eluniversal.com.mx/cultura/sothebys-exhibe-cartas-ineditas-del-poeta-ingles-john-keats/",
           "categorias": ""
         },
         {
-          "titulo": "Marcha del IPN, concentraciones y rodadas se realizarán hoy 12 de mayo en CDMX",
-          "fecha": "2026-05-12 14:17:21",
-          "url": "https://24-horas.mx/cdmx/marcha-del-ipn-concentraciones-y-rodadas-se-realizaran-hoy-12-de-mayo-en-cdmx/",
-          "categorias": "educacion:0.75"
-        },
-        {
-          "titulo": "Marchas y bloqueos en CDMX HOY 12 de mayo: ¿Qué manifestaciones hay y qué calles están cerradas?",
-          "fecha": "2026-05-12 14:07:12",
-          "url": "https://www.razon.com.mx/ciudad/2026/05/12/marchas-y-bloqueos-en-cdmx-hoy-12-de-mayo-que-manifestaciones-hay-y-que-calles-estan-cerradas/",
+          "titulo": "Alertan por persistencia de lluvias en CDMX",
+          "fecha": "2026-05-12 17:22:30",
+          "url": "https://24-horas.mx/cdmx/alertan-por-persistencia-de-lluvias-en-cdmx/",
           "categorias": ""
         },
         {
-          "titulo": "Clima CDMX: ¿Qué es la alerta púrpura por lluvias y por qué se activó esta semana?",
-          "fecha": "2026-05-12 13:49:50",
-          "url": "https://www.cronica.com.mx/metropoli/2026/05/12/clima-cdmx-que-es-la-alerta-purpura-por-lluvias-y-por-que-se-activo-esta-semana/",
+          "titulo": "‘Los caldos se cocinan por 12 horas’: Así es Gaman, restaurante de ramen tradicional fuera de CDMX",
+          "fecha": "2026-05-12 17:19:01",
+          "url": "https://www.elfinanciero.com.mx/food-and-drink/2026/05/12/asi-es-gaman-restaurante-de-ramen-tradicional-fuera-de-cdmx/",
           "categorias": ""
         },
         {
-          "titulo": "Hoy No Circula martes 12 de mayo: restricciones vehiculares CDMX y EDOMEX",
-          "fecha": "2026-05-12 12:57:28",
-          "url": "https://www.cronica.com.mx/metropoli/2026/05/12/hoy-no-circula-martes-12-de-mayo-restricciones-vehiculares-cdmx-y-edomex/",
+          "titulo": "Intercambio y venta de estampas del Álbum Panini del Mundial 2026: estos son los puntos de encuentro en CDMX",
+          "fecha": "2026-05-12 17:16:23",
+          "url": "https://www.cronica.com.mx/tendencias/2026/05/12/intercambio-y-venta-de-estampas-del-album-panini-del-mundial-2026-estos-son-los-puntos-de-encuentro-en-cdmx/",
           "categorias": ""
         },
         {
-          "titulo": "MC, preocupado por la infraestructura mundialista",
-          "fecha": "2026-05-12 12:04:30",
-          "url": "https://www.elfinanciero.com.mx/opinion/confidencial/2026/05/12/mc-preocupado-por-la-infraestructura-mundialista/",
-          "categorias": "infraestructura:0.75"
-        },
-        {
-          "titulo": "El Güerito de Tepito, una adolescencia entre los golpes, gimnasios y las dietas",
-          "fecha": "2026-05-12 11:07:43",
-          "url": "https://www.eluniversal.com.mx/deportes/el-guerito-de-tepito-una-adolescencia-entre-los-golpes-gimnasios-y-las-dietas/",
+          "titulo": "Fuertes lluvias en CDMX y Edomex: guía rápida para reportar coladeras tapadas y evitar inundaciones",
+          "fecha": "2026-05-12 17:11:42",
+          "url": "https://www.eluniversal.com.mx/tendencias/fuertes-lluvias-en-cdmx-y-edomex-guia-rapida-para-reportar-coladeras-tapadas-y-evitar-inundaciones/",
           "categorias": ""
         },
         {
-          "titulo": "Los sueños de Juan Pérez 'El Güerito de Tepito', la joven promesa del boxeo mexicano",
-          "fecha": "2026-05-12 11:02:56",
-          "url": "https://www.eluniversal.com.mx/deportes/los-suenos-de-juan-perez-el-guerito-de-tepito-la-joven-promesa-del-boxeo-mexicano/",
-          "categorias": ""
+          "titulo": "Semarnat, CDMX y Edomex revisan medidas para mejorar la calidad del aire en la ZMVM",
+          "fecha": "2026-05-12 16:57:52",
+          "url": "https://www.cronica.com.mx/metropoli/2026/05/12/semarnat-cdmx-y-edomex-revisan-medidas-para-mejorar-la-calidad-del-aire-en-la-zmvm/",
+          "categorias": "medio_ambiente:1.0128"
         },
         {
-          "titulo": "100 años de González de León: una calle, cine y muestras",
-          "fecha": "2026-05-12 10:50:00",
-          "url": "https://www.eluniversal.com.mx/cultura/100-anos-de-gonzalez-de-leon-una-calle-cine-y-muestras/",
-          "categorias": "medios_comunicacion:0.7304"
-        },
-        {
-          "titulo": "El Güerito de Tepito se declara listo para su debut en México, en la Arena Coliseo",
-          "fecha": "2026-05-12 10:49:58",
-          "url": "https://www.eluniversal.com.mx/deportes/el-guerito-de-tepito-se-declara-listo-para-su-debut-en-mexico-en-la-arena-coliseo/",
-          "categorias": ""
+          "titulo": "Metro CDMX: este es el motivo del cierre de estaciones en las Líneas 2 y 7",
+          "fecha": "2026-05-12 16:56:23",
+          "url": "https://24-horas.mx/cdmx/metro-cdmx-este-es-el-motivo-del-cierre-de-estaciones-en-las-lineas-2-y-7/",
+          "categorias": "infraestructura:0.5837"
         }
       ]
     },
     "coahuila": {
       "nombre": "Coahuila",
       "abreviatura": "COA",
-      "total_articulos": 9,
+      "total_articulos": 10,
       "categorias": [
+        "derechos_humanos:0.4753",
         "electoral_politico:0.7404",
         "infraestructura:0.4938",
+        "relaciones_exteriores:0.4176",
+        "seguridad_justicia:0.5609",
         "seguridad_justicia:1.5812"
       ],
       "articulos": [
+        {
+          "titulo": "Sentencian a mexicana en Texas por tráfico de personas; pasará más de 3 años en prisión",
+          "fecha": "2026-05-12 17:26:17",
+          "url": "https://www.eluniversal.com.mx/mundo/sentencian-a-mexicana-en-texas-por-trafico-de-personas-pasara-mas-de-3-anos-en-prision/",
+          "categorias": "seguridad_justicia:0.5609,derechos_humanos:0.4753,relaciones_exteriores:0.4176"
+        },
         {
           "titulo": "Detienen a nueve ex trabajadores de AHMSA por bloquear carretera",
           "fecha": "2026-05-12 08:41:32",
@@ -86186,11 +86229,12 @@
     "durango": {
       "nombre": "Durango",
       "abreviatura": "DUR",
-      "total_articulos": 8,
+      "total_articulos": 9,
       "categorias": [
         "derechos_humanos:0.75",
         "educacion:0.4333",
         "salud:0.2539",
+        "seguridad_justicia:0.4676",
         "seguridad_justicia:0.6381"
       ],
       "articulos": [
@@ -86211,6 +86255,12 @@
           "fecha": "2026-05-12",
           "url": "https://www.elsoldemexico.com.mx/elsoldemexico/mexico/concentran-durango-y-sinaloa-produccion-de-drogas-sinteticas-29929122",
           "categorias": ""
+        },
+        {
+          "titulo": "Familias de comunidad de El Durazno, Durango, dejan su hogar por violencia",
+          "fecha": "2026-05-12",
+          "url": "https://www.proceso.com.mx/nacional/estados/2026/5/12/familias-de-comunidad-de-el-durazno-durango-dejan-su-hogar-por-violencia-373888.html",
+          "categorias": "seguridad_justicia:0.4676"
         },
         {
           "titulo": "Civiles armados atacan a agentes estatales en Chihuahua; protegían a familias desplazadas",
@@ -86247,13 +86297,18 @@
     "estado_de_mexico": {
       "nombre": "Estado de Mexico",
       "abreviatura": "MEX",
-      "total_articulos": 47,
+      "total_articulos": 56,
       "categorias": [
+        "educacion:0.5407",
         "infraestructura:0.2415",
         "infraestructura:0.75",
         "medio_ambiente:0.5566",
+        "medio_ambiente:0.6909",
         "medio_ambiente:0.75",
+        "medio_ambiente:0.7968",
         "medio_ambiente:0.9205",
+        "medio_ambiente:1.0128",
+        "medio_ambiente:1.2591",
         "salud:0.5311",
         "seguridad_justicia:0.4328",
         "seguridad_justicia:0.75",
@@ -86261,6 +86316,48 @@
         "seguridad_justicia:1.5812"
       ],
       "articulos": [
+        {
+          "titulo": "Semarnat, CDMX y Edomex coordinan acciones para mejorar la gestión de la calidad del aire en la ZMVM",
+          "fecha": "2026-05-12 17:49:02",
+          "url": "https://www.razon.com.mx/mexico/2026/05/12/semarnat-cdmx-y-edomex-coordinan-acciones-para-mejorar-la-gestion-de-la-calidad-del-aire-en-la-zmvm/",
+          "categorias": "medio_ambiente:0.7968"
+        },
+        {
+          "titulo": "CDMX y Edomex coordinan agenda contra mala calidad del aire",
+          "fecha": "2026-05-12 17:39:02",
+          "url": "https://24-horas.mx/cdmx/cdmx-y-edomex-coordinan-agenda-contra-mala-calidad-de-aire/",
+          "categorias": "medio_ambiente:1.2591"
+        },
+        {
+          "titulo": "PVEM celebra reforma que prohíbe la venta de animales en las calles del Edomex",
+          "fecha": "2026-05-12 17:32:40",
+          "url": "https://www.politico.mx/2026/05/12/pvem-celebra-aval-a-reforma-que-prohibe-la-venta-de-animales-en-las-calles-del-edomex/",
+          "categorias": "medio_ambiente:0.75"
+        },
+        {
+          "titulo": "Fuertes lluvias en CDMX y Edomex: guía rápida para reportar coladeras tapadas y evitar inundaciones",
+          "fecha": "2026-05-12 17:11:42",
+          "url": "https://www.eluniversal.com.mx/tendencias/fuertes-lluvias-en-cdmx-y-edomex-guia-rapida-para-reportar-coladeras-tapadas-y-evitar-inundaciones/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Semarnat, CDMX y Edomex revisan medidas para mejorar la calidad del aire en la ZMVM",
+          "fecha": "2026-05-12 16:57:52",
+          "url": "https://www.cronica.com.mx/metropoli/2026/05/12/semarnat-cdmx-y-edomex-revisan-medidas-para-mejorar-la-calidad-del-aire-en-la-zmvm/",
+          "categorias": "medio_ambiente:1.0128"
+        },
+        {
+          "titulo": "Reabren vialidades cerradas por lluvias en Naucalpan; Guardia Municipal mantiene recorridos de supervisión",
+          "fecha": "2026-05-12 16:51:19",
+          "url": "https://www.eluniversal.com.mx/metropoli/reabren-vialidades-cerradas-por-lluvias-en-naucalpan-guardia-municipal-mantiene-recorridos-de-supervision/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Profepa clausura predios en Edomex por daño ambiental; detectan tala y remoción ilegal de vegetación",
+          "fecha": "2026-05-12 16:38:31",
+          "url": "https://www.eluniversal.com.mx/metropoli/profepa-clausura-predios-en-edomex-por-dano-ambiental-detectan-tala-y-remocion-ilegal-de-vegetacion/",
+          "categorias": "medio_ambiente:0.6909"
+        },
         {
           "titulo": "Hoy No Circula martes 12 de mayo: restricciones vehiculares CDMX y EDOMEX",
           "fecha": "2026-05-12 12:57:28",
@@ -86278,61 +86375,25 @@
           "fecha": "2026-05-12 04:55:10",
           "url": "https://www.eluniversal.com.mx/metropoli/alcaldia-alvaro-obregon-niega-desbordamiento-en-presa-becerra-agua-alcanzo-niveles-altos-por-acumulacion-de-residuos-senala/",
           "categorias": "medio_ambiente:0.75,infraestructura:0.2415"
-        },
-        {
-          "titulo": "CDMX registra al menos 18 encharcamientos por fuertes lluvias; activan Operativo Tlaloque",
-          "fecha": "2026-05-12 04:52:15",
-          "url": "https://www.eluniversal.com.mx/metropoli/cdmx-registra-al-menos-18-encharcamientos-por-fuertes-lluvias-activan-operativo-tlaloque/",
-          "categorias": ""
-        },
-        {
-          "titulo": "CDMX, Edomex y Semarnat acuerdan acciones contra la contaminación; buscan mejorar calidad del aire en el Valle de México",
-          "fecha": "2026-05-12 04:08:21",
-          "url": "https://www.eluniversal.com.mx/metropoli/cdmx-edomex-y-semarnat-acuerdan-acciones-contra-la-contaminacion-buscan-mejorar-calidad-del-aire-en-el-valle-de-mexico/",
-          "categorias": "medio_ambiente:0.9205"
-        },
-        {
-          "titulo": "Hoy No Circula martes 12 de mayo 2026: estos autos descansan en CDMX y Edomex",
-          "fecha": "2026-05-12 03:15:00",
-          "url": "https://www.razon.com.mx/ciudad/2026/05/11/hoy-no-circula-martes-12-de-mayo-de-2026-estos-autos-descansan-en-cdmx-y-edomex/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Liga MX: Definidos los árbitros para los juegos de ida de las semifinales del Clausura 2026",
-          "fecha": "2026-05-12 01:54:28",
-          "url": "https://www.eluniversal.com.mx/deportes/liga-mx-definidos-los-arbitros-para-los-juegos-de-ida-de-las-semifinales-del-clausura-2026/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Fuerte lluvia provoca severas inundaciones en Ecatepec y Tecámac, Edomex",
-          "fecha": "2026-05-12 01:28:47",
-          "url": "https://www.razon.com.mx/estados/2026/05/11/fuerte-lluvia-provoca-severas-inundaciones-en-ecatepec-y-tecamac-edomex/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Vinculan a proceso a camillero del IMSS Tlalnepantla; está acusado de abuso sexual",
-          "fecha": "2026-05-12 00:17:15",
-          "url": "https://www.eluniversal.com.mx/metropoli/vinculan-a-proceso-a-camillero-del-imss-tlalnepantla-esta-acusado-de-abuso-sexual/",
-          "categorias": "salud:0.5311"
-        },
-        {
-          "titulo": "¿En auto o en ‘El Ajolote’? Así queda el Hoy No Circula en CDMX y Edomex para este martes 12 de mayo",
-          "fecha": "2026-05-12 00:12:35",
-          "url": "https://www.elfinanciero.com.mx/cdmx/2026/05/11/hoy-no-circula-en-cdmx-y-edomex-para-el-martes-12-de-mayo-que-autos-no-saldran/",
-          "categorias": ""
         }
       ]
     },
     "guanajuato": {
       "nombre": "Guanajuato",
       "abreviatura": "GUA",
-      "total_articulos": 5,
+      "total_articulos": 6,
       "categorias": [
         "igualdad_genero:0.2018",
         "seguridad_justicia:0.75",
         "seguridad_justicia:1.2165"
       ],
       "articulos": [
+        {
+          "titulo": "Declaran culpables a dos elementos de la GN por asesinato de estudiante de la Universidad de Guanajuato; agentes se excedieron en el uso de la fuerza: jueza",
+          "fecha": "2026-05-12 16:13:34",
+          "url": "https://www.eluniversal.com.mx/estados/declaran-culpables-a-dos-elementos-de-la-gn-por-asesinato-de-estudiante-de-la-universidad-de-guanajuato-agentes-se-excedieron-en-el-uso-de-la-fuerza-jueza/",
+          "categorias": ""
+        },
         {
           "titulo": "Vinculan por homicidio a presuntos asaltantes de presidente de Cruz Roja Celaya; murió tras sufrir infarto",
           "fecha": "2026-05-12 12:40:32",
@@ -86368,23 +86429,78 @@
     "guerrero": {
       "nombre": "Guerrero",
       "abreviatura": "GRO",
-      "total_articulos": 29,
+      "total_articulos": 42,
       "categorias": [
         "derechos_humanos:0.4093",
         "derechos_humanos:0.5527",
         "derechos_humanos:0.608",
         "derechos_humanos:0.75",
+        "educacion:0.75",
         "electoral_politico:0.7404",
         "electoral_politico:0.75",
         "infraestructura:0.4624",
+        "infraestructura:0.4803",
+        "seguridad_justicia:0.4161",
         "seguridad_justicia:0.4809",
+        "seguridad_justicia:0.5425",
+        "seguridad_justicia:0.5608",
+        "seguridad_justicia:0.5733",
         "seguridad_justicia:0.741",
         "seguridad_justicia:0.75",
+        "seguridad_justicia:0.7771",
         "seguridad_justicia:0.8665",
         "seguridad_justicia:1.2165",
         "turismo:0.5753"
       ],
       "articulos": [
+        {
+          "titulo": "Segob interviene en conflicto de Chilapa; buscan retirar bloqueos y atender a desplazados en Guerrero",
+          "fecha": "2026-05-12 17:42:29",
+          "url": "https://www.cronica.com.mx/nacional/2026/05/12/segob-interviene-en-conflicto-de-chilapa-buscan-retirar-bloqueos-y-atender-a-desplazados-en-guerrero/",
+          "categorias": "seguridad_justicia:0.75"
+        },
+        {
+          "titulo": "Encabezan en rezago educativo Chiapas, Michoacán y Guerrero",
+          "fecha": "2026-05-12 17:12:41",
+          "url": "https://24-horas.mx/estados/encabezan-en-rezago-educativo-chiapas-michoacan-y-guerrero/",
+          "categorias": "educacion:0.75"
+        },
+        {
+          "titulo": "Sheinbaum revela por qué Ejército no repelió a Los Ardillos en Guerrero: ‘Se evitó la confrontación’",
+          "fecha": "2026-05-12 16:46:19",
+          "url": "https://www.elfinanciero.com.mx/nacional/2026/05/12/sheinbaum-revela-por-que-ejercito-no-repelio-a-los-ardillos-en-guerrero-se-evito-la-confrontacion/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Guerrero avanza en seguridad: bajan 33.3% los homicidios dolosos en el primer cuatrimestre de 2026",
+          "fecha": "2026-05-12 16:24:31",
+          "url": "https://www.razon.com.mx/estados/2026/05/12/guerrero-avanza-en-seguridad-bajan-333-los-homicidios-dolosos-en-el-primer-cuatrimestre-de-2026/",
+          "categorias": "seguridad_justicia:0.4161"
+        },
+        {
+          "titulo": "Segob atiende situación de desplazados en Chilapa; Los Ardillos y Tlacos detrás del conflicto",
+          "fecha": "2026-05-12 16:22:15",
+          "url": "https://www.politico.mx/2026/05/12/segob-atiende-situacion-de-desplazados-en-chilapa-los-ardillos-y-tlacos-detras-del-conflicto/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Harfuch reporta 96 personas desplazadas en Chilapa ante violencia; autoridades identifican a \"Los Ardillos\" y \"Los Tlacos\"",
+          "fecha": "2026-05-12 16:21:52",
+          "url": "https://www.eluniversal.com.mx/nacion/harfuch-reporta-96-personas-desplazadas-en-chilapa-ante-violencia-autoridades-identifican-a-los-ardillos-y-los-tlacos/",
+          "categorias": "seguridad_justicia:0.7771"
+        },
+        {
+          "titulo": "FGR liga a Rafael Ojeda con protección a los Farías Laguna, señalados por huachicol fiscal",
+          "fecha": "2026-05-12 15:59:08",
+          "url": "https://www.politico.mx/2026/05/12/fgr-liga-a-rafael-ojeda-con-proteccion-a-los-farias-laguna-senalados-por-huachicol-fiscal/",
+          "categorias": "seguridad_justicia:0.5608"
+        },
+        {
+          "titulo": "Comunidades de Chilapa, Guerrero, denuncian violencia y desplazamientos por ‘Los Ardillos’; piden intervención",
+          "fecha": "2026-05-12 15:04:23",
+          "url": "https://www.razon.com.mx/estados/2026/05/12/comunidades-de-chilapa-guerrero-denuncian-violencia-y-desplazamientos-por-los-ardillos-piden-intervencion/",
+          "categorias": ""
+        },
         {
           "titulo": "Se disparan asesinatos de policías durante la gestión de Rocha Moya",
           "fecha": "2026-05-12 10:00:00",
@@ -86396,61 +86512,13 @@
           "fecha": "2026-05-12 08:41:32",
           "url": "https://www.jornada.com.mx/2026/05/12/estados/025n1est?partner=rss",
           "categorias": ""
-        },
-        {
-          "titulo": "Los Ardillos mataron a 3 integrantes del Cipog-EZ y desaparecieron a dos",
-          "fecha": "2026-05-12 08:41:32",
-          "url": "https://www.jornada.com.mx/2026/05/12/estados/024n1est?partner=rss",
-          "categorias": ""
-        },
-        {
-          "titulo": "Plantean morenistas plan para proteger a personas expulsadas de sus comunidades",
-          "fecha": "2026-05-12 08:41:32",
-          "url": "https://www.jornada.com.mx/2026/05/12/estados/025n3est?partner=rss",
-          "categorias": ""
-        },
-        {
-          "titulo": "CNI convoca a una acción global en apoyo a pueblos originarios de la Montaña Baja",
-          "fecha": "2026-05-12 08:41:32",
-          "url": "https://www.jornada.com.mx/2026/05/12/estados/024n2est?partner=rss",
-          "categorias": "derechos_humanos:0.608"
-        },
-        {
-          "titulo": "Habitantes de Tula y Alcozacán ruegan por ayuda para familias desplazadas",
-          "fecha": "2026-05-12 08:41:32",
-          "url": "https://www.jornada.com.mx/2026/05/12/estados/025n2est?partner=rss",
-          "categorias": ""
-        },
-        {
-          "titulo": "Se reforzará presencia de la GN en la zona: Sheinbaum",
-          "fecha": "2026-05-12 08:41:32",
-          "url": "https://www.jornada.com.mx/2026/05/12/estados/024n3est?partner=rss",
-          "categorias": ""
-        },
-        {
-          "titulo": "Suman 10 muertos en este el lunes",
-          "fecha": "2026-05-12 06:58:13",
-          "url": "https://www.eluniversal.com.mx/estados/suman-10-muertos-en-este-el-lunes/",
-          "categorias": ""
-        },
-        {
-          "titulo": "El éxodo que no quieren ver",
-          "fecha": "2026-05-12 06:01:18",
-          "url": "https://24-horas.mx/columnas/politica-columnas/la-divisa-del-poder/el-exodo-que-no-quieren-ver/",
-          "categorias": "derechos_humanos:0.75"
-        },
-        {
-          "titulo": "Guerrero vive jornada violenta; hallan 10 cadáveres abandonados en carreteras de Chilapa y Olinalá",
-          "fecha": "2026-05-12 04:18:34",
-          "url": "https://www.eluniversal.com.mx/estados/guerrero-vive-jornada-violenta-hallan-10-cadaveres-abandonados-en-carreteras-de-chilapa-y-olinala/",
-          "categorias": "seguridad_justicia:0.8665,infraestructura:0.4624"
         }
       ]
     },
     "hidalgo": {
       "nombre": "Hidalgo",
       "abreviatura": "HID",
-      "total_articulos": 40,
+      "total_articulos": 41,
       "categorias": [
         "educacion:0.4167",
         "electoral_politico:0.4938",
@@ -86459,6 +86527,12 @@
         "turismo:0.6632"
       ],
       "articulos": [
+        {
+          "titulo": "Comisión de Árbitros eliminó a Luis Enrique Santander del Pachuca vs Pumas",
+          "fecha": "2026-05-12 16:40:30",
+          "url": "https://www.eluniversal.com.mx/deportes/comision-de-arbitros-elimino-a-luis-enrique-santander-del-pachuca-vs-pumas/",
+          "categorias": ""
+        },
         {
           "titulo": "‘Se les va a dar las gracias’: alcalde de Pachuca amenaza a funcionarios por no compartir sus publicaciones",
           "fecha": "2026-05-12 03:01:24",
@@ -86512,19 +86586,13 @@
           "fecha": "2026-05-12",
           "url": "https://www.milenio.com/politica/mas-de-4-mil-trabajadores-hidalguenses-estan-en-el-extranjero",
           "categorias": ""
-        },
-        {
-          "titulo": "Alcalde panista de Miguel Hidalgo arranca programa de vigilancia noctura durante el Mundial",
-          "fecha": "2026-05-12",
-          "url": "https://www.proceso.com.mx/nacional/cdmx/2026/5/11/alcalde-panista-de-miguel-hidalgo-arranca-programa-de-vigilancia-noctura-durante-el-mundial-373870.html",
-          "categorias": "electoral_politico:0.4938"
         }
       ]
     },
     "jalisco": {
       "nombre": "Jalisco",
       "abreviatura": "JAL",
-      "total_articulos": 28,
+      "total_articulos": 30,
       "categorias": [
         "anticorrupcion:0.4092",
         "anticorrupcion:0.5401",
@@ -86609,16 +86677,23 @@
     "michoacan": {
       "nombre": "Michoacan",
       "abreviatura": "MIC",
-      "total_articulos": 9,
+      "total_articulos": 10,
       "categorias": [
         "derechos_humanos:0.5312",
         "economia_hacienda:0.7207",
+        "educacion:0.75",
         "infraestructura:0.5808",
         "seguridad_justicia:0.9416",
         "seguridad_justicia:1.2165",
         "turismo:0.5442"
       ],
       "articulos": [
+        {
+          "titulo": "Encabezan en rezago educativo Chiapas, Michoacán y Guerrero",
+          "fecha": "2026-05-12 17:12:41",
+          "url": "https://24-horas.mx/estados/encabezan-en-rezago-educativo-chiapas-michoacan-y-guerrero/",
+          "categorias": "educacion:0.75"
+        },
         {
           "titulo": "Se disparan asesinatos de policías durante la gestión de Rocha Moya",
           "fecha": "2026-05-12 10:00:00",
@@ -86678,9 +86753,15 @@
     "morelos": {
       "nombre": "Morelos",
       "abreviatura": "MOR",
-      "total_articulos": 1,
+      "total_articulos": 2,
       "categorias": [],
       "articulos": [
+        {
+          "titulo": "‘Los caldos se cocinan por 12 horas’: Así es Gaman, restaurante de ramen tradicional fuera de CDMX",
+          "fecha": "2026-05-12 17:19:01",
+          "url": "https://www.elfinanciero.com.mx/food-and-drink/2026/05/12/asi-es-gaman-restaurante-de-ramen-tradicional-fuera-de-cdmx/",
+          "categorias": ""
+        },
         {
           "titulo": "Madres marchan en 7 estados; exigen apoyo para localizar a sus seres queridos",
           "fecha": "2026-05-11 08:27:27",
@@ -86718,9 +86799,10 @@
     "nuevo_leon": {
       "nombre": "Nuevo Leon",
       "abreviatura": "NLE",
-      "total_articulos": 35,
+      "total_articulos": 36,
       "categorias": [
         "educacion:0.5571",
+        "educacion:0.8374",
         "energia:0.2723",
         "energia:0.4457",
         "energia:0.5658",
@@ -86737,6 +86819,12 @@
         "seguridad_justicia:0.9155"
       ],
       "articulos": [
+        {
+          "titulo": "Nuevo León mantiene calendario escolar 2025-2026; ciclo concluirá el 8 de julio sin cambios",
+          "fecha": "2026-05-12 17:12:31",
+          "url": "https://www.eluniversal.com.mx/estados/nuevo-leon-mantiene-calendario-escolar-2025-2026-ciclo-concluira-el-8-de-julio-sin-cambios/",
+          "categorias": "educacion:0.8374"
+        },
         {
           "titulo": "Sheinbaum: no fue ocurrencia, votaron todos los secretarios",
           "fecha": "2026-05-12 10:00:00",
@@ -86790,19 +86878,13 @@
           "fecha": "2026-05-12 02:30:15",
           "url": "https://www.cronica.com.mx/tendencias/2026/05/11/muere-pamela-marisa-melo-que-le-paso-a-la-actriz-y-promotora-cultural-de-monterrey/",
           "categorias": ""
-        },
-        {
-          "titulo": "Mundial 2026 impulsa megainversión en Nuevo León; más de 100 empresas se unen al proyecto estatal",
-          "fecha": "2026-05-12 01:33:25",
-          "url": "https://www.eluniversal.com.mx/estados/mundial-2026-impulsa-megainversion-en-nuevo-leon-mas-de-100-empresas-se-unen-al-proyecto-estatal/",
-          "categorias": ""
         }
       ]
     },
     "oaxaca": {
       "nombre": "Oaxaca",
       "abreviatura": "OAX",
-      "total_articulos": 18,
+      "total_articulos": 21,
       "categorias": [
         "electoral_politico:0.4869",
         "energia:0.4286",
@@ -86817,9 +86899,16 @@
         "energia:1.1315",
         "medio_ambiente:0.5366",
         "medio_ambiente:0.5385",
-        "seguridad_justicia:1.0264"
+        "seguridad_justicia:1.0264",
+        "seguridad_justicia:1.4772"
       ],
       "articulos": [
+        {
+          "titulo": "Gobierno de Oaxaca presenta la cartelera oficial de ‘Julio, mes de la Guelaguetza 2026′",
+          "fecha": "2026-05-12 18:00:25",
+          "url": "https://www.razon.com.mx/estados/2026/05/12/gobierno-de-oaxaca-presenta-la-cartelera-oficial-de-julio-mes-de-la-guelaguetza-2026/",
+          "categorias": ""
+        },
         {
           "titulo": "Pemex enfrenta explosión en refinería Salina Cruz con al menos seis heridos",
           "fecha": "2026-05-12 05:17:41",
@@ -86873,19 +86962,13 @@
           "fecha": "2026-05-12",
           "url": "https://www.excelsior.com.mx/nacional/detienen-tres-personas-puebla-robo-millonario-oaxaca",
           "categorias": ""
-        },
-        {
-          "titulo": "ExplosiĂłn en refinerĂ­a de Pemex en Salinas Cruz, Oaxaca; seis personas lesionadas (Video)",
-          "fecha": "2026-05-12",
-          "url": "https://www.proceso.com.mx/nacional/estados/2026/5/11/explosion-en-refineria-de-pemex-en-salinas-cruz-oaxaca-seis-personas-lesionadas-video-373876.html",
-          "categorias": "energia:0.5486"
         }
       ]
     },
     "puebla": {
       "nombre": "Puebla",
       "abreviatura": "PUE",
-      "total_articulos": 18,
+      "total_articulos": 21,
       "categorias": [
         "administracion:0.75",
         "medio_ambiente:0.4878",
@@ -86893,6 +86976,24 @@
         "seguridad_justicia:0.452"
       ],
       "articulos": [
+        {
+          "titulo": "¿Quién es Edgar Chumacero, el funcionario del Bienestar Puebla grabado siendo infiel?",
+          "fecha": "2026-05-12 17:37:43",
+          "url": "https://www.razon.com.mx/estados/2026/05/12/quien-es-edgar-chumacero-el-funcionario-del-bienestar-puebla-grabado-siendo-infiel/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Construyen 3.3 kilómetros del camino a las Loberas en Tecali, Puebla",
+          "fecha": "2026-05-12 16:56:24",
+          "url": "https://www.cronica.com.mx/estados/2026/05/12/construyen-33-kilometros-del-camino-a-las-loberas-en-tecali-puebla/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Exhiben en VIDEO presunta infidelidad de Edgar Chumacero y Natalia Suárez, funcionarios de Bienestar Puebla",
+          "fecha": "2026-05-12 16:31:42",
+          "url": "https://www.razon.com.mx/estados/2026/05/12/exhiben-en-video-presunta-infidelidad-de-edgar-chumacero-y-natalia-suarez-funcionarios-de-bienestar-puebla/",
+          "categorias": ""
+        },
         {
           "titulo": "‘Consejo Interinstitucional vigilará entrega de concesiones de transporte en Puebla’, afirma Armenta",
           "fecha": "2026-05-12 04:28:45",
@@ -86934,24 +87035,6 @@
           "fecha": "2026-05-12",
           "url": "https://www.proceso.com.mx/nacional/estados/2026/5/11/renuncia-secretaria-de-medio-ambiente-de-puebla-en-medio-de-crisis-por-cablebus-373868.html",
           "categorias": ""
-        },
-        {
-          "titulo": "Detienen a tres personas en Puebla por robo millonario en Oaxaca",
-          "fecha": "2026-05-12",
-          "url": "https://www.excelsior.com.mx/nacional/detienen-tres-personas-puebla-robo-millonario-oaxaca",
-          "categorias": ""
-        },
-        {
-          "titulo": "Renuncia secretaria de Medio Ambiente de Puebla en medio de crisis por cablebû¤s",
-          "fecha": "2026-05-12",
-          "url": "https://www.proceso.com.mx/nacional/estados/2026/5/11/renuncia-secretaria-de-medio-ambiente-de-puebla-en-medio-de-crisis-por-cablebus-373868.html",
-          "categorias": ""
-        },
-        {
-          "titulo": "Carambola en la capital de Puebla deja 5 heridos y un muerto",
-          "fecha": "2026-05-11 23:56:51",
-          "url": "https://24-horas.mx/estados/carambola-en-la-capital-de-puebla-deja-5-heridos-y-un-muerto/",
-          "categorias": ""
         }
       ]
     },
@@ -86972,9 +87055,17 @@
     "quintana_roo": {
       "nombre": "Quintana Roo",
       "abreviatura": "ROO",
-      "total_articulos": 3,
-      "categorias": [],
+      "total_articulos": 4,
+      "categorias": [
+        "medio_ambiente:1.1435"
+      ],
       "articulos": [
+        {
+          "titulo": "Greenpeace despliega manta en Bellas Artes contra \"Perfect Day\" en Quintana Roo; proyecto no cuenta con autorización: Semarnat",
+          "fecha": "2026-05-12 16:50:19",
+          "url": "https://www.eluniversal.com.mx/nacion/greenpeace-despliega-manta-en-bellas-artes-contra-perfect-day-en-quintana-roo-proyecto-no-cuenta-con-autorizacion-semarnat/",
+          "categorias": "medio_ambiente:1.1435"
+        },
         {
           "titulo": "Quintana Roo rumbo al Mundial 2026; Mara Lezama coordina estrategia internacional con 21 países",
           "fecha": "2026-05-11 18:44:30",
@@ -87028,8 +87119,9 @@
     "sinaloa": {
       "nombre": "Sinaloa",
       "abreviatura": "SIN",
-      "total_articulos": 44,
+      "total_articulos": 48,
       "categorias": [
+        "educacion:1.1185",
         "electoral_politico:0.5092",
         "electoral_politico:0.5277",
         "electoral_politico:0.6347",
@@ -87038,7 +87130,10 @@
         "electoral_politico:0.75",
         "electoral_politico:0.7782",
         "infraestructura:0.5786",
+        "medio_ambiente:0.9283",
         "relaciones_exteriores:0.4981",
+        "relaciones_exteriores:0.5307",
+        "relaciones_exteriores:0.6421",
         "relaciones_exteriores:0.6852",
         "seguridad_justicia:0.4993",
         "seguridad_justicia:0.5662",
@@ -87051,6 +87146,24 @@
         "seguridad_justicia:1.2165"
       ],
       "articulos": [
+        {
+          "titulo": "(VIDEO) SRE insiste: EUA todavía no entrega pruebas vs Rocha Moya",
+          "fecha": "2026-05-12 17:07:10",
+          "url": "https://www.politico.mx/2026/05/12/video-sre-insiste-eua-todavia-no-entrega-pruebas-vs-rocha-moya/",
+          "categorias": "relaciones_exteriores:0.5307"
+        },
+        {
+          "titulo": "No se detectó alguna \"conducta ilícita\" a Rocha Moya, asegura Harfuch; EU no ha presentado pruebas, dice canciller Velasco",
+          "fecha": "2026-05-12 16:34:00",
+          "url": "https://www.eluniversal.com.mx/nacion/harfuch-asegura-que-no-se-detecto-alguna-conducta-ilicita-a-rocha-moya-eu-no-ha-presentado-pruebas-dice-canciller-velasco/",
+          "categorias": "relaciones_exteriores:0.6421"
+        },
+        {
+          "titulo": "Se registra incendio en relleno sanitario del Piggy Back en Sinaloa; autoridades cierran la circulación en la zona",
+          "fecha": "2026-05-12 16:16:18",
+          "url": "https://www.eluniversal.com.mx/estados/se-registra-incendio-en-relleno-sanitario-del-piggy-back-en-sinaloa-autoridades-cierran-la-circulacion-en-la-zona/",
+          "categorias": "medio_ambiente:0.9283"
+        },
         {
           "titulo": "Harfuch reporta aseguramiento de 28 mil armas y desmantelamiento de 2 mil laboratorios en el país; destaca acciones en Sinaloa",
           "fecha": "2026-05-12 14:37:44",
@@ -87092,41 +87205,38 @@
           "fecha": "2026-05-12 08:41:32",
           "url": "https://www.jornada.com.mx/2026/05/12/politica/005n3pol?partner=rss",
           "categorias": ""
-        },
-        {
-          "titulo": "Descarta la Presidenta que  EU sustraiga a Rocha Moya",
-          "fecha": "2026-05-12 08:41:32",
-          "url": "https://www.jornada.com.mx/2026/05/12/politica/005n1pol?partner=rss",
-          "categorias": ""
-        },
-        {
-          "titulo": "Elecciones de Coahuila pulsarán el caso Rocha",
-          "fecha": "2026-05-12 07:00:00",
-          "url": "https://www.razon.com.mx/estados/2026/05/12/elecciones-de-coahuila-pulsaran-el-caso-rocha/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Sinaloa y la comunicación política",
-          "fecha": "2026-05-12 06:01:56",
-          "url": "https://24-horas.mx/columnas/politica-columnas/hechos-y-susurros/sinaloa-y-la-comunicacion-politica/",
-          "categorias": "electoral_politico:0.75"
         }
       ]
     },
     "sonora": {
       "nombre": "Sonora",
       "abreviatura": "SON",
-      "total_articulos": 8,
+      "total_articulos": 10,
       "categorias": [
         "politica_social:0.75",
-        "seguridad_justicia:0.5377"
+        "salud:0.5257",
+        "seguridad_justicia:0.4439",
+        "seguridad_justicia:0.5377",
+        "seguridad_justicia:0.75"
       ],
       "articulos": [
+        {
+          "titulo": "Fiscalía de Sonora ofrece recompensa para localizar a médico ligado a 8 muertes por sueros vitaminados; autoridades continúan investigaciones",
+          "fecha": "2026-05-12 17:58:35",
+          "url": "https://www.eluniversal.com.mx/estados/fiscalia-de-sonora-ofrece-recompensa-para-localizar-a-medico-ligado-a-8-muertes-por-sueros-vitaminados-autoridades-continuan-investigaciones/",
+          "categorias": "seguridad_justicia:0.75"
+        },
         {
           "titulo": "El bisonte americano reaparece en Sonora con una nueva cría tras dos siglos de ausencia",
           "fecha": "2026-05-12",
           "url": "https://elpais.com/mexico/2026-05-11/el-bisonte-americano-reaparece-en-sonora-con-una-nueva-cria-tras-dos-siglos-de-ausencia.html",
           "categorias": ""
+        },
+        {
+          "titulo": "Fiscalía de Sonora ofrece 500 mil pesos por captura del médico de sueros vitaminados",
+          "fecha": "2026-05-12",
+          "url": "https://www.excelsior.com.mx/nacional/fiscalia-sonora-ofrece-500-mil-pesos-por-captura-medico-sueros-vitaminados",
+          "categorias": "salud:0.5257,seguridad_justicia:0.4439"
         },
         {
           "titulo": "Selecciones Mexicanas de Flag Football vencen a España rumbo al Mundial",
@@ -87244,7 +87354,7 @@
     "tamaulipas": {
       "nombre": "Tamaulipas",
       "abreviatura": "TAM",
-      "total_articulos": 15,
+      "total_articulos": 16,
       "categorias": [
         "derechos_humanos:0.7212",
         "educacion:0.6511",
@@ -87253,6 +87363,7 @@
         "relaciones_exteriores:0.2016",
         "relaciones_exteriores:0.5341",
         "relaciones_exteriores:0.9758",
+        "seguridad_justicia:0.5339",
         "seguridad_justicia:0.5583",
         "seguridad_justicia:0.6555",
         "seguridad_justicia:0.6743",
@@ -87261,6 +87372,12 @@
         "seguridad_justicia:1.3819"
       ],
       "articulos": [
+        {
+          "titulo": "Él es Roberto Blanco Cantú, pieza clave en caso de huachicol fiscal; \"El Señor de los Buques\" operaba red de empresas fachada",
+          "fecha": "2026-05-12 15:23:30",
+          "url": "https://www.eluniversal.com.mx/nacion/el-es-roberto-blanco-cantu-pieza-clave-en-caso-de-huachicol-fiscal-el-senor-de-los-buques-operaba-red-de-empresas-fachada/",
+          "categorias": "seguridad_justicia:0.5339"
+        },
         {
           "titulo": "Cae cabecilla del cártel del Noreste en NL ligado a buque con huachicol",
           "fecha": "2026-05-12 08:41:32",
@@ -87314,12 +87431,6 @@
           "fecha": "2026-05-11 13:30:05",
           "url": "https://www.razon.com.mx/mexico/2026/05/11/cae-jose-antonio-n-lider-delictivo-vinculado-a-buque-huachicolero-asegurado-en-tamaulipas/",
           "categorias": ""
-        },
-        {
-          "titulo": "Cae en NL José Antonio “N”, líder de célula del Cártel del Noroeste; autoridades aseguran siete tigres, armas y vehículos",
-          "fecha": "2026-05-11 13:22:14",
-          "url": "https://www.eluniversal.com.mx/nacion/cae-en-nl-jose-antonio-n-presunto-lider-del-cartel-del-noroeste-autoridades-aseguran-siete-tigres-armas-y-vehiculos/",
-          "categorias": "seguridad_justicia:0.7692"
         }
       ]
     },
@@ -87439,8 +87550,9 @@
     "zacatecas": {
       "nombre": "Zacatecas",
       "abreviatura": "ZAC",
-      "total_articulos": 12,
+      "total_articulos": 14,
       "categorias": [
+        "administracion:0.75",
         "agro_rural:0.4345",
         "anticorrupcion:0.21",
         "anticorrupcion:0.4201",
@@ -87449,6 +87561,18 @@
         "seguridad_justicia:0.453"
       ],
       "articulos": [
+        {
+          "titulo": "Diálogo y el apego a la normativa consolidan un acopio histórico en Zacatecas, destaca Federación",
+          "fecha": "2026-05-12 17:16:25",
+          "url": "https://www.razon.com.mx/mexico/2026/05/12/dialogo-y-el-apego-a-la-normativa-consolidan-un-acopio-historico-en-zacatecas-destaca-federacion/",
+          "categorias": "administracion:0.75"
+        },
+        {
+          "titulo": "Sí se han atendido sus demandas, gobierno federal responde a productores de frijol en Zacatecas; asegura atención a más de 12 mil productores",
+          "fecha": "2026-05-12 17:03:31",
+          "url": "https://www.eluniversal.com.mx/estados/si-se-han-atendido-sus-demandas-responde-gobierno-federal-a-productores-de-frijol-en-zacatecas-los-apoyos-al-campo-se-entregan-de-manera-directa-asegura/",
+          "categorias": ""
+        },
         {
           "titulo": "Miles marchan contra gobierno represor de Monreal en Zacatecas",
           "fecha": "2026-05-12 09:17:27",
@@ -87496,18 +87620,6 @@
           "fecha": "2026-05-11 20:23:36",
           "url": "https://www.cronica.com.mx/estados/2026/05/11/campesinos-confrontan-a-funcionarios-de-morena-en-restaurante-de-zacatecas/",
           "categorias": "agro_rural:0.4345"
-        },
-        {
-          "titulo": "Saúl Monreal sugiere aplicar ley de nepotismo contra Verónica Díaz en Zacatecas: ‘Hay que investigarlo’",
-          "fecha": "2026-05-11 15:06:35",
-          "url": "https://www.razon.com.mx/mexico/2026/05/11/saul-monreal-sugiere-aplicar-ley-de-nepotismo-contra-veronica-diaz-en-zacatecas-hay-que-investigarlo/",
-          "categorias": "electoral_politico:0.75,anticorrupcion:0.21"
-        },
-        {
-          "titulo": "Días de furia en Zacatecas",
-          "fecha": "2026-05-11 12:55:00",
-          "url": "https://ovaciones.com/dias-de-furia-en-zacatecas/?utm_source=rss&utm_medium=rss&utm_campaign=dias-de-furia-en-zacatecas",
-          "categorias": ""
         }
       ]
     }
