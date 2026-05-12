@@ -399,6 +399,15 @@ def guardar_en_db(conn, elos):
         except sqlite3.OperationalError:
             pass
 
+    # IMPORTANTE: borrar filas viejas antes de insertar. Sin esto, runs
+    # previos con formatos distintos de nombre (ej. extraer_legislador
+    # de presentador SIL vs leg_nombre de tabla legisladores) dejan
+    # filas residuales con MISMO legislador_id pero NOMBRE distinto.
+    # Como PK es 'nombre', el ON CONFLICT no las detecta y quedan duplicadas,
+    # haciendo que el JOIN del worker explote y muestre cada legislador
+    # dos veces en /radar.
+    conn.execute("DELETE FROM legisladores_elo")
+
     inverted, tokens_by_id = _construir_indice_legisladores(conn)
     indices, percentiles_cam = _calcular_indices(elos)
     ahora = datetime.now().isoformat()
