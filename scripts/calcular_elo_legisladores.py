@@ -149,16 +149,18 @@ def calcular_elos(conn):
     tasas_com, tasa_global = calcular_tasas_comision(conn)
     print(f"  Tasa global LXVI: {100*tasa_global:.1f}% · {len(tasas_com)} comisiones con data suficiente")
 
-    # CAMBIO 12-may-2026: leer de actividad_legislador (no sil_documentos).
-    # Para senadores, después del rebuild de actividad_legislador desde
-    # senador_instrumento, cada firmante tiene su propia fila con
-    # co_firmantes='' si es promovente único, o 'colectivo (N firmantes)'
-    # si firmó con bancada. Eso permite filtrar EXACTO por individuales.
+    # CAMBIO 12-may-2026 (v2): incluir colectivas con peso reducido (0.3)
+    # para que TODOS los legisladores tengan ELO. Diseño:
+    #   - Filas con co_firmantes vacío = acto INDIVIDUAL → peso 1.0
+    #   - Filas con co_firmantes poblado = acto COLECTIVO (firma bancada) → 0.3
+    # Esto preserva la señal de esfuerzo personal (individuales pesan más)
+    # pero garantiza cobertura universal: un senador del PRI que solo firma
+    # con bloque aún recibe ELO basado en sus colectivas (×0.3).
     #
-    # Antes: leíamos de sil_documentos.presentador (texto concatenado)
-    # con heurística de contar 'Sen.'. Funcionaba para diputados pero
-    # para senadores el rebuild dejaba presentadores en formato distinto
-    # que esquivaba el filtro, inflando ELO con firmas colectivas.
+    # Antes (v1): filtraba colectivas → solo 147 de 685 tenían ELO.
+    PESO_INDIVIDUAL = 1.0
+    PESO_COLECTIVA = 0.3
+
     rows = conn.execute("""
         SELECT
             al.legislador_id,
@@ -176,27 +178,28 @@ def calcular_elos(conn):
         WHERE al.legislador_id IS NOT NULL
           AND sd.fecha_presentacion >= '2024-09-01'
           AND (sd.clasificacion = 'legislativo_sustantivo' OR sd.clasificacion IS NULL)
-          AND (al.co_firmantes IS NULL OR al.co_firmantes = '')
         ORDER BY sd.fecha_presentacion
     """).fetchall()
 
     elos = {}  # nombre canónico → {rating, partidas, ...}
-    procesados = 0
+    procesados_ind = 0
+    procesados_col = 0
 
     for leg_id, leg_nombre, leg_camara, leg_partido, tipo, comision, estatus, fp, co_firmantes in rows:
         if not leg_nombre:
             continue
-        # Clave canónica: el nombre de la tabla legisladores prefijado por
-        # Sen./Dip. para que _matchear_legislador después lo encuentre.
         titulo = "Sen." if leg_camara and "Senado" in leg_camara else "Dip."
         nombre_clave = f"{titulo} {leg_nombre}"
 
         S = clasificar_estatus(estatus or "", fp or "")
         if S is None:
-            continue  # excluir (muy reciente o sin estado)
+            continue
 
-        # E (expected): tasa de dictamen de la comisión
         E = tasas_com.get(comision, tasa_global) if comision else tasa_global
+
+        # Peso: individual completo, colectiva reducida
+        es_individual = (co_firmantes is None or co_firmantes == "")
+        peso = PESO_INDIVIDUAL if es_individual else PESO_COLECTIVA
 
         info = elos.setdefault(nombre_clave, {
             "rating": ELO_INICIAL, "partidas": 0, "wins": 0, "losses": 0,
@@ -204,7 +207,10 @@ def calcular_elos(conn):
             "partido": leg_partido or "", "camara": leg_camara or "",
         })
 
-        delta = K * (S - E)
+        # Delta reducido para colectivas. Las partidas se cuentan completo
+        # para que el frontend muestre número real, pero el impacto en
+        # rating es proporcional al peso.
+        delta = K * (S - E) * peso
         info["rating"] += delta
         info["partidas"] += 1
 
@@ -220,9 +226,12 @@ def calcular_elos(conn):
         else:
             info["draws"] += 1
 
-        procesados += 1
+        if es_individual:
+            procesados_ind += 1
+        else:
+            procesados_col += 1
 
-    print(f"  Partidas procesadas (solo individuales): {procesados}")
+    print(f"  Partidas procesadas: {procesados_ind:,} individuales + {procesados_col:,} colectivas (peso {PESO_COLECTIVA})")
     print(f"  Legisladores con ELO: {len(elos)}")
     return elos
 
