@@ -149,65 +149,61 @@ def calcular_elos(conn):
     tasas_com, tasa_global = calcular_tasas_comision(conn)
     print(f"  Tasa global LXVI: {100*tasa_global:.1f}% · {len(tasas_com)} comisiones con data suficiente")
 
-    # Iterar instrumentos cronológicamente — solo legislativo sustantivo Y
-    # solo actos donde el legislador es promovente único (es_individual=1).
-    # Una iniciativa firmada por toda la bancada NO cuenta para el ELO
-    # personal: es acción colectiva del partido. (Decisión post-feedback
-    # del 6-may-2026.) Para sil_documentos sin la columna es_individual
-    # (Diputados aún sin recalibrar), aceptamos cuando es NULL pero
-    # filtramos por presentador con ≤1 'Sen.' en su string.
+    # CAMBIO 12-may-2026: leer de actividad_legislador (no sil_documentos).
+    # Para senadores, después del rebuild de actividad_legislador desde
+    # senador_instrumento, cada firmante tiene su propia fila con
+    # co_firmantes='' si es promovente único, o 'colectivo (N firmantes)'
+    # si firmó con bancada. Eso permite filtrar EXACTO por individuales.
+    #
+    # Antes: leíamos de sil_documentos.presentador (texto concatenado)
+    # con heurística de contar 'Sen.'. Funcionaba para diputados pero
+    # para senadores el rebuild dejaba presentadores en formato distinto
+    # que esquivaba el filtro, inflando ELO con firmas colectivas.
     rows = conn.execute("""
-        SELECT presentador, partido, camara, tipo, comision, estatus,
-               fecha_presentacion, es_individual
-        FROM sil_documentos
-        WHERE fecha_presentacion >= '2024-09-01' AND presentador != ''
-          AND (clasificacion = 'legislativo_sustantivo' OR clasificacion IS NULL)
-        ORDER BY fecha_presentacion
+        SELECT
+            al.legislador_id,
+            l.nombre AS leg_nombre,
+            l.camara AS leg_camara,
+            l.partido AS leg_partido,
+            sd.tipo,
+            sd.comision,
+            sd.estatus,
+            sd.fecha_presentacion,
+            al.co_firmantes
+        FROM actividad_legislador al
+        JOIN legisladores l ON l.id = al.legislador_id
+        JOIN sil_documentos sd ON sd.id = al.sil_documento_id
+        WHERE al.legislador_id IS NOT NULL
+          AND sd.fecha_presentacion >= '2024-09-01'
+          AND (sd.clasificacion = 'legislativo_sustantivo' OR sd.clasificacion IS NULL)
+          AND (al.co_firmantes IS NULL OR al.co_firmantes = '')
+        ORDER BY sd.fecha_presentacion
     """).fetchall()
 
-    def _es_acto_individual(presentador_raw: str, es_individual_flag) -> bool:
-        # Fuente 1: flag explícito si existe (Senado post-mayo 2026)
-        if es_individual_flag is not None:
-            return bool(es_individual_flag)
-        # Fuente 2: contar 'Sen.' o 'Dip.' con punto en el string. Si solo
-        # hay 1 título, es individual. Si hay 2+, es colectivo.
-        import re as _re
-        if not presentador_raw:
-            return True
-        n = len(_re.findall(r'\b(?:Sen\.|Dip\.)\s+[A-ZÁÉÍÓÚÑ]', presentador_raw))
-        return n <= 1
-
-    elos = {}  # nombre → {rating, partidas, wins, losses, ...}
+    elos = {}  # nombre canónico → {rating, partidas, ...}
     procesados = 0
 
-    saltados_colectivos = 0
-    for presentador, partido_raw, camara, tipo, comision, estatus, fp, es_ind in rows:
-        # Excluir actos colectivos: no atribuibles al legislador individual.
-        if not _es_acto_individual(presentador, es_ind):
-            saltados_colectivos += 1
+    for leg_id, leg_nombre, leg_camara, leg_partido, tipo, comision, estatus, fp, co_firmantes in rows:
+        if not leg_nombre:
             continue
-        info_leg = extraer_legislador(presentador)
-        if not info_leg:
-            continue
-        nombre, partido = info_leg
-        if partido_raw and not partido:
-            partido = partido_raw
+        # Clave canónica: el nombre de la tabla legisladores prefijado por
+        # Sen./Dip. para que _matchear_legislador después lo encuentre.
+        titulo = "Sen." if leg_camara and "Senado" in leg_camara else "Dip."
+        nombre_clave = f"{titulo} {leg_nombre}"
 
         S = clasificar_estatus(estatus or "", fp or "")
         if S is None:
-            continue  # excluir (muy reciente)
+            continue  # excluir (muy reciente o sin estado)
 
         # E (expected): tasa de dictamen de la comisión
         E = tasas_com.get(comision, tasa_global) if comision else tasa_global
 
-        # Obtener ELO actual
-        info = elos.setdefault(nombre, {
+        info = elos.setdefault(nombre_clave, {
             "rating": ELO_INICIAL, "partidas": 0, "wins": 0, "losses": 0,
             "draws": 0, "aprobados": 0, "desechados": 0, "pendientes_largo": 0,
-            "partido": partido, "camara": camara,
+            "partido": leg_partido or "", "camara": leg_camara or "",
         })
 
-        # Update
         delta = K * (S - E)
         info["rating"] += delta
         info["partidas"] += 1
@@ -226,7 +222,7 @@ def calcular_elos(conn):
 
         procesados += 1
 
-    print(f"  Partidas procesadas: {procesados} (colectivas excluidas: {saltados_colectivos})")
+    print(f"  Partidas procesadas (solo individuales): {procesados}")
     print(f"  Legisladores con ELO: {len(elos)}")
     return elos
 

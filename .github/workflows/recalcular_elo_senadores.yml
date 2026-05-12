@@ -1,0 +1,84 @@
+name: Recalcular ELO + Sync D1 (one-off)
+
+# Workflow para recalcular ELO de legisladores con el nuevo filtro
+# por co_firmantes (solo individuales) sobre actividad_legislador.
+# Después del fix de senadores (rebuild + scrape estatus comisiones),
+# los conteos en sil_documentos.presentador podían inflar ELO con
+# firmas colectivas. Esta corrida limpia ELO con la lógica correcta.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "recalcular-elo-senadores"
+  cancel-in-progress: false
+
+jobs:
+  recalcular:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Restaurar SQLite DB
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-elo-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - name: Fallback a release si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+          npm install -g wrangler@3
+
+      - name: Recalcular ELO local
+        run: python scripts/calcular_elo_legisladores.py --guardar
+
+      - name: Sync ELO a D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python scripts/sync_elo_d1.py
+
+      - name: Verificación
+        run: |
+          sleep 5
+          curl -s "https://fiat-busqueda.rreubenleon.workers.dev/radar?camara=Senado&limite=2000" \
+            | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          rows = d.get('legisladores') or []
+          for tn in ['Camarillo', 'Viggiano', 'Angulo', 'Añorve']:
+              for c in [r for r in rows if tn in (r.get('nombre','') or '')][:1]:
+                  ia_i = c.get('n_ini_aprob_ind',0); id_i = c.get('n_ini_desech_ind',0)
+                  pa_i = c.get('n_prop_aprob_ind',0); pd_i = c.get('n_prop_desech_ind',0)
+                  expected = ia_i+id_i+pa_i+pd_i
+                  print(f\"{c['nombre']}: ELO partidas={c.get('elo_partidas')} (expected ~{expected}) aprob={c.get('elo_aprobados')} desech={c.get('elo_desechados')} indice={c.get('elo_indice')}\")
+          "
+
+      - name: Guardar BD en cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-elo-${{ github.run_id }}
