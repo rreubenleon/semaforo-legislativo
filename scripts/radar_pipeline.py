@@ -881,6 +881,11 @@ def paso_matchup_grade(db_ro: sqlite3.Connection) -> dict:
         return "F"
 
     # ─── 3. Comisión dominante por legislador ───
+    # Filtro `co_firmantes IS NULL OR co_firmantes = ''`: solo cuentan
+    # las comisiones donde turnaron actos donde el legislador es
+    # promovente único. Sin este filtro, todos los senadores del PRI
+    # acaban con la misma "Segunda Comisión" porque firman las mismas
+    # iniciativas colectivas turnadas ahí.
     leg_rows = db_ro.execute(
         """
         SELECT al.legislador_id, al.comision_turno, COUNT(*) AS total
@@ -889,6 +894,7 @@ def paso_matchup_grade(db_ro: sqlite3.Connection) -> dict:
         WHERE al.legislador_id IS NOT NULL
           AND al.comision_turno IS NOT NULL AND al.comision_turno <> ''
           AND al.fecha_presentacion >= ?
+          AND (al.co_firmantes IS NULL OR al.co_firmantes = '')
         GROUP BY al.legislador_id, al.comision_turno
         HAVING total >= ?
         """,
