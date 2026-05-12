@@ -1,0 +1,112 @@
+name: Scrape Estatus Comisiones Senado (one-off)
+
+# Workflow one-off para poblar el estatus de iniciativas/proposiciones/
+# dictámenes de senadores cruzando con páginas de comisiones del Senado
+# (única fuente pública con campo "Estatus" explícito y enlace estable a
+# gaceta del Senado).
+#
+# Pasos:
+#   1. Scrape estatus_senado_panel (77 comisiones × 3 tipos, ~30 min)
+#   2. Match por SEN_{gaceta_doc_id} → UPDATE sil_documentos.estatus
+#   3. Re-correr radar_pipeline --skip-scraper para recalcular conteos
+#      por estado y sync D1
+#   4. Verificación Camarillo
+
+on:
+  workflow_dispatch:
+    inputs:
+      solo_id:
+        description: 'Solo esta comisión (debug, ej. 414)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "scrape-estatus-senado"
+  cancel-in-progress: false
+
+jobs:
+  scrape-match-recalc:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Restaurar SQLite DB
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-estatus-sen-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - name: Fallback a release si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+          npm install -g wrangler@3
+
+      # 1. Scrape estatus de páginas de comisiones
+      - name: Scrape estatus comisiones
+        run: |
+          if [ -n "${{ inputs.solo_id }}" ]; then
+            python scripts/scrape_estatus_comisiones_senado.py --solo-id ${{ inputs.solo_id }}
+          else
+            python scripts/scrape_estatus_comisiones_senado.py
+          fi
+
+      # 2. Match y UPDATE sil_documentos.estatus
+      - name: Match estatus a sil_documentos
+        run: python scripts/match_estatus_a_sil_documentos.py
+
+      # 3. Re-correr radar (sin SIL scrape, ya hicimos lo nuestro)
+      - name: Recalcular conteos y sync D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python scripts/radar_pipeline.py --skip-scraper
+
+      # 4. Verificación
+      - name: Verificación Camarillo
+        run: |
+          sleep 5
+          curl -s "https://fiat-busqueda.rreubenleon.workers.dev/radar?camara=Senado&limite=2000" \
+            | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          rows = d.get('legisladores') or []
+          for tn in ['Camarillo', 'Viggiano', 'Angulo', 'Añorve']:
+              for c in [r for r in rows if tn in (r.get('nombre','') or '')][:1]:
+                  print(f\"{c['nombre']}:\")
+                  print(f\"  Ini A={c.get('n_ini_aprob_ind',0)}+{c.get('n_ini_aprob_col',0)} P={c.get('n_ini_pend_ind',0)}+{c.get('n_ini_pend_col',0)} D={c.get('n_ini_desech_ind',0)}+{c.get('n_ini_desech_col',0)}\")
+                  print(f\"  Prop A={c.get('n_prop_aprob_ind',0)}+{c.get('n_prop_aprob_col',0)} P={c.get('n_prop_pend_ind',0)}+{c.get('n_prop_pend_col',0)} D={c.get('n_prop_desech_ind',0)}+{c.get('n_prop_desech_col',0)}\")
+          "
+
+      # 5. Guardar BD
+      - name: Guardar SQLite DB en cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-estatus-sen-${{ github.run_id }}
