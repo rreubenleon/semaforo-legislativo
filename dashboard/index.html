@@ -2442,10 +2442,13 @@
                                 <select value={fSort} onChange={e => { setFSort(e.target.value); setPaginaRadar(1); }}
                                     className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-acento/20">
                                     <option value="hit_rate">Hit rate</option>
-                                    <option value="efectividad">Índice de Efectividad</option>
-                                    <option value="iniciativas">Iniciativas proy.</option>
-                                    <option value="proposiciones">Proposiciones proy.</option>
+                                    <option value="efectividad">Efectividad</option>
+                                    <option value="matchup">Matchup A→F</option>
+                                    <option value="iniciativas_indiv">Iniciativas (total)</option>
+                                    <option value="iniciativas">Ini proyectadas 15d</option>
+                                    <option value="proposiciones">Prop proyectadas 15d</option>
                                     <option value="actividad">Actividad L3P</option>
+                                    <option value="categoria">Categoría A-Z</option>
                                     <option value="nombre">Nombre A-Z</option>
                                 </select>
                             </div>
@@ -2506,38 +2509,38 @@
                     {/* Player-props table (sin wrapper — estilo PFF abierto) */}
                     {legisladores.length > 0 && (
                         <div>
-                            {/* Header row (desktop) */}
-                            <div className="hidden md:grid grid-cols-[minmax(0,2.1fr)_0.85fr_0.85fr_0.85fr_0.85fr_0.8fr_0.75fr_0.85fr] gap-2 px-3 py-2 border-b-2 border-gray-300 text-[10px] uppercase tracking-wider text-gray-500 font-bold font-mono">
-                                <div>Legislador</div>
-                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2"
-                                    title="Categoría dominante del legislador (medio_ambiente, educación, etc.). Se calcula con ≥3 actos legislativos desde inicio LXVI, ponderando iniciativas 2x sobre proposiciones.">
-                                    Categoría
-                                </div>
-                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2 font-mono"
-                                    title="Hit rate — % de los últimos 20 picos mediáticos en su categoría dominante donde el legislador presentó un instrumento dentro de los 7 días posteriores. Verde ≥70%, ámbar ≥40%, rojo <40%.">
-                                    Hit rate
-                                </div>
-                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2 font-mono"
-                                    title="Iniciativas proyectadas en los próximos 15 días, basadas en la tasa LXVI ajustada por actividad reciente (30d).">
-                                    Ini 15d
-                                </div>
-                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2 font-mono"
-                                    title="Proposiciones con punto de acuerdo proyectadas en los próximos 15 días. Misma fórmula que Ini 15d.">
-                                    Prop 15d
-                                </div>
-                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2 font-mono"
-                                    title="Iniciativas presentadas en LXVI (sep 2024 – hoy) como promovente único. No incluye firmas con bancada. Hover sobre cada celda para ver desglose por estado.">
-                                    Iniciativas
-                                </div>
-                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2 font-mono"
-                                    title="Matchup grade vs. la comisión a la que más turnan sus instrumentos. A = comisión que dictamina rápido; F = comisión donde los asuntos se quedan en pendiente. Grading relativo entre comisiones.">
-                                    Matchup
-                                </div>
-                                <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2 font-mono"
-                                    title="Índice de Efectividad (0–100) — capacidad del legislador para convertir instrumentos en avances dentro del proceso parlamentario, ajustada por la dificultad estructural de sus comisiones. 50 = mediana LXVI · 80+ = desempeño alto · 20- = bajo. Se calcula con tasas históricas de dictaminación, trayectoria reciente y progresión de cada instrumento. Requiere ≥3 instrumentos dictaminables.">
-                                    Efectividad
-                                </div>
-                            </div>
+                            {/* Header row (desktop) — columnas clickables para ordenar */}
+                            {(() => {
+                                /* Helper para renderizar headers ordenables.
+                                   Al dar clic, cambia fSort y la lista se reordena
+                                   automáticamente via el useEffect que watch fSort. */
+                                const SortableHeader = ({ sortKey, label, tip, mono = true }) => {
+                                    const active = fSort === sortKey;
+                                    return (
+                                        <div className={`text-center cursor-pointer select-none flex items-center justify-center gap-1 hover:text-acento transition-colors ${active ? 'text-acento font-bold' : ''} ${mono ? 'font-mono' : ''}`}
+                                            title={tip}
+                                            onClick={() => { setFSort(sortKey); setPaginaRadar(1); }}>
+                                            <span className={active ? '' : 'underline decoration-dotted decoration-gray-300 underline-offset-2'}>{label}</span>
+                                            {active && <span className="text-[8px]">▼</span>}
+                                        </div>
+                                    );
+                                };
+                                return (
+                                    <div className="hidden md:grid grid-cols-[minmax(0,2.1fr)_0.85fr_0.85fr_0.85fr_0.85fr_0.8fr_0.75fr_0.85fr] gap-2 px-3 py-2 border-b-2 border-gray-300 text-[10px] uppercase tracking-wider text-gray-500 font-bold font-mono">
+                                        <div className={`cursor-pointer select-none hover:text-acento transition-colors ${fSort === 'nombre' ? 'text-acento font-bold' : ''}`}
+                                            onClick={() => { setFSort('nombre'); setPaginaRadar(1); }}>
+                                            Legislador {fSort === 'nombre' && <span className="text-[8px]">▼</span>}
+                                        </div>
+                                        <SortableHeader sortKey="categoria" label="Categoría" tip="Categoría dominante (sustantivo). Ordenar A-Z." mono={false} />
+                                        <SortableHeader sortKey="hit_rate" label="Hit rate" tip="% de los últimos picos mediáticos en su categoría donde respondió presentando un instrumento dentro de 7 días." />
+                                        <SortableHeader sortKey="iniciativas" label="Ini 15d" tip="Iniciativas proyectadas en los próximos 15 días según ritmo LXVI." />
+                                        <SortableHeader sortKey="proposiciones" label="Prop 15d" tip="Proposiciones proyectadas en los próximos 15 días." />
+                                        <SortableHeader sortKey="iniciativas_indiv" label="Iniciativas" tip="Iniciativas LXVI como promovente único. Sin firmas con bancada." />
+                                        <SortableHeader sortKey="matchup" label="Matchup" tip="Grado vs. comisión dictaminadora (A rápida, F lenta). Ordenar A→F." />
+                                        <SortableHeader sortKey="efectividad" label="Efectividad" tip="Tasa de éxito: aprobados / (aprobados + desechados). Universal, refleja resultados reales." />
+                                    </div>
+                                );
+                            })()}
 
                             {/* Rows */}
                             <div className="divide-y divide-gray-200">

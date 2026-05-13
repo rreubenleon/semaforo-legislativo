@@ -878,23 +878,32 @@ def paso_matchup_grade(db_ro: sqlite3.Connection) -> dict:
 
     logger.info(f"  Comisiones con ≥{MATCHUP_MIN_DOCS_COM} docs: {len(com_tasas)}")
 
-    # ─── 2. Percentiles para grading relativo ───
-    if com_tasas:
-        tasas_sorted = sorted(com_tasas.values())
-        n = len(tasas_sorted)
-        p20 = tasas_sorted[int(n * 0.20)]
-        p40 = tasas_sorted[int(n * 0.40)]
-        p60 = tasas_sorted[int(n * 0.60)]
-        p80 = tasas_sorted[int(n * 0.80)]
-    else:
-        p20 = p40 = p60 = p80 = 0
+    # ─── 2. Grading por RANK (no por valores de percentil) ───
+    # Bug anterior: usaba percentiles de valor (p20, p40, p60, p80) que
+    # colapsaban cuando muchas comisiones tenían tasa=0. Resultado: todos
+    # los grados en A o B, sin C/D/F.
+    #
+    # Fix: ranking explícito. Las comisiones se ordenan por tasa DESC.
+    # Top 20% → A, siguiente 20% → B, ..., bottom 20% → F. Esto fuerza
+    # distribución pareja A-F sin importar la dispersión de valores.
+    sorted_coms = sorted(com_tasas.items(), key=lambda kv: -kv[1])
+    n_coms = len(sorted_coms)
+    com_grades: dict[str, str] = {}
+    for idx, (com_name, _) in enumerate(sorted_coms):
+        pct = idx / n_coms if n_coms else 0
+        if pct < 0.20:
+            com_grades[com_name] = "A"
+        elif pct < 0.40:
+            com_grades[com_name] = "B"
+        elif pct < 0.60:
+            com_grades[com_name] = "C"
+        elif pct < 0.80:
+            com_grades[com_name] = "D"
+        else:
+            com_grades[com_name] = "F"
 
-    def _grade(tasa: float) -> str:
-        if tasa >= p80: return "A"
-        if tasa >= p60: return "B"
-        if tasa >= p40: return "C"
-        if tasa >= p20: return "D"
-        return "F"
+    def _grade(_tasa: float, com_name: str = "") -> str:
+        return com_grades.get(com_name, "F")
 
     # ─── 3. Comisión dominante por legislador ───
     # Filtro `co_firmantes IS NULL OR co_firmantes = ''`: solo cuentan
@@ -938,7 +947,7 @@ def paso_matchup_grade(db_ro: sqlite3.Connection) -> dict:
             tasa_val = "NULL"
         else:
             tasa = com_tasas[comision]
-            grade = _grade(tasa)
+            grade = _grade(tasa, comision)
             tasa_val = f"{tasa:.4f}"
             distro[grade] += 1
 

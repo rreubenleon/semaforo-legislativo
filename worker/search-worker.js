@@ -267,15 +267,21 @@ async function handleRadar(request, env) {
   const limite = Math.min(2000, Math.max(1, parseInt(url.searchParams.get('limite') || '30') || 30));
   const offset = (pagina - 1) * limite;
 
-  // Orden
+  // Orden — opciones expuestas a frontend (clic en headers de tabla)
   const orderMap = {
     hit_rate: 's.prob_reaccion_dominante DESC NULLS LAST, s.iniciativas_proy_15d DESC',
     iniciativas: 's.iniciativas_proy_15d DESC NULLS LAST',
     proposiciones: 's.proposiciones_proy_15d DESC NULLS LAST',
+    // Total iniciativas individuales LXVI (lo que muestra la columna "Iniciativas")
+    iniciativas_indiv: 'COALESCE(l.n_ini_iniciante, 0) + COALESCE(s.promedio_l3p_iniciativas, 0) DESC',
     nombre: 'l.nombre ASC',
+    categoria: 's.categoria_dominante ASC NULLS LAST',
     actividad: '(COALESCE(s.iniciativas_proy_15d,0) + COALESCE(s.proposiciones_proy_15d,0)) DESC',
+    // Efectividad nueva: tasa éxito desde n_*_aprob/desech (no usar elo viejo)
+    efectividad: 'CASE WHEN (COALESCE(s.n_ini_aprob_ind,0)+COALESCE(s.n_ini_aprob_col,0)+COALESCE(s.n_prop_aprob_ind,0)+COALESCE(s.n_prop_aprob_col,0)+COALESCE(s.n_ini_desech_ind,0)+COALESCE(s.n_ini_desech_col,0)+COALESCE(s.n_prop_desech_ind,0)+COALESCE(s.n_prop_desech_col,0)) > 0 THEN CAST(COALESCE(s.n_ini_aprob_ind,0)+COALESCE(s.n_ini_aprob_col,0)+COALESCE(s.n_prop_aprob_ind,0)+COALESCE(s.n_prop_aprob_col,0) AS REAL) / (COALESCE(s.n_ini_aprob_ind,0)+COALESCE(s.n_ini_aprob_col,0)+COALESCE(s.n_prop_aprob_ind,0)+COALESCE(s.n_prop_aprob_col,0)+COALESCE(s.n_ini_desech_ind,0)+COALESCE(s.n_ini_desech_col,0)+COALESCE(s.n_prop_desech_ind,0)+COALESCE(s.n_prop_desech_col,0)) ELSE NULL END DESC NULLS LAST',
     elo: 'e.indice DESC NULLS LAST, e.partidas DESC',
-    efectividad: 'e.indice DESC NULLS LAST, e.partidas DESC',
+    // Matchup: A primero, F al final
+    matchup: "CASE s.matchup_grade WHEN 'A' THEN 1 WHEN 'B' THEN 2 WHEN 'C' THEN 3 WHEN 'D' THEN 4 WHEN 'F' THEN 5 ELSE 6 END ASC",
   };
   const orderSql = orderMap[sort] || orderMap.hit_rate;
 
