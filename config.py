@@ -231,6 +231,12 @@ TWITTER_ACCOUNTS = [
         "medio": "Análisis electoral",
         "peso": 1.0,
     },
+    {
+        "handle": "@LatamData",
+        "nombre": "LatamData",
+        "medio": "Datos cuantitativos LatAm con foco México",
+        "peso": 1.2,
+    },
 ]
 
 # Twitter/X API v2 — Bearer Token (PPU plan)
