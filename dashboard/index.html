@@ -2000,16 +2000,33 @@
                             const px = data.prob_extraordinario_global;
                             if (!px) return null;
                             const probGlobal = px.probabilidad;
-                            const colorByProb = probGlobal >= 70 ? 'from-red-700 to-red-900'
-                                : probGlobal >= 50 ? 'from-amber-600 to-amber-800'
-                                : 'from-slate-600 to-slate-800';
+                            /* Color fijo slate (decisión visual 13-may): mantener el
+                               azul oscuro elegante sin importar el número. El usuario
+                               aprobó esta paleta. */
+                            const colorByProb = 'from-slate-600 to-slate-800';
                             const notasTicker = px.notas || [];
                             return (
                                 <div className={`lg:col-span-3 relative overflow-hidden bg-gradient-to-r ${colorByProb} rounded-2xl p-6 text-white shadow-lg`}>
-                                    <svg className="absolute pointer-events-none" style={{right: '-60px', top: '50%', transform: 'translateY(-50%)', width: '360px', height: '360px', opacity: 0.12}} viewBox="0 0 360 360">
-                                        <circle cx="180" cy="180" r="70" stroke="white" strokeWidth="1.2" fill="none"/>
-                                        <circle cx="180" cy="180" r="115" stroke="white" strokeWidth="1" fill="none"/>
-                                        <circle cx="180" cy="180" r="160" stroke="white" strokeWidth="0.8" fill="none"/>
+                                    {/* Aros animados — pulse continuo desde el centro
+                                        hacia afuera. 3 aros con delay escalonado dan
+                                        sensación de monitoreo en vivo. */}
+                                    <style>{`
+                                        @keyframes pulseRing {
+                                            0% { r: 30; opacity: 0; }
+                                            20% { opacity: 0.18; }
+                                            100% { r: 170; opacity: 0; }
+                                        }
+                                        .pulse-ring { animation: pulseRing 4s ease-out infinite; transform-origin: center; }
+                                        .pulse-ring-2 { animation-delay: 1.33s; }
+                                        .pulse-ring-3 { animation-delay: 2.66s; }
+                                    `}</style>
+                                    <svg className="absolute pointer-events-none" style={{right: '-60px', top: '50%', transform: 'translateY(-50%)', width: '360px', height: '360px'}} viewBox="0 0 360 360">
+                                        <circle className="pulse-ring" cx="180" cy="180" r="30" stroke="white" strokeWidth="1.2" fill="none" opacity="0"/>
+                                        <circle className="pulse-ring pulse-ring-2" cx="180" cy="180" r="30" stroke="white" strokeWidth="1" fill="none" opacity="0"/>
+                                        <circle className="pulse-ring pulse-ring-3" cx="180" cy="180" r="30" stroke="white" strokeWidth="0.8" fill="none" opacity="0"/>
+                                        {/* Aros base estáticos como referencia visual */}
+                                        <circle cx="180" cy="180" r="70" stroke="white" strokeWidth="1" fill="none" opacity="0.08"/>
+                                        <circle cx="180" cy="180" r="120" stroke="white" strokeWidth="0.8" fill="none" opacity="0.06"/>
                                     </svg>
                                     <div className="relative flex items-start justify-between">
                                         <div className="flex-1 min-w-0">

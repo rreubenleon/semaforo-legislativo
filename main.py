@@ -587,22 +587,43 @@ def _calcular_prob_extraordinario_global():
             WHERE fecha >= ? AND {kw_match} AND NOT {kw_neg}
         """, (d7,)).fetchone()[0]
 
-        # A.1 Volumen: hasta 35 pts. 1 nota = 5 pts, 10+ = 35 pts.
-        pts_volumen = min(35, n_30 * 3.5)
+        # A.1 Volumen: hasta 45 pts (antes 35). 5 pts/nota, cap a 45.
+        # Con 23 notas (cap'd) ahora vale 45 en lugar de 35.
+        pts_volumen = min(45, n_30 * 3.0)
 
-        # A.2 Aceleración: si >40% de las 30d son de últimos 7d → +15.
+        # A.2 Aceleración: thresholds más laxos.
+        # 17% de notas en últimos 7d ya es señal real, no ruido.
         if n_30 >= 3:
             ratio_reciente = n_7 / n_30
-            if ratio_reciente >= 0.5:
+            if ratio_reciente >= 0.4:
                 pts_acel = 15
-            elif ratio_reciente >= 0.3:
+            elif ratio_reciente >= 0.20:
                 pts_acel = 10
-            elif ratio_reciente >= 0.15:
+            elif ratio_reciente >= 0.10:
                 pts_acel = 5
             else:
                 pts_acel = 0
         else:
             pts_acel = 0
+
+        # A.3 Declaraciones FUERTES de actores políticos: bonus por
+        # notas que contengan verbos confirmatorios (no solo mención
+        # genérica). Estas valen más que un simple "se analiza".
+        # Ejemplo: "Confirma Monreal", "Convocará", "Acuerdan fecha".
+        n_fuerte = conn.execute(f"""
+            SELECT COUNT(DISTINCT id) FROM articulos
+            WHERE fecha >= ? AND {kw_match} AND NOT {kw_neg}
+              AND (LOWER(titulo) LIKE '%confirma%'
+                   OR LOWER(titulo) LIKE '%convocar%'
+                   OR LOWER(titulo) LIKE '%acuerd%'
+                   OR LOWER(titulo) LIKE '%se realiz%'
+                   OR LOWER(titulo) LIKE '%aprueba%'
+                   OR LOWER(titulo) LIKE '%cita%'
+                   OR LOWER(titulo) LIKE '%entre el%mayo%'
+                   OR LOWER(titulo) LIKE '%antes de%mayo%'
+                   OR LOWER(titulo) LIKE '%en una semana%')
+        """, (d30,)).fetchone()[0]
+        pts_fuerte = min(15, n_fuerte * 5)  # 3 notas confirmatorias = +15
 
         # B. Convocatorias formales en gaceta. La gaceta SOLO publica un
         # "convoca a periodo extraordinari" cuando hay decreto real.
@@ -643,13 +664,15 @@ def _calcular_prob_extraordinario_global():
         """, (d7,)).fetchone()[0]
         pts_neg = min(20, n_neg_7 * 5)  # cada desmentido reciente -5 pts
 
-        prob = pts_volumen + pts_acel + pts_conv + pts_sil + pts_tw - pts_neg
+        prob = pts_volumen + pts_acel + pts_fuerte + pts_conv + pts_sil + pts_tw - pts_neg
         prob = round(max(0, min(100, prob)))
 
         # Breakdown explicable
         partes = []
         if n_30 > 0:
             partes.append(f"{n_30} notas en 30d ({n_7} en últimos 7d)")
+        if n_fuerte > 0:
+            partes.append(f"{n_fuerte} declaración(es) confirmatorias")
         if n_conv > 0:
             partes.append(f"{n_conv} convocatoria(s) formal(es) en gaceta")
         if n_sil > 0:
