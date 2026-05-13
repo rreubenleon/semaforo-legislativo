@@ -2526,8 +2526,8 @@
                                     Prop 15d
                                 </div>
                                 <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2 font-mono"
-                                    title="Instrumentos LXVI (sep 2024 – hoy): individuales / de grupo. Individuales = firmados como único promovente. De grupo = firmados con bancada (acción colectiva del partido). Hover sobre cada celda para ver desglose por estado.">
-                                    Ind / Grupo
+                                    title="Iniciativas presentadas en LXVI (sep 2024 – hoy) como promovente único. No incluye firmas con bancada. Hover sobre cada celda para ver desglose por estado.">
+                                    Iniciativas
                                 </div>
                                 <div className="text-center cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2 font-mono"
                                     title="Matchup grade vs. la comisión a la que más turnan sus instrumentos. A = comisión que dictamina rápido; F = comisión donde los asuntos se quedan en pendiente. Grading relativo entre comisiones.">
@@ -2649,8 +2649,19 @@
             const l3pTotal = (leg.l3p_iniciativas ?? 0) + (leg.l3p_proposiciones ?? 0);
             const grade = leg.matchup_grade;
             const gradeStyle = grade === 'A' ? 'text-emerald-600' : grade === 'B' ? 'text-lime-600' : grade === 'C' ? 'text-amber-600' : grade === 'D' ? 'text-orange-600' : grade === 'F' ? 'text-red-600' : 'text-gray-400';
-            const efInd = leg.elo_indice != null ? Math.round(leg.elo_indice) : null;
-            const efColor = efInd == null ? 'text-gray-400' : efInd >= 80 ? 'text-emerald-600' : efInd >= 60 ? 'text-lime-600' : efInd >= 40 ? 'text-gray-700' : efInd >= 20 ? 'text-amber-600' : 'text-red-600';
+            /* NUEVA Efectividad (mayo 12): tasa de éxito pura.
+               Antes: elo_indice mezclaba partidas + percentiles → premiaba
+               actividad incluso con 0 aprobados (Vargas 75/100 con 0 aprob).
+               Ahora: aprobados / (aprobados + desechados) × 100.
+               Cuenta tanto individuales como colectivos del legislador.
+               Si no hay resoluciones (todo pendiente), Efectividad = null. */
+            const aprob = (leg.n_ini_aprob_ind ?? 0) + (leg.n_ini_aprob_col ?? 0)
+                          + (leg.n_prop_aprob_ind ?? 0) + (leg.n_prop_aprob_col ?? 0);
+            const desech = (leg.n_ini_desech_ind ?? 0) + (leg.n_ini_desech_col ?? 0)
+                           + (leg.n_prop_desech_ind ?? 0) + (leg.n_prop_desech_col ?? 0);
+            const resueltos = aprob + desech;
+            const efInd = resueltos >= 1 ? Math.round((aprob / resueltos) * 100) : null;
+            const efColor = efInd == null ? 'text-gray-400' : efInd >= 50 ? 'text-emerald-600' : efInd >= 30 ? 'text-lime-600' : efInd >= 15 ? 'text-amber-600' : 'text-red-600';
 
             return (
                 <div onClick={onClick}
@@ -2685,7 +2696,7 @@
                     {/* Desktop columns */}
                     <div className="hidden md:block text-center">
                         {leg.categoria_dominante ? (
-                            <span className="text-[11px] text-gray-500 truncate block" title={leg.categoria_dominante}>
+                            <span className="text-[11px] text-gray-500 truncate block font-mono" title={leg.categoria_dominante}>
                                 {_catLabel(leg.categoria_dominante)}
                             </span>
                         ) : <span className="text-xs text-gray-400">—</span>}
@@ -2700,58 +2711,28 @@
                         <div className="text-base font-bold text-gray-800 leading-tight font-mono">{propProy}</div>
                     </div>
                     <div className="hidden md:block text-center" title={(() => {
-                        /* Desglose unificado: individuales vs grupo, con detalle por estado.
-                           Para senadores usa l3p_*_col + n_*_aprob_ind/col (radar_pipeline).
-                           Para diputados usa n_ini_iniciante / n_ini_de_grupo (calcular_conteos_roles).
-                           El tooltip muestra ini/prop separadas + Aprobada/Pendiente/Desechada. */
+                        /* Columna "Iniciativas" — número total presentadas como
+                           promovente único en la LXVI. Diputados usan n_ini_iniciante,
+                           senadores l3p_iniciativas. El tooltip muestra contexto:
+                           proposiciones y desglose por estado. */
                         const isDip = (leg.n_ini_iniciante ?? 0) > 0 || (leg.n_prop_proponente ?? 0) > 0;
-                        if (isDip) {
-                            const ini_ind = leg.n_ini_iniciante ?? 0;
-                            const ini_grp = (leg.n_ini_de_grupo ?? 0) + (leg.n_ini_adherente ?? 0);
-                            const prop_ind = leg.n_prop_proponente ?? 0;
-                            const prop_grp = (leg.n_prop_de_grupo ?? 0) + (leg.n_prop_adherente ?? 0);
-                            return `LXVI — desglose por rol\n` +
-                                `Iniciativas: ${ini_ind} iniciante + ${ini_grp} con bancada\n` +
-                                `Proposiciones: ${prop_ind} proponente + ${prop_grp} con bancada`;
-                        }
-                        // Senadores: usar individual/colectivo + estado
-                        const ini_ind = Math.round(leg.l3p_iniciativas ?? 0);
-                        const ini_col = Math.round(leg.l3p_iniciativas_col ?? 0);
-                        const prop_ind = Math.round(leg.l3p_proposiciones ?? 0);
-                        const prop_col = Math.round(leg.l3p_proposiciones_col ?? 0);
-                        const ia_i = leg.n_ini_aprob_ind ?? 0, ia_c = leg.n_ini_aprob_col ?? 0;
-                        const ip_i = leg.n_ini_pend_ind ?? 0, ip_c = leg.n_ini_pend_col ?? 0;
-                        const id_i = leg.n_ini_desech_ind ?? 0, id_c = leg.n_ini_desech_col ?? 0;
-                        const pa_i = leg.n_prop_aprob_ind ?? 0, pa_c = leg.n_prop_aprob_col ?? 0;
-                        const pp_i = leg.n_prop_pend_ind ?? 0, pp_c = leg.n_prop_pend_col ?? 0;
-                        const pd_i = leg.n_prop_desech_ind ?? 0, pd_c = leg.n_prop_desech_col ?? 0;
-                        return `LXVI — Individuales / De grupo\n` +
-                            `Iniciativas: ${ini_ind} / ${ini_col}\n` +
-                            `  Aprobadas: ${ia_i} / ${ia_c}\n` +
-                            `  Pendientes: ${ip_i} / ${ip_c}\n` +
-                            `  Desechadas: ${id_i} / ${id_c}\n` +
-                            `Proposiciones: ${prop_ind} / ${prop_col}\n` +
-                            `  Aprobadas: ${pa_i} / ${pa_c}\n` +
-                            `  Pendientes: ${pp_i} / ${pp_c}\n` +
-                            `  Desechadas: ${pd_i} / ${pd_c}`;
+                        const ini_ind = isDip ? (leg.n_ini_iniciante ?? 0) : Math.round(leg.l3p_iniciativas ?? 0);
+                        const prop_ind = isDip ? (leg.n_prop_proponente ?? 0) : Math.round(leg.l3p_proposiciones ?? 0);
+                        const ia_i = leg.n_ini_aprob_ind ?? 0;
+                        const ip_i = leg.n_ini_pend_ind ?? 0;
+                        const id_i = leg.n_ini_desech_ind ?? 0;
+                        return `LXVI — Como promovente único\n` +
+                            `Iniciativas: ${ini_ind}\n` +
+                            `  Aprobadas: ${ia_i}\n` +
+                            `  Pendientes: ${ip_i}\n` +
+                            `  Desechadas: ${id_i}\n` +
+                            `Proposiciones: ${prop_ind}`;
                     })()}>
                         {(() => {
                             const isDip = (leg.n_ini_iniciante ?? 0) > 0 || (leg.n_prop_proponente ?? 0) > 0;
-                            const ind = isDip
-                                ? (leg.n_ini_iniciante ?? 0) + (leg.n_prop_proponente ?? 0)
-                                : Math.round((leg.l3p_iniciativas ?? 0) + (leg.l3p_proposiciones ?? 0));
-                            const grp = isDip
-                                ? (leg.n_ini_adherente ?? 0) + (leg.n_ini_de_grupo ?? 0) + (leg.n_prop_adherente ?? 0) + (leg.n_prop_de_grupo ?? 0)
-                                : Math.round((leg.l3p_iniciativas_col ?? 0) + (leg.l3p_proposiciones_col ?? 0));
+                            const ini_ind = isDip ? (leg.n_ini_iniciante ?? 0) : Math.round(leg.l3p_iniciativas ?? 0);
                             return (
-                                <>
-                                    <div className="text-base font-bold text-gray-800 leading-tight font-mono">
-                                        {ind} <span className="text-gray-400 font-normal">/</span> {grp}
-                                    </div>
-                                    <div className="text-[9px] text-gray-400 font-mono leading-none">
-                                        indiv / grupo
-                                    </div>
-                                </>
+                                <div className="text-base font-bold text-gray-800 leading-tight font-mono">{ini_ind}</div>
                             );
                         })()}
                     </div>
@@ -2763,14 +2744,14 @@
                     </div>
                     <div className="hidden md:flex flex-col items-center justify-center gap-0.5">
                         <div className={`text-lg font-black font-mono ${efColor} leading-none`}
-                            title={efInd != null ? `Índice de Efectividad ${efInd}/100 · Mejor que ${Math.round(leg.elo_percentil_camara || 0)}% de su cámara · ${leg.elo_partidas || 0} instrumentos dictaminables` : 'Sin índice (menos de 3 instrumentos dictaminables)'}>
+                            title={efInd != null ? `Efectividad ${efInd}/100 · ${aprob} aprobado(s) de ${resueltos} con resolución · LXVI` : 'Sin resoluciones aún (todo pendiente)'}>
                             {efInd != null ? efInd : '—'}
                         </div>
                         {efInd != null && (
                             <div className="flex items-center gap-0.5 mt-0.5" aria-hidden>
                                 {[0,1,2,3,4,5,6,7,8,9].map(i => (
                                     <div key={i}
-                                        className={`w-1 h-1.5 rounded-sm ${i < Math.round(efInd/10) ? (efInd >= 80 ? 'bg-emerald-500' : efInd >= 60 ? 'bg-lime-500' : efInd >= 40 ? 'bg-gray-500' : efInd >= 20 ? 'bg-amber-500' : 'bg-red-500') : 'bg-gray-200'}`} />
+                                        className={`w-1 h-1.5 rounded-sm ${i < Math.round(efInd/10) ? (efInd >= 50 ? 'bg-emerald-500' : efInd >= 30 ? 'bg-lime-500' : efInd >= 15 ? 'bg-amber-500' : 'bg-red-500') : 'bg-gray-200'}`} />
                                 ))}
                             </div>
                         )}
@@ -2928,11 +2909,22 @@
 
                             {/* Headline stats */}
                             <div className="grid grid-cols-4 gap-2 mt-4">
-                                <div className="bg-white/10 rounded-lg p-2.5 text-center">
-                                    <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Efectividad</div>
-                                    <div className="text-xl font-bold mt-0.5 font-mono">{leg.elo_indice != null ? Math.round(leg.elo_indice) : '—'}{leg.elo_indice != null && <span className="text-xs text-white/50">/100</span>}</div>
-                                    <div className="text-[10px] text-white/60 font-mono">{leg.elo_percentil_camara != null ? `Top ${Math.max(1, Math.round(100 - leg.elo_percentil_camara))}% ${(leg.camara || '').replace('Cámara de ', '')}` : '—'}</div>
-                                </div>
+                                {(() => {
+                                    /* Efectividad con nueva fórmula: tasa éxito = aprob / (aprob+desech) × 100 */
+                                    const aprob = (leg.n_ini_aprob_ind ?? 0) + (leg.n_ini_aprob_col ?? 0)
+                                                  + (leg.n_prop_aprob_ind ?? 0) + (leg.n_prop_aprob_col ?? 0);
+                                    const desech = (leg.n_ini_desech_ind ?? 0) + (leg.n_ini_desech_col ?? 0)
+                                                   + (leg.n_prop_desech_ind ?? 0) + (leg.n_prop_desech_col ?? 0);
+                                    const resueltos = aprob + desech;
+                                    const ef = resueltos >= 1 ? Math.round((aprob / resueltos) * 100) : null;
+                                    return (
+                                        <div className="bg-white/10 rounded-lg p-2.5 text-center" title={ef != null ? `${aprob} aprobado(s) de ${resueltos} resueltos` : 'Sin resoluciones aún en LXVI'}>
+                                            <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Efectividad</div>
+                                            <div className="text-xl font-bold mt-0.5 font-mono">{ef != null ? ef : '—'}{ef != null && <span className="text-xs text-white/50">/100</span>}</div>
+                                            <div className="text-[10px] text-white/60 font-mono">{ef != null ? `${aprob} aprob / ${resueltos} resueltos` : 'sin resoluciones'}</div>
+                                        </div>
+                                    );
+                                })()}
                                 <div className="bg-white/10 rounded-lg p-2.5 text-center">
                                     <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Hit rate</div>
                                     <div className="text-xl font-bold mt-0.5 font-mono">{hitPct != null ? `${hitPct}%` : '—'}</div>
@@ -3063,7 +3055,18 @@
                     </div>
 
                     <div>
-                        <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold mb-2">Totales LXVI</div>
+                        <div className="flex items-baseline justify-between mb-2">
+                            <div className="text-[10px] uppercase tracking-wider text-gray-400 font-semibold">Efectividad LXVI — desglose</div>
+                            {(() => {
+                                const aprob = (leg.n_ini_aprob_ind ?? 0) + (leg.n_ini_aprob_col ?? 0) + (leg.n_prop_aprob_ind ?? 0) + (leg.n_prop_aprob_col ?? 0);
+                                const desech = (leg.n_ini_desech_ind ?? 0) + (leg.n_ini_desech_col ?? 0) + (leg.n_prop_desech_ind ?? 0) + (leg.n_prop_desech_col ?? 0);
+                                const resueltos = aprob + desech;
+                                if (resueltos < 1) return <span className="text-[10px] text-gray-400 font-mono">sin resoluciones aún</span>;
+                                const ef = Math.round((aprob / resueltos) * 100);
+                                const color = ef >= 50 ? 'text-emerald-600' : ef >= 30 ? 'text-lime-600' : ef >= 15 ? 'text-amber-600' : 'text-red-600';
+                                return <span className="text-[11px] font-mono"><span className="text-gray-500">Tasa éxito </span><span className={`font-bold ${color}`}>{aprob}/{resueltos} = {ef}/100</span></span>;
+                            })()}
+                        </div>
                         {(() => {
                             /* Para senadores los conteos vienen de l3p_* + n_*_aprob/pend/desech.
                                Para diputados de n_ini_iniciante etc (todavía sin desglose por estado).

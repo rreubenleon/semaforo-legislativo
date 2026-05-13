@@ -8,6 +8,11 @@ name: Scrape Senadores LXVI desde senado.gob.mx
 # Output: dashboard/senadores_lxvi_oficial.json (artifact + commit).
 
 on:
+  # Cron diario 06:00 UTC (00:00 CDMX) — refresca instrumentos nuevos
+  # publicados en senado.gob.mx en las últimas 24h. Antes era manual y
+  # quedaban gaps (ej. Viggiano 309 vs 346 oficial el 12-may).
+  schedule:
+    - cron: '0 6 * * *'
   workflow_dispatch:
     inputs:
       limite:
