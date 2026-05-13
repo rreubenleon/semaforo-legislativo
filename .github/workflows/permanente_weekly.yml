@@ -99,7 +99,24 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         continue-on-error: true
 
-      # 5. Refresh comisiones gaceta → D1 (popular tab Comisiones)
+      # 5. Re-scrape comisiones+cargo de los 128 senadores desde
+      #    senado.gob.mx. Actualiza legisladores.comisiones_cargo
+      #    (que refresh_comisiones_sitl.py lee abajo). ~5 min.
+      #    SIN este paso, composición queda desactualizada (caso bug
+      #    Medio Ambiente con solo 2 miembros visto 12-may).
+      - name: Re-scrape comisiones de senadores
+        run: python scripts/rescrape_senadores_comisiones.py
+        continue-on-error: true
+
+      # 6. Sync legisladores.comisiones_cargo a D1
+      - name: Sync comisiones senadores a D1
+        run: python scripts/sync_legisladores_cargo_d1.py
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        continue-on-error: true
+
+      # 7. Refresh comisiones gaceta → D1 (popular tab Comisiones).
+      #    Ahora con comisiones_cargo fresco del paso 5.
       - name: Refresh comisiones gaceta a D1
         run: python scripts/refresh_comisiones_sitl.py --paso gaceta --ignorar-modo-receso
         env:

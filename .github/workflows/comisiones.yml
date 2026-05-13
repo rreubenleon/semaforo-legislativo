@@ -17,6 +17,14 @@ on:
   schedule:
     - cron: '0 14 * * 1'   # Lunes 14:00 UTC → SITL batch 1 + Gaceta
     - cron: '0 14 * * 2'   # Martes 14:00 UTC → SITL batch 2
+  # Encadenado: cuando termina el scrape oficial de senadores (que
+  # actualiza legisladores.comisiones_cargo), dispara automáticamente
+  # comisiones.yml para que la composición en D1 use los datos frescos.
+  # Resuelve el bug de caches desincronizados entre workflows.
+  workflow_run:
+    workflows: ["Scrape Senadores LXVI desde senado.gob.mx"]
+    types: [completed]
+    branches: [main]
   workflow_dispatch:
     inputs:
       paso:
@@ -99,6 +107,11 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             PASO="${{ github.event.inputs.paso }}"
+          elif [ "${{ github.event_name }}" = "workflow_run" ]; then
+            # Disparado por término de scrape_senadores_oficial.yml.
+            # Solo recalcular gaceta (composición + último dictamen),
+            # no re-scrapear SITL diputados que es la parte costosa.
+            PASO="gaceta"
           elif [ "${{ github.event.schedule }}" = "0 14 * * 1" ]; then
             PASO="lunes"
           else

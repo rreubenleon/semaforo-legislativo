@@ -635,26 +635,37 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
     #    Tie-break determinístico: score ponderado → count real → nombre asc.
     cats_por_leg: dict[int, str] = {}
     raw_counts: dict[int, dict[str, dict[str, float]]] = {}
-    # Filtrar SOLO actos individuales del legislador. Un instrumento firmado
-    # por toda la bancada (13 senadores) NO debe contar como acción personal
-    # — eso distorsiona el ranking de eficiencia. co_firmantes = '' significa
-    # que el legislador es promovente único (decisión de scrape).
+    # OPCIÓN B (decisión usuario 12-may): para CATEGORÍA DOMINANTE incluir
+    # también firmas colectivas, pero con peso reducido (0.3). Esto da
+    # cobertura universal: senadores PRI/PVEM que firman casi todo con
+    # bancada también reciben categoría dominante basada en lo que su
+    # bloque empuja. Hit Rate y todo lo demás siguen calculándose contra
+    # esta categoría enriquecida.
+    # Pesos: iniciativa individual=2.0, prop individual=1.0,
+    #        iniciativa colectiva=0.6, prop colectiva=0.3.
     for row in db_ro.execute(
         """
-        SELECT legislador_id, categoria, tipo_instrumento, COUNT(*) as n
+        SELECT legislador_id, categoria, tipo_instrumento,
+               CASE WHEN co_firmantes IS NULL OR co_firmantes = ''
+                    THEN 1 ELSE 0 END as es_indiv,
+               COUNT(*) as n
         FROM actividad_legislador
         WHERE legislador_id IS NOT NULL
           AND categoria IS NOT NULL AND categoria <> ''
           AND fecha_presentacion >= ?
-          AND (co_firmantes IS NULL OR co_firmantes = '')
-        GROUP BY legislador_id, categoria, tipo_instrumento
+        GROUP BY legislador_id, categoria, tipo_instrumento, es_indiv
         """,
         (FECHA_INICIO_LXVI,),
     ):
         leg_id = row["legislador_id"]
         cat = row["categoria"]
         tipo_norm = (row["tipo_instrumento"] or "").lower()
-        peso = 2.0 if "iniciativa" in tipo_norm else 1.0
+        es_iniciativa = "iniciativa" in tipo_norm
+        es_indiv = bool(row["es_indiv"])
+        if es_indiv:
+            peso = 2.0 if es_iniciativa else 1.0
+        else:
+            peso = 0.6 if es_iniciativa else 0.3
         n = int(row["n"] or 0)
         leg_bucket = raw_counts.setdefault(leg_id, {})
         cat_bucket = leg_bucket.setdefault(cat, {"count": 0.0, "score": 0.0})
@@ -662,7 +673,12 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
         cat_bucket["score"] += n * peso
 
     for leg_id, cats in raw_counts.items():
-        candidates = {c: v for c, v in cats.items() if v["count"] >= 3}
+        # Threshold reducido de ≥3 a ≥1 (decisión 12-may con Opción B).
+        # Antes excluía a quienes firman poco. Ahora cualquier legislador
+        # con al menos 1 acto en una categoría puede tener categoría
+        # dominante. Tie-break por score ponderado mantiene calidad
+        # (iniciativa individual pesa 2.0, colectiva 0.6).
+        candidates = {c: v for c, v in cats.items() if v["count"] >= 1}
         if not candidates:
             continue
         best_cat = sorted(
@@ -700,8 +716,9 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
     # 3) Pre-cargar set de (legislador_id, categoria, fecha) de actividad
     #    para lookup O(1) sin hacer 10 queries por legislador.
     actividad_set: set[tuple[int, str, str]] = set()
-    # Mismo filtro: solo actos individuales cuentan como "respondió al pico".
-    # Si firmó con bancada, es acción colectiva del partido, no del legislador.
+    # Opción B: incluir colectivas. Si el legislador (o su bancada con
+    # él dentro) presentó algo en el rango del pico, cuenta como "respondió".
+    # Esto da cobertura universal para Hit Rate.
     for row in db_ro.execute(
         """
         SELECT legislador_id, categoria, fecha_presentacion
@@ -710,7 +727,6 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
           AND categoria IS NOT NULL AND categoria <> ''
           AND fecha_presentacion IS NOT NULL AND fecha_presentacion <> ''
           AND fecha_presentacion >= ?
-          AND (co_firmantes IS NULL OR co_firmantes = '')
         """,
         (FECHA_INICIO_LXVI,),
     ):
