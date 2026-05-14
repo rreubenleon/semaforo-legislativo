@@ -373,12 +373,29 @@ def main():
             continue
 
         # CONSERVATIVO: Si HAY candidatos por (fecha, apellido) pero el
-        # título no matchea suficiente, NO insertar como nuevo. Es muy
-        # probable que sea el mismo doc con reformato de título y meterlo
-        # como DIP_* nuevo crearía duplicado. Lo contamos como "ambiguo"
-        # y lo skip — preferimos sub-cubrir que duplicar.
+        # título no matchea suficiente, NO insertar como NUEVO sil_documentos
+        # (evita duplicar el sil_documento). PERO sí registrar en la tabla
+        # relacional diputado_instrumento — el legislador SÍ tiene esa
+        # vinculación según SITL aunque no tengamos el sil_documento limpio.
+        # Fix 14-may: antes saltaba completo y subcontaba 20+ prop de
+        # Margarita García y otros diputados.
         if cands_apellido_unique:
             ambiguos += 1
+            leg_id = sitl_to_leg.get(sitl_id_dip)
+            if leg_id and not args.dry_run:
+                try:
+                    conn.execute(
+                        """
+                        INSERT OR REPLACE INTO diputado_instrumento
+                          (legislador_id, sitl_id_dip, seguimiento_id, rol, tipo, fecha)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        """,
+                        (leg_id, sitl_id_dip, seg_id_dip_relacional, rol, tipo, fecha),
+                    )
+                    relacional_inserted += 1
+                except Exception:
+                    pass
+                rol_por_leg.setdefault(leg_id, Counter())[rol] += 1
             continue
 
         # No match → INSERT como DIP_* nuevo.
