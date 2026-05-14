@@ -236,8 +236,16 @@ def main():
         fecha = parsear_fecha_es(inst.get("fecha", ""))
         gaceta_id = extraer_gaceta_id(inst.get("enlace_gaceta", ""))
         if not gaceta_id:
-            seed = f"{inst.get('titulo','')[:80]}|{fecha}|{inst.get('tipo')}"
-            gaceta_id = hashlib.md5(seed.encode("utf-8")).hexdigest()[:12]
+            # FIX 13-may-2026: usar título COMPLETO (no [:80]) + presentador
+            # crudo (firmantes del bloque) para eliminar colisiones de hash
+            # entre proposiciones distintas con título similar.
+            # Sin este fix, 5+ pares colisionaban en Viggiano (perdíamos
+            # 5 proposiciones cuando 2 distintas hashearon a misma key).
+            seed = (
+                f"{inst.get('titulo','')}|{fecha}|{inst.get('tipo')}|"
+                f"{(inst.get('promoventes_raw') or '')[:200]}"
+            )
+            gaceta_id = hashlib.md5(seed.encode("utf-8")).hexdigest()[:16]
         seg_id = f"SEN_{gaceta_id}"
         grupos[(seg_id, inst.get("tipo"))].append(inst)
 
@@ -297,24 +305,22 @@ def main():
         )
 
         if match_id is not None:
-            # ENRIQUECER fila existente: añadir es_individual y n_firmantes
+            # ENRIQUECER fila existente en sil_documentos: añadir flags.
+            # FIX 13-may: NO sobreescribir seg_id para senador_instrumento.
+            # Antes: si dos prop distintas del JSON matcheaban contra la
+            # MISMA fila SIL Gob (por título+fecha+apellido similar), ambas
+            # heredaban el mismo seg_id_real y se aplicaba INSERT OR
+            # REPLACE → la segunda sobrescribía la primera, perdiendo data.
+            # Para Viggiano esto causó -18 filas. Ahora mantenemos seg_id
+            # = SEN_* artificial para senador_instrumento (que es 1:1 con
+            # cada instrumento del scrape oficial), y el enrichment de
+            # sil_documentos sigue funcionando aparte.
             try:
                 conn.execute("""
                     UPDATE sil_documentos
                     SET es_individual = ?, n_firmantes = ?
                     WHERE id = ?
                 """, (es_individual_int, n_firmantes, match_id))
-                # Para tabla relacional, usar seg_id real de la fila SIL Gob
-                row_match = conn.execute(
-                    "SELECT seguimiento_id, asunto_id FROM sil_documentos WHERE id = ?",
-                    (match_id,)
-                ).fetchone()
-                if row_match:
-                    seg_id_real = row_match[0]
-                    asu_id_real = row_match[1]
-                    # Actualizar el seg_id que usaremos para senador_instrumento
-                    seg_id = seg_id_real
-                    asu_id = asu_id_real
                 saltadas += 1
             except Exception as e:
                 print(f"ERROR enriqueciendo: {e}", file=sys.stderr)
