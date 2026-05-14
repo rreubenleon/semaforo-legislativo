@@ -86,8 +86,23 @@ jobs:
           fi
         continue-on-error: true
 
+      # 2b. Scrape SITL completo para TODOS los roles (Iniciante,
+      #     Adherente, De Grupo, Proponente, Suscriptor) por diputado.
+      #     Captura proposiciones colectivas que scrape_urls_diputados.py
+      #     no recoge. Sin este paso, diputados como Margarita García
+      #     muestran 6 prop (solo Proponente) cuando tienen 26 reales.
+      #     ~20-30 min para 500 diputados × N pert.
+      - name: Scrape SITL completo Diputados (todos los roles)
+        run: python scripts/scrape_diputados_sitl_lxvi.py
+        continue-on-error: true
+
+      # 2c. Integrar JSON a diputado_instrumento (poblar roles)
+      - name: Integrar diputados oficial a BD
+        run: python scripts/integrar_diputados_oficial.py
+        continue-on-error: true
+
       # 3. Calcular conteos por rol (Iniciante/Adherente/De Grupo)
-      #    Solo refresca con datos nuevos del scrape anterior.
+      #    Lee diputado_instrumento (ya popular tras paso 2c).
       - name: Calcular conteos por rol Diputados
         run: python scripts/calcular_conteos_roles_diputados.py
         continue-on-error: true
