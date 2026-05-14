@@ -337,9 +337,24 @@ def main():
                     best_score = score
                     match = c
 
+        # Seg_id artificial DIP_* para diputado_instrumento — SIEMPRE
+        # (no sobreescribir con seg_id del match SIL Gob). Esto preserva
+        # 1 fila por instrumento × rol en la tabla relacional, evitando
+        # que dos prop distintas que matchean a la MISMA fila SIL Gob
+        # colapsen vía INSERT OR REPLACE.
+        # Bug 14-may: Margarita tenía 26 prop en JSON pero diputado_instrumento
+        # mostraba 6 por este colapso. Mismo bug que senadores 13-may.
+        # Hash con título COMPLETO (no [:80]) reduce colisiones.
+        seed_dip = f"{titulo}|{fecha}|{tipo}"
+        sid_dip = hashlib.md5(seed_dip.encode("utf-8")).hexdigest()[:14]
+        seg_id_dip_relacional = f"DIP_{sid_dip}"
+
         if match:
             matched += 1
-            # También registrar Iniciante en tabla relacional
+            # También registrar Iniciante en tabla relacional.
+            # Usar seg_id_dip_relacional (DIP_* artificial) en lugar del
+            # match["seg_id"]. Esto evita el colapso por SIL Gob match
+            # que afectaba diputado_instrumento (Margarita 26→6 prop).
             leg_id = sitl_to_leg.get(sitl_id_dip)
             if leg_id and not args.dry_run:
                 try:
@@ -349,7 +364,7 @@ def main():
                           (legislador_id, sitl_id_dip, seguimiento_id, rol, tipo, fecha)
                         VALUES (?, ?, ?, ?, ?, ?)
                         """,
-                        (leg_id, sitl_id_dip, match["seg_id"], rol, tipo, fecha),
+                        (leg_id, sitl_id_dip, seg_id_dip_relacional, rol, tipo, fecha),
                     )
                     relacional_inserted += 1
                 except Exception:
@@ -367,11 +382,9 @@ def main():
             continue
 
         # No match → INSERT como DIP_* nuevo.
-        # seg_id determinístico POR INSTRUMENTO. Si una iniciativa colectiva
-        # aparece N veces (1 por co-firmante) los N generan el mismo seg_id
-        # y solo se inserta UNA fila (el segundo y siguientes hacen UPSERT
-        # idempotente sobre la misma fila).
-        seed = f"{titulo[:80]}|{fecha}|{tipo}"
+        # Hash con título COMPLETO (no [:80]) para reducir colisiones
+        # entre prop distintas con título similar. Fix 14-may.
+        seed = f"{titulo}|{fecha}|{tipo}"
         sid = hashlib.md5(seed.encode("utf-8")).hexdigest()[:14]
         seg_id = f"DIP_{sid}"
         es_nuevo_seg_id = seg_id not in seg_ids_creados
