@@ -230,9 +230,27 @@ def main():
     inicio = datetime.now()
     todos_items = []
     diputados_meta = []
+
+    # Checkpoint: si JSON existe, cargar diputados ya hechos y skipear.
+    # Crítico para resiliencia ante timeouts (60min original, 180min ahora).
+    out_path = ROOT / "dashboard" / "diputados_lxvi_oficial.json"
+    ya_hechos = set()
+    if out_path.exists():
+        try:
+            existing = json.loads(out_path.read_text())
+            for d in existing.get("diputados", []):
+                ya_hechos.add(str(d.get("sitl_id", "")))
+            diputados_meta = existing.get("diputados", []).copy()
+            todos_items = existing.get("instrumentos", []).copy()
+            logger.info(f"Checkpoint: {len(ya_hechos)} diputados ya scrapeados, reanudando")
+        except Exception as e:
+            logger.warning(f"No se pudo cargar checkpoint: {e}")
+
     for i, dip in enumerate(diputados, 1):
         sitl_id = str(dip["sitl_id"]) if dip["sitl_id"] else ""
         if not sitl_id:
+            continue
+        if sitl_id in ya_hechos:
             continue
         items = scrape_diputado(sitl_id)
         # Stats por rol
@@ -269,6 +287,21 @@ def main():
                 f"i={n_ini_iniciante:2} a={n_ini_adherente:2} g={n_ini_grupo:2} "
                 f"p={n_prop_promovente:2} · ETA {eta/60:.1f}m"
             )
+            # Checkpoint incremental: guardar JSON cada 25 diputados para
+            # no perder trabajo si timeout / crash mid-scrape.
+            try:
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                ckpt = {
+                    "diputados": diputados_meta,
+                    "instrumentos": todos_items,
+                    "scraped_at": datetime.now().isoformat(timespec="seconds"),
+                    "total_diputados": len(diputados_meta),
+                    "total_instrumentos": len(todos_items),
+                    "checkpoint": True,
+                }
+                out_path.write_text(json.dumps(ckpt, ensure_ascii=False))
+            except Exception as e:
+                logger.warning(f"  No se pudo guardar checkpoint: {e}")
 
     out = {
         "diputados": diputados_meta,
