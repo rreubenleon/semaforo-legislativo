@@ -278,7 +278,7 @@ def main():
             "n_proposiciones_grupo": n_prop_grupo,
         })
         todos_items.extend(items)
-        if i % 25 == 0 or i == len(diputados):
+        if i % 5 == 0 or i == len(diputados):
             elapsed = (datetime.now() - inicio).total_seconds()
             rate = i / max(elapsed, 1)
             eta = (len(diputados) - i) / max(rate, 0.1)

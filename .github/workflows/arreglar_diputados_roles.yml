@@ -49,7 +49,12 @@ jobs:
           npm install -g wrangler@3
 
       - name: 1. Scrape SITL completo Diputados (todos los roles)
-        run: python scripts/scrape_diputados_sitl_lxvi.py
+        # python -u: stdout/stderr unbuffered. Sin esto, GitHub mata el
+        # job por "no log output" tras ~1h aunque el proceso siga vivo.
+        # PYTHONUNBUFFERED es redundante pero defensivo.
+        env:
+          PYTHONUNBUFFERED: "1"
+        run: python -u scripts/scrape_diputados_sitl_lxvi.py
 
       - name: 2. Integrar a diputado_instrumento
         run: python scripts/integrar_diputados_oficial.py
