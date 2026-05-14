@@ -1,0 +1,55 @@
+name: Limpiar Pendientes Malparseadas (one-off)
+
+# Workflow one-off para limpiar filas gaceta con títulos crudos
+# de SITL Pendientes Diputados (bug pre-13may-2026). Después corre
+# scrape_urls_diputados.py con parser fijo para re-popular limpio.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "limpiar-pendientes-malparseadas"
+
+jobs:
+  limpiar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-limpiar-pend-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: pip install -r requirements.txt
+
+      - name: 1. Borrar pendientes malparseadas
+        run: python scripts/limpiar_pendientes_malparseadas.py
+
+      - name: 2. Re-scrape Pendientes con parser fijo
+        run: python scripts/scrape_urls_diputados.py --solo-mes-actual
+
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: semaforo.db
+          key: semaforo-db-limpiar-pend-${{ github.run_id }}

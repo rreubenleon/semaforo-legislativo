@@ -260,31 +260,48 @@ def scrape_comision(comt: int, endpoint: str = "iniciativaslxvi.php",
             )
             comision = m_com.group(1).strip() if m_com else ""
 
-            # Título: en "antes" — buscar el último número de orden
-            # ("\d+ TÍTULO Proponente:") y tomar lo que sigue
-            # Para iniciativas: "Proyecto de decreto..."
-            # Para proposiciones: "Por el que..." / "Por la que..."
-            m_titulo_ini = re.search(
-                r"((?:Proyecto\s+de\s+decreto|Iniciativa)[^\.]+?)$",
-                antes.strip(),
+            # Título: REFACTOR 13-may. El bloque "antes" tiene metadata
+            # mezclada con el título real:
+            #   "- {COMISIÓN} --> [sinopsis]. Pendiente Publicación en
+            #    Gaceta: {FECHA} {NUM_ORDEN} {TÍTULO REAL}"
+            # Estrategia: limpiar metadata y aislar el título real.
+            antes_clean = antes.strip()
+
+            # Cortar metadata: "Pendiente Publicación en Gaceta: FECHA NUM"
+            # → quedarse con lo que está DESPUÉS de esos campos.
+            # FECHA = "DD-Mes-YYYY", NUM_ORDEN = 1-3 dígitos.
+            m_after_meta = re.search(
+                r"Pendiente\s+Publicaci[óo]n\s+en\s+Gaceta:\s*\d{1,2}-[A-Za-zñÑáéíóú]+-\d{4}\s+\d+\s+(.+)$",
+                antes_clean,
             )
-            m_titulo_prop = re.search(
-                r"((?:Por\s+(?:el|la|los|las)\s+que|Que\s+exhorta|Por\s+la\s+que\s+se\s+solicita|Por\s+el\s+cual)[^\.]+?)$",
-                antes.strip(),
-            )
-            titulo = ""
-            if m_titulo_ini:
-                titulo = m_titulo_ini.group(1).strip()
-            elif m_titulo_prop:
-                titulo = m_titulo_prop.group(1).strip()
+            if m_after_meta:
+                titulo = m_after_meta.group(1).strip()
             else:
-                # Fallback: tomar últimos 200 chars de antes (contienen número + título)
-                antes_clean = antes.strip()
-                m_num = re.search(r"\d+\s+(.+)$", antes_clean[-300:])
-                if m_num:
-                    titulo = m_num.group(1).strip()
+                # Sin metadata "Pendiente..." (algunos casos): tomar después del
+                # ÚLTIMO patrón "{NUM} {Mayúscula}" en últimos 500 chars.
+                m_num = re.search(
+                    r"\b\d+\s+([A-ZÁÉÍÓÚ][^\d].+)$",
+                    antes_clean[-500:],
+                )
+                titulo = m_num.group(1).strip() if m_num else ""
+
+            # Limpieza adicional: quitar prefijo "- {COMISIÓN} --> [sinopsis]"
+            # si aún quedó (regex de arriba puede haber fallado).
+            titulo = re.sub(r"^[-•]\s*[A-ZÁÉÍÓÚÑa-záéíóúñ,\s]+-->\s*[^.]+\.\s*", "", titulo)
+
             titulo = re.sub(r"\s+", " ", titulo)[:500]
             if len(titulo) < 30:
+                continue
+
+            # Validar: el título debe empezar con un patrón legislativo
+            # esperado. Si no, descartar (probablemente parseo falló).
+            if not re.match(
+                r"^(Proyecto\s+de\s+decreto|Iniciativa|Por\s+(?:el|la|los|las)\s+que|"
+                r"Que\s+(?:reforma|adiciona|expide|deroga|exhorta)|Con\s+punto\s+de\s+acuerdo|"
+                r"Que\s+expide)",
+                titulo,
+                re.IGNORECASE,
+            ):
                 continue
 
             # ID sintético
