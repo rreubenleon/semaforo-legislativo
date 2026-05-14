@@ -242,6 +242,28 @@ def main():
     rol_por_leg = {}  # leg_id → Counter(rol → n)
     from collections import defaultdict, Counter
 
+    # RESET 14-may: borrar TODAS las filas de diputado_instrumento para
+    # los diputados del JSON. Sin este reset, runs anteriores con bugs
+    # de hash colision o match-overwrite dejaban filas duplicadas/huérfanas
+    # que se sumaban a las nuevas. Margarita pasó de 6 → 32 prop cuando
+    # debe ser 26 — sobre-conteo por overlap entre seg_id viejo y nuevo.
+    # Al limpiar primero, el INSERT OR REPLACE de abajo poblará desde
+    # cero con la nueva lógica consistente.
+    if not args.dry_run:
+        sitl_ids_en_json = {str(i.get("sitl_id_dip", "")) for i in instrumentos}
+        leg_ids_clean = [
+            sitl_to_leg[sid] for sid in sitl_ids_en_json
+            if sid in sitl_to_leg
+        ]
+        if leg_ids_clean:
+            placeholders = ",".join("?" * len(leg_ids_clean))
+            n_clean = conn.execute(
+                f"DELETE FROM diputado_instrumento WHERE legislador_id IN ({placeholders})",
+                leg_ids_clean,
+            ).rowcount
+            print(f"  Reset: {n_clean} filas previas borradas para {len(leg_ids_clean)} diputados")
+            conn.commit()
+
     for inst in instrumentos:
         titulo = inst.get("titulo", "")
         fecha = inst.get("fecha", "")
