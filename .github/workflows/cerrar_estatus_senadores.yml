@@ -1,0 +1,89 @@
+name: Cerrar Estatus Senadores (one-off)
+
+# Workflow para cerrar los 53% de SEN_* sin estatus.
+# Pasos:
+#   1. Re-scrape comisiones Senado (~30 min) → captura recientes
+#   2. Match por gaceta_doc_id → asigna estatus real a los nuevos
+#   3. Default 'Pendiente en comisión' a los que aún quedan sin estatus
+#   4. Recalcular conteos_estado + sync D1
+#   5. Verificación
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "cerrar-estatus-senadores"
+
+jobs:
+  cerrar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-cerrar-est-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: |
+          pip install -r requirements.txt
+          npm install -g wrangler@3
+
+      - name: 1. Re-scrape comisiones Senado (captura recientes)
+        env:
+          PYTHONUNBUFFERED: "1"
+        run: python -u scripts/scrape_estatus_comisiones_senado.py
+
+      - name: 2. Match estatus real por gaceta_doc_id
+        run: python scripts/match_estatus_a_sil_documentos.py
+
+      - name: 3. Default 'Pendiente' a SEN_* aún sin estatus
+        run: python scripts/default_pendiente_senadores.py
+
+      - name: 4. Recalcular conteos + sync D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python scripts/radar_pipeline.py --skip-scraper
+
+      - name: 5. Verificación
+        run: |
+          sleep 5
+          curl -s "https://fiat-busqueda.rreubenleon.workers.dev/radar?camara=Senado&limite=2000" \
+            | python3 -c "
+          import sys, json
+          rows = json.load(sys.stdin).get('legisladores') or []
+          for tn in ['Camarillo', 'Viggiano', 'Angulo']:
+              for c in [r for r in rows if tn in (r.get('nombre','') or '')][:1]:
+                  ia = c.get('n_ini_aprob_ind',0) + c.get('n_ini_aprob_col',0)
+                  ip = c.get('n_ini_pend_ind',0) + c.get('n_ini_pend_col',0)
+                  id_ = c.get('n_ini_desech_ind',0) + c.get('n_ini_desech_col',0)
+                  pa = c.get('n_prop_aprob_ind',0) + c.get('n_prop_aprob_col',0)
+                  pp = c.get('n_prop_pend_ind',0) + c.get('n_prop_pend_col',0)
+                  pd = c.get('n_prop_desech_ind',0) + c.get('n_prop_desech_col',0)
+                  print(f\"{c['nombre']}: ini A={ia} P={ip} D={id_} | prop A={pa} P={pp} D={pd}\")"
+
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: semaforo.db
+          key: semaforo-db-cerrar-est-${{ github.run_id }}
