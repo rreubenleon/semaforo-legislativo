@@ -2950,16 +2950,36 @@
                                     <div className="text-xl font-bold mt-0.5 font-mono">{hitPct != null ? `${hitPct}%` : '—'}</div>
                                     <div className="text-[10px] text-white/60 font-mono">{leg.hit_respondio ?? 0}/{leg.hit_total ?? 0} picos</div>
                                 </div>
-                                <div className="bg-white/10 rounded-lg p-2.5 text-center" title="Iniciativas individuales (sin firmas con bancada). Las colectivas se cuentan aparte abajo.">
-                                    <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Ini · solo</div>
-                                    <div className="text-xl font-bold mt-0.5 font-mono">{l3pIni}</div>
-                                    <div className="text-[10px] text-white/60 font-mono">+{leg.l3p_iniciativas_col ?? 0} bancada</div>
-                                </div>
-                                <div className="bg-white/10 rounded-lg p-2.5 text-center" title="Proposiciones de punto de acuerdo individuales. Las firmadas con bancada se cuentan aparte abajo.">
-                                    <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Prop · solo</div>
-                                    <div className="text-xl font-bold mt-0.5 font-mono">{l3pProp}</div>
-                                    <div className="text-[10px] text-white/60 font-mono">+{leg.l3p_proposiciones_col ?? 0} bancada</div>
-                                </div>
+                                {/* Para diputados usa diputado_instrumento (fuente
+                                    oficial SITL). Para senadores usa l3p_* del scrape
+                                    senado.gob.mx. NO MEZCLAR — antes había contradicción
+                                    KPI 23 vs Desglose 24 porque ambos usaban fuentes distintas. */}
+                                {(() => {
+                                    const isDip = (leg.n_ini_iniciante ?? 0) > 0 || (leg.n_prop_proponente ?? 0) > 0
+                                                  || (leg.n_ini_de_grupo ?? 0) > 0 || (leg.n_prop_de_grupo ?? 0) > 0;
+                                    const iniSolo = isDip ? (leg.n_ini_iniciante ?? 0) : Math.round(leg.l3p_iniciativas ?? 0);
+                                    const iniBanc = isDip
+                                        ? (leg.n_ini_adherente ?? 0) + (leg.n_ini_de_grupo ?? 0)
+                                        : Math.round(leg.l3p_iniciativas_col ?? 0);
+                                    const propSolo = isDip ? (leg.n_prop_proponente ?? 0) : Math.round(leg.l3p_proposiciones ?? 0);
+                                    const propBanc = isDip
+                                        ? (leg.n_prop_adherente ?? 0) + (leg.n_prop_de_grupo ?? 0)
+                                        : Math.round(leg.l3p_proposiciones_col ?? 0);
+                                    return (
+                                        <>
+                                            <div className="bg-white/10 rounded-lg p-2.5 text-center" title="Iniciativas presentadas como promovente único. El '+N bancada' suma adherente y de grupo cuando aplica.">
+                                                <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Ini · solo</div>
+                                                <div className="text-xl font-bold mt-0.5 font-mono">{iniSolo}</div>
+                                                <div className="text-[10px] text-white/60 font-mono">+{iniBanc} bancada</div>
+                                            </div>
+                                            <div className="bg-white/10 rounded-lg p-2.5 text-center" title="Proposiciones de punto de acuerdo como proponente único. El '+N bancada' suma colectivas.">
+                                                <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Prop · solo</div>
+                                                <div className="text-xl font-bold mt-0.5 font-mono">{propSolo}</div>
+                                                <div className="text-[10px] text-white/60 font-mono">+{propBanc} bancada</div>
+                                            </div>
+                                        </>
+                                    );
+                                })()}
                             </div>
                         </div>
 

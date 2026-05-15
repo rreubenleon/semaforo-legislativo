@@ -71,15 +71,27 @@ def construir_prompt_usuario(leg: dict) -> str:
     matchup_tasa = leg.get("matchup_tasa")
     matchup_str = f"{matchup} ({round(matchup_tasa * 100)}% dictaminado)" if matchup_tasa else matchup
 
-    ini_proy = leg.get("iniciativas_proy_15d")
-    prop_proy = leg.get("proposiciones_proy_15d")
-    l3p_ini = leg.get("l3p_iniciativas", 0) or 0
-    l3p_prop = leg.get("l3p_proposiciones", 0) or 0
-    l3p_total = l3p_ini + l3p_prop
+    # Diputados: usar conteos por rol (fuente oficial SITL).
+    # Senadores: usar l3p_* (scrape senado.gob.mx).
+    is_dip = (leg.get("n_ini_iniciante") or 0) > 0 or (leg.get("n_prop_proponente") or 0) > 0 \
+             or (leg.get("n_ini_de_grupo") or 0) > 0 or (leg.get("n_prop_de_grupo") or 0) > 0
+    if is_dip:
+        ini_solo = leg.get("n_ini_iniciante") or 0
+        prop_solo = leg.get("n_prop_proponente") or 0
+        ini_banc = (leg.get("n_ini_adherente") or 0) + (leg.get("n_ini_de_grupo") or 0)
+        prop_banc = (leg.get("n_prop_adherente") or 0) + (leg.get("n_prop_de_grupo") or 0)
+    else:
+        ini_solo = round(leg.get("l3p_iniciativas") or 0)
+        prop_solo = round(leg.get("l3p_proposiciones") or 0)
+        ini_banc = round(leg.get("l3p_iniciativas_col") or 0)
+        prop_banc = round(leg.get("l3p_proposiciones_col") or 0)
 
     cat = leg.get("categoria_dominante") or "sin categoría dominante"
     comisiones = leg.get("comisiones_cargo") or "sin comisiones registradas"
 
+    # NO incluir proyecciones de 15 días — esos números cambian cada semana
+    # y la narrativa quedaría obsoleta. Las proyecciones ya se muestran
+    # en KPI numérico aparte. La narrativa debe enfocarse en datos estables.
     return f"""\
 Legislador: {leg['nombre']}
 Partido: {leg.get('partido', '?')}
@@ -88,12 +100,14 @@ Estado: {leg.get('estado', '?')}
 Categoría dominante: {cat}
 Hit rate (reacción a picos mediáticos): {hit_str}
 Matchup grade (comisión {matchup_com}): {matchup_str}
-Iniciativas proyectadas 15d: {ini_proy if ini_proy is not None else 'N/A'}
-Proposiciones proyectadas 15d: {prop_proy if prop_proy is not None else 'N/A'}
-Total instrumentos LXVI: {l3p_total} (ini: {l3p_ini}, prop: {l3p_prop})
+Iniciativas LXVI: {ini_solo} como promovente único + {ini_banc} firmadas con bancada
+Proposiciones LXVI: {prop_solo} como promovente único + {prop_banc} firmadas con bancada
 Comisiones: {comisiones}
 
-Escribe la narrativa (2-3 oraciones, máximo 60 palabras):"""
+Escribe la narrativa (2-3 oraciones, máximo 60 palabras). NO menciones
+proyecciones a 15 días (los números cambian cada semana). Enfócate en
+patrón de trabajo, área de especialidad y posicionamiento real.
+"""
 
 
 def obtener_legisladores_d1() -> list[dict]:
