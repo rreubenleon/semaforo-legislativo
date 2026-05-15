@@ -9,11 +9,11 @@ on:
   workflow_dispatch:
     inputs:
       modo:
-        description: 'incremental (solo refs conocidas) | barrido (rango completo) | test (3 refs)'
+        description: 'incremental (solo refs conocidas) | descubrimiento (rango completo) | test (3 refs)'
         required: false
         default: 'incremental'
         type: choice
-        options: ['incremental', 'barrido', 'test']
+        options: ['incremental', 'descubrimiento', 'test']
 
 permissions:
   contents: read
