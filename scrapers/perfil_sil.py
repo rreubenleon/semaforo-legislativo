@@ -512,19 +512,45 @@ def scrape_perfiles_sil(
             fecha_scraping TEXT
         )
     """)
+    # Schema completo legisladores_trayectoria — debe matchear el INSERT
+    # del script (cargo, estado, distrito, principio_eleccion, comisiones,
+    # fecha_inicio, fecha_fin, fuente). Fix 15-may: anterior versión faltaba
+    # estas columnas y causaba 'no column named cargo' en cada INSERT.
     conn.execute("""
         CREATE TABLE IF NOT EXISTS legisladores_trayectoria (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             legislador_id INTEGER NOT NULL,
             legislatura TEXT,
+            cargo TEXT,
             camara TEXT,
             partido TEXT,
-            entidad TEXT,
-            tipo_eleccion TEXT,
-            fecha_protesta TEXT,
-            UNIQUE(legislador_id, legislatura, camara)
+            estado TEXT,
+            distrito TEXT,
+            principio_eleccion TEXT,
+            comisiones TEXT,
+            fecha_inicio TEXT,
+            fecha_fin TEXT,
+            fuente TEXT,
+            UNIQUE(legislador_id, legislatura, cargo)
         )
     """)
+    # Si la tabla existía con schema viejo, agregar columnas faltantes
+    # (idempotente). ALTER TABLE ADD COLUMN no soporta IF NOT EXISTS,
+    # entonces try/except cada una.
+    for col, ddl in [
+        ("cargo", "ALTER TABLE legisladores_trayectoria ADD COLUMN cargo TEXT"),
+        ("estado", "ALTER TABLE legisladores_trayectoria ADD COLUMN estado TEXT"),
+        ("distrito", "ALTER TABLE legisladores_trayectoria ADD COLUMN distrito TEXT"),
+        ("principio_eleccion", "ALTER TABLE legisladores_trayectoria ADD COLUMN principio_eleccion TEXT"),
+        ("comisiones", "ALTER TABLE legisladores_trayectoria ADD COLUMN comisiones TEXT"),
+        ("fecha_inicio", "ALTER TABLE legisladores_trayectoria ADD COLUMN fecha_inicio TEXT"),
+        ("fecha_fin", "ALTER TABLE legisladores_trayectoria ADD COLUMN fecha_fin TEXT"),
+        ("fuente", "ALTER TABLE legisladores_trayectoria ADD COLUMN fuente TEXT"),
+    ]:
+        try:
+            conn.execute(ddl)
+        except sqlite3.OperationalError:
+            pass  # columna ya existe
     conn.commit()
 
     # Decidir el set de refs a procesar
