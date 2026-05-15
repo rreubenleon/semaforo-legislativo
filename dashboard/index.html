@@ -2669,19 +2669,24 @@
             const l3pTotal = (leg.l3p_iniciativas ?? 0) + (leg.l3p_proposiciones ?? 0);
             const grade = leg.matchup_grade;
             const gradeStyle = grade === 'A' ? 'text-emerald-600' : grade === 'B' ? 'text-lime-600' : grade === 'C' ? 'text-amber-600' : grade === 'D' ? 'text-orange-600' : grade === 'F' ? 'text-red-600' : 'text-gray-400';
-            /* NUEVA Efectividad (mayo 12): tasa de éxito pura.
-               Antes: elo_indice mezclaba partidas + percentiles → premiaba
-               actividad incluso con 0 aprobados (Vargas 75/100 con 0 aprob).
-               Ahora: aprobados / (aprobados + desechados) × 100.
-               Cuenta tanto individuales como colectivos del legislador.
-               Si no hay resoluciones (todo pendiente), Efectividad = null. */
+            /* Efectividad — Wilson 95% LB (mayo 15). Antes era tasa cruda
+               (aprob/resueltos) que daba 100% a 1/1 (Imelda) y mentía sobre
+               productividad. Wilson penaliza automáticamente muestras chicas:
+               1/1 → 5%, 5/29 → 7%, 20/30 → 49%. */
             const aprob = (leg.n_ini_aprob_ind ?? 0) + (leg.n_ini_aprob_col ?? 0)
                           + (leg.n_prop_aprob_ind ?? 0) + (leg.n_prop_aprob_col ?? 0);
             const desech = (leg.n_ini_desech_ind ?? 0) + (leg.n_ini_desech_col ?? 0)
                            + (leg.n_prop_desech_ind ?? 0) + (leg.n_prop_desech_col ?? 0);
             const resueltos = aprob + desech;
-            const efInd = resueltos >= 1 ? Math.round((aprob / resueltos) * 100) : null;
-            const efColor = efInd == null ? 'text-gray-400' : efInd >= 50 ? 'text-emerald-600' : efInd >= 30 ? 'text-lime-600' : efInd >= 15 ? 'text-amber-600' : 'text-red-600';
+            let efInd = null;
+            if (resueltos >= 1) {
+                const p = aprob / resueltos, n = resueltos, z = 1.96;
+                const denom = 1 + (z * z) / n;
+                const center = p + (z * z) / (2 * n);
+                const margin = z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n));
+                efInd = Math.round(Math.max(0, (center - margin) / denom) * 100);
+            }
+            const efColor = efInd == null ? 'text-gray-400' : efInd >= 40 ? 'text-emerald-600' : efInd >= 20 ? 'text-lime-600' : efInd >= 10 ? 'text-amber-600' : 'text-red-600';
 
             return (
                 <div onClick={onClick}
@@ -3277,11 +3282,14 @@
         }
 
         function TabEfectividad({ leg }) {
-            /* REDISEÑO 15-may: Efectividad NUEVA basada en tasa de éxito.
-               Antes ELO + percentil daba números difíciles de interpretar
-               ("Percentil 43 de Senado" = ¿qué significa?). Ahora:
-                 Efectividad = aprobados / (aprobados + desechados) × 100
-               Universal, intuitiva, alineada con la columna del Radar. */
+            /* REDISEÑO 15-may v3: tasa éxito + Wilson lower bound (95% CI).
+               Imelda 1/1 = 100% crudo era engañoso. Wilson penaliza
+               automáticamente muestras chicas:
+                 1/1  → Wilson 5%   (era 100% crudo)
+                 5/29 → Wilson 7%   (era 17% crudo)
+                 20/30 → Wilson 49% (era 67% crudo)
+               Estándar de industria (Reddit, IMDB) para ranking con
+               sample variable. Cobertura universal preservada. */
             const isDip = (leg.n_ini_iniciante ?? 0) > 0 || (leg.n_prop_proponente ?? 0) > 0
                           || (leg.n_ini_de_grupo ?? 0) > 0 || (leg.n_prop_de_grupo ?? 0) > 0;
             const aprob = (leg.n_ini_aprob_ind ?? 0) + (leg.n_ini_aprob_col ?? 0)
@@ -3291,7 +3299,18 @@
             const pend = (leg.n_ini_pend_ind ?? 0) + (leg.n_ini_pend_col ?? 0)
                          + (leg.n_prop_pend_ind ?? 0) + (leg.n_prop_pend_col ?? 0);
             const resueltos = aprob + desech;
-            const indice = resueltos >= 1 ? Math.round((aprob / resueltos) * 100) : null;
+            const tasaCruda = resueltos >= 1 ? (aprob / resueltos) : null;
+            // Wilson 95% lower bound — manejo correcto de samples chicos.
+            function wilsonLB(success, n, z = 1.96) {
+                if (n <= 0) return null;
+                const p = success / n;
+                const denom = 1 + (z * z) / n;
+                const center = p + (z * z) / (2 * n);
+                const margin = z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n));
+                return Math.max(0, (center - margin) / denom);
+            }
+            const wilson = resueltos >= 1 ? wilsonLB(aprob, resueltos) : null;
+            const indice = wilson != null ? Math.round(wilson * 100) : null;
 
             // Total presentado LXVI (fuente correcta por cámara)
             const iniSolo = isDip ? (leg.n_ini_iniciante ?? 0) : Math.round(leg.l3p_iniciativas ?? 0);
@@ -3326,10 +3345,13 @@
             }
 
             const pctApr = resueltos ? Math.round(100 * aprob / resueltos) : 0;
-            const tier = indice >= 50 ? { label: 'ALTO', desc: 'Más de la mitad de sus instrumentos resueltos obtuvieron dictamen aprobatorio.', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', barBg: 'bg-emerald-500' }
-                : indice >= 30 ? { label: 'MEDIO', desc: 'Una de cada tres iniciativas resueltas obtuvo aprobación.', color: 'text-lime-700', bg: 'bg-lime-50 border-lime-200', barBg: 'bg-lime-500' }
-                : indice >= 15 ? { label: 'LIMITADO', desc: 'Pocas resoluciones favorables sobre el total resuelto.', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200', barBg: 'bg-amber-500' }
-                : { label: 'MÍNIMO', desc: 'La mayoría de sus instrumentos resueltos fueron desechados.', color: 'text-red-700', bg: 'bg-red-50 border-red-200', barBg: 'bg-red-500' };
+            // Thresholds ajustados al Wilson lower bound (más bajos que tasa cruda).
+            // Wilson 40+ ≈ tasa cruda 50-60%+ con sample bueno. Wilson <10 ≈ casi
+            // nada aprobado o sample muy chico.
+            const tier = indice >= 40 ? { label: 'ALTO', desc: 'Sample robusto con alta proporción de aprobaciones (Wilson 40+ ≈ tasa cruda ≥50% con ≥10 resueltos).', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', barBg: 'bg-emerald-500' }
+                : indice >= 20 ? { label: 'MEDIO', desc: 'Resultados positivos consistentes, ajustado por tamaño de muestra.', color: 'text-lime-700', bg: 'bg-lime-50 border-lime-200', barBg: 'bg-lime-500' }
+                : indice >= 10 ? { label: 'LIMITADO', desc: 'Pocas aprobaciones o muestra insuficiente para confiar.', color: 'text-amber-700', bg: 'bg-amber-50 border-amber-200', barBg: 'bg-amber-500' }
+                : { label: 'MÍNIMO', desc: 'Casi nada aprobado, o muy poca muestra resuelta a la fecha.', color: 'text-red-700', bg: 'bg-red-50 border-red-200', barBg: 'bg-red-500' };
 
             // Distribuciones para barra apilada (sobre total presentado LXVI)
             const total = aprob + desech + pend;
@@ -3339,7 +3361,7 @@
 
             return (
                 <div className="space-y-4">
-                    {/* Headline card */}
+                    {/* Headline card — Wilson como número principal, tasa cruda visible */}
                     <div className={`rounded-xl border p-4 ${tier.bg}`}>
                         <div className="flex items-baseline justify-between gap-3">
                             <div>
@@ -3349,8 +3371,13 @@
                                     <div className="text-lg text-gray-400 font-mono">/100</div>
                                 </div>
                                 <div className="text-xs text-gray-700 font-mono mt-1">
-                                    {aprob}/{resueltos} resoluciones a favor
+                                    {aprob}/{resueltos} resoluciones · tasa cruda {Math.round((tasaCruda || 0) * 100)}%
                                 </div>
+                                {resueltos < 5 && resueltos > 0 && (
+                                    <div className="text-[10px] text-amber-700 font-mono mt-1 italic">
+                                        ⚠ Muestra mínima ({resueltos} resoluciones)
+                                    </div>
+                                )}
                             </div>
                             <div className="text-right">
                                 <div className={`text-xs font-black tracking-wider ${tier.color}`}>{tier.label}</div>
@@ -3372,16 +3399,14 @@
                     <div className="bg-white border border-gray-200 rounded-xl p-4 text-[13px] text-gray-700 leading-relaxed">
                         <div className="font-bold text-gray-900 mb-1.5 font-mono uppercase text-[10px] tracking-wider">Qué mide</div>
                         <div>
-                            Porcentaje de instrumentos del legislador que llegaron a dictamen aprobatorio,
-                            sobre el total con resolución registrada (aprobados + desechados).
-                            Las iniciativas en revisión o pendientes no entran al cálculo porque aún no
-                            tienen resultado.
+                            Tasa de aprobación de instrumentos legislativos, ajustada por confianza estadística.
+                            Calculada con Wilson lower bound al 95% — el mismo método que usan rankings de Reddit,
+                            IMDB y Amazon para combinar "% éxito" con "tamaño de muestra" en un solo número honesto.
                         </div>
                         <div className="mt-2 text-[12px] text-gray-600">
-                            La mayoría de los legisladores tienen Efectividad baja: ese es el comportamiento normal del
-                            proceso parlamentario, donde muchos instrumentos se quedan en comisión sin dictamen. El número
-                            no es un juicio sobre el trabajo legislativo total: para posicionamiento mediático y reacción
-                            a la agenda pública, ver Hit Rate.
+                            <strong>Por qué no la tasa cruda:</strong> alguien con 1/1 aprobada tendría 100% crudo
+                            pero esa cifra no significa nada con tan poca muestra. Wilson penaliza muestras chicas
+                            automáticamente: 1/1 → 5, 5/10 → 22, 20/30 → 49. Todos comparables, ninguno engaña.
                         </div>
                     </div>
 
@@ -3527,28 +3552,32 @@
                         );
                     })()}
 
-                    {/* Metodología tasa éxito */}
+                    {/* Metodología tasa éxito + Wilson */}
                     <details className="text-[11px] text-gray-600 bg-white border border-gray-200 rounded-lg">
                         <summary className="px-3 py-2 cursor-pointer font-bold text-gray-700 font-mono uppercase text-[10px] tracking-wider hover:bg-gray-50">Cómo se calcula la Efectividad</summary>
                         <div className="px-3 pb-3 leading-relaxed space-y-2">
                             <div>
-                                <strong>Fórmula:</strong> Efectividad = aprobados ÷ (aprobados + desechados) × 100.
-                                Solo los instrumentos con resolución registrada entran al cálculo.
+                                <strong>Fórmula completa:</strong> Wilson lower bound al 95% sobre aprobados / (aprobados + desechados).
+                                Las iniciativas en revisión (sin dictamen aún) no entran al cálculo.
                             </div>
                             <div>
-                                Las iniciativas y proposiciones aún en comisión (turnadas pero sin dictamen) cuentan
-                                como volumen presentado pero no penalizan ni inflan la Efectividad — están "en revisión".
+                                <strong>Ejemplos comparativos:</strong>
+                                <ul className="list-disc list-inside text-[11px] mt-1 space-y-0.5">
+                                    <li>1 aprobada / 1 resuelta · crudo 100% · Wilson <strong>5</strong></li>
+                                    <li>5 aprobadas / 10 resueltas · crudo 50% · Wilson <strong>22</strong></li>
+                                    <li>20 aprobadas / 30 resueltas · crudo 67% · Wilson <strong>49</strong></li>
+                                </ul>
                             </div>
                             <div>
-                                <strong>Por qué casi nadie está arriba del 50:</strong> el proceso parlamentario mexicano
-                                tiene baja tasa de dictamen en general. Una Efectividad de 30 ya está en la mitad alta de
-                                la cámara. Solo legisladores que presiden comisiones activas o tienen agenda alineada con
-                                la mayoría llegan a tasas mayores.
+                                <strong>Por qué Wilson:</strong> estándar de industria para rankings con sample variable
+                                (Reddit, IMDB, Amazon usan la misma fórmula). Penaliza automáticamente muestras chicas
+                                sin excluirlas — todos los legisladores quedan medibles y comparables.
                             </div>
                             <div>
-                                <strong>Diferencia con Lectura analítica:</strong> la Efectividad de arriba es simple
-                                (cuántas tuyas pasaron, cuántas no). La Lectura analítica abajo ajusta por dificultad de
-                                comisión — premia el mérito de presentar en comisiones que casi nunca dictaminan.
+                                <strong>Diferencia con Lectura analítica:</strong> la Efectividad de arriba responde
+                                "¿cuántas de tus cosas pasaron, ajustado por cuánta muestra hay?". La Lectura analítica
+                                de abajo ajusta también por dificultad de comisión (premia presentar en comisiones que
+                                casi nunca dictaminan).
                             </div>
                         </div>
                     </details>
