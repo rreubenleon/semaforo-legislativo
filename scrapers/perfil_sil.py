@@ -29,6 +29,11 @@ from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from db import get_connection
+from utils.matcher import (
+    build_bd_index,
+    encontrar_legislador_id,
+    normalizar_nombre as _matcher_normalizar,
+)
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 warnings.filterwarnings("ignore", category=urllib3.exceptions.InsecureRequestWarning)
@@ -359,39 +364,36 @@ def descubrir_refs_lxvi(
 # ────────────────────────────────────────────
 # Persistencia
 # ────────────────────────────────────────────
-def _match_legislador_id(conn, nombre_sil: str, camara_sil: str | None) -> int | None:
-    """Busca el legislador_id existente por nombre normalizado."""
-    nombre_norm = _normalizar_nombre(nombre_sil)
-    if not nombre_norm:
+def _match_legislador_id(conn, nombre_sil: str, camara_sil: str | None,
+                         bd_idx=None) -> int | None:
+    """Busca legislador_id usando el matcher robusto (utils/matcher).
+
+    Reemplazo 15-may: el matcher anterior (exact + LIKE últimas 2
+    palabras) tenía 45% de sin_match. utils.matcher.encontrar_legislador_id
+    resuelve nombre invertido, segundos apellidos, concatenación
+    (Bolaños-Cacho), y fallback 2-token (Lilly Téllez). bd_idx se
+    construye una vez por run y se pasa para no reconstruir por ref.
+    """
+    if bd_idx is None:
+        bd_idx = build_bd_index(conn)
+    nn = _matcher_normalizar(nombre_sil or "")
+    if not nn:
         return None
-
-    # Match exacto
-    row = conn.execute(
-        "SELECT id FROM legisladores WHERE nombre_normalizado = ?",
-        (nombre_norm,),
-    ).fetchone()
-    if row:
-        return row[0]
-
-    # Fallback: match por apellidos (últimas 2 palabras)
-    partes = nombre_norm.split()
-    if len(partes) >= 2:
-        apellidos = " ".join(partes[-2:])
-        row = conn.execute(
-            "SELECT id FROM legisladores WHERE nombre_normalizado LIKE ? LIMIT 1",
-            (f"%{apellidos}%",),
-        ).fetchone()
-        if row:
-            return row[0]
-
-    return None
+    cam = "Senado" if (camara_sil and "senad" in camara_sil.lower()) else "Diputados"
+    leg_id = encontrar_legislador_id(nn, cam, bd_idx)
+    if leg_id:
+        return leg_id
+    # Si no machó con la cámara declarada, intentar la otra (el SIL a veces
+    # marca mal la cámara para reelectos que cambiaron de curul).
+    otra = "Diputados" if cam == "Senado" else "Senado"
+    return encontrar_legislador_id(nn, otra, bd_idx)
 
 
-def guardar_perfil(conn, parsed: dict) -> bool:
+def guardar_perfil(conn, parsed: dict, bd_idx=None) -> bool:
     """UPSERT idempotente de perfil + trayectoria."""
     perfil = parsed["perfil"]
     ref = perfil["legislador_ref"]
-    leg_id = _match_legislador_id(conn, perfil["nombre_sil"], perfil["camara_sil"])
+    leg_id = _match_legislador_id(conn, perfil["nombre_sil"], perfil["camara_sil"], bd_idx)
 
     if not leg_id:
         logger.debug(f"  Ref {ref}: sin match en legisladores ({perfil['nombre_sil'][:40]})")
@@ -593,6 +595,10 @@ def scrape_perfiles_sil(
     if refs_ya:
         logger.info(f"Skip-cache: {len(refs_ya)} refs ya scrapeadas, se saltan")
 
+    # Índice de legisladores construido UNA vez (no por ref).
+    bd_idx = build_bd_index(conn)
+    logger.info(f"Índice matcher: {len(bd_idx)} legisladores")
+
     for i, ref in enumerate(refs):
         if ref in refs_ya:
             stats["skip"] += 1
@@ -610,7 +616,7 @@ def scrape_perfiles_sil(
             continue
 
         try:
-            ok = guardar_perfil(conn, parsed)
+            ok = guardar_perfil(conn, parsed, bd_idx)
             if ok:
                 stats["guardadas"] += 1
             else:
