@@ -494,6 +494,39 @@ def scrape_perfiles_sil(
     session = requests.Session()
     session.headers.update(HEADERS)
 
+    # Asegurar que las tablas existan (idempotente, no destructivo).
+    # El seed v4 puede no incluir estas tablas; crearlas si faltan.
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS legisladores_perfil (
+            legislador_id INTEGER PRIMARY KEY,
+            biografia TEXT,
+            anio_nacimiento INTEGER,
+            genero TEXT,
+            profesion TEXT,
+            estudios TEXT,
+            twitter_handle TEXT,
+            web_personal TEXT,
+            foto_hd_url TEXT,
+            wikipedia_url TEXT,
+            fuente_scraping TEXT,
+            fecha_scraping TEXT
+        )
+    """)
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS legisladores_trayectoria (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            legislador_id INTEGER NOT NULL,
+            legislatura TEXT,
+            camara TEXT,
+            partido TEXT,
+            entidad TEXT,
+            tipo_eleccion TEXT,
+            fecha_protesta TEXT,
+            UNIQUE(legislador_id, legislatura, camara)
+        )
+    """)
+    conn.commit()
+
     # Decidir el set de refs a procesar
     if modo == "incremental":
         cur = conn.execute(
