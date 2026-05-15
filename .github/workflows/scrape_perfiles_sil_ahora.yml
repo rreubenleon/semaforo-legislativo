@@ -1,0 +1,85 @@
+name: Scrape Perfiles SIL (one-off)
+
+# Workflow para correr scrape_perfiles_sil ahora y subir cobertura de
+# biografía/estudios/año nacimiento de 70% → 95%+.
+#
+# Después del run, el cron mensual (monthly.yml) lo mantiene fresco.
+
+on:
+  workflow_dispatch:
+    inputs:
+      modo:
+        description: 'incremental (solo refs conocidas) | barrido (rango completo) | test (3 refs)'
+        required: false
+        default: 'incremental'
+        type: choice
+        options: ['incremental', 'barrido', 'test']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "scrape-perfiles-sil"
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-perfiles-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: |
+          pip install -r requirements.txt
+          npm install -g wrangler@3
+
+      - name: Scrape perfiles SIL
+        env:
+          PYTHONUNBUFFERED: "1"
+        run: python -u -m scrapers.perfil_sil --modo ${{ inputs.modo || 'incremental' }}
+
+      - name: Sync legisladores_perfil a D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python scripts/sync_legisladores_cargo_d1.py
+        continue-on-error: true
+
+      - name: Verificación
+        run: |
+          sleep 5
+          curl -s "https://fiat-busqueda.rreubenleon.workers.dev/radar?limite=2000" \
+            | python3 -c "
+          import sys, json
+          rows = json.load(sys.stdin).get('legisladores') or []
+          total = len(rows)
+          con_bio = sum(1 for r in rows if r.get('biografia'))
+          con_anio = sum(1 for r in rows if r.get('anio_nacimiento'))
+          print(f'Total: {total}')
+          print(f'Con bio: {con_bio} ({con_bio*100//total}%)')
+          print(f'Con año nacim: {con_anio} ({con_anio*100//total}%)')"
+
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: semaforo.db
+          key: semaforo-db-perfiles-${{ github.run_id }}

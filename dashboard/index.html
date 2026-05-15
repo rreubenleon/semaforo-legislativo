@@ -3988,13 +3988,39 @@
                             <div className="text-gray-700 text-xs leading-relaxed whitespace-pre-wrap">{leg.biografia}</div>
                         </div>
                     )}
-                    {leg.fuente_perfil && (
-                        <div className="pt-2 border-t border-gray-100 text-[10px] text-gray-400">
-                            Fuente: {leg.fuente_perfil}
-                        </div>
-                    )}
+                    {/* Link al perfil oficial SIL — parsea SID:N de fuente_perfil
+                        a la URL pública del SIL Gobernación. */}
+                    {leg.fuente_perfil && (() => {
+                        const m = String(leg.fuente_perfil).match(/SIL:?(\d+)/i);
+                        const ref = m ? m[1] : null;
+                        const url = ref ? `https://sil.gobernacion.gob.mx/Librerias/pp_PerfilLegislador.php?Referencia=${ref}` : null;
+                        return (
+                            <div className="pt-2 border-t border-gray-100 text-[10px] text-gray-400 flex items-center justify-between">
+                                <span>Fuente: SIL Gobernación{ref ? ` · ref ${ref}` : ''}</span>
+                                {url && (
+                                    <a href={url} target="_blank" rel="noopener noreferrer"
+                                       className="text-acento font-semibold hover:underline">
+                                        Ver perfil oficial ↗
+                                    </a>
+                                )}
+                            </div>
+                        );
+                    })()}
                     {!leg.profesion && !leg.estudios && !leg.biografia && (
-                        <div className="text-xs text-gray-500 italic">Perfil aún no scrapeado desde SIL.</div>
+                        <div className="text-xs text-gray-500 italic">
+                            Perfil aún no scrapeado desde SIL.
+                            {leg.fuente_perfil && (() => {
+                                const m = String(leg.fuente_perfil).match(/SIL:?(\d+)/i);
+                                return m ? (
+                                    <>
+                                        {' '}
+                                        <a href={`https://sil.gobernacion.gob.mx/Librerias/pp_PerfilLegislador.php?Referencia=${m[1]}`}
+                                           target="_blank" rel="noopener noreferrer"
+                                           className="text-acento hover:underline">Ver perfil oficial ↗</a>
+                                    </>
+                                ) : null;
+                            })()}
+                        </div>
                     )}
                 </div>
             );

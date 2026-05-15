@@ -86,6 +86,15 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
 
+      # 4. Re-scrape perfiles SIL — bio, año nacimiento, estudios, etc.
+      #    El enriquecimiento biográfico es estático, mensual es suficiente.
+      #    ~30 min para los 686 legisladores.
+      - name: Re-scrape perfiles SIL (bio + estudios)
+        env:
+          PYTHONUNBUFFERED: "1"
+        run: python -m scrapers.perfil_sil --modo incremental
+        continue-on-error: true
+
       # Guardar BD actualizada en cache
       - name: Guardar SQLite DB en cache
         if: always()
