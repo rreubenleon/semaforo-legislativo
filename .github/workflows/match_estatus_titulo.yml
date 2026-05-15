@@ -1,0 +1,102 @@
+name: Match Estatus por Título (one-off)
+
+# Workflow para recuperar estatus de 4,757 sil_documentos SEN_*
+# sin estatus, matcheando por TÍTULO contra estatus_senado_panel
+# (en lugar de gaceta_doc_id que no existe en esos docs).
+#
+# Pasos:
+#   1. Dry-run: reportar cobertura esperada + muestra de matches
+#   2. Apply: UPDATE sil_documentos.estatus
+#   3. Re-correr radar_pipeline para refrescar conteos_estado en D1
+#   4. Verificación Camarillo (debe tener más A/P/D contadas)
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run_only:
+        description: 'Solo reportar (no escribir)'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "match-estatus-titulo"
+
+jobs:
+  match:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-match-est-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: |
+          pip install -r requirements.txt
+          npm install -g wrangler@3
+
+      - name: 1. Dry-run (reportar cobertura)
+        run: python scripts/match_estatus_por_titulo.py --dry-run
+
+      - name: 2. Aplicar matches (UPDATE estatus)
+        if: ${{ inputs.dry_run_only != 'true' }}
+        run: python scripts/match_estatus_por_titulo.py
+
+      - name: 3. Recalcular conteos_estado + sync D1
+        if: ${{ inputs.dry_run_only != 'true' }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python scripts/radar_pipeline.py --skip-scraper
+
+      - name: 4. Verificación Camarillo + agregados
+        if: ${{ inputs.dry_run_only != 'true' }}
+        run: |
+          sleep 5
+          curl -s "https://fiat-busqueda.rreubenleon.workers.dev/radar?camara=Senado&limite=2000" \
+            | python3 -c "
+          import sys, json
+          rows = json.load(sys.stdin).get('legisladores') or []
+          # Camarillo específico
+          cam = [r for r in rows if 'Camarillo' in (r.get('nombre','') or '')]
+          for c in cam:
+              ia = (c.get('n_ini_aprob_ind',0) + c.get('n_ini_aprob_col',0))
+              ip = (c.get('n_ini_pend_ind',0) + c.get('n_ini_pend_col',0))
+              id_ = (c.get('n_ini_desech_ind',0) + c.get('n_ini_desech_col',0))
+              pa = (c.get('n_prop_aprob_ind',0) + c.get('n_prop_aprob_col',0))
+              pp = (c.get('n_prop_pend_ind',0) + c.get('n_prop_pend_col',0))
+              pd = (c.get('n_prop_desech_ind',0) + c.get('n_prop_desech_col',0))
+              print(f\"{c['nombre']}: ini A={ia} P={ip} D={id_} | prop A={pa} P={pp} D={pd}\")
+          # Agregado: cuántos senadores con todo en cero
+          n_total = len([r for r in rows if r.get('camara','').startswith(('Senado','Cámara'))])
+          n_zero = sum(1 for r in rows if r.get('camara','').startswith(('Senado','Cámara')) and (
+              (r.get('n_ini_aprob_ind',0) + r.get('n_ini_aprob_col',0) + r.get('n_ini_desech_ind',0) + r.get('n_ini_desech_col',0)) == 0))
+          print(f'Senadores con 0 aprob+desech en ini: {n_zero}/{n_total}')"
+
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: semaforo.db
+          key: semaforo-db-match-est-${{ github.run_id }}
