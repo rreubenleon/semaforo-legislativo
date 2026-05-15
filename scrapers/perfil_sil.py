@@ -572,9 +572,31 @@ def scrape_perfiles_sil(
 
     logger.info(f"Procesando {len(refs)} refs SIL en modo '{modo}'")
 
-    stats = {"procesadas": 0, "guardadas": 0, "sin_match": 0, "errores": 0}
+    stats = {"procesadas": 0, "guardadas": 0, "sin_match": 0, "errores": 0, "skip": 0}
+
+    # Skip de refs ya scrapeadas (resumibilidad ante timeouts).
+    # El cache de GH Actions se guarda con if:always() así que la BD
+    # parcial persiste; el siguiente run salta lo ya hecho y continúa.
+    refs_ya = set()
+    try:
+        cur = conn.execute(
+            "SELECT fuente_scraping FROM legisladores_perfil "
+            "WHERE fuente_scraping LIKE 'SIL:%'"
+        )
+        for (fs,) in cur.fetchall():
+            try:
+                refs_ya.add(int(str(fs).split(":")[1]))
+            except (IndexError, ValueError):
+                pass
+    except sqlite3.OperationalError:
+        pass
+    if refs_ya:
+        logger.info(f"Skip-cache: {len(refs_ya)} refs ya scrapeadas, se saltan")
 
     for i, ref in enumerate(refs):
+        if ref in refs_ya:
+            stats["skip"] += 1
+            continue
         html = _get(session, ref)
         if not html:
             stats["errores"] += 1
