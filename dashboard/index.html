@@ -3461,9 +3461,75 @@
                         );
                     })()}
 
-                    {/* Metodología */}
+                    {/* LECTURA PREMIUM: índice ajustado por dificultad de comisión.
+                        Decisión 15-may con luz verde explícita: mantener tasa éxito
+                        como headline (intuitivo) + ELO ajustado como capa premium
+                        para quien busca matiz analítico. */}
+                    {leg.elo_indice != null && (() => {
+                        const eloIdx = Math.round(leg.elo_indice);
+                        const pctCam = leg.elo_percentil_camara;
+                        const camaraShort = (leg.camara || '').replace('Cámara de ', '');
+                        const posicionTexto = pctCam == null ? null
+                            : pctCam >= 50
+                                ? `Mejor que ${Math.round(pctCam)}% de ${camaraShort}`
+                                : `Por debajo de ${Math.round(100 - pctCam)}% de ${camaraShort}`;
+                        const eloTier = eloIdx >= 80 ? { label: 'ÉLITE', color: 'text-emerald-700', bg: 'bg-emerald-50' }
+                            : eloIdx >= 60 ? { label: 'ALTO', color: 'text-lime-700', bg: 'bg-lime-50' }
+                            : eloIdx >= 40 ? { label: 'PROMEDIO', color: 'text-gray-700', bg: 'bg-gray-100' }
+                            : eloIdx >= 20 ? { label: 'LIMITADO', color: 'text-amber-700', bg: 'bg-amber-50' }
+                            : { label: 'MÍNIMO', color: 'text-red-700', bg: 'bg-red-50' };
+                        const eloPartidas = leg.elo_partidas || 0;
+                        const eloApr = leg.elo_aprobados || 0;
+                        const eloDes = leg.elo_desechados || 0;
+                        const eloPen = leg.elo_pendientes || 0;
+                        const eloDra = leg.elo_draws || 0;
+                        return (
+                            <div className="bg-gradient-to-br from-slate-50 to-gray-50 border border-slate-200 rounded-xl p-4">
+                                <div className="flex items-baseline gap-2 mb-2">
+                                    <span className="text-[9px] uppercase tracking-widest font-bold text-slate-600 font-mono">Lectura analítica</span>
+                                    <span className="text-[9px] text-slate-400 font-mono">· ajustada por dificultad de comisión</span>
+                                </div>
+                                <div className="flex items-baseline gap-4">
+                                    <div>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="text-3xl font-black text-gray-900 font-mono leading-none">{eloIdx}</span>
+                                            <span className="text-sm text-gray-400 font-mono">/100</span>
+                                        </div>
+                                        <div className={`text-[10px] font-black tracking-wider mt-1 ${eloTier.color}`}>{eloTier.label}</div>
+                                    </div>
+                                    <div className="flex-1 text-[11px] text-gray-700 leading-snug">
+                                        {posicionTexto && <div className="font-mono mb-0.5">{posicionTexto}</div>}
+                                        <div className="text-gray-600">
+                                            Esta lectura SÍ ajusta por qué tan rápido dictamina cada comisión a la que se turnan
+                                            sus instrumentos. Premia presentar en comisiones lentas (mayor mérito esperar).
+                                        </div>
+                                    </div>
+                                </div>
+                                {eloPartidas > 0 && (
+                                    <div className="mt-3 pt-2.5 border-t border-slate-200 grid grid-cols-4 gap-1.5 text-[10px] text-center font-mono">
+                                        <div><div className="font-bold text-emerald-700">{eloApr}</div><div className="text-gray-500">aprob</div></div>
+                                        <div><div className="font-bold text-red-700">{eloDes}</div><div className="text-gray-500">desec</div></div>
+                                        <div><div className="font-bold text-orange-700">{eloPen}</div><div className="text-gray-500">+180d</div></div>
+                                        <div><div className="font-bold text-gray-700">{eloDra}</div><div className="text-gray-500">90-180d</div></div>
+                                    </div>
+                                )}
+                                <details className="mt-2 text-[10px] text-gray-500">
+                                    <summary className="cursor-pointer hover:text-gray-700">Cómo se calcula</summary>
+                                    <div className="mt-1.5 leading-relaxed">
+                                        Sistema tipo ELO (K=24, base 1500). Cada instrumento es una "partida" contra la
+                                        tasa histórica de dictamen de su comisión turnada. Resultado: 1.0 aprobado, 0.0
+                                        desechado o congelado &gt;180d, 0.3 en ventana 90-180d. El rating final se remapea
+                                        a percentil dentro de legisladores con ≥3 instrumentos resueltos. Esto premia a
+                                        quienes logran avances en comisiones difíciles y penaliza alto volumen sin progresión.
+                                    </div>
+                                </details>
+                            </div>
+                        );
+                    })()}
+
+                    {/* Metodología tasa éxito */}
                     <details className="text-[11px] text-gray-600 bg-white border border-gray-200 rounded-lg">
-                        <summary className="px-3 py-2 cursor-pointer font-bold text-gray-700 font-mono uppercase text-[10px] tracking-wider hover:bg-gray-50">Cómo se calcula</summary>
+                        <summary className="px-3 py-2 cursor-pointer font-bold text-gray-700 font-mono uppercase text-[10px] tracking-wider hover:bg-gray-50">Cómo se calcula la Efectividad</summary>
                         <div className="px-3 pb-3 leading-relaxed space-y-2">
                             <div>
                                 <strong>Fórmula:</strong> Efectividad = aprobados ÷ (aprobados + desechados) × 100.
@@ -3478,6 +3544,11 @@
                                 tiene baja tasa de dictamen en general. Una Efectividad de 30 ya está en la mitad alta de
                                 la cámara. Solo legisladores que presiden comisiones activas o tienen agenda alineada con
                                 la mayoría llegan a tasas mayores.
+                            </div>
+                            <div>
+                                <strong>Diferencia con Lectura analítica:</strong> la Efectividad de arriba es simple
+                                (cuántas tuyas pasaron, cuántas no). La Lectura analítica abajo ajusta por dificultad de
+                                comisión — premia el mérito de presentar en comisiones que casi nunca dictaminan.
                             </div>
                         </div>
                     </details>
