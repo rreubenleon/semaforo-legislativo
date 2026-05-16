@@ -5561,6 +5561,7 @@
           const [paso, setPaso] = useState(PASOS[0]);
           const [search, setSearch] = useState('');
           const [searchCom, setSearchCom] = useState('');
+          const [ordenCom, setOrdenCom] = useState('nombre'); // 'nombre' | 'asuntos'
           const idx = PASOS.indexOf(paso);
 
           const toggleLeg = (id) => {
@@ -5895,15 +5896,31 @@
                         <div className="text-xs text-gray-600">
                           Hasta {limites.comisiones} comisiones · <span className="font-semibold text-acento">{counts.comisiones} seleccionadas</span>
                         </div>
-                        <input type="text" placeholder="Buscar comisión..." value={searchCom}
-                          onChange={e => setSearchCom(e.target.value)}
-                          className="w-full sm:w-72 px-3 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white" />
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="inline-flex rounded-lg border border-gray-200 bg-white overflow-hidden text-xs">
+                            {[['nombre','Alfabético'],['asuntos','Por # de asuntos']].map(([k,label], i) => (
+                              <button key={k} onClick={() => setOrdenCom(k)}
+                                className={`px-3 py-2 font-medium transition-colors ${ordenCom === k ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-50'} ${i > 0 ? 'border-l border-gray-200' : ''}`}>
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                          <input type="text" placeholder="Buscar comisión..." value={searchCom}
+                            onChange={e => setSearchCom(e.target.value)}
+                            className="w-full sm:w-64 px-3 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white" />
+                        </div>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {[
-                          { titulo: 'Cámara de Diputados', items: filtrarComs(comisionesPorCamara.dip) },
-                          { titulo: 'Senado',              items: filtrarComs(comisionesPorCamara.sen) },
-                        ].map(col => (
+                        {(() => {
+                          const asuntos = c => (c.sitl?.turnadas ?? c.total_docs ?? 0);
+                          const ordenar = lista => ordenCom === 'asuntos'
+                            ? [...lista].sort((a, b) => asuntos(b) - asuntos(a))
+                            : lista;
+                          return [
+                            { titulo: 'Cámara de Diputados', items: ordenar(filtrarComs(comisionesPorCamara.dip)) },
+                            { titulo: 'Senado',              items: ordenar(filtrarComs(comisionesPorCamara.sen)) },
+                          ];
+                        })().map(col => (
                           <div key={col.titulo} className="border border-gray-200 rounded-xl flex flex-col" style={{maxHeight: '60vh'}}>
                             <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-xl flex items-center justify-between">
                               <div className="text-xs font-bold text-gray-700">{col.titulo}</div>
