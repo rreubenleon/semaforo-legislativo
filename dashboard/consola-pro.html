@@ -5843,17 +5843,47 @@
                       <div className="text-xs text-gray-600 mb-3">
                         Hasta {limites.estados} estados · <span className="font-semibold text-acento">{counts.estados} seleccionados</span>
                       </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                        {estadosOrdenados.map(([key, info]) => {
-                          const sel = config.estados.includes(key);
-                          return (
-                            <button key={key} onClick={() => toggleEstado(key)}
-                              className={`flex items-center justify-between gap-2 px-3 py-2 text-left rounded-lg border transition ${sel ? 'bg-emerald-50 border-emerald-300' : 'bg-white border-gray-200 hover:border-gray-400'}`}>
-                              <span className="text-sm text-gray-800 truncate">{info.nombre || info.abreviatura}</span>
-                              {sel && <span className="text-emerald-600 font-bold text-sm flex-shrink-0">✓</span>}
-                            </button>
-                          );
-                        })}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        {/* Izquierda: lista compacta en 2 columnas (minimalista) */}
+                        <div className="md:col-span-2">
+                          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+                            {estadosOrdenados.map(([key, info]) => {
+                              const sel = config.estados.includes(key);
+                              return (
+                                <button key={key} onClick={() => toggleEstado(key)}
+                                  className={`flex items-center gap-2 px-2 py-1.5 text-left rounded-md transition ${sel ? 'bg-emerald-50 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>
+                                  <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border text-[10px] font-bold ${sel ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-gray-300 text-transparent'}`}>✓</span>
+                                  <span className="text-[13px] truncate">{info.nombre || info.abreviatura}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        {/* Derecha: panel de selección (aquí irá el mapa de México) */}
+                        <div className="md:col-span-1">
+                          <div className="border border-gray-200 rounded-xl p-3 bg-gray-50/60 h-full">
+                            <div className="text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-2">Seleccionados · {counts.estados}/{limites.estados}</div>
+                            {config.estados.length === 0 ? (
+                              <div className="text-[12px] text-gray-400 italic py-4 text-center">Aún no eliges estados</div>
+                            ) : (
+                              <div className="flex flex-wrap gap-1.5">
+                                {config.estados.map(k => {
+                                  const info = (mapa[k] || {});
+                                  return (
+                                    <button key={k} onClick={() => toggleEstado(k)}
+                                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white border border-emerald-200 text-emerald-700 text-[11px] font-medium hover:bg-emerald-50 transition">
+                                      {info.nombre || info.abreviatura || k}
+                                      <span className="text-emerald-400">×</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                            <div className="text-[10px] text-gray-400 mt-3 leading-relaxed border-t border-gray-200 pt-2">
+                              Mapa interactivo de México próximamente — las entidades se iluminarán al seleccionarlas.
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
