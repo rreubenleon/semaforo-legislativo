@@ -6025,7 +6025,7 @@
           const [paginaEstado, setPaginaEstado] = useState(1);
           const [ordenTemas, setOrdenTemas] = useState('todos'); // todos | score | urgencia
           const [vistaMapa, setVistaMapa] = useState('calor'); // calor | red | sat
-          const [ordenLeg, setOrdenLeg] = useState({ col: 'efectividad', dir: 'desc' });
+          const [ordenLeg, setOrdenLeg] = useState({ col: 'hit_rate', dir: 'desc' });
 
           /* Reset paginación cuando cambia estado o periodo */
           useEffect(() => { setPaginaEstado(1); }, [estadoSeleccionado, periodoEstado]);
@@ -6348,9 +6348,9 @@
                     : { col, dir: col === 'nombre' || col === 'tema' ? 'asc' : 'desc' });
                 };
                 const arrow = (col) => ordenLeg.col === col ? (ordenLeg.dir === 'asc' ? '↑' : '↓') : '';
-                const HeaderBtn = ({col, label, align='center'}) => (
-                  <button onClick={() => toggleSort(col)}
-                    className={`text-[9px] uppercase tracking-widest font-bold transition hover:text-acento ${ordenLeg.col === col ? 'text-acento' : 'text-gray-500'} text-${align} flex items-center gap-0.5 ${align === 'center' ? 'justify-center' : ''}`}>
+                const HeaderBtn = ({col, label, align='center', tip}) => (
+                  <button onClick={() => toggleSort(col)} title={tip}
+                    className={`text-[10px] uppercase tracking-wider font-bold font-mono transition hover:text-acento ${ordenLeg.col === col ? 'text-acento' : 'text-gray-500'} ${tip ? 'cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2' : ''} text-${align} flex items-center gap-0.5 ${align === 'center' ? 'justify-center' : ''}`}>
                     {label}{arrow(col) && <span className="text-[10px]">{arrow(col)}</span>}
                   </button>
                 );
@@ -6409,15 +6409,22 @@
                     </div>
                     <div className="glass border border-borde rounded-xl divide-y divide-gray-100 overflow-hidden">
                       {/* Header de columnas clickables (sort) */}
-                      <div className="hidden md:grid md:grid-cols-[minmax(0,2.1fr)_0.85fr_0.85fr_0.85fr_0.85fr_0.8fr_0.75fr_0.85fr] gap-2 px-3 py-2 bg-gray-50">
+                      <div className="hidden md:grid md:grid-cols-[minmax(0,2.1fr)_0.85fr_0.85fr_0.85fr_0.85fr_0.8fr_0.75fr_0.85fr] gap-2 px-3 py-2 border-b-2 border-gray-300 bg-gray-50">
                         <HeaderBtn col="nombre" label="Legislador" align="left" />
-                        <HeaderBtn col="tema" label="Tema dom." />
-                        <HeaderBtn col="hit_rate" label="Hit rate" />
-                        <HeaderBtn col="ini" label="Ini 15d" />
-                        <HeaderBtn col="prop" label="Prop 15d" />
-                        <HeaderBtn col="l3p" label="L3P" />
-                        <HeaderBtn col="match" label="Match" />
-                        <HeaderBtn col="efectividad" label="Efect." />
+                        <HeaderBtn col="tema" label="Categoría"
+                          tip="Categoría dominante del legislador (medio_ambiente, educación, etc.). Se calcula con ≥3 actos legislativos desde inicio LXVI, ponderando iniciativas 2x sobre proposiciones." />
+                        <HeaderBtn col="hit_rate" label="Hit rate"
+                          tip="Hit rate — % de los últimos 20 picos mediáticos en su categoría dominante donde el legislador presentó un instrumento dentro de los 7 días posteriores. Verde ≥70%, ámbar ≥40%, rojo <40%." />
+                        <HeaderBtn col="ini" label="Ini 15d"
+                          tip="Iniciativas proyectadas en los próximos 15 días, basadas en la tasa LXVI ajustada por actividad reciente (30d)." />
+                        <HeaderBtn col="prop" label="Prop 15d"
+                          tip="Proposiciones con punto de acuerdo proyectadas en los próximos 15 días. Misma fórmula que Ini 15d." />
+                        <HeaderBtn col="l3p" label="L3P total"
+                          tip="Total de instrumentos (iniciativas + proposiciones) presentados durante la LXVI Legislatura (sep 2024 – hoy)." />
+                        <HeaderBtn col="match" label="Matchup"
+                          tip="Matchup grade vs. la comisión a la que más turnan sus instrumentos. A = comisión que dictamina rápido; F = comisión donde los asuntos se quedan en pendiente. Grading relativo entre comisiones." />
+                        <HeaderBtn col="efectividad" label="Efectividad"
+                          tip="Índice de Efectividad (0–100) — capacidad del legislador para convertir instrumentos en avances dentro del proceso parlamentario, ajustada por la dificultad estructural de sus comisiones. 50 = mediana LXVI · 80+ = desempeño alto · 20- = bajo. Requiere ≥3 instrumentos dictaminables." />
                       </div>
                       {ordenado.map(l => <RadarRow key={l.id} leg={l} onClick={() => onLegSelect(l)} />)}
                     </div>
