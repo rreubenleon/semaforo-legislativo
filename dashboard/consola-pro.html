@@ -14,6 +14,7 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -189,6 +190,14 @@
 
     <script type="text/babel">
         const { useState, useEffect, useRef, useMemo } = React;
+
+        /* ── Supabase Auth (mismo proyecto que fiatmx.com; misma sesión
+           por ser mismo origen). URL + anon key son públicas. ── */
+        const SUPABASE_URL = 'https://cvkmqjybsqowxivczmwx.supabase.co';
+        const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN2a21xanlic3Fvd3hpdmN6bXd4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTIwMzMsImV4cCI6MjA5NDUyODAzM30.W7TGmPkEYmWFbq9Ev_-nINSVGwQixjc-8J36xUL2kj0';
+        const sb = (window.supabase && window.supabase.createClient)
+            ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
+            : null;
 
         /* ================================================================
            HELPERS
@@ -5517,35 +5526,49 @@
         }
 
         function PasswordGate({ onAuth }) {
+          const [email, setEmail] = useState('');
           const [pwd, setPwd] = useState('');
-          const [err, setErr] = useState(false);
+          const [err, setErr] = useState('');
           const [loading, setLoading] = useState(false);
           const tryLogin = async () => {
-            setLoading(true); setErr(false);
-            const hash = await _sha256(pwd);
-            if (hash === CONSOLA_PRO_PASSWORD_HASH) {
-              sessionStorage.setItem(CONSOLA_PRO_SESSION, '1');
-              onAuth();
-            } else { setErr(true); setLoading(false); }
+            setErr('');
+            if (!sb) { setErr('Servicio de cuentas no disponible. Recarga.'); return; }
+            if (!email || !pwd) { setErr('Escribe tu correo y contraseña.'); return; }
+            setLoading(true);
+            const { error } = await sb.auth.signInWithPassword({ email, password: pwd });
+            if (error) {
+              const m = (error.message || '').toLowerCase();
+              setErr(m.includes('invalid login') ? 'Correo o contraseña incorrectos.'
+                : m.includes('email not confirmed') ? 'Confirma tu correo antes de entrar.'
+                : 'No se pudo iniciar sesión.');
+              setLoading(false);
+            } else { onAuth && onAuth(); }
           };
           return (
             <div className="min-h-screen flex items-center justify-center px-4">
               <div className="bg-white rounded-2xl border border-gray-200 p-8 max-w-sm w-full" style={{boxShadow: '0 20px 60px rgba(0,0,0,0.06)'}}>
                 <img src="fiat-logo-transparent.png" alt="FIAT" style={{height: 32, maxWidth: 100, objectFit: 'contain', display: 'block'}} className="mb-2" />
                 <div className="inline-block mt-4 mb-1" style={{background: '#1a365d', color: 'white', fontSize: 9, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', padding: '4px 10px', borderRadius: 9999}}>CONSOLE PRO · ALPHA</div>
-                <h1 className="text-xl font-black text-gray-900 mt-3">Acceso restringido</h1>
-                <p className="text-xs text-gray-500 mt-1 mb-5">Introduce la contraseña para continuar.</p>
+                <h1 className="text-xl font-black text-gray-900 mt-3">Acceso a Console Pro</h1>
+                <p className="text-xs text-gray-500 mt-1 mb-5">Inicia sesión con tu cuenta Fiat.</p>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && tryLogin()}
+                  placeholder="tu@correo.com" autoFocus autoComplete="email"
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white transition mb-2" />
                 <input type="password" value={pwd} onChange={e => setPwd(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && tryLogin()}
-                  placeholder="Contraseña" autoFocus
+                  placeholder="Contraseña" autoComplete="current-password"
                   className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white transition" />
-                {err && <div className="text-xs text-rose-600 mt-2 font-mono">Contraseña incorrecta</div>}
-                <button onClick={tryLogin} disabled={loading || !pwd}
+                {err && <div className="text-xs text-rose-600 mt-2">{err}</div>}
+                <button onClick={tryLogin} disabled={loading}
                   className="w-full mt-4 text-white font-semibold py-2.5 rounded-full text-sm transition shadow-sm disabled:opacity-50"
                   style={{background: loading ? '#9ca3af' : 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)'}}>
                   {loading ? '...' : 'Entrar'}
                 </button>
-                <p className="text-[10px] text-gray-400 mt-4 text-center font-mono">FIAT México · Console Pro v3</p>
+                <p className="text-[11px] text-gray-500 mt-4 text-center">
+                  ¿No tienes cuenta? <a href="/dashboard" className="text-semaforo-verde font-semibold hover:underline">Regístrate en fiatmx.com</a>
+                </p>
+                <p className="text-[10px] text-gray-400 mt-3 text-center font-mono">FIAT México · Console Pro v3</p>
               </div>
             </div>
           );
@@ -7842,7 +7865,8 @@
         }
 
         function App() {
-            const [authed, setAuthed] = useState(() => sessionStorage.getItem(CONSOLA_PRO_SESSION) === '1');
+            const [authed, setAuthed] = useState(false);
+            const [authReady, setAuthReady] = useState(false);
             const [data, setData] = useState(null);
             const [selected, setSelected] = useState(null);
             const [pagina, setPagina] = useState('consola_pro');
@@ -7875,6 +7899,21 @@
                 fetch('./data.json?v=' + Date.now()).then(r => r.ok ? r.json() : Promise.reject()).then(d => { setData(d); setLoading(false); }).catch(() => { setLoading(false); });
             }, [authed]);
 
+            /* Sesión Supabase (mismo origen que fiatmx.com → sesión compartida).
+               Entitlement actual: cualquier usuario con sesión válida (beta).
+               Cuando entre Stripe: condicionar a suscripción activa. */
+            useEffect(() => {
+                if (!sb) { setAuthReady(true); return; }
+                sb.auth.getSession().then(({ data }) => {
+                    setAuthed(!!data.session);
+                    setAuthReady(true);
+                });
+                const { data: sub } = sb.auth.onAuthStateChange((_e, session) => {
+                    setAuthed(!!session);
+                });
+                return () => { try { sub.subscription.unsubscribe(); } catch {} };
+            }, []);
+
             // Cargar todos los legisladores y comisiones para Console Pro
             useEffect(() => {
                 if (!authed || !data) return;
@@ -7898,6 +7937,9 @@
                   .then(d => setAllComisionesCP(d.comisiones || []));
             }, [authed, data]);
 
+            if (!authReady) return (
+              <div className="min-h-screen flex items-center justify-center text-sm text-gray-400">Cargando…</div>
+            );
             if (!authed) return <PasswordGate onAuth={() => setAuthed(true)} />;
 
             if (loading) return (<div className="min-h-screen flex items-center justify-center"><div className="text-center space-y-4"><div className="w-12 h-12 border-4 border-acento border-t-transparent rounded-full animate-spin mx-auto"></div><div className="text-gray-500">Cargando datos...</div></div></div>);
@@ -7945,7 +7987,7 @@
                                 {pagina === 'consola_pro' && (
                                   <button onClick={() => setShowConfigCP(true)} className="text-[12px] text-white font-semibold whitespace-nowrap px-3 py-1.5 rounded-full bg-semaforo-verde hover:bg-emerald-700 transition-colors shadow-sm">Configurar</button>
                                 )}
-                                <button onClick={() => { sessionStorage.removeItem(CONSOLA_PRO_SESSION); location.reload(); }} className="text-[11px] text-gray-500 hover:text-gray-800 font-medium px-2 py-1">Salir</button>
+                                <button onClick={() => { try { sb && sb.auth.signOut(); } catch {} ; sessionStorage.removeItem(CONSOLA_PRO_SESSION); }} className="text-[11px] text-gray-500 hover:text-gray-800 font-medium px-2 py-1">Salir</button>
                             </div>
                         </div>
                     </header>
