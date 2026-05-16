@@ -6010,6 +6010,66 @@
           );
         }
 
+        /* Fila de tema estilo Polymarket: score grande a la izquierda,
+           nombre + momentum al centro, sparkline + Δ7d a la derecha.
+           serie = array de scores históricos diarios de la categoría. */
+        function TemaRowPM({ t, serie, onClick }) {
+          const hex = SEMAFORO_COLOR_HEX[t.color] || '#6B7280';
+          const s = Array.isArray(serie) ? serie.filter(v => v != null) : [];
+          // Δ de los últimos ~7 días (serie es diaria)
+          const n = s.length;
+          const prev = n >= 8 ? s[n - 8] : (n >= 2 ? s[0] : null);
+          const last = n >= 1 ? s[n - 1] : (t.score_total ?? null);
+          const delta = (prev != null && last != null) ? (last - prev) : null;
+          const subiendo = delta != null && delta > 0.5;
+          const bajando = delta != null && delta < -0.5;
+          const arrowCol = subiendo ? '#16a34a' : bajando ? '#dc2626' : '#9ca3af';
+          const arrow = subiendo ? '▲' : bajando ? '▼' : '▬';
+          // Sparkline (últimos 30 puntos)
+          const sl = s.slice(-30);
+          const W = 104, H = 30;
+          let path = '';
+          if (sl.length >= 2) {
+            const mx = Math.max(...sl), mn = Math.min(...sl), rg = (mx - mn) || 1;
+            const stepX = W / (sl.length - 1);
+            path = sl.map((v, i) => `${(i * stepX).toFixed(1)},${(H - ((v - mn) / rg) * H).toFixed(1)}`).join(' ');
+          }
+          return (
+            <button onClick={() => onClick(t)}
+              className="w-full flex items-center gap-3 px-3 py-2.5 bg-white hover:bg-gray-50 border border-gray-200 rounded-xl transition text-left">
+              {/* Score grande (izquierda, como el thumbnail de Polymarket) */}
+              <div className="flex-shrink-0 w-14 h-14 rounded-xl flex flex-col items-center justify-center"
+                style={{ background: hex + '14', border: `1px solid ${hex}33` }}>
+                <span className="text-lg font-black leading-none" style={{ color: hex }}>{Math.round(t.score_total ?? 0)}</span>
+                <span className="text-[8px] uppercase tracking-wider font-bold mt-0.5" style={{ color: hex }}>score</span>
+              </div>
+              {/* Nombre + momentum */}
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-bold text-gray-900 truncate">{t.nombre}</div>
+                {t.momentum?.etiqueta && (
+                  <div className="text-[11px] text-gray-500 mt-0.5 truncate">{t.momentum.etiqueta}</div>
+                )}
+              </div>
+              {/* Sparkline */}
+              <div className="flex-shrink-0">
+                {path ? (
+                  <svg width={W} height={H} className="block">
+                    <polyline points={`0,${H} ${path} ${W},${H}`} fill={arrowCol} fillOpacity="0.07" stroke="none" />
+                    <polyline points={path} fill="none" stroke={arrowCol} strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" />
+                  </svg>
+                ) : <span className="text-[10px] text-gray-300 font-mono">—</span>}
+              </div>
+              {/* Δ7d con flecha */}
+              <div className="flex-shrink-0 w-16 text-right">
+                <div className="text-sm font-bold tabular-nums" style={{ color: arrowCol }}>
+                  {arrow} {delta != null ? (delta > 0 ? '+' : '') + delta.toFixed(1) : '—'}
+                </div>
+                <div className="text-[9px] uppercase tracking-wider text-gray-400 font-bold">7 días</div>
+              </div>
+            </button>
+          );
+        }
+
         function PageConsolePro({ data, setSelected, onConfigClick, onLegSelect, allLegisladores, allComisiones, config, setConfig }) {
           const [estadoSeleccionado, setEstadoSeleccionado] = useState(null);
           const [filtroCSP, setFiltroCSP] = useState(null);
@@ -6189,8 +6249,12 @@
                         </button>
                       </div>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {ordenado.map(t => <SemaforoCard key={t.categoria} data={t} onClick={setSelected} />)}
+                    <div className="space-y-1.5">
+                      {ordenado.map(t => (
+                        <TemaRowPM key={t.categoria} t={t}
+                          serie={data.historial_scores?.categorias?.[t.categoria]?.scores}
+                          onClick={setSelected} />
+                      ))}
                     </div>
                   </div>
                 );
