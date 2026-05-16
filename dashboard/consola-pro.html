@@ -491,6 +491,30 @@
             PRD:    'assets/partidos/prd.svg',
         };
 
+        // Nombre oficial completo de cada grupo parlamentario.
+        const PARTIDO_NOMBRE_COMPLETO = {
+            MORENA: 'Movimiento Regeneración Nacional (MORENA)',
+            PAN:    'Partido Acción Nacional (PAN)',
+            PRI:    'Partido Revolucionario Institucional (PRI)',
+            PVEM:   'Partido Verde Ecologista de México (PVEM)',
+            PT:     'Partido del Trabajo (PT)',
+            MC:     'Movimiento Ciudadano (MC)',
+            PRD:    'Partido de la Revolución Democrática (PRD)',
+            INDEP:  'Independientes / Sin grupo',
+        };
+
+        // Orden político estándar para listar grupos parlamentarios.
+        const PARTIDO_ORDEN = ['MORENA', 'PAN', 'PRI', 'PVEM', 'PT', 'MC', 'PRD', 'INDEP'];
+
+        // Normaliza variantes de partido a la clave canónica.
+        // 'Morena' → 'MORENA'; 'Sin Partido'/''/null → 'INDEP'.
+        function normPartido(p) {
+            const s = (p || '').trim().toUpperCase();
+            if (!s || s === 'SIN PARTIDO' || s === 'INDEPENDIENTE' || s === 'NINGUNO') return 'INDEP';
+            if (PARTIDO_NOMBRE_COMPLETO[s]) return s;
+            return 'INDEP';
+        }
+
         function PartidoBadge({ partido, size = 'sm' }) {
             const [errored, setErrored] = React.useState(false);
             const color = PARTIDO_COLORS[partido] || '#6B7280';
@@ -5585,6 +5609,32 @@
             return { dip, sen };
           }, [allLegisladores]);
 
+          /* Agrupado por partido dentro de cada cámara. Devuelve, por
+             cámara, un array ordenado (PARTIDO_ORDEN) de grupos
+             { key, nombre, legs[] }. Solo grupos con ≥1 legislador. */
+          const agruparPorPartido = (lista) => {
+            const mapa = {};
+            lista.forEach(l => {
+              const k = normPartido(l.partido);
+              (mapa[k] = mapa[k] || []).push(l);
+            });
+            return PARTIDO_ORDEN
+              .filter(k => mapa[k] && mapa[k].length)
+              .map(k => ({ key: k, nombre: PARTIDO_NOMBRE_COMPLETO[k], legs: mapa[k] }));
+          };
+          const legAgrupados = useMemo(() => ({
+            dip: agruparPorPartido(legPorCamara.dip),
+            sen: agruparPorPartido(legPorCamara.sen),
+          }), [legPorCamara]);
+
+          /* Acordeón: qué grupos de partido están expandidos.
+             Default colapsado para que el panel respire ("muy pro"). */
+          const [partidosAbiertos, setPartidosAbiertos] = useState({});
+          const togglePartido = (camKey, pKey) => {
+            const id = camKey + ':' + pKey;
+            setPartidosAbiertos(prev => ({ ...prev, [id]: !prev[id] }));
+          };
+
           const temasOrdenados = useMemo(
             () => [...semaforo].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '')),
             [semaforo]
@@ -5705,32 +5755,61 @@
                           className="w-full sm:w-72 px-3 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white" />
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {/* DIPUTADOS */}
-                        <div className="border border-gray-200 rounded-xl flex flex-col" style={{maxHeight: '60vh'}}>
-                          <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-xl flex items-center justify-between">
-                            <div className="text-xs font-bold text-gray-700">Cámara de Diputados</div>
-                            <div className="text-[10px] text-gray-500">{filtrarLegs(legPorCamara.dip).length}</div>
-                          </div>
-                          <div className="overflow-y-auto p-2 space-y-1">
-                            {filtrarLegs(legPorCamara.dip).map(l => <LegCard key={l.id} l={l} />)}
-                            {filtrarLegs(legPorCamara.dip).length === 0 && (
-                              <div className="text-xs text-gray-400 italic text-center py-4">Sin resultados</div>
-                            )}
-                          </div>
-                        </div>
-                        {/* SENADORES */}
-                        <div className="border border-gray-200 rounded-xl flex flex-col" style={{maxHeight: '60vh'}}>
-                          <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-xl flex items-center justify-between">
-                            <div className="text-xs font-bold text-gray-700">Senado</div>
-                            <div className="text-[10px] text-gray-500">{filtrarLegs(legPorCamara.sen).length}</div>
-                          </div>
-                          <div className="overflow-y-auto p-2 space-y-1">
-                            {filtrarLegs(legPorCamara.sen).map(l => <LegCard key={l.id} l={l} />)}
-                            {filtrarLegs(legPorCamara.sen).length === 0 && (
-                              <div className="text-xs text-gray-400 italic text-center py-4">Sin resultados</div>
-                            )}
-                          </div>
-                        </div>
+                        {[
+                          { camKey: 'dip', label: 'Cámara de Diputados', grupos: legAgrupados.dip },
+                          { camKey: 'sen', label: 'Senado',              grupos: legAgrupados.sen },
+                        ].map(({ camKey, label, grupos }) => {
+                          const buscando = search.length >= 2;
+                          // Grupos con sus legisladores ya filtrados por búsqueda
+                          const gruposVis = grupos
+                            .map(g => ({ ...g, legsFiltrados: filtrarLegs(g.legs) }))
+                            .filter(g => g.legsFiltrados.length > 0);
+                          const totalCam = gruposVis.reduce((s, g) => s + g.legsFiltrados.length, 0);
+                          return (
+                            <div key={camKey} className="border border-gray-200 rounded-xl flex flex-col" style={{maxHeight: '60vh'}}>
+                              <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-xl flex items-center justify-between">
+                                <div className="text-xs font-bold text-gray-700">{label}</div>
+                                <div className="text-[10px] text-gray-500">{totalCam}</div>
+                              </div>
+                              <div className="overflow-y-auto p-2 space-y-1.5">
+                                {gruposVis.map(g => {
+                                  const abierto = buscando || !!partidosAbiertos[camKey + ':' + g.key];
+                                  const selEnGrupo = g.legsFiltrados.filter(l => config.legisladores.includes(l.id)).length;
+                                  const color = PARTIDO_COLORS[g.key] || '#6B7280';
+                                  return (
+                                    <div key={g.key} className="rounded-lg border border-gray-200 overflow-hidden">
+                                      <button onClick={() => !buscando && togglePartido(camKey, g.key)}
+                                        className="w-full flex items-center gap-2 px-2.5 py-2 bg-gray-50 hover:bg-gray-100 transition text-left"
+                                        style={{ borderLeft: `3px solid ${color}` }}>
+                                        {PARTIDO_LOGOS[g.key]
+                                          ? <img src={PARTIDO_LOGOS[g.key]} alt={g.key} className="w-6 h-6 object-contain flex-shrink-0" />
+                                          : <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[9px] font-bold" style={{ background: color }}>IND</div>}
+                                        <div className="flex-1 min-w-0">
+                                          <div className="text-[12px] font-bold text-gray-800 truncate">{g.nombre}</div>
+                                          <div className="text-[10px] text-gray-500">
+                                            {g.legsFiltrados.length} legislador{g.legsFiltrados.length !== 1 ? 'es' : ''}
+                                            {selEnGrupo > 0 && <span className="text-acento font-semibold"> · {selEnGrupo} seleccionado{selEnGrupo !== 1 ? 's' : ''}</span>}
+                                          </div>
+                                        </div>
+                                        {!buscando && (
+                                          <span className={`text-gray-400 text-xs flex-shrink-0 transition-transform ${abierto ? 'rotate-90' : ''}`}>▶</span>
+                                        )}
+                                      </button>
+                                      {abierto && (
+                                        <div className="p-1.5 space-y-1 bg-white">
+                                          {g.legsFiltrados.map(l => <LegCard key={l.id} l={l} />)}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                                {gruposVis.length === 0 && (
+                                  <div className="text-xs text-gray-400 italic text-center py-4">Sin resultados</div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   )}
