@@ -5772,17 +5772,17 @@
                     <div className="flex items-center gap-2">
                       <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition ${
                         activo ? 'bg-acento text-white ring-2 ring-acento/30' :
-                        completado ? 'bg-emerald-500 text-white' :
+                        completado ? 'bg-semaforo-verde text-white' :
                         'bg-gray-200 text-gray-500'
                       }`}>
                         {completado && !activo ? '✓' : i + 1}
                       </div>
-                      <div className={`text-xs font-semibold ${activo ? 'text-acento' : completado ? 'text-emerald-700' : 'text-gray-400'} hidden sm:inline`}>
+                      <div className={`text-xs font-semibold ${activo ? 'text-acento' : completado ? 'text-semaforo-verde' : 'text-gray-400'} hidden sm:inline`}>
                         {PASOS_LABEL[p]}
                       </div>
                     </div>
                     {i < PASOS.length - 1 && (
-                      <div className={`flex-1 h-0.5 max-w-[40px] ${completado ? 'bg-emerald-300' : 'bg-gray-200'}`}></div>
+                      <div className={`flex-1 h-0.5 max-w-[40px] ${completado ? 'bg-semaforo-verde/40' : 'bg-gray-200'}`}></div>
                     )}
                   </React.Fragment>
                 );
