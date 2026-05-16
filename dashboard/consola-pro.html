@@ -7456,6 +7456,64 @@
             return partes.join(` ${logica} `);
           };
 
+          /* ── Helpers de lenguaje natural (friendly) ── */
+          const [modoAvanzado, setModoAvanzado] = useState(false);
+
+          // Niveles amigables → {operador, valor}. "personalizado" deja editar.
+          const NIVELES = [
+            { k: 'alto',  label: 'llegue a nivel ALTO (75+)',   operador: '>=', valor: 75 },
+            { k: 'max',   label: 'llegue al MÁXIMO (90+)',       operador: '>=', valor: 90 },
+            { k: 'bajo',  label: 'baje a nivel BAJO (40 o menos)', operador: '<=', valor: 40 },
+          ];
+          const nivelDeCondicion = (c) => {
+            const m = NIVELES.find(n => n.operador === c.operador && n.valor === c.valor);
+            return m ? m.k : 'personalizado';
+          };
+          const aplicarNivel = (i, k) => {
+            if (k === 'personalizado') { updateCondicion(i, { operador: '>=', valor: 75 }); return; }
+            const n = NIVELES.find(x => x.k === k);
+            if (n) updateCondicion(i, { operador: n.operador, valor: n.valor });
+          };
+
+          // Frase en español de una condición
+          const fraseCondicion = (c) => {
+            if (c.tipo === 'tema_score') {
+              const cat = semaforo.find(s => s.categoria === c.tema);
+              const nom = cat ? cat.nombre : '(elige un tema)';
+              const op = c.operador === '<=' || c.operador === '<' ? 'baje a' : 'llegue a';
+              return `el tema ${nom} ${op} ${c.valor}`;
+            }
+            if (c.tipo === 'legislador_actividad') {
+              const leg = allLegisladores.find(l => l.id === Number(c.legislador_id));
+              return `${leg ? formatNombreLegislador(leg) : '(elige un legislador)'} presente un instrumento (iniciativa o proposición)`;
+            }
+            return '…';
+          };
+          // Preview completo: "Te avisaremos por correo cuando …"
+          const fraseAlerta = () => {
+            const partes = condiciones.map(fraseCondicion);
+            const union = logica === 'OR' ? ' o cuando ' : ' y además ';
+            const canal = canales.email ? 'por correo' : 'en la consola';
+            return `Te avisaremos ${canal} cuando ${partes.join(union)}.`;
+          };
+
+          // Plantillas de 1 clic — preconfiguran condiciones; el usuario solo
+          // elige el tema/legislador y guarda.
+          const plantillas = [
+            { id: 't_alto', icon: '📈', titulo: 'Un tema sube a nivel alto',
+              desc: 'Te avisamos cuando un tema que sigues llega a 75+',
+              setup: () => { setLogica('AND'); setModoAvanzado(false);
+                setCondiciones([{ tipo: 'tema_score', tema: '', operador: '>=', valor: 75 }]); } },
+            { id: 't_max', icon: '🚨', titulo: 'Un tema llega al máximo',
+              desc: 'Alerta fuerte: el tema alcanza 90+',
+              setup: () => { setLogica('AND'); setModoAvanzado(false);
+                setCondiciones([{ tipo: 'tema_score', tema: '', operador: '>=', valor: 90 }]); } },
+            { id: 't_leg', icon: '🧑‍⚖️', titulo: 'Un legislador presenta algo',
+              desc: 'Cuando alguien que vigilas presenta iniciativa o punto de acuerdo',
+              setup: () => { setLogica('AND'); setModoAvanzado(false);
+                setCondiciones([{ tipo: 'legislador_actividad', legislador_id: '' }]); } },
+          ];
+
           const submit = () => {
             /* Validar */
             const validas = condiciones.every(c => {
@@ -7479,6 +7537,7 @@
             setShowForm(false);
             setCondiciones([{ tipo: 'tema_score', tema: '', operador: '>=', valor: 75 }]);
             setLogica('AND');
+            setModoAvanzado(false);
           };
 
           const togglePausar = (id) => {
@@ -7525,7 +7584,7 @@
                   <button onClick={() => setShowForm(!showForm)}
                     className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition border"
                     style={showForm ? {background:'#f3f4f6', color:'#6b7280', borderColor:'#d1d5db'} : {background:'#1a365d', color:'white', borderColor:'#1a365d'}}>
-                    {showForm ? 'Cancelar' : '+ Nueva regla'}
+                    {showForm ? 'Cancelar' : '+ Nueva alerta'}
                   </button>
                   <ShareButton title="Trigger Desk — Fiat Console"
                     getText={() => `Trigger Desk · ${alertas.length} alerta(s) configurada(s):\n${alertas.slice(0,5).map(a => `· ${a.nombre}`).join('\n')}`} /></div>
@@ -7534,179 +7593,186 @@
               <div className="p-4 space-y-3">
                 {/* Form de nueva regla */}
                 {showForm && (
-                  <div className="border border-acento/20 bg-gray-50 rounded-lg p-3 space-y-3">
-                    <div className="text-[10px] uppercase tracking-widest text-acento font-bold font-mono">▸ NUEVA REGLA · CONDICIONES → ACCIÓN</div>
+                  <div className="border border-gray-200 bg-white rounded-xl p-4 space-y-4">
+                    <div className="text-sm font-bold text-gray-900">Crear una alerta</div>
 
-                    {/* Lista de condiciones */}
-                    <div className="space-y-2">
-                      {condiciones.map((c, i) => (
-                        <div key={i} className="bg-white rounded-lg border border-gray-200 p-2.5">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-[10px] text-gray-500 font-mono font-bold">
-                              {i === 0 ? 'SI' : logica}
-                            </span>
-                            <select value={c.tipo}
-                              onChange={e => updateCondicion(i, { tipo: e.target.value, tema: '', legislador_id: '' })}
-                              className="text-xs px-2 py-1 border border-gray-200 rounded bg-white flex-1">
-                              <option value="tema_score">Score de tema</option>
-                              <option value="legislador_actividad">Legislador presenta</option>
-                            </select>
-                            {condiciones.length > 1 && (
-                              <button onClick={() => removeCondicion(i)} className="text-gray-400 hover:text-rose-600 w-6 h-6 text-base leading-none">×</button>
-                            )}
-                          </div>
-                          {c.tipo === 'tema_score' && (
-                            <div className="flex items-center gap-2">
-                              <select value={c.tema} onChange={e => updateCondicion(i, { tema: e.target.value })}
-                                className="text-xs px-2 py-1.5 border border-gray-200 rounded bg-white flex-1">
-                                <option value="">Elige tema...</option>
-                                {semaforo.map(s => <option key={s.categoria} value={s.categoria}>{s.nombre}</option>)}
-                              </select>
-                              <select value={c.operador} onChange={e => updateCondicion(i, { operador: e.target.value })}
-                                className="text-xs px-2 py-1.5 border border-gray-200 rounded bg-white font-mono w-16">
-                                <option value=">=">≥</option>
-                                <option value=">">&gt;</option>
-                                <option value="<=">≤</option>
-                                <option value="<">&lt;</option>
-                              </select>
-                              <input type="number" value={c.valor} onChange={e => updateCondicion(i, { valor: Number(e.target.value) })}
-                                min="0" max="100" className="text-xs px-2 py-1.5 border border-gray-200 rounded bg-white font-mono w-16" />
-                            </div>
-                          )}
-                          {c.tipo === 'legislador_actividad' && (
-                            <select value={c.legislador_id || ''} onChange={e => updateCondicion(i, { legislador_id: e.target.value })}
-                              className="w-full text-xs px-2 py-1.5 border border-gray-200 rounded bg-white">
-                              <option value="">Elige legislador...</option>
-                              {allLegisladores.map(l => <option key={l.id} value={l.id}>{formatNombreLegislador(l)}</option>)}
-                            </select>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Lógica AND/OR + agregar condición */}
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] uppercase tracking-widest text-gray-500 font-mono font-bold">Lógica:</span>
-                        <button onClick={() => setLogica('AND')}
-                          className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded border transition ${logica==='AND' ? 'border-acento bg-acento text-white' : 'border-gray-300 text-gray-600 hover:border-gray-500'}`}>AND</button>
-                        <button onClick={() => setLogica('OR')}
-                          className={`text-[10px] font-mono font-bold px-2.5 py-1 rounded border transition ${logica==='OR' ? 'border-acento bg-acento text-white' : 'border-gray-300 text-gray-600 hover:border-gray-500'}`}>OR</button>
-                      </div>
-                      <button onClick={addCondicion}
-                        className="text-[10px] font-bold uppercase tracking-widest text-acento hover:underline">+ Condición</button>
-                    </div>
-
-                    {/* Canales */}
+                    {/* Plantillas de 1 clic */}
                     <div>
-                      <div className="text-[10px] uppercase tracking-widest text-gray-500 font-mono font-bold mb-1.5">Canales</div>
-                      <div className="flex items-center gap-3">
-                        <label className="flex items-center gap-1.5 text-xs cursor-pointer">
-                          <input type="checkbox" checked={canales.email} onChange={e => setCanales({...canales, email: e.target.checked})} />
-                          <span className="font-mono text-gray-700">email</span>
-                        </label>
-                        <label className="flex items-center gap-1.5 text-xs cursor-pointer opacity-60">
-                          <input type="checkbox" checked={canales.push} onChange={e => setCanales({...canales, push: e.target.checked})} disabled />
-                          <span className="font-mono text-gray-700">push <span className="text-[9px] text-gray-400">(V2)</span></span>
-                        </label>
+                      <div className="text-[11px] font-semibold text-gray-500 mb-1.5">Empieza con una plantilla</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {plantillas.map(p => (
+                          <button key={p.id} onClick={p.setup}
+                            className="text-left p-3 rounded-lg border border-gray-200 hover:border-acento hover:bg-gray-50 transition">
+                            <div className="text-lg leading-none mb-1.5">{p.icon}</div>
+                            <div className="text-[12px] font-bold text-gray-800 leading-tight">{p.titulo}</div>
+                            <div className="text-[11px] text-gray-500 mt-0.5 leading-snug">{p.desc}</div>
+                          </button>
+                        ))}
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                      <div className="text-[10px] text-gray-400 font-mono italic truncate flex-1 mr-3" title={generarNombre()}>{generarNombre() || 'Configura las condiciones'}</div>
+                    {/* Builder guiado en lenguaje natural */}
+                    <div className="border-t border-gray-100 pt-3">
+                      <div className="text-[11px] font-semibold text-gray-500 mb-2">…o ajústala a tu medida</div>
+                      <div className="space-y-2">
+                        {condiciones.map((c, i) => (
+                          <div key={i} className="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[11px] font-semibold text-gray-500">
+                                {i === 0 ? 'Avísame cuando' : (logica === 'OR' ? 'o cuando' : 'y además cuando')}
+                              </span>
+                              {condiciones.length > 1 && (
+                                <button onClick={() => removeCondicion(i)} className="text-[11px] text-gray-400 hover:text-rose-600 font-medium">Quitar</button>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
+                              <select value={c.tipo}
+                                onChange={e => updateCondicion(i, { tipo: e.target.value, tema: '', legislador_id: '' })}
+                                className="px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white text-sm">
+                                <option value="tema_score">un tema</option>
+                                <option value="legislador_actividad">un legislador</option>
+                              </select>
+                              {c.tipo === 'tema_score' && (
+                                <React.Fragment>
+                                  <select value={c.tema} onChange={e => updateCondicion(i, { tema: e.target.value })}
+                                    className="px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white text-sm">
+                                    <option value="">elige tema…</option>
+                                    {semaforo.map(s => <option key={s.categoria} value={s.categoria}>{s.nombre}</option>)}
+                                  </select>
+                                  <select value={nivelDeCondicion(c)} onChange={e => aplicarNivel(i, e.target.value)}
+                                    className="px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white text-sm">
+                                    {NIVELES.map(n => <option key={n.k} value={n.k}>{n.label}</option>)}
+                                    <option value="personalizado">personalizado…</option>
+                                  </select>
+                                  {nivelDeCondicion(c) === 'personalizado' && (
+                                    <span className="flex items-center gap-1">
+                                      <select value={c.operador} onChange={e => updateCondicion(i, { operador: e.target.value })}
+                                        className="px-2 py-1.5 border border-gray-200 rounded-lg bg-white text-sm">
+                                        <option value=">=">≥</option><option value=">">&gt;</option>
+                                        <option value="<=">≤</option><option value="<">&lt;</option>
+                                      </select>
+                                      <input type="number" min="0" max="100" value={c.valor}
+                                        onChange={e => updateCondicion(i, { valor: Number(e.target.value) })}
+                                        className="w-16 px-2 py-1.5 border border-gray-200 rounded-lg bg-white text-sm" />
+                                    </span>
+                                  )}
+                                </React.Fragment>
+                              )}
+                              {c.tipo === 'legislador_actividad' && (
+                                <React.Fragment>
+                                  <select value={c.legislador_id || ''} onChange={e => updateCondicion(i, { legislador_id: e.target.value })}
+                                    className="px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white text-sm flex-1 min-w-[180px]">
+                                    <option value="">elige legislador…</option>
+                                    {allLegisladores.map(l => <option key={l.id} value={l.id}>{formatNombreLegislador(l)}</option>)}
+                                  </select>
+                                  <span className="text-sm text-gray-500">presente un instrumento</span>
+                                </React.Fragment>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Combinar condiciones (avanzado, opcional) */}
+                      <div className="mt-2">
+                        {!modoAvanzado && condiciones.length === 1 ? (
+                          <button onClick={() => { setModoAvanzado(true); addCondicion(); }}
+                            className="text-[12px] text-acento hover:underline font-medium">+ Combinar con otra condición</button>
+                        ) : (
+                          <div className="flex items-center gap-2 flex-wrap text-[12px]">
+                            <span className="text-gray-500">Combinar:</span>
+                            <button onClick={() => setLogica('AND')}
+                              className={`px-2.5 py-1 rounded-full border transition ${logica==='AND' ? 'bg-acento text-white border-acento' : 'border-gray-300 text-gray-600 hover:border-gray-500'}`}>y además (ambas)</button>
+                            <button onClick={() => setLogica('OR')}
+                              className={`px-2.5 py-1 rounded-full border transition ${logica==='OR' ? 'bg-acento text-white border-acento' : 'border-gray-300 text-gray-600 hover:border-gray-500'}`}>o (cualquiera)</button>
+                            <button onClick={addCondicion}
+                              className="px-2.5 py-1 rounded-full border border-dashed border-gray-300 text-gray-600 hover:border-acento transition">+ otra</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Canal */}
+                    <div className="border-t border-gray-100 pt-3 space-y-1.5">
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input type="checkbox" checked={canales.email} onChange={e => setCanales({...canales, email: e.target.checked})} />
+                        Avisarme por correo
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-400 cursor-not-allowed">
+                        <input type="checkbox" checked={canales.push} disabled />
+                        Notificación push <span className="text-[11px]">(próximamente)</span>
+                      </label>
+                    </div>
+
+                    {/* Preview en español */}
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5 text-[13px] text-emerald-900 leading-snug">
+                      {fraseAlerta()}
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2">
+                      <button onClick={() => setShowForm(false)}
+                        className="text-sm font-semibold px-4 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-50 transition">Cancelar</button>
                       <button onClick={submit}
-                        className="text-[10px] font-bold uppercase tracking-widest text-white px-3 py-1.5 rounded"
-                        style={{background:'linear-gradient(135deg,#2e7d32 0%,#388e3c 100%)'}}>
-                        Guardar regla
-                      </button>
+                        className="text-sm font-bold px-4 py-2 rounded-full text-white transition"
+                        style={{background:'#16a34a'}}>Crear alerta</button>
                     </div>
                   </div>
                 )}
 
-                {/* Lista de reglas */}
+                {/* Lista de alertas */}
                 {alertas.length === 0 && !showForm ? (
                   <div className="text-center py-8">
-                    <div className="text-xs text-gray-500 font-mono">SIN REGLAS CONFIGURADAS</div>
-                    <div className="text-[11px] text-gray-500 mt-2">Crea tu primera regla con condiciones combinables (AND/OR)</div>
+                    <div className="text-sm font-semibold text-gray-700">Aún no tienes alertas</div>
+                    <div className="text-[12px] text-gray-500 mt-1">Crea una para que te avisemos cuando pase algo que te importa.</div>
+                    <button onClick={() => setShowForm(true)}
+                      className="mt-4 text-sm font-bold px-4 py-2 rounded-full text-white" style={{background:'#16a34a'}}>
+                      Crear mi primera alerta
+                    </button>
                   </div>
                 ) : (
                   <div className="space-y-2">
                     {alertas.map((a, idx) => {
                       const isDisparada = a.estado === 'disparado';
                       const isPausada = a.estado === 'pausada';
-                      const borderColor = isDisparada ? '#2e7d32' : isPausada ? '#9ca3af' : '#c6972b';
-                      const bgColor = isDisparada ? '#f0f9f1' : isPausada ? '#f9fafb' : '#fffbeb';
-                      const stateLabel = isDisparada ? '▲ TRIGGER·ACTIVO' : isPausada ? '◼ PAUSADA' : '◆ ESPERANDO';
-                      const stateColor = isDisparada ? '#2e7d32' : isPausada ? '#6b7280' : '#c6972b';
+                      const borderColor = isDisparada ? '#16a34a' : isPausada ? '#9ca3af' : '#d97706';
+                      const bgColor = isDisparada ? '#f0fdf4' : isPausada ? '#f9fafb' : '#fffbeb';
+                      const estadoTxt = isDisparada ? 'Activa' : isPausada ? 'Pausada' : 'En espera';
+                      const estadoCls = isDisparada ? 'bg-emerald-100 text-emerald-700'
+                        : isPausada ? 'bg-gray-200 text-gray-600' : 'bg-amber-100 text-amber-700';
                       const diasCreada = Math.floor((Date.now() - new Date(a.fecha_creada).getTime()) / (1000*60*60*24));
+                      const union = a.logica === 'OR' ? ' o cuando ' : ' y además ';
+                      const desc = (a.condiciones || []).map(fraseCondicion).join(union);
+                      const p = probs[a.id];
                       return (
-                        <div key={a.id} className="rounded-lg border-l-4 p-3" style={{borderLeftColor: borderColor, background: bgColor}}>
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] uppercase tracking-widest font-mono font-bold" style={{color: stateColor}}>{stateLabel}</span>
-                              <span className="text-[10px] text-gray-400 font-mono">· #{String(idx+1).padStart(3,'0')}</span>
-                            </div>
-                            <span className="text-[10px] text-gray-500 font-mono">creada hace {diasCreada}d</span>
+                        <div key={a.id} className="rounded-xl border border-gray-200 border-l-4 p-3.5" style={{borderLeftColor: borderColor, background: bgColor}}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${estadoCls}`}>{estadoTxt}</span>
+                            <span className="text-[11px] text-gray-400">creada hace {diasCreada === 0 ? 'hoy' : diasCreada + 'd'}</span>
                           </div>
-                          <div className="text-sm text-gray-900 font-bold mb-2 leading-tight">{a.nombre}</div>
-                          <div className="grid grid-cols-3 gap-3 text-[10px] mb-2">
-                            <div>
-                              <div className="text-gray-500 font-bold mb-0.5">Condición</div>
-                              <div className="text-gray-800 font-mono">
+                          <div className="text-[14px] text-gray-900 mb-2 leading-snug">
+                            <span className="text-gray-500">Avísame cuando </span>{desc}.
+                          </div>
+                          <div className="flex items-center gap-x-5 gap-y-1 flex-wrap text-[12px] mb-2.5">
+                            {!isPausada && !isDisparada && (
+                              <span className="text-gray-600" title={p?.descripcion || 'Calculando…'}>
+                                Probabilidad:{' '}
                                 {(() => {
-                                  const c0 = a.condiciones?.[0];
-                                  if (c0?.tipo === 'tema_score') return `score ${c0.operador} ${c0.valor}`;
-                                  if (c0?.tipo === 'legislador_actividad') return `próx. 15d`;
-                                  return `${a.condiciones?.length || 1} regla${(a.condiciones?.length || 1) > 1 ? 's' : ''}`;
-                                })()}
-                                {(a.condiciones?.length || 1) > 1 && <span className="text-gray-400"> · +{(a.condiciones.length - 1)} {a.logica}</span>}
-                              </div>
-                            </div>
-                            {/* Columna del medio cambia según estado: ESTADO si disparado/pausado, PROBABIL si esperando */}
-                            {isDisparada ? (
-                              <div>
-                                <div className="text-gray-500 font-bold mb-0.5">Estado</div>
-                                <div className="font-mono font-bold" style={{color: stateColor}}>▲ DISPARADO</div>
-                              </div>
-                            ) : isPausada ? (
-                              <div>
-                                <div className="text-gray-500 font-bold mb-0.5">Estado</div>
-                                <div className="font-mono font-bold" style={{color: stateColor}}>◼ PAUSADA</div>
-                              </div>
-                            ) : (
-                              <div title={probs[a.id]?.descripcion || 'Calculando...'}>
-                                <div className="text-gray-500 font-bold mb-0.5">Probabil.</div>
-                                {(() => {
-                                  const p = probs[a.id];
-                                  if (!p || p.loading) return <div className="text-gray-400 font-mono">·····</div>;
-                                  if (p.prob == null) return <div className="text-gray-400 font-mono italic">—</div>;
+                                  if (!p || p.loading) return <span className="text-gray-400">calculando…</span>;
+                                  if (p.prob == null) return <span className="text-gray-400 italic">sin datos suficientes</span>;
                                   const pct = Math.round(p.prob * 100);
-                                  const color = pct >= 67 ? '#2e7d32' : pct >= 33 ? '#c6972b' : '#c62828';
-                                  const dot = p.confianza === 'alta' ? '●' : p.confianza === 'media' ? '◐' : '○';
-                                  return (
-                                    <div className="font-mono font-bold flex items-baseline gap-1" style={{color}}>
-                                      <span>{pct}%</span>
-                                      <span className="text-[8px] opacity-60" title={`Confianza: ${p.confianza || '—'}`}>{dot}</span>
-                                    </div>
-                                  );
+                                  const color = pct >= 67 ? '#16a34a' : pct >= 33 ? '#d97706' : '#dc2626';
+                                  const conf = p.confianza ? ` · confianza ${p.confianza}` : '';
+                                  return <span className="font-bold" style={{color}}>{pct}%<span className="font-normal text-gray-400">{conf}</span></span>;
                                 })()}
-                              </div>
+                              </span>
                             )}
-                            <div>
-                              <div className="text-gray-500 font-bold mb-0.5">Canal</div>
-                              <div className="text-gray-800 font-mono">{(a.canales || ['email']).join(' + ')}</div>
-                            </div>
+                            {isDisparada && <span className="text-emerald-700 font-semibold">Se cumplió la condición</span>}
+                            <span className="text-gray-500">Aviso por {(a.canales || ['email']).map(c => c === 'email' ? 'correo' : c).join(' y ')}</span>
+                            <span className="text-gray-400">{a.disparos_total || 0} aviso{(a.disparos_total||0) === 1 ? '' : 's'} enviado{(a.disparos_total||0) === 1 ? '' : 's'}</span>
                           </div>
-                          <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                            <div className="flex items-center gap-3 text-[11px] font-mono">
-                              <button onClick={() => togglePausar(a.id)} className="text-acento hover:underline">▸ {isPausada ? 'activar' : 'pausar'}</button>
-                              <button className="text-acento hover:underline opacity-50">▸ editar</button>
-                              <button className="text-acento hover:underline opacity-50">▸ historial</button>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-[10px] text-gray-500 font-mono">· {a.disparos_total || 0} disparos</span>
-                              <button onClick={() => eliminar(a.id)} className="text-gray-300 hover:text-rose-600 w-6 h-6 text-base leading-none">×</button>
-                            </div>
+                          <div className="flex items-center gap-4 pt-2 border-t border-gray-200/70 text-[12px]">
+                            <button onClick={() => togglePausar(a.id)} className="text-acento hover:underline font-medium">{isPausada ? 'Activar' : 'Pausar'}</button>
+                            <button onClick={() => eliminar(a.id)} className="text-gray-400 hover:text-rose-600 font-medium ml-auto">Eliminar</button>
                           </div>
                         </div>
                       );
@@ -7714,15 +7780,15 @@
                     {/* CTA crear nueva al final */}
                     {!showForm && (
                       <button onClick={() => setShowForm(true)}
-                        className="w-full border-2 border-dashed border-gray-300 hover:border-acento hover:bg-gray-50 transition py-3 rounded-lg text-[11px] uppercase tracking-widest text-gray-500 hover:text-acento font-mono font-bold">
-                        + Crear regla · COND → ACCIÓN
+                        className="w-full border-2 border-dashed border-gray-300 hover:border-acento hover:bg-gray-50 transition py-3 rounded-xl text-[13px] text-gray-500 hover:text-acento font-semibold">
+                        + Crear otra alerta
                       </button>
                     )}
                   </div>
                 )}
 
-                <div className="text-[9px] text-gray-400 font-mono italic mt-2 leading-snug">
-                  Las reglas se guardan en este navegador. Email automático y push activos en V2.
+                <div className="text-[11px] text-gray-400 mt-2 leading-snug">
+                  Tus alertas se guardan en este navegador. El aviso por correo se activa en la siguiente versión.
                 </div>
               </div>
             </div>
