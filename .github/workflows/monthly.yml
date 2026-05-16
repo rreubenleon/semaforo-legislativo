@@ -95,6 +95,19 @@ jobs:
         run: python -u -m scrapers.perfil_sil --modo incremental
         continue-on-error: true
 
+      # 4b. Scraper de RESPALDO Diputados: rellena los huecos que el
+      #     SIL Gobernación no logró (partido vacío + perfil faltante)
+      #     desde las fuentes oficiales estáticas de la Cámara
+      #     (listado_diputados_gpnp.php + curricula.php). Datos
+      #     biográficos estáticos → mensual es suficiente. --d1 propaga
+      #     el partido; el perfil lo sincroniza el paso 5.
+      - name: Scrape respaldo Diputados (partido + perfil)
+        env:
+          PYTHONUNBUFFERED: "1"
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python -u scripts/scrape_respaldo_diputados.py --d1
+        continue-on-error: true
+
       # 5. Sync legisladores_perfil → D1. CRÍTICO: sin esto el scrape
       #    de arriba queda solo en BD local y D1 no se actualiza
       #    (bug 15-may: 662 scrapeados local, D1 en 70%).
