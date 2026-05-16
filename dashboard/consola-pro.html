@@ -199,6 +199,16 @@
             ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
             : null;
 
+        function displayName(u) {
+            if (!u) return '';
+            const m = u.user_metadata || {};
+            const n = (m.full_name || m.name || '').trim();
+            if (n) return n;
+            const local = (u.email || '').split('@')[0].replace(/[._-]+/g, ' ').trim();
+            return local ? local.replace(/\b\w/g, c => c.toUpperCase()) : (u.email || '');
+        }
+        function primerNombre(u) { return (displayName(u) || '').split(' ')[0] || ''; }
+
         /* ================================================================
            HELPERS
            ================================================================ */
@@ -6241,7 +6251,7 @@
           );
         }
 
-        function PageConsolePro({ data, setSelected, onConfigClick, onLegSelect, allLegisladores, allComisiones, config, setConfig }) {
+        function PageConsolePro({ data, setSelected, onConfigClick, onLegSelect, allLegisladores, allComisiones, config, setConfig, userNombre }) {
           const [estadoSeleccionado, setEstadoSeleccionado] = useState(null);
           const [filtroCSP, setFiltroCSP] = useState(null);
           const [actividadTab, setActividadTab] = useState('legisladores');
@@ -6359,17 +6369,38 @@
                 <div className="text-[10px] text-gray-400 font-mono ml-1">Última actualización: {new Date(data.metadata?.generado || '').toLocaleString('es-MX', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'})}</div>
 
               <TickerBar semaforo={semaforo} historial={data.historial_scores} />
-                <div className="glass border border-borde rounded-2xl p-12 text-center">
-                  <div className="text-3xl font-black text-gray-900">Bienvenido a Console Pro</div>
-                  <p className="text-sm text-gray-600 mt-2 max-w-md mx-auto">
-                    Empieza configurando los legisladores, temas y estados que quieres monitorear.
-                    Tus selecciones se guardan en este navegador.
-                  </p>
-                  <button onClick={onConfigClick}
-                    className="mt-6 text-white font-semibold px-6 py-3 rounded-full text-sm shadow-sm"
-                    style={{background: 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)'}}>
-                    Empezar configuración
-                  </button>
+                <div className="glass border border-borde rounded-2xl overflow-hidden">
+                  <div className="px-8 md:px-12 pt-10 pb-2 text-center">
+                    <div className="inline-block mb-4" style={{background: '#1a365d', color: 'white', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 14px', borderRadius: 9999}}>Console Pro</div>
+                    <div className="text-3xl md:text-4xl font-black text-gray-900 leading-tight">
+                      {userNombre ? `Hola, ${userNombre}.` : 'Hola.'} Bienvenido a tu consola.
+                    </div>
+                    <p className="text-[15px] text-gray-600 mt-3 max-w-xl mx-auto leading-relaxed">
+                      Tu consola es tu sala de control del Congreso: vigila a los legisladores,
+                      temas, estados y comisiones que te importan, y FIAT te avisa cuando algo se mueve.
+                      Configúrala una vez — toma 2 minutos.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 px-8 md:px-12 py-6 max-w-3xl mx-auto">
+                    {[
+                      ['Legisladores', 'Sigue a quienes te interesan, agrupados por partido.'],
+                      ['Temas y estados', 'Monitorea los temas que escalan y las entidades clave.'],
+                      ['Alertas', 'Te avisamos por correo cuando se cumple lo que definiste.'],
+                    ].map(([t, d]) => (
+                      <div key={t} className="bg-white border border-gray-200 rounded-xl p-4 text-left">
+                        <div className="text-[13px] font-bold text-gray-900">{t}</div>
+                        <div className="text-[12px] text-gray-500 mt-1 leading-snug">{d}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="text-center pb-10">
+                    <button onClick={onConfigClick}
+                      className="text-white font-bold px-8 py-3.5 rounded-full text-sm shadow-md hover:scale-[1.02] transition-transform"
+                      style={{background: 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)'}}>
+                      Configurar mi consola →
+                    </button>
+                    <div className="text-[11px] text-gray-400 mt-3">Tus selecciones se guardan en tu cuenta.</div>
+                  </div>
                 </div>
               </div>
             );
@@ -7867,6 +7898,7 @@
         function App() {
             const [authed, setAuthed] = useState(false);
             const [authReady, setAuthReady] = useState(false);
+            const [authUserCP, setAuthUserCP] = useState(null);
             const [data, setData] = useState(null);
             const [selected, setSelected] = useState(null);
             const [pagina, setPagina] = useState('consola_pro');
@@ -7906,10 +7938,12 @@
                 if (!sb) { setAuthReady(true); return; }
                 sb.auth.getSession().then(({ data }) => {
                     setAuthed(!!data.session);
+                    setAuthUserCP(data.session ? data.session.user : null);
                     setAuthReady(true);
                 });
                 const { data: sub } = sb.auth.onAuthStateChange((_e, session) => {
                     setAuthed(!!session);
+                    setAuthUserCP(session ? session.user : null);
                 });
                 return () => { try { sub.subscription.unsubscribe(); } catch {} };
             }, []);
@@ -7987,13 +8021,14 @@
                                 {pagina === 'consola_pro' && (
                                   <button onClick={() => setShowConfigCP(true)} className="text-[12px] text-white font-semibold whitespace-nowrap px-3 py-1.5 rounded-full bg-semaforo-verde hover:bg-emerald-700 transition-colors shadow-sm">Configurar</button>
                                 )}
+                                {authUserCP && <span className="text-[12px] text-gray-700 font-semibold whitespace-nowrap max-w-[160px] truncate hidden sm:inline" title={authUserCP.email}>{displayName(authUserCP)}</span>}
                                 <button onClick={() => { try { sb && sb.auth.signOut(); } catch {} ; sessionStorage.removeItem(CONSOLA_PRO_SESSION); }} className="text-[11px] text-gray-500 hover:text-gray-800 font-medium px-2 py-1">Salir</button>
                             </div>
                         </div>
                     </header>
 
                     {/* Page content */}
-                    {pagina === 'consola_pro' && <PageConsolePro data={data} setSelected={setSelected} onConfigClick={() => setShowConfigCP(true)} onLegSelect={setLegSeleccionadoCP} allLegisladores={allLegisladoresCP} allComisiones={allComisionesCP} config={configCP} setConfig={setConfigCP} />}
+                    {pagina === 'consola_pro' && <PageConsolePro data={data} setSelected={setSelected} onConfigClick={() => setShowConfigCP(true)} onLegSelect={setLegSeleccionadoCP} allLegisladores={allLegisladoresCP} allComisiones={allComisionesCP} config={configCP} setConfig={setConfigCP} userNombre={primerNombre(authUserCP)} />}
                     {pagina === 'actividad' && <PageActividadLegislativa data={data} setSelected={setSelected} busqueda={busquedaGlobal} />}
                     {pagina === 'legisladores' && <PageLegisladores data={data} />}
                     {pagina === 'radar' && <PageRadarLegisladores data={data} />}

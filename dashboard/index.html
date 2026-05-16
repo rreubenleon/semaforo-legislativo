@@ -190,6 +190,19 @@
             ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON)
             : null;
 
+        /* Nombre para mostrar: metadata.full_name → si no, deriva del correo */
+        function displayName(u) {
+            if (!u) return '';
+            const m = u.user_metadata || {};
+            const n = (m.full_name || m.name || '').trim();
+            if (n) return n;
+            const local = (u.email || '').split('@')[0].replace(/[._-]+/g, ' ').trim();
+            return local ? local.replace(/\b\w/g, c => c.toUpperCase()) : (u.email || '');
+        }
+        function primerNombre(u) {
+            return (displayName(u) || '').split(' ')[0] || '';
+        }
+
         /* ================================================================
            HELPERS
            ================================================================ */
@@ -6145,6 +6158,8 @@
            ================================================================ */
         function LoginModal({ onClose, initialMode = 'login' }) {
             const [modo, setModo] = useState(initialMode); // 'login' | 'signup'
+            const [nombre, setNombre] = useState('');
+            const [org, setOrg] = useState('');
             const [email, setEmail] = useState('');
             const [pass, setPass] = useState('');
             const [cargando, setCargando] = useState(false);
@@ -6167,12 +6182,16 @@
                 setError(''); setOkMsg('');
                 if (!sb) { setError('Servicio de cuentas no disponible. Recarga la página.'); return; }
                 if (!email || !pass) { setError('Escribe tu correo y contraseña.'); return; }
+                if (esSignup && !nombre.trim()) { setError('Escribe tu nombre.'); return; }
                 setCargando(true);
                 try {
                     if (esSignup) {
                         const { data, error } = await sb.auth.signUp({
                             email, password: pass,
-                            options: { emailRedirectTo: window.location.origin + '/dashboard' },
+                            options: {
+                                emailRedirectTo: window.location.origin + '/dashboard',
+                                data: { full_name: nombre.trim(), organizacion: org.trim() },
+                            },
                         });
                         if (error) { setError(traducir(error.message)); }
                         else if (data.session) { onClose(); }
@@ -6239,6 +6258,14 @@
                                         <div className="flex-1 h-px bg-gray-200"></div>
                                     </div>
                                     <form onSubmit={submit} className="space-y-2.5">
+                                        {esSignup && (
+                                            <>
+                                                <input type="text" placeholder="Nombre completo" value={nombre} onChange={e => setNombre(e.target.value)} required autoComplete="name"
+                                                    className="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-full text-gray-800 placeholder-gray-400 focus:outline-none focus:border-semaforo-verde focus:bg-white transition-all" />
+                                                <input type="text" placeholder="Organización (opcional)" value={org} onChange={e => setOrg(e.target.value)} autoComplete="organization"
+                                                    className="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-full text-gray-800 placeholder-gray-400 focus:outline-none focus:border-semaforo-verde focus:bg-white transition-all" />
+                                            </>
+                                        )}
                                         <input type="email" placeholder="tu@correo.com" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="email"
                                             className="w-full px-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-full text-gray-800 placeholder-gray-400 focus:outline-none focus:border-semaforo-verde focus:bg-white transition-all" />
                                         <input type="password" placeholder="Contraseña" value={pass} onChange={e => setPass(e.target.value)} required autoComplete={esSignup ? 'new-password' : 'current-password'} minLength={6}
@@ -6486,7 +6513,7 @@
                             <div className="flex items-center gap-2 flex-shrink-0 hidden md:flex">
                                 {authUser ? (
                                     <>
-                                        <span className="text-[12px] text-gray-600 font-medium whitespace-nowrap max-w-[160px] truncate" title={authUser.email}>{authUser.email}</span>
+                                        <span className="text-[12px] text-gray-700 font-semibold whitespace-nowrap max-w-[180px] truncate" title={authUser.email}>{displayName(authUser)}</span>
                                         <button onClick={() => sb && sb.auth.signOut()} className="text-[12px] text-gray-500 hover:text-gray-800 font-medium transition-colors whitespace-nowrap px-2 py-1">Salir</button>
                                     </>
                                 ) : (
