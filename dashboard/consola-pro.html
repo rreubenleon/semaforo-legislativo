@@ -4160,6 +4160,59 @@
             );
         }
 
+        /* Mapa de selección para el wizard de configuración (paso Estados).
+           Muestra las 32 entidades como puntos; las seleccionadas se
+           "iluminan" (verde, más grandes). Click en un punto = toggle. */
+        function MapaSeleccionEstados({ seleccionados, mapa, onToggle }) {
+            const mapRef = React.useRef(null);
+            const mapInstanceRef = React.useRef(null);
+            const markersRef = React.useRef([]);
+            const onToggleRef = React.useRef(onToggle);
+            React.useEffect(() => { onToggleRef.current = onToggle; }, [onToggle]);
+
+            React.useEffect(() => {
+                if (!mapRef.current || mapInstanceRef.current) return;
+                const map = L.map(mapRef.current, {
+                    center: [23.6, -102.0], zoom: 4,
+                    scrollWheelZoom: false, zoomControl: false,
+                    attributionControl: false, dragging: true, doubleClickZoom: false,
+                });
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 7, minZoom: 4,
+                }).addTo(map);
+                mapInstanceRef.current = map;
+                setTimeout(() => map.invalidateSize(), 250);
+                return () => { map.remove(); mapInstanceRef.current = null; };
+            }, []);
+
+            React.useEffect(() => {
+                const map = mapInstanceRef.current;
+                if (!map) return;
+                markersRef.current.forEach(m => map.removeLayer(m));
+                markersRef.current = [];
+                const sel = new Set(seleccionados || []);
+                Object.entries(ESTADO_COORDS).forEach(([key, coords]) => {
+                    const on = sel.has(key);
+                    const size = on ? 16 : 9;
+                    const html = on
+                        ? `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#16a34a;border:2px solid #fff;box-shadow:0 0 0 3px rgba(22,163,74,0.30),0 1px 4px rgba(0,0,0,0.25);"></div>`
+                        : `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#cbd5e1;border:1px solid #94a3b8;"></div>`;
+                    const icon = L.divIcon({ html, className: '', iconSize: [size, size], iconAnchor: [size/2, size/2] });
+                    const mk = L.marker(coords, { icon });
+                    const nombre = (mapa[key]?.nombre) || key;
+                    mk.bindTooltip(
+                        `<div style="font-family:Inter,sans-serif;font-size:11px;font-weight:600">${nombre}</div><div style="font-family:Inter,sans-serif;font-size:10px;color:#666">${on ? 'Seleccionado · clic para quitar' : 'Clic para agregar'}</div>`,
+                        { direction: 'top', className: 'leaflet-tooltip-fiat' }
+                    );
+                    mk.on('click', () => onToggleRef.current && onToggleRef.current(key));
+                    mk.addTo(map);
+                    markersRef.current.push(mk);
+                });
+            }, [seleccionados, mapa]);
+
+            return <div ref={mapRef} style={{height: '100%', minHeight: '320px', width: '100%', borderRadius: '0.5rem'}}></div>;
+        }
+
         function PageMapa({ data }) {
             const [estadoSeleccionado, setEstadoSeleccionado] = useState(null);
             const [filtroCategoria, setFiltroCategoria] = useState(null);
@@ -5860,19 +5913,20 @@
                             })}
                           </div>
                         </div>
-                        {/* Derecha: panel de selección (aquí irá el mapa de México) */}
+                        {/* Derecha: mapa interactivo — las entidades se iluminan al seleccionarlas */}
                         <div className="md:col-span-1">
-                          <div className="border border-gray-200 rounded-xl p-3 bg-gray-50/60 h-full">
-                            <div className="text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-2">Seleccionados · {counts.estados}/{limites.estados}</div>
-                            {config.estados.length === 0 ? (
-                              <div className="text-[12px] text-gray-400 italic py-4 text-center">Aún no eliges estados</div>
-                            ) : (
-                              <div className="flex flex-wrap gap-1.5">
+                          <div className="border border-gray-200 rounded-xl p-3 bg-gray-50/60 h-full flex flex-col">
+                            <div className="text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-2">Mapa · {counts.estados}/{limites.estados} seleccionados</div>
+                            <div className="flex-1 min-h-[320px] rounded-lg overflow-hidden border border-gray-200 bg-white">
+                              <MapaSeleccionEstados seleccionados={config.estados} mapa={mapa} onToggle={toggleEstado} />
+                            </div>
+                            {config.estados.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mt-2 max-h-[88px] overflow-y-auto">
                                 {config.estados.map(k => {
                                   const info = (mapa[k] || {});
                                   return (
                                     <button key={k} onClick={() => toggleEstado(k)}
-                                      className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-white border border-emerald-200 text-emerald-700 text-[11px] font-medium hover:bg-emerald-50 transition">
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white border border-emerald-200 text-emerald-700 text-[11px] font-medium hover:bg-emerald-50 transition">
                                       {info.nombre || info.abreviatura || k}
                                       <span className="text-emerald-400">×</span>
                                     </button>
@@ -5880,9 +5934,6 @@
                                 })}
                               </div>
                             )}
-                            <div className="text-[10px] text-gray-400 mt-3 leading-relaxed border-t border-gray-200 pt-2">
-                              Mapa interactivo de México próximamente — las entidades se iluminarán al seleccionarlas.
-                            </div>
                           </div>
                         </div>
                       </div>
