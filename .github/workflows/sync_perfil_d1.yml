@@ -1,0 +1,89 @@
+name: Sync Perfil a D1 (one-off)
+
+# Restaura el cache con los 662 perfiles scrapeados y los empuja a D1.
+# sync_legisladores_cargo_d1.py NO cubre legisladores_perfil — por eso
+# D1 quedó en 70% aunque BD local tenga 662 (15-may).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "sync-perfil-d1"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      # Restaurar el cache MÁS RECIENTE con perfiles. El scrape
+      # 25944948982 guardó semaforo-db-perfiles-25944948982.
+      - uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-syncperfil-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-perfiles-
+            semaforo-db-
+
+      - run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: |
+          pip install -r requirements.txt
+          npm install -g wrangler@3
+
+      - name: Verificar perfiles en BD local
+        run: |
+          python3 -c "
+          import sqlite3
+          c = sqlite3.connect('semaforo.db')
+          try:
+              n = c.execute('SELECT COUNT(*) FROM legisladores_perfil').fetchone()[0]
+              nb = c.execute(\"SELECT COUNT(*) FROM legisladores_perfil WHERE biografia IS NOT NULL AND biografia!=''\").fetchone()[0]
+              print(f'legisladores_perfil local: {n} filas, {nb} con bio')
+          except Exception as e:
+              print(f'ERROR: {e}')
+          "
+
+      - name: Sync legisladores_perfil → D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python scripts/sync_perfil_d1.py
+
+      - name: Verificación cobertura D1
+        run: |
+          sleep 5
+          curl -s "https://fiat-busqueda.rreubenleon.workers.dev/radar?limite=2000" \
+            | python3 -c "
+          import sys, json
+          rows = json.load(sys.stdin).get('legisladores') or []
+          t = len(rows)
+          b = sum(1 for r in rows if r.get('biografia'))
+          a = sum(1 for r in rows if r.get('anio_nacimiento'))
+          e = sum(1 for r in rows if r.get('estudios'))
+          print(f'Total: {t}')
+          print(f'Con bio: {b} ({b*100//t}%)')
+          print(f'Con año: {a} ({a*100//t}%)')
+          print(f'Con estudios: {e} ({e*100//t}%)')"
+
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: semaforo.db
+          key: semaforo-db-syncperfil-${{ github.run_id }}
