@@ -162,6 +162,19 @@
     <!-- Cloudflare Web Analytics -->
     <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "2dcb1144eb1242b48bfad55aa873c89d"}'></script>
     <!-- End Cloudflare Web Analytics -->
+    <!-- SPA routing: restaura el path limpio tras el redirect de 404.html
+         (técnica spa-github-pages, rafgraph, MIT). Corre antes de React. -->
+    <script>
+      (function (l) {
+        if (l.search[1] === '/') {
+          var decoded = l.search.slice(1).split('&').map(function (s) {
+            return s.replace(/~and~/g, '&');
+          }).join('?');
+          window.history.replaceState(null, null,
+            l.pathname.slice(0, -1) + decoded + l.hash);
+        }
+      }(window.location));
+    </script>
 </head>
 <body class="min-h-screen text-gray-800">
     <div id="root"></div>
@@ -6269,12 +6282,21 @@
         function App() {
             const [data, setData] = useState(null);
             const [selected, setSelected] = useState(null);
-            /* Deep link: ?tab=comisiones | radar | mapa | resoluciones | actividad
-               Permite que cualquier link externo (ej. consola-pro) abra una pestaña directa. */
+            /* Ruteo por URL limpia: /dashboard=Actividad, /radar, /mapa,
+               /comisiones. Métricas (resoluciones) sin URL por ahora.
+               Compat: sigue aceptando ?tab= (links viejos de consola-pro). */
+            const PATH_TO_TAB = { '': 'actividad', '/': 'actividad', '/dashboard': 'actividad',
+                '/radar': 'radar', '/mapa': 'mapa', '/comisiones': 'comisiones' };
+            const TAB_TO_PATH = { actividad: '/dashboard', radar: '/radar', mapa: '/mapa', comisiones: '/comisiones' };
             const tabFromURL = (() => {
                 try {
+                    const p = (window.location.pathname || '/').replace(/\/+$/, '') || '/';
+                    // Ruta limpia explícita (no raíz) manda.
+                    if (p !== '/' && PATH_TO_TAB[p]) return PATH_TO_TAB[p];
+                    // Compat: ?tab= (links viejos / compartidos).
                     const t = new URLSearchParams(window.location.search).get('tab');
-                    return ['actividad','radar','mapa','comisiones','resoluciones'].includes(t) ? t : 'actividad';
+                    if (['actividad','radar','mapa','comisiones','resoluciones','legisladores','metodologia'].includes(t)) return t;
+                    return PATH_TO_TAB[p] || 'actividad';
                 } catch { return 'actividad'; }
             })();
             const [pagina, setPagina] = useState(tabFromURL);
@@ -6288,6 +6310,29 @@
 
             useEffect(() => {
                 fetch('./data.json?v=' + Date.now()).then(r => r.ok ? r.json() : Promise.reject()).then(d => { setData(d); setLoading(false); }).catch(() => { setLoading(false); });
+            }, []);
+
+            /* Sincroniza la URL con la pestaña activa (URLs limpias). */
+            const _rutaInicial = useRef(true);
+            useEffect(() => {
+                const path = TAB_TO_PATH[pagina];
+                if (!path) { _rutaInicial.current = false; return; } // Métricas/ocultas: sin URL
+                const actual = (window.location.pathname || '/').replace(/\/+$/, '') || '/';
+                if (actual === path) { _rutaInicial.current = false; return; }
+                try {
+                    if (_rutaInicial.current) window.history.replaceState(null, '', path);
+                    else window.history.pushState(null, '', path);
+                } catch {}
+                _rutaInicial.current = false;
+            }, [pagina]);
+
+            useEffect(() => {
+                const onPop = () => {
+                    const p = (window.location.pathname || '/').replace(/\/+$/, '') || '/';
+                    if (PATH_TO_TAB[p]) { setSelected(null); setPagina(PATH_TO_TAB[p]); }
+                };
+                window.addEventListener('popstate', onPop);
+                return () => window.removeEventListener('popstate', onPop);
             }, []);
 
             if (loading) return (

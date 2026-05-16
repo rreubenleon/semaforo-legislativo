@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FIAT</title>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+  <!--
+    SPA fallback para GitHub Pages (técnica spa-github-pages, rafgraph, MIT).
+    GitHub Pages sirve este 404.html para cualquier ruta que no sea un
+    archivo real (ej. /radar, /mapa, /comisiones, /dashboard). Reescribe
+    la ruta a /?/ruta y redirige a la raíz; index.html la restaura a la
+    URL limpia antes de montar React. pathSegmentsToKeep = 0 porque el
+    sitio vive en la raíz del dominio (fiatmx.com).
+  -->
+  <script>
+    (function () {
+      var pathSegmentsToKeep = 0;
+      var l = window.location;
+      l.replace(
+        l.protocol + '//' + l.hostname + (l.port ? ':' + l.port : '') +
+        l.pathname.split('/').slice(0, 1 + pathSegmentsToKeep).join('/') + '/?/' +
+        l.pathname.slice(1).split('/').slice(pathSegmentsToKeep).join('/').replace(/&/g, '~and~') +
+        (l.search ? '&' + l.search.slice(1).replace(/&/g, '~and~') : '') +
+        l.hash
+      );
+    }());
+  </script>
+</head>
+<body>
+  <noscript>
+    Esta aplicación necesita JavaScript. Ve a <a href="/">fiatmx.com</a>.
+  </noscript>
+</body>
+</html>

@@ -6417,7 +6417,7 @@
                         </div>
                         <div className="flex items-center gap-2">
                           <ShareButton getText={() => `Mis estados FIAT — ${estadosFiltradosArr.length} entidades vigiladas\n${estadosFiltradosArr.slice(0,5).map(([,v])=>`${v.nombre}: ${v.total_articulos||0} notas`).join('\n')}\nhttps://fiatmx.com`} title="Compartir Mis estados" />
-                          <a href="/?tab=mapa" target="_blank" rel="noopener" className="text-[11px] font-semibold text-acento hover:underline whitespace-nowrap">Ver mapa completo →</a>
+                          <a href="/mapa" target="_blank" rel="noopener" className="text-[11px] font-semibold text-acento hover:underline whitespace-nowrap">Ver mapa completo →</a>
                         </div>
                       </div>
                       {/* Mapa real Leaflet con capa de calor radar — solo estados configurados */}
@@ -7115,7 +7115,7 @@
                     <span>HOTSPOT <span className="text-gray-800 font-bold">{(hotspot.nombre || '').slice(0, 24)}</span> · <span className="text-acento font-bold">{Math.round(hotspot.score_actividad || 0)}</span></span>
                   )}
                 </div>
-                <a href="/?tab=comisiones" target="_blank" rel="noopener" className="text-acento font-semibold hover:underline">Abrir pestaña Comisiones →</a>
+                <a href="/comisiones" target="_blank" rel="noopener" className="text-acento font-semibold hover:underline">Abrir pestaña Comisiones →</a>
               </div>
 
               {/* Modal Ver todas */}
