@@ -1,0 +1,104 @@
+name: Limpiar Fantasmas SIL (one-off)
+
+# Propaga a D1/radar el fix de fantasmas sil_inferido duplicados:
+#   Miguel Márquez Márquez (629 dup 540) e Imelda Castro Castro
+#   (640 dup 570 — el "100% efectividad 1/1" que reportó el usuario).
+#
+# El pipeline cada-4h ya se auto-cura (main.py paso_5d corre
+# completar → limpiar → calcular_elo), pero solo limpia LOCAL. La
+# tabla D1 legisladores no la repuebla nadie (sync_legisladores_cargo
+# solo hace UPDATE) → los fantasmas viven en el radar hasta que se
+# borran de D1 explícitamente. Este workflow hace eso ahora.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "limpiar-fantasmas-sil"
+  cancel-in-progress: false
+
+jobs:
+  limpiar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-limpfant-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: |
+          pip install -r requirements.txt
+          npm install -g wrangler@3
+
+      # 1. completar (fixed: camara canónica → no recrea dups de senadores)
+      - name: Completar legisladores desde ELO
+        run: python scripts/completar_legisladores_desde_elo.py
+        continue-on-error: true
+
+      # 2. limpiar fantasmas — local + D1
+      - name: Limpiar fantasmas sil_inferido (local + D1)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python scripts/limpiar_fantasmas_sil_inferido.py --d1
+
+      # 3. recalcular ELO (con fantasmas fuera, Castro→570, Márquez→540)
+      - name: Recalcular ELO
+        run: python scripts/calcular_elo_legisladores.py --guardar
+
+      # 4. sync limpio a D1
+      - name: Sync ELO + H2H + perfil a D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          python scripts/sync_elo_d1.py
+          python scripts/sync_h2h_d1.py || true
+          python scripts/sync_perfil_d1.py || true
+
+      # 5. Verificación: Castro/Márquez una sola vez, sin fantasmas
+      - name: Verificación radar
+        run: |
+          sleep 5
+          curl -s "https://fiat-busqueda.rreubenleon.workers.dev/radar?limite=2000" \
+            | python3 -c "
+          import sys, json
+          rows = json.load(sys.stdin).get('legisladores') or []
+          print(f'Total radar: {len(rows)}')
+          for nom in ['Imelda Castro Castro','Miguel Márquez Márquez']:
+              m = [r for r in rows if r.get('nombre')==nom]
+              print(f'  {nom}: {len(m)} entrada(s)')
+              for r in m:
+                  print(f'    cam={r.get(\"camara\")} elo={r.get(\"elo_rating\")} part={r.get(\"elo_partidas\")}')
+          import collections
+          c = collections.Counter((r.get('nombre') or '') for r in rows)
+          dups = [(n,k) for n,k in c.items() if k>1]
+          print(f'Nombres duplicados en radar: {len(dups)}')
+          for n,k in dups[:10]:
+              print(f'  {n} ×{k}')"
+
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: semaforo.db
+          key: semaforo-db-limpfant-${{ github.run_id }}

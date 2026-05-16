@@ -36,7 +36,9 @@ Uso:
 import argparse
 import logging
 import sqlite3
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -66,6 +68,10 @@ def canon(camara):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--d1", action="store_true",
+                    help="además borra los fantasmas de D1 vía wrangler "
+                         "(requiere CLOUDFLARE_API_TOKEN; el pipeline cada-4h "
+                         "NO lo pasa, solo el workflow one-off)")
     args = ap.parse_args()
 
     conn = sqlite3.connect(str(ROOT / "semaforo.db"))
@@ -145,6 +151,38 @@ def main():
         )
 
     conn.commit()
+
+    # Propagar el borrado a D1 (radar lee de ahí). Nada repuebla la tabla
+    # D1 legisladores — sync_legisladores_cargo_d1.py solo hace UPDATE —
+    # así que los fantasmas viven en D1 hasta que se borran explícitamente.
+    if args.d1 and fantasmas:
+        ids = [sid for sid, _, _ in fantasmas]
+        lista = ",".join(str(i) for i in ids)
+        sql_d1 = "\n".join([
+            f"DELETE FROM legisladores_elo WHERE legislador_id IN ({lista});",
+            f"DELETE FROM legisladores_stats WHERE legislador_id IN ({lista});",
+            f"DELETE FROM legisladores_hit_rate WHERE legislador_id IN ({lista});",
+            f"DELETE FROM legisladores_perfil WHERE legislador_id IN ({lista});",
+            f"DELETE FROM legisladores WHERE id IN ({lista});",
+        ])
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".sql",
+                                         delete=False) as tmp:
+            tmp.write(sql_d1)
+            tmp_path = tmp.name
+        try:
+            r = subprocess.run(
+                ["npx", "wrangler", "d1", "execute", "fiat-busqueda",
+                 "--remote", "--file", tmp_path],
+                cwd=ROOT / "worker", capture_output=True, text=True,
+                timeout=120,
+            )
+            if r.returncode != 0:
+                logger.warning(f"wrangler stderr: {r.stderr[:600]}")
+            else:
+                logger.info(f"✓ D1: fantasmas {ids} borrados")
+        finally:
+            Path(tmp_path).unlink()
+
     print(f"\n  ═══ Limpieza ═══")
     print(f"  Fantasmas borrados:        {borradas}")
     print(f"  Camara normalizada:        {len(norm_camara)}")
