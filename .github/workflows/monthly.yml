@@ -92,7 +92,16 @@ jobs:
       - name: Re-scrape perfiles SIL (bio + estudios)
         env:
           PYTHONUNBUFFERED: "1"
-        run: python -m scrapers.perfil_sil --modo incremental
+        run: python -u -m scrapers.perfil_sil --modo incremental
+        continue-on-error: true
+
+      # 5. Sync legisladores_perfil → D1. CRÍTICO: sin esto el scrape
+      #    de arriba queda solo en BD local y D1 no se actualiza
+      #    (bug 15-may: 662 scrapeados local, D1 en 70%).
+      - name: Sync perfiles a D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python scripts/sync_perfil_d1.py
         continue-on-error: true
 
       # Guardar BD actualizada en cache

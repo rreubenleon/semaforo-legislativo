@@ -61,7 +61,7 @@ jobs:
       - name: Sync legisladores_perfil a D1
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        run: python scripts/sync_legisladores_cargo_d1.py
+        run: python scripts/sync_perfil_d1.py
         continue-on-error: true
 
       - name: Verificación
