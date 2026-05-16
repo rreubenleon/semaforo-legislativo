@@ -3234,7 +3234,7 @@
                         <div className="font-bold mb-1.5 text-amber-900">Sin modelo de predicción</div>
                         <div className="text-xs text-gray-700 leading-relaxed">
                             {totalActosIndiv > 0 ? (
-                                <>Ha presentado <strong>{totalActosIndiv}</strong> instrumentos individuales en LXVI, pero el modelo necesita <strong>≥3 actos concentrados en una misma categoría</strong> para emitir predicción confiable. Su actividad probablemente está distribuida entre varias áreas temáticas.</>
+                                <>Ha presentado <strong>{totalActosIndiv}</strong> instrumentos individuales en LXVI, pero el modelo necesita <strong>≥3 actos concentrados en una misma categoría</strong> para emitir predicción confiable. Su actividad probablemente está distribuida en varias categorías.</>
                             ) : (
                                 <>Aún no hay actos individuales registrados en LXVI suficientes para predecir patrón temático.</>
                             )}
@@ -3400,13 +3400,12 @@
                         <div className="font-bold text-gray-900 mb-1.5 font-mono uppercase text-[10px] tracking-wider">Qué mide</div>
                         <div>
                             Tasa de aprobación de instrumentos legislativos, ajustada por confianza estadística.
-                            Calculada con Wilson lower bound al 95% — el mismo método que usan rankings de Reddit,
-                            IMDB y Amazon para combinar "% éxito" con "tamaño de muestra" en un solo número honesto.
                         </div>
                         <div className="mt-2 text-[12px] text-gray-600">
-                            <strong>Por qué no la tasa cruda:</strong> alguien con 1/1 aprobada tendría 100% crudo
-                            pero esa cifra no significa nada con tan poca muestra. Wilson penaliza muestras chicas
-                            automáticamente: 1/1 → 5, 5/10 → 22, 20/30 → 49. Todos comparables, ninguno engaña.
+                            <strong>Por qué no la tasa cruda:</strong> alguien con una sola iniciativa aprobada
+                            (1 de 1) marcaría 100%, pero esa cifra no significa nada con tan poca muestra.
+                            El ajuste por confianza estadística penaliza las muestras pequeñas para que todos
+                            los legisladores sean comparables en una misma escala.
                         </div>
                     </div>
 
@@ -3557,21 +3556,22 @@
                         <summary className="px-3 py-2 cursor-pointer font-bold text-gray-700 font-mono uppercase text-[10px] tracking-wider hover:bg-gray-50">Cómo se calcula la Efectividad</summary>
                         <div className="px-3 pb-3 leading-relaxed space-y-2">
                             <div>
-                                <strong>Fórmula completa:</strong> Wilson lower bound al 95% sobre aprobados / (aprobados + desechados).
-                                Las iniciativas en revisión (sin dictamen aún) no entran al cálculo.
+                                <strong>Fórmula:</strong> intervalo de confianza estadística al 95% sobre la proporción
+                                de aprobados entre aprobados + desechados. Las iniciativas en revisión (sin dictamen aún)
+                                no entran al cálculo.
                             </div>
                             <div>
                                 <strong>Ejemplos comparativos:</strong>
                                 <ul className="list-disc list-inside text-[11px] mt-1 space-y-0.5">
-                                    <li>1 aprobada / 1 resuelta · crudo 100% · Wilson <strong>5</strong></li>
-                                    <li>5 aprobadas / 10 resueltas · crudo 50% · Wilson <strong>22</strong></li>
-                                    <li>20 aprobadas / 30 resueltas · crudo 67% · Wilson <strong>49</strong></li>
+                                    <li>1 aprobada / 1 resuelta · tasa cruda 100% · índice <strong>5</strong></li>
+                                    <li>5 aprobadas / 10 resueltas · tasa cruda 50% · índice <strong>22</strong></li>
+                                    <li>20 aprobadas / 30 resueltas · tasa cruda 67% · índice <strong>49</strong></li>
                                 </ul>
                             </div>
                             <div>
-                                <strong>Por qué Wilson:</strong> estándar de industria para rankings con sample variable
-                                (Reddit, IMDB, Amazon usan la misma fórmula). Penaliza automáticamente muestras chicas
-                                sin excluirlas — todos los legisladores quedan medibles y comparables.
+                                <strong>Por qué se ajusta:</strong> penaliza automáticamente las muestras pequeñas
+                                sin excluirlas — todos los legisladores quedan medibles y comparables en una misma escala,
+                                sin que una sola iniciativa aprobada infle el resultado.
                             </div>
                             <div>
                                 <strong>Diferencia con Lectura analítica:</strong> la Efectividad de arriba responde
