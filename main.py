@@ -1164,6 +1164,15 @@ def paso_5d_elo_legisladores():
             [sys.executable, str(Path(__file__).parent / "scripts" / "completar_legisladores_desde_elo.py")],
             capture_output=True, text=True, timeout=60,
         )
+        # Pre-paso 2 (16-may): limpiar fantasmas — stubs sil_inferido que
+        # son dup de un legislador del roster oficial (causa raíz: camara
+        # 'Cámara de Senadores' vs 'Senado' rompía el dedup). Idempotente.
+        # Corre sobre el DB cacheado de CI que aún trae los fantasmas
+        # viejos (629 Márquez dup 540, 640 Castro dup 570 → "100% 1/1").
+        subprocess.run(
+            [sys.executable, str(Path(__file__).parent / "scripts" / "limpiar_fantasmas_sil_inferido.py")],
+            capture_output=True, text=True, timeout=60,
+        )
         result = subprocess.run(
             [sys.executable, str(Path(__file__).parent / "scripts" / "calcular_elo_legisladores.py"), "--guardar"],
             capture_output=True, text=True, timeout=120,

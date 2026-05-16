@@ -61,15 +61,35 @@ def normalizar_nombre_sitl(nombre):
     return re.sub(r"\s+", " ", nombre).strip()
 
 
+def canonizar_camara(camara):
+    """Normaliza cualquier variante a los DOS valores canónicos que usa
+    el roster oficial (origen='sitl_oficial'):
+        senadores  → 'Senado'
+        diputados  → 'Cámara de Diputados'
+
+    Bug 16-may: este script escribía 'Cámara de Senadores' para los stubs
+    de senadores, pero el roster oficial usa 'Senado'. Como el dedup
+    (Chequeo 1 y 2) filtra `WHERE camara = ?`, los senadores nunca se
+    deduplicaban → se crearon fantasmas (Miguel Márquez Márquez id=629
+    dup de 540, Imelda Castro Castro id=640 dup de 570, esta última
+    causaba el "100% efectividad 1/1" que reportó el usuario)."""
+    c = (camara or "").lower()
+    if "senad" in c:
+        return "Senado"
+    return "Cámara de Diputados"
+
+
 def inferir_camara(nombre_elo, camara_original):
     """La columna camara del ELO puede decir 'H. Congreso General' o
     'Comisión Permanente'. El prefijo del nombre (Dip./Sen.) es más
-    confiable para inferir la cámara real."""
+    confiable para inferir la cámara real. Siempre devuelve el valor
+    CANÓNICO ('Senado' | 'Cámara de Diputados') para que el dedup y el
+    Radar empaten con el roster oficial."""
     if nombre_elo.startswith("Dip."):
         return "Cámara de Diputados"
     if nombre_elo.startswith("Sen."):
-        return "Cámara de Senadores"
-    return camara_original
+        return "Senado"
+    return canonizar_camara(camara_original)
 
 
 def limpiar_nombre(nombre_elo):
