@@ -6425,9 +6425,10 @@
         }
 
         /* Menú de cuenta (dropdown desde el nombre, arriba a la derecha) */
-        function AccountMenu({ user, onMiCuenta, onSoporte, onConfigurar }) {
+        function AccountMenu({ user, onMiCuenta, onSoporte, onConfigurar, onMiConsola }) {
             const [open, setOpen] = useState(false);
             const ir = (url) => { window.location.href = url; };
+            const configurada = consolaConfigurada(user);
             return (
                 <div className="relative">
                     <button onClick={() => setOpen(o => !o)}
@@ -6451,9 +6452,12 @@
                                     <div className="mt-3 inline-block text-[9px] font-bold tracking-widest uppercase bg-white/10 border border-white/20 px-2 py-0.5 rounded-full">Cuenta activa · Beta</div>
                                 </div>
                                 <nav className="py-1.5">
-                                    <button onClick={() => { setOpen(false); onConfigurar && onConfigurar(); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition text-left">
+                                    <button onClick={() => { setOpen(false); if (configurada) { onMiConsola && onMiConsola(); } else { onConfigurar && onConfigurar(); } }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition text-left">
                                         <svg className="w-4 h-4 text-semaforo-verde flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM13 14a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1h-6a1 1 0 01-1-1v-6z" /></svg>
-                                        <div className="flex-1"><div className="text-[13px] font-semibold text-gray-900">Configurar mi consola</div><div className="text-[11px] text-gray-500">Legisladores, temas, alertas</div></div>
+                                        <div className="flex-1">
+                                            <div className="text-[13px] font-semibold text-gray-900">{configurada ? 'Mi consola' : 'Configurar mi consola'}</div>
+                                            <div className="text-[11px] text-gray-500">{configurada ? 'Tu panel personalizado' : 'Legisladores, temas, alertas'}</div>
+                                        </div>
                                     </button>
                                     <button onClick={() => { setOpen(false); onMiCuenta(); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition text-left">
                                         <svg className="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
@@ -9038,7 +9042,6 @@
                             {/* Nav tabs */}
                             <div className="nav-tabs-scroll flex items-center gap-0.5 flex-shrink-0 order-3 md:order-none w-full md:w-auto justify-center md:justify-start">
                                 {[
-                                    ...(authUser ? [['consola', 'Mi consola']] : []),
                                     ['actividad', 'Actividad'], ['radar', 'Radar de Legisladores'], ['mapa', 'Mapa'], ['comisiones', 'Comisiones'], ['resoluciones', 'Métricas']
                                 ].map(([key, label]) => (
                                     <button key={key} onClick={() => setPagina(key)}
@@ -9058,7 +9061,7 @@
                             {/* Auth buttons */}
                             <div className="flex items-center gap-2 flex-shrink-0 hidden md:flex">
                                 {authUser ? (
-                                    <AccountMenu user={authUser} onMiCuenta={() => setShowCuenta(true)} onSoporte={() => setShowFAQ(true)} onConfigurar={() => setShowConfigWizard(true)} />
+                                    <AccountMenu user={authUser} onMiCuenta={() => setShowCuenta(true)} onSoporte={() => setShowFAQ(true)} onConfigurar={() => setShowConfigWizard(true)} onMiConsola={() => setPagina('consola')} />
                                 ) : (
                                     <>
                                         <button onClick={() => { setShowRegistro(false); setShowLogin(true); }} className="text-[12px] text-gray-500 hover:text-gray-800 font-medium transition-colors whitespace-nowrap px-2 py-1">Inicia sesión</button>
