@@ -207,11 +207,26 @@
             if (!p.length) return '·';
             return ((p[0][0] || '') + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase();
         }
-        /* ¿El usuario ya configuró su consola? (config vive en localStorage,
-           mismo origen que consola-pro.html). */
-        function consolaConfigurada() {
+        /* Clave de config de consola POR USUARIO. Antes era global
+           (`fiat_consola_pro_config_v3`) → las configs se filtraban entre
+           cuentas en el mismo navegador. Ahora se sufija con el user id de
+           Supabase. Usuario nuevo / sin sesión → config vacía. */
+        const _CONSOLA_CFG_BASE = 'fiat_consola_pro_config_v3';
+        function consolaConfigKey(user) {
+            const uid = user && user.id ? user.id : null;
+            return uid ? `${_CONSOLA_CFG_BASE}::${uid}` : _CONSOLA_CFG_BASE;
+        }
+        function loadConsolaConfig(user) {
             try {
-                const c = JSON.parse(localStorage.getItem('fiat_consola_pro_config_v3') || '{}');
+                const c = JSON.parse(localStorage.getItem(consolaConfigKey(user))) || {};
+                return { legisladores: [], temas: [], estados: [], comisiones: [], alertas: [], ...c };
+            } catch { return { legisladores: [], temas: [], estados: [], comisiones: [], alertas: [] }; }
+        }
+        /* ¿El usuario ya configuró su consola? (config vive en localStorage,
+           por usuario). */
+        function consolaConfigurada(user) {
+            try {
+                const c = loadConsolaConfig(user);
                 return ((c.legisladores || []).length + (c.temas || []).length + (c.estados || []).length) > 0;
             } catch { return false; }
         }
@@ -528,6 +543,35 @@
             MC:     'assets/partidos/mc.svg',
             PRD:    'assets/partidos/prd.svg',
         };
+
+        // Nombre oficial completo de cada grupo parlamentario.
+        // (Portado de consola-pro.html para el wizard ConsolaProConfigModal.)
+        const PARTIDO_NOMBRE_COMPLETO = {
+            MORENA: 'Movimiento Regeneración Nacional (MORENA)',
+            PAN:    'Partido Acción Nacional (PAN)',
+            PRI:    'Partido Revolucionario Institucional (PRI)',
+            PVEM:   'Partido Verde Ecologista de México (PVEM)',
+            PT:     'Partido del Trabajo (PT)',
+            MC:     'Movimiento Ciudadano (MC)',
+            PRD:    'Partido de la Revolución Democrática (PRD)',
+            INDEP:  'Independientes / Sin grupo',
+        };
+
+        // Orden político estándar para listar grupos parlamentarios.
+        const PARTIDO_ORDEN = ['MORENA', 'PAN', 'PRI', 'PVEM', 'PT', 'MC', 'PRD', 'INDEP'];
+
+        // Normaliza variantes de partido a la clave canónica.
+        // 'Morena' → 'MORENA'; 'Sin Partido'/''/null → 'INDEP'.
+        function normPartido(p) {
+            const s = (p || '').trim().toUpperCase();
+            if (!s || s === 'SIN PARTIDO' || s === 'INDEPENDIENTE' || s === 'NINGUNO') return 'INDEP';
+            if (PARTIDO_NOMBRE_COMPLETO[s]) return s;
+            return 'INDEP';
+        }
+
+        /* Solo el nombre distintivo de la comisión (sin "Comisión de ").
+           Portado de consola-pro.html para el wizard. */
+        const _nombreComisionDisplay = (nombre) => (nombre || '').replace(/^Comisi[oó]n\s+de\s+/i, '').trim();
 
         /* ── Banner de frescura del SIL: avisa si el scraper se quedó atrás ── */
         function SilFreshnessBanner({ metadata }) {
@@ -4895,6 +4939,59 @@
             yucatan: [20.97, -89.62], zacatecas: [22.77, -102.58]
         };
 
+        /* ── Mapa de selección de estados (wizard ConsolaProConfigModal).
+           Portado de consola-pro.html. Reusa ESTADO_COORDS y el global L
+           (Leaflet ya cargado en el <head> de index.html). ── */
+        function MapaSeleccionEstados({ seleccionados, mapa, onToggle }) {
+            const mapRef = React.useRef(null);
+            const mapInstanceRef = React.useRef(null);
+            const markersRef = React.useRef([]);
+            const onToggleRef = React.useRef(onToggle);
+            React.useEffect(() => { onToggleRef.current = onToggle; }, [onToggle]);
+
+            React.useEffect(() => {
+                if (!mapRef.current || mapInstanceRef.current) return;
+                const map = L.map(mapRef.current, {
+                    center: [23.6, -102.0], zoom: 4,
+                    scrollWheelZoom: false, zoomControl: false,
+                    attributionControl: false, dragging: true, doubleClickZoom: false,
+                });
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 7, minZoom: 4,
+                }).addTo(map);
+                mapInstanceRef.current = map;
+                setTimeout(() => map.invalidateSize(), 250);
+                return () => { map.remove(); mapInstanceRef.current = null; };
+            }, []);
+
+            React.useEffect(() => {
+                const map = mapInstanceRef.current;
+                if (!map) return;
+                markersRef.current.forEach(m => map.removeLayer(m));
+                markersRef.current = [];
+                const sel = new Set(seleccionados || []);
+                Object.entries(ESTADO_COORDS).forEach(([key, coords]) => {
+                    const on = sel.has(key);
+                    const size = on ? 16 : 9;
+                    const html = on
+                        ? `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#16a34a;border:2px solid #fff;box-shadow:0 0 0 3px rgba(22,163,74,0.30),0 1px 4px rgba(0,0,0,0.25);"></div>`
+                        : `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#cbd5e1;border:1px solid #94a3b8;"></div>`;
+                    const icon = L.divIcon({ html, className: '', iconSize: [size, size], iconAnchor: [size/2, size/2] });
+                    const mk = L.marker(coords, { icon });
+                    const nombre = (mapa[key]?.nombre) || key;
+                    mk.bindTooltip(
+                        `<div style="font-family:Inter,sans-serif;font-size:11px;font-weight:600">${nombre}</div><div style="font-family:Inter,sans-serif;font-size:10px;color:#666">${on ? 'Seleccionado · clic para quitar' : 'Clic para agregar'}</div>`,
+                        { direction: 'top', className: 'leaflet-tooltip-fiat' }
+                    );
+                    mk.on('click', () => onToggleRef.current && onToggleRef.current(key));
+                    mk.addTo(map);
+                    markersRef.current.push(mk);
+                });
+            }, [seleccionados, mapa]);
+
+            return <div ref={mapRef} style={{height: '100%', minHeight: '320px', width: '100%', borderRadius: '0.5rem'}}></div>;
+        }
+
         /* ── Componente MapaMexico con Leaflet ── */
         function MapaMexico({ estados, maxArts, onSelectEstado, estadoSeleccionado }) {
             const mapRef = React.useRef(null);
@@ -6310,7 +6407,7 @@
         }
 
         /* Menú de cuenta (dropdown desde el nombre, arriba a la derecha) */
-        function AccountMenu({ user, onMiCuenta, onSoporte }) {
+        function AccountMenu({ user, onMiCuenta, onSoporte, onConfigurar }) {
             const [open, setOpen] = useState(false);
             const ir = (url) => { window.location.href = url; };
             return (
@@ -6336,7 +6433,7 @@
                                     <div className="mt-3 inline-block text-[9px] font-bold tracking-widest uppercase bg-white/10 border border-white/20 px-2 py-0.5 rounded-full">Cuenta activa · Beta</div>
                                 </div>
                                 <nav className="py-1.5">
-                                    <button onClick={() => ir('/consola-pro.html')} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition text-left">
+                                    <button onClick={() => { setOpen(false); onConfigurar && onConfigurar(); }} className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 transition text-left">
                                         <svg className="w-4 h-4 text-semaforo-verde flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM13 14a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1h-6a1 1 0 01-1-1v-6z" /></svg>
                                         <div className="flex-1"><div className="text-[13px] font-semibold text-gray-900">Configurar mi consola</div><div className="text-[11px] text-gray-500">Legisladores, temas, alertas</div></div>
                                     </button>
@@ -6368,7 +6465,7 @@
 
         /* Modal de bienvenida — aparece tras confirmar el correo y mientras
            el usuario no haya configurado su consola. */
-        function BienvenidaModal({ user, onClose }) {
+        function BienvenidaModal({ user, onClose, onConfigurar }) {
             return (
                 <div className="fixed inset-0 z-[210] flex items-center justify-center p-4" style={{background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)'}}>
                     <div className="absolute inset-0" onClick={onClose} />
@@ -6385,7 +6482,7 @@
                                 elige los legisladores, temas y estados que quieres vigilar. Toma 2 minutos
                                 y FIAT empieza a trabajar para ti.
                             </p>
-                            <button onClick={() => { window.location.href = '/consola-pro.html'; }}
+                            <button onClick={() => { onClose && onClose(); onConfigurar && onConfigurar(); }}
                                 className="w-full mt-7 text-white font-bold py-3.5 rounded-full text-sm shadow-md hover:scale-[1.02] transition-transform"
                                 style={{background: 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)'}}>
                                 Configurar mi consola →
@@ -6532,6 +6629,495 @@
             );
         }
 
+        /* ConsolaProConfigModal — Wizard de 4 pasos.
+           Portado de consola-pro.html (Fase 1 de unificación). Reusa los
+           helpers ya presentes en index.html (PARTIDO_*, normPartido,
+           PartidoBadge, SEMAFORO_COLOR_HEX, formatNombreLegislador,
+           _nombreComisionDisplay, MapaSeleccionEstados).
+           Cada paso requiere ≥1 selección para avanzar. Botón "Siguiente"
+           se vuelve "Listo" en el último paso. */
+        function ConsolaProConfigModal({ data, allLegisladores, allComisiones, config, setConfig, onClose }) {
+          const PASOS = ['legisladores', 'temas', 'estados', 'comisiones'];
+          const PASOS_LABEL = {
+            legisladores: 'Legisladores',
+            temas:        'Temas',
+            estados:      'Estados',
+            comisiones:   'Comisiones',
+          };
+          const [paso, setPaso] = useState(PASOS[0]);
+          const [search, setSearch] = useState('');
+          const [searchCom, setSearchCom] = useState('');
+          const [ordenCom, setOrdenCom] = useState('nombre'); // 'nombre' | 'asuntos'
+          const idx = PASOS.indexOf(paso);
+
+          const toggleLeg = (id) => {
+            const set = new Set(config.legisladores);
+            if (set.has(id)) set.delete(id); else if (set.size < 20) set.add(id);
+            setConfig({ ...config, legisladores: Array.from(set) });
+          };
+          const toggleTema = (cat) => {
+            const set = new Set(config.temas);
+            if (set.has(cat)) set.delete(cat); else if (set.size < 8) set.add(cat);
+            setConfig({ ...config, temas: Array.from(set) });
+          };
+          const toggleEstado = (key) => {
+            const set = new Set(config.estados);
+            if (set.has(key)) set.delete(key); else if (set.size < 12) set.add(key);
+            setConfig({ ...config, estados: Array.from(set) });
+          };
+          const toggleComision = (key) => {
+            const set = new Set(config.comisiones || []);
+            if (set.has(key)) set.delete(key); else if (set.size < 10) set.add(key);
+            setConfig({ ...config, comisiones: Array.from(set) });
+          };
+
+          /* Validación de avance: cada paso requiere ≥1 selección */
+          const counts = {
+            legisladores: config.legisladores.length,
+            temas:        config.temas.length,
+            estados:      config.estados.length,
+            comisiones:   (config.comisiones || []).length,
+          };
+          const limites = { legisladores: 20, temas: 8, estados: 12, comisiones: 10 };
+          const puedeAvanzar = counts[paso] >= 1;
+
+          const semaforo = data?.semaforo || [];
+          const mapa = data?.mapa || {};
+
+          /* Datos pre-procesados: alfabéticos + divididos por cámara */
+          const legPorCamara = useMemo(() => {
+            const dip = [], sen = [];
+            (allLegisladores || []).forEach(l => {
+              const cam = (l.camara || '').toLowerCase();
+              if (cam.includes('senad')) sen.push(l); else dip.push(l);
+            });
+            const sortByName = (a, b) => formatNombreLegislador(a).localeCompare(formatNombreLegislador(b));
+            dip.sort(sortByName); sen.sort(sortByName);
+            return { dip, sen };
+          }, [allLegisladores]);
+
+          /* Agrupado por partido dentro de cada cámara. Devuelve, por
+             cámara, un array ordenado (PARTIDO_ORDEN) de grupos
+             { key, nombre, legs[] }. Solo grupos con ≥1 legislador. */
+          const agruparPorPartido = (lista) => {
+            const mapa = {};
+            lista.forEach(l => {
+              const k = normPartido(l.partido);
+              (mapa[k] = mapa[k] || []).push(l);
+            });
+            return PARTIDO_ORDEN
+              .filter(k => mapa[k] && mapa[k].length)
+              .map(k => ({ key: k, nombre: PARTIDO_NOMBRE_COMPLETO[k], legs: mapa[k] }));
+          };
+          const legAgrupados = useMemo(() => ({
+            dip: agruparPorPartido(legPorCamara.dip),
+            sen: agruparPorPartido(legPorCamara.sen),
+          }), [legPorCamara]);
+
+          /* Acordeón: qué grupos de partido están expandidos.
+             Default colapsado para que el panel respire ("muy pro"). */
+          const [partidosAbiertos, setPartidosAbiertos] = useState({});
+          const togglePartido = (camKey, pKey) => {
+            const id = camKey + ':' + pKey;
+            setPartidosAbiertos(prev => ({ ...prev, [id]: !prev[id] }));
+          };
+
+          const temasOrdenados = useMemo(
+            () => [...semaforo].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '')),
+            [semaforo]
+          );
+
+          /* Temas ordenados por cómo han escalado (Δ ~7d desc), con su
+             serie histórica para la mini-gráfica estilo Polymarket. */
+          const temasEscalando = useMemo(() => {
+            const cats = data?.historial_scores?.categorias || {};
+            return [...semaforo].map(s => {
+              const serie = (cats[s.categoria]?.scores || []).filter(v => v != null);
+              const n = serie.length;
+              const prev = n >= 8 ? serie[n - 8] : (n >= 2 ? serie[0] : null);
+              const last = n >= 1 ? serie[n - 1] : (s.score_total ?? null);
+              const delta = (prev != null && last != null) ? (last - prev) : null;
+              return { s, serie, delta };
+            }).sort((a, b) => (b.delta ?? -1e9) - (a.delta ?? -1e9));
+          }, [semaforo, data]);
+
+          const estadosOrdenados = useMemo(() => {
+            return Object.entries(mapa)
+              .sort(([, a], [, b]) => (a.nombre || '').localeCompare(b.nombre || ''));
+          }, [mapa]);
+
+          const comisionesPorCamara = useMemo(() => {
+            const dip = [], sen = [];
+            (allComisiones || []).forEach(c => {
+              const cam = (c.camara || '').toLowerCase();
+              if (cam.includes('senad')) sen.push(c); else dip.push(c);
+            });
+            const cmp = (a, b) => _nombreComisionDisplay(a.nombre).localeCompare(_nombreComisionDisplay(b.nombre));
+            dip.sort(cmp); sen.sort(cmp);
+            return { dip, sen };
+          }, [allComisiones]);
+
+          /* Filtro por búsqueda dentro de la lista alfabética por cámara */
+          const filtrarLegs = (lista) => {
+            if (search.length < 2) return lista;
+            const q = search.toLowerCase();
+            return lista.filter(l => formatNombreLegislador(l).toLowerCase().includes(q));
+          };
+          const filtrarComs = (lista) => {
+            if (searchCom.length < 2) return lista;
+            const q = searchCom.toLowerCase();
+            return lista.filter(c => (c.nombre || '').toLowerCase().includes(q));
+          };
+
+          /* === SUBCOMPONENTES === */
+
+          /* Card de legislador con foto. Click toggle. */
+          const LegCard = ({ l }) => {
+            const sel = config.legisladores.includes(l.id);
+            const nombreFmt = formatNombreLegislador(l);
+            const foto = l.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreFmt)}&background=e5e7eb&color=374151&size=64`;
+            return (
+              <button onClick={() => toggleLeg(l.id)}
+                className={`w-full flex items-center gap-2 px-2 py-2 text-left transition rounded-md ${sel ? 'bg-emerald-50 border border-emerald-200' : 'hover:bg-gray-50 border border-transparent'}`}>
+                <img src={foto} alt={nombreFmt}
+                  onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreFmt)}&background=e5e7eb&color=374151&size=64`; }}
+                  className="w-9 h-9 rounded-full object-cover bg-gray-100 flex-shrink-0 border border-gray-200" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[12px] font-semibold text-gray-800 truncate">{nombreFmt}</div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <PartidoBadge partido={l.partido} size="sm" />
+                    {l.estado && <span className="text-[10px] text-gray-500 truncate">{l.estado}</span>}
+                  </div>
+                </div>
+                {sel && <span className="text-emerald-600 font-bold text-base flex-shrink-0">✓</span>}
+              </button>
+            );
+          };
+
+          /* === STEPPER (encabezado visual con 4 puntos numerados) === */
+          const Stepper = () => (
+            <div className="flex items-center justify-center gap-2 px-5 py-4 border-b border-gray-100">
+              {PASOS.map((p, i) => {
+                const completado = counts[p] >= 1;
+                const activo = p === paso;
+                return (
+                  <React.Fragment key={p}>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition ${
+                        activo ? 'bg-acento text-white ring-2 ring-acento/30' :
+                        completado ? 'bg-semaforo-verde text-white' :
+                        'bg-gray-200 text-gray-500'
+                      }`}>
+                        {completado && !activo ? '✓' : i + 1}
+                      </div>
+                      <div className={`text-xs font-semibold ${activo ? 'text-acento' : completado ? 'text-semaforo-verde' : 'text-gray-400'} hidden sm:inline`}>
+                        {PASOS_LABEL[p]}
+                      </div>
+                    </div>
+                    {i < PASOS.length - 1 && (
+                      <div className={`flex-1 h-0.5 max-w-[40px] ${completado ? 'bg-semaforo-verde/40' : 'bg-gray-200'}`}></div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          );
+
+          return (
+            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+              <div onClick={e => e.stopPropagation()}
+                className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col" style={{boxShadow: '0 20px 60px rgba(0,0,0,0.15)'}}>
+                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">CONFIGURAR CONSOLA · PASO {idx + 1} DE {PASOS.length}</div>
+                    <h2 className="text-lg font-black text-gray-900 mt-0.5">
+                      {paso === 'legisladores' && 'Elige los legisladores que quieres vigilar'}
+                      {paso === 'temas'        && 'Elige los temas legislativos relevantes'}
+                      {paso === 'estados'      && 'Elige los estados que te interesan'}
+                      {paso === 'comisiones'   && 'Elige las comisiones a seguir'}
+                    </h2>
+                  </div>
+                  <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-2xl leading-none w-8 h-8 hover:bg-gray-100 rounded-full">×</button>
+                </div>
+
+                <Stepper />
+
+                <div className="flex-1 overflow-y-auto p-5">
+
+                  {/* === PASO 1 — LEGISLADORES === */}
+                  {paso === 'legisladores' && (
+                    <div>
+                      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                        <div className="text-xs text-gray-600">
+                          Hasta {limites.legisladores} legisladores · <span className="font-semibold text-acento">{counts.legisladores} seleccionados</span>
+                        </div>
+                        <input type="text" placeholder="Buscar por nombre..." value={search}
+                          onChange={e => setSearch(e.target.value)}
+                          className="w-full sm:w-72 px-3 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white" />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[
+                          { camKey: 'dip', label: 'Cámara de Diputados', grupos: legAgrupados.dip },
+                          { camKey: 'sen', label: 'Senado',              grupos: legAgrupados.sen },
+                        ].map(({ camKey, label, grupos }) => {
+                          const buscando = search.length >= 2;
+                          // Grupos con sus legisladores ya filtrados por búsqueda
+                          const gruposVis = grupos
+                            .map(g => ({ ...g, legsFiltrados: filtrarLegs(g.legs) }))
+                            .filter(g => g.legsFiltrados.length > 0);
+                          const totalCam = gruposVis.reduce((s, g) => s + g.legsFiltrados.length, 0);
+                          return (
+                            <div key={camKey} className="border border-gray-200 rounded-xl flex flex-col" style={{maxHeight: '60vh'}}>
+                              <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-xl flex items-center justify-between">
+                                <div className="text-xs font-bold text-gray-700">{label}</div>
+                                <div className="text-[10px] text-gray-500">{totalCam}</div>
+                              </div>
+                              <div className="overflow-y-auto p-2 space-y-1.5">
+                                {gruposVis.map(g => {
+                                  const abierto = buscando || !!partidosAbiertos[camKey + ':' + g.key];
+                                  const selEnGrupo = g.legsFiltrados.filter(l => config.legisladores.includes(l.id)).length;
+                                  const color = PARTIDO_COLORS[g.key] || '#6B7280';
+                                  return (
+                                    <div key={g.key} className="rounded-lg border border-gray-200 overflow-hidden">
+                                      <button onClick={() => !buscando && togglePartido(camKey, g.key)}
+                                        className="w-full flex items-center gap-2 px-2.5 py-2 bg-gray-50 hover:bg-gray-100 transition text-left"
+                                        style={{ borderLeft: `3px solid ${color}` }}>
+                                        {PARTIDO_LOGOS[g.key]
+                                          ? <img src={PARTIDO_LOGOS[g.key]} alt={g.key} className="w-6 h-6 object-contain flex-shrink-0" />
+                                          : <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[9px] font-bold" style={{ background: color }}>IND</div>}
+                                        <div className="flex-1 min-w-0">
+                                          <div className="text-[12px] font-bold text-gray-800 truncate">{g.nombre}</div>
+                                          <div className="text-[10px] text-gray-500">
+                                            {g.legsFiltrados.length} legislador{g.legsFiltrados.length !== 1 ? 'es' : ''}
+                                            {selEnGrupo > 0 && <span className="text-acento font-semibold"> · {selEnGrupo} seleccionado{selEnGrupo !== 1 ? 's' : ''}</span>}
+                                          </div>
+                                        </div>
+                                        {!buscando && (
+                                          <span className={`text-gray-400 text-xs flex-shrink-0 transition-transform ${abierto ? 'rotate-90' : ''}`}>▶</span>
+                                        )}
+                                      </button>
+                                      {abierto && (
+                                        <div className="p-1.5 space-y-1 bg-white">
+                                          {g.legsFiltrados.map(l => <LegCard key={l.id} l={l} />)}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                                {gruposVis.length === 0 && (
+                                  <div className="text-xs text-gray-400 italic text-center py-4">Sin resultados</div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* === PASO 2 — TEMAS (estilo Polymarket, ordenado por escalada) === */}
+                  {paso === 'temas' && (
+                    <div>
+                      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                        <div className="text-xs text-gray-600">
+                          Hasta {limites.temas} temas · <span className="font-semibold text-acento">{counts.temas} seleccionados</span>
+                        </div>
+                        <div className="text-[11px] text-gray-400">Ordenados por cómo han escalado (últimos 7 días)</div>
+                      </div>
+                      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden" style={{maxHeight: '60vh', overflowY: 'auto'}}>
+                        {temasEscalando.map(({ s, serie, delta }, i) => {
+                          const sel = config.temas.includes(s.categoria);
+                          const hex = SEMAFORO_COLOR_HEX[s.color] || '#6B7280';
+                          const subiendo = delta != null && delta > 0.5;
+                          const bajando = delta != null && delta < -0.5;
+                          const arrowCol = subiendo ? '#16a34a' : bajando ? '#dc2626' : '#9ca3af';
+                          const arrow = subiendo ? '↗' : bajando ? '↘' : '→';
+                          const sl = serie.slice(-30);
+                          const W = 112, H = 34;
+                          let path = '';
+                          if (sl.length >= 2) {
+                            const mx = Math.max(...sl), mn = Math.min(...sl), rg = (mx - mn) || 1;
+                            const stepX = W / (sl.length - 1);
+                            path = sl.map((v, k) => `${(k * stepX).toFixed(1)},${(H - ((v - mn) / rg) * H).toFixed(1)}`).join(' ');
+                          }
+                          return (
+                            <button key={s.categoria} onClick={() => toggleTema(s.categoria)}
+                              className={`w-full flex items-center gap-3 px-2.5 py-3 border-b border-gray-100 last:border-b-0 text-left transition ${sel ? 'bg-emerald-50' : 'bg-white hover:bg-gray-50'}`}>
+                              <span className="flex-shrink-0 w-5 text-center text-sm text-gray-300 font-medium tabular-nums">{i + 1}</span>
+                              <div className="flex-shrink-0 w-12 h-12 rounded-lg flex flex-col items-center justify-center"
+                                style={{ background: hex + '14', border: `1px solid ${hex}33` }}>
+                                <span className="text-[17px] font-black leading-none" style={{ color: hex }}>{Math.round(s.score_total ?? 0)}</span>
+                                <span className="text-[7px] uppercase tracking-wider font-bold mt-0.5" style={{ color: hex }}>score</span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[15px] font-bold text-gray-900 truncate leading-tight">{s.nombre}</div>
+                                <div className="flex items-baseline gap-1.5 mt-1">
+                                  <span className="text-[19px] font-black text-gray-900 leading-none tabular-nums">{Math.round(s.score_total ?? 0)}</span>
+                                  <span className="text-[13px] font-bold leading-none" style={{ color: arrowCol }}>
+                                    {arrow} {delta != null ? (delta > 0 ? '+' : '') + delta.toFixed(1) : '—'}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex-shrink-0">
+                                {path ? (
+                                  <svg width={W} height={H} className="block">
+                                    <polyline points={`0,${H} ${path} ${W},${H}`} fill={arrowCol} fillOpacity="0.08" stroke="none" />
+                                    <polyline points={path} fill="none" stroke={arrowCol} strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
+                                  </svg>
+                                ) : <span className="text-[10px] text-gray-300 font-mono">—</span>}
+                              </div>
+                              <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold transition ${sel ? 'bg-emerald-500 text-white' : 'border-2 border-gray-300 text-transparent'}`}>✓</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* === PASO 3 — ESTADOS === */}
+                  {paso === 'estados' && (
+                    <div>
+                      <div className="text-xs text-gray-600 mb-3">
+                        Hasta {limites.estados} estados · <span className="font-semibold text-acento">{counts.estados} seleccionados</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        {/* Izquierda: lista compacta en 2 columnas (minimalista) */}
+                        <div className="md:col-span-2">
+                          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+                            {estadosOrdenados.map(([key, info]) => {
+                              const sel = config.estados.includes(key);
+                              return (
+                                <button key={key} onClick={() => toggleEstado(key)}
+                                  className={`flex items-center gap-2 px-2 py-1.5 text-left rounded-md transition ${sel ? 'bg-emerald-50 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>
+                                  <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border text-[10px] font-bold ${sel ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-gray-300 text-transparent'}`}>✓</span>
+                                  <span className="text-[13px] truncate">{info.nombre || info.abreviatura}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        {/* Derecha: mapa interactivo — las entidades se iluminan al seleccionarlas */}
+                        <div className="md:col-span-1">
+                          <div className="border border-gray-200 rounded-xl p-3 bg-gray-50/60 h-full flex flex-col">
+                            <div className="text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-2">Mapa · {counts.estados}/{limites.estados} seleccionados</div>
+                            <div className="flex-1 min-h-[320px] rounded-lg overflow-hidden border border-gray-200 bg-white">
+                              <MapaSeleccionEstados seleccionados={config.estados} mapa={mapa} onToggle={toggleEstado} />
+                            </div>
+                            {config.estados.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mt-2 max-h-[88px] overflow-y-auto">
+                                {config.estados.map(k => {
+                                  const info = (mapa[k] || {});
+                                  return (
+                                    <button key={k} onClick={() => toggleEstado(k)}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white border border-emerald-200 text-emerald-700 text-[11px] font-medium hover:bg-emerald-50 transition">
+                                      {info.nombre || info.abreviatura || k}
+                                      <span className="text-emerald-400">×</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* === PASO 4 — COMISIONES === */}
+                  {paso === 'comisiones' && (
+                    <div>
+                      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                        <div className="text-xs text-gray-600">
+                          Hasta {limites.comisiones} comisiones · <span className="font-semibold text-acento">{counts.comisiones} seleccionadas</span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="inline-flex rounded-lg border border-gray-200 bg-white overflow-hidden text-xs">
+                            {[['nombre','Alfabético'],['asuntos','Por # de asuntos']].map(([k,label], i) => (
+                              <button key={k} onClick={() => setOrdenCom(k)}
+                                className={`px-3 py-2 font-medium transition-colors ${ordenCom === k ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-50'} ${i > 0 ? 'border-l border-gray-200' : ''}`}>
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                          <input type="text" placeholder="Buscar comisión..." value={searchCom}
+                            onChange={e => setSearchCom(e.target.value)}
+                            className="w-full sm:w-64 px-3 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {(() => {
+                          const asuntos = c => (c.sitl?.turnadas ?? c.total_docs ?? 0);
+                          const ordenar = lista => ordenCom === 'asuntos'
+                            ? [...lista].sort((a, b) => asuntos(b) - asuntos(a))
+                            : lista;
+                          return [
+                            { titulo: 'Cámara de Diputados', items: ordenar(filtrarComs(comisionesPorCamara.dip)) },
+                            { titulo: 'Senado',              items: ordenar(filtrarComs(comisionesPorCamara.sen)) },
+                          ];
+                        })().map(col => (
+                          <div key={col.titulo} className="border border-gray-200 rounded-xl flex flex-col" style={{maxHeight: '60vh'}}>
+                            <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-xl flex items-center justify-between">
+                              <div className="text-xs font-bold text-gray-700">{col.titulo}</div>
+                              <div className="text-[10px] text-gray-500">{col.items.length}</div>
+                            </div>
+                            <div className="overflow-y-auto p-2 space-y-1">
+                              {col.items.map(c => {
+                                const key = `${c.nombre}|${c.camara}`;
+                                const sel = (config.comisiones || []).includes(key);
+                                return (
+                                  <button key={key} onClick={() => toggleComision(key)}
+                                    className={`w-full flex items-center justify-between gap-2 px-2 py-2 text-left rounded-md border transition ${sel ? 'bg-emerald-50 border-emerald-300' : 'border-transparent hover:bg-gray-50'}`}>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-[12px] font-semibold text-gray-800 truncate" title={c.nombre}>{_nombreComisionDisplay(c.nombre)}</div>
+                                      <div className="text-[10px] text-gray-500">{(c.sitl?.turnadas ?? c.total_docs ?? 0)} asuntos</div>
+                                    </div>
+                                    {sel && <span className="text-emerald-600 font-bold text-base flex-shrink-0">✓</span>}
+                                  </button>
+                                );
+                              })}
+                              {col.items.length === 0 && (
+                                <div className="text-xs text-gray-400 italic text-center py-4">Sin resultados</div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* === FOOTER con Atrás / Siguiente / Listo === */}
+                <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between bg-gray-50 rounded-b-2xl gap-2">
+                  <button onClick={() => setPaso(PASOS[Math.max(0, idx - 1)])}
+                    disabled={idx === 0}
+                    className="text-xs font-semibold px-4 py-2 rounded-full transition border bg-white border-gray-300 text-gray-700 hover:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed">
+                    ← Atrás
+                  </button>
+                  <div className="text-[11px] text-gray-500 font-mono">
+                    {!puedeAvanzar && <span>Selecciona al menos 1 para continuar</span>}
+                    {puedeAvanzar && <span>{counts[paso]} de {limites[paso]} seleccionados</span>}
+                  </div>
+                  {idx < PASOS.length - 1 ? (
+                    <button onClick={() => setPaso(PASOS[idx + 1])}
+                      disabled={!puedeAvanzar}
+                      className="text-white font-semibold px-5 py-2 rounded-full text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{background: puedeAvanzar ? 'linear-gradient(135deg, #1a365d 0%, #2c5282 100%)' : '#9ca3af'}}>
+                      Siguiente →
+                    </button>
+                  ) : (
+                    <button onClick={onClose}
+                      disabled={!puedeAvanzar}
+                      className="text-white font-semibold px-5 py-2 rounded-full text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{background: puedeAvanzar ? 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)' : '#9ca3af'}}>
+                      ✓ Listo
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        }
+
         /* ================================================================
            MAIN APP
            ================================================================ */
@@ -6568,6 +7154,22 @@
             const [showCuenta, setShowCuenta] = useState(false);
             const [bienvenidaCerrada, setBienvenidaCerrada] = useState(false);
             const [infoBubbleDismissed, setInfoBubbleDismissed] = useState(false);
+            /* Wizard de configuración de consola (Fase 1 de unificación).
+               Config POR USUARIO en localStorage. allLegisladores/allComisiones
+               se cargan del Worker solo cuando hay sesión (no cargar costo en
+               visitantes anónimos). */
+            const [showConfigWizard, setShowConfigWizard] = useState(false);
+            const [consolaConfig, setConsolaConfigState] = useState(() => loadConsolaConfig(null));
+            const [allLegisladores, setAllLegisladores] = useState([]);
+            const [allComisiones, setAllComisiones] = useState([]);
+            /* Recargar config al cambiar de usuario (clave per-user). */
+            useEffect(() => {
+                setConsolaConfigState(loadConsolaConfig(authUser));
+            }, [authUser ? authUser.id : null]);
+            const setConsolaConfig = (next) => {
+                setConsolaConfigState(next);
+                try { localStorage.setItem(consolaConfigKey(authUser), JSON.stringify(next)); } catch {}
+            };
 
             useEffect(() => {
                 fetch('./data.json?v=' + Date.now()).then(r => r.ok ? r.json() : Promise.reject()).then(d => { setData(d); setLoading(false); }).catch(() => { setLoading(false); });
@@ -6585,6 +7187,30 @@
                 });
                 return () => { try { sub.subscription.unsubscribe(); } catch {} };
             }, []);
+
+            /* Carga legisladores + comisiones para el wizard de consola.
+               Solo cuando hay sesión y data.json ya cargó → no genera costo
+               de red para visitantes anónimos. Paginado vía /radar?limite=100. */
+            useEffect(() => {
+                if (!authUser || !data) return;
+                const WORKER_URL = 'https://fiat-busqueda.rreubenleon.workers.dev';
+                fetch(`${WORKER_URL}/radar?limite=100`).then(r => r.ok ? r.json() : { legisladores: [] }).then(radar => {
+                    setAllLegisladores(radar.legisladores || []);
+                    const total = radar.total || 0;
+                    if (total > 100) {
+                        const pages = Math.ceil(total / 100);
+                        const ps = [];
+                        for (let p = 2; p <= pages; p++) ps.push(fetch(`${WORKER_URL}/radar?limite=100&pagina=${p}`).then(r => r.ok ? r.json() : { legisladores: [] }));
+                        Promise.all(ps).then(results => {
+                            const todos = [...(radar.legisladores || [])];
+                            results.forEach(r => todos.push(...(r.legisladores || [])));
+                            setAllLegisladores(todos);
+                        });
+                    }
+                }).catch(() => {});
+                fetch(`${WORKER_URL}/comisiones`).then(r => r.ok ? r.json() : { comisiones: [] })
+                    .then(d => setAllComisiones(d.comisiones || [])).catch(() => {});
+            }, [authUser ? authUser.id : null, !!data]);
 
             /* Sincroniza la URL con la pestaña activa (URLs limpias). */
             const _rutaInicial = useRef(true);
@@ -6670,7 +7296,7 @@
                             {/* Auth buttons */}
                             <div className="flex items-center gap-2 flex-shrink-0 hidden md:flex">
                                 {authUser ? (
-                                    <AccountMenu user={authUser} onMiCuenta={() => setShowCuenta(true)} onSoporte={() => setShowFAQ(true)} />
+                                    <AccountMenu user={authUser} onMiCuenta={() => setShowCuenta(true)} onSoporte={() => setShowFAQ(true)} onConfigurar={() => setShowConfigWizard(true)} />
                                 ) : (
                                     <>
                                         <button onClick={() => { setShowRegistro(false); setShowLogin(true); }} className="text-[12px] text-gray-500 hover:text-gray-800 font-medium transition-colors whitespace-nowrap px-2 py-1">Inicia sesión</button>
@@ -6795,10 +7421,24 @@
                     {/* Modal Registro */}
                     {showRegistro && <LoginModal initialMode="signup" onClose={() => setShowRegistro(false)} />}
                     {showLogin && <LoginModal initialMode="login" onClose={() => setShowLogin(false)} />}
-                    {authReady && authUser && !consolaConfigurada() && !bienvenidaCerrada && (
-                        <BienvenidaModal user={authUser} onClose={() => setBienvenidaCerrada(true)} />
+                    {authReady && authUser && !consolaConfigurada(authUser) && !bienvenidaCerrada && (
+                        <BienvenidaModal user={authUser} onClose={() => setBienvenidaCerrada(true)} onConfigurar={() => setShowConfigWizard(true)} />
                     )}
                     {showCuenta && authUser && <MiCuentaModal user={authUser} onClose={() => setShowCuenta(false)} />}
+
+                    {/* Wizard de configuración de consola (Fase 1 unificación).
+                        Solo para usuarios con sesión. Al cerrar: persiste +
+                        cierra (sin vista de consola personalizada todavía). */}
+                    {showConfigWizard && authUser && (
+                        <ConsolaProConfigModal
+                            data={data}
+                            allLegisladores={allLegisladores}
+                            allComisiones={allComisiones}
+                            config={consolaConfig}
+                            setConfig={setConsolaConfig}
+                            onClose={() => setShowConfigWizard(false)}
+                        />
+                    )}
 
                     {/* Info Bubble - abre FAQ, desaparece al cerrar */}
                     {!infoBubbleDismissed && (
