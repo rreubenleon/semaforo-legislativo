@@ -6573,10 +6573,11 @@
                                 </Campo>
                             </div>
                             <div className="flex items-center justify-between mt-7">
-                                <span className="text-[12px] font-medium" style={{color: msg.startsWith('✓') ? '#2e7d32' : '#e11d48'}}>{msg}</span>
+                                <span className="text-[12px] font-medium text-rose-600">{msg && !msg.startsWith('✓') ? msg : ''}</span>
                                 <button onClick={guardar} disabled={guardando || !nombre.trim()}
-                                    className="text-sm font-semibold px-6 py-2.5 rounded-full text-white bg-gray-900 hover:bg-semaforo-verde transition-colors duration-200 disabled:opacity-50">
-                                    {guardando ? 'Guardando…' : 'Guardar'}
+                                    className="text-sm font-bold bg-transparent border-0 p-0 transition-colors duration-200 disabled:opacity-40 hover:opacity-80"
+                                    style={{color: (guardando || msg.startsWith('✓')) ? '#2e7d32' : '#111827'}}>
+                                    {guardando ? 'Guardando…' : (msg.startsWith('✓') ? '✓ Guardado' : 'Guardar')}
                                 </button>
                             </div>
                         </div>
