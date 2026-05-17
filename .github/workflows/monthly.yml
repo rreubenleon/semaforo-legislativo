@@ -108,6 +108,22 @@ jobs:
         run: python -u scripts/scrape_respaldo_diputados.py --d1
         continue-on-error: true
 
+      # 4c. Scraper de RESPALDO Senado: mantiene limpia en D1 la
+      #     fila-basura "Vargas" (nombre = fragmento de iniciativa) que
+      #     limpiar_legisladores_fantasma.py no atrapa (deriva IDs de la
+      #     BD local, que está limpia, y sale temprano). --d1 consulta D1
+      #     directamente y borra por patrón de nombre; el senador real
+      #     id=543 (nombre limpio) no matchea y queda intacto. El relleno
+      #     de bios de senadores queda DESACTIVADO a propósito (sin
+      #     fuente estática fiable; ver el script). Datos estáticos →
+      #     mensual es suficiente.
+      - name: Scrape respaldo Senado (limpieza Vargas D1)
+        env:
+          PYTHONUNBUFFERED: "1"
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python -u scripts/scrape_respaldo_senado.py --d1
+        continue-on-error: true
+
       # 5. Sync legisladores_perfil → D1. CRÍTICO: sin esto el scrape
       #    de arriba queda solo en BD local y D1 no se actualiza
       #    (bug 15-may: 662 scrapeados local, D1 en 70%).

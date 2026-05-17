@@ -1,0 +1,120 @@
+name: Scrape Respaldo Senado (one-off)
+
+# Espejo de scrape_respaldo_diputados.yml, para el Senado.
+#
+# Estado verificado 17-may-2026:
+#   · Parte ACTIVA → limpia de D1 la fila-basura "Vargas" (nombre =
+#     fragmento de iniciativa). scripts/limpiar_legisladores_fantasma.py
+#     NO la atrapa (deriva IDs de la BD local, que está limpia, y hace
+#     return temprano). scrape_respaldo_senado.py --d1 sí: consulta D1
+#     DIRECTAMENTE y borra por patrón de nombre. El senador real
+#     (legisladores.id=543, nombre limpio de 25 chars) NO matchea los
+#     patrones → queda intacto.
+#   · Parte PENDIENTE → relleno de biografías de senadores. No hay
+#     fuente OFICIAL estática fiable (la curricular de senado.gob.mx
+#     es JS; SIL Gobernación llega sin secciones biográficas para
+#     ellos). Por eso NO se pasa --enable-bio-scrape. Regla dura del
+#     proyecto: 0 datos malos.
+#
+# Igual que el de Diputados, también corre limpiar_legisladores_fantasma
+# (idempotente, barato) por si hubiera basura atrapable por la vía
+# local, y sync_perfil_d1 + verificación del radar al final.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "scrape-respaldo-senado"
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-respaldo-sen-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-respaldo-
+            semaforo-db-perfiles-
+            semaforo-db-monthly-
+            semaforo-db-
+
+      - run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: |
+          pip install -r requirements.txt
+          npm install -g wrangler@3
+
+      # 1. Limpieza fantasmas por la vía local (idempotente, barato).
+      #    Atrapa cualquier basura LOCAL; la fila Vargas vive solo en
+      #    D1 y la limpia el paso 2.
+      - name: Limpiar legisladores fantasma (local + D1 si aplica)
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python scripts/limpiar_legisladores_fantasma.py
+        continue-on-error: true
+
+      # 2. Respaldo Senado: limpia la fila-basura Vargas en D1 (consulta
+      #    D1 directa; id real 543 intacto). El relleno de bios queda
+      #    DESACTIVADO a propósito (sin fuente fiable; ver script).
+      - name: Scrape respaldo Senado (limpieza Vargas D1, --d1)
+        env:
+          PYTHONUNBUFFERED: "1"
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python -u scripts/scrape_respaldo_senado.py --d1
+
+      # 3. Sync legisladores_perfil → D1 (idempotente; sin nuevas bios
+      #    de senadores hoy, pero mantiene D1 coherente con local).
+      - name: Sync legisladores_perfil → D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python scripts/sync_perfil_d1.py
+        continue-on-error: true
+
+      # 4. Verificación: cuántos senadores siguen sin biografía en el
+      #    radar (debe BAJAR al menos en 1: la fila-basura Vargas ya no
+      #    aparece como entrada sin bio).
+      - name: Verificación radar (Senado sin biografía)
+        run: |
+          sleep 5
+          curl -s "https://fiat-busqueda.rreubenleon.workers.dev/radar?limite=2000" \
+            | python3 -c "
+          import sys, json
+          rows = json.load(sys.stdin).get('legisladores') or []
+          t = len(rows)
+          sen = [r for r in rows if 'enad' in (r.get('camara') or '')]
+          sin_bio = [r for r in sen if not (r.get('biografia') or '').strip()]
+          print(f'Total radar: {t}  Senado: {len(sen)}')
+          print(f'Senado sin biografía: {len(sin_bio)}')
+          for r in sin_bio[:20]:
+              print(f'  id={r.get(\"id\")} {r.get(\"nombre\")!r}')
+          vargas = [r for r in rows if 'vargas' in (r.get('nombre') or '').lower()
+                    and 'villar' in (r.get('nombre') or '').lower()]
+          print(f'Filas Vargas del Villar en radar: {len(vargas)}')
+          for r in vargas:
+              print(f'  id={r.get(\"id\")} len={len(r.get(\"nombre\") or \"\")} {(r.get(\"nombre\") or \"\")[:60]!r}')"
+
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: semaforo.db
+          key: semaforo-db-respaldo-sen-${{ github.run_id }}
