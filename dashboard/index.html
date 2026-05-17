@@ -2528,8 +2528,8 @@
                         </div>
                     )}
 
-                    {/* Filter bar: search + selects */}
-                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 space-y-2">
+                    {/* Filter bar: search + selects (sin card blanca) */}
+                    <div className="space-y-2">
                         <div className="flex items-center gap-2 flex-wrap">
                             <div className="relative flex-1 min-w-[180px]">
                                 <svg className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -4791,9 +4791,9 @@
                         <div className="text-center py-8 text-sm text-gray-400">Cargando comisiones...</div>
                     )}
 
-                    {/* Filter bar: search + selects (mismo estilo que Radar) */}
+                    {/* Filter bar: search + selects (sin card blanca) */}
                     {!comLoading && <React.Fragment>
-                    <div className="bg-white border border-gray-200 rounded-xl p-2.5 space-y-2">
+                    <div className="space-y-2">
                         <div className="flex items-center gap-2 flex-wrap">
                             <div className="relative flex-1 min-w-[180px]">
                                 <svg className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
@@ -5125,16 +5125,17 @@
             }, [estados, estadoSeleccionado, maxArts]);
 
             return (
-                <div className="glass border border-borde rounded-xl overflow-hidden">
-                    <div className="flex items-center justify-between px-4 pt-3 pb-1">
-                        <h3 className="font-semibold text-gray-700 text-sm">Cobertura por estado</h3>
-                        <div className="flex items-center gap-3 text-[10px] text-gray-500 font-mono">
-                            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Alto</span>
-                            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Elevado</span>
-                            <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block"></span> Bajo</span>
+                <div>
+                    <div className="flex items-center justify-between mb-3 px-1">
+                        <h3 className="font-semibold text-gray-800 text-sm">Cobertura por estado</h3>
+                        <div className="flex items-center gap-3 text-[11px] text-gray-500">
+                            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Alto</span>
+                            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Elevado</span>
+                            <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block"></span> Bajo</span>
                         </div>
                     </div>
-                    <div ref={mapRef} style={{height: '420px', width: '100%'}}></div>
+                    <div ref={mapRef} className="rounded-2xl overflow-hidden"
+                        style={{height: '440px', width: '100%', boxShadow: 'inset 0 2px 14px rgba(15,23,42,0.16)', border: '1px solid #e5e7eb'}}></div>
                 </div>
             );
         }
