@@ -100,6 +100,24 @@
             .nav-tabs-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
             .nav-tabs-scroll::-webkit-scrollbar { display: none; }
         }
+        /* Consola personalizada (Fase 2) — ticker + override compacto CSP.
+           Portado desde consola-pro.html para que TickerBar y FuentesMananera
+           dentro de PageConsolePro se vean igual. */
+        @keyframes ticker-scroll {
+          from { transform: translateX(0); }
+          to   { transform: translateX(-50%); }
+        }
+        .ticker-track { animation: ticker-scroll 70s linear infinite; }
+        .ticker-track:hover { animation-play-state: paused; }
+        .csp-compact .text-sm { font-size: 11px; line-height: 1.45; }
+        .csp-compact .text-xs { font-size: 10px; }
+        .csp-compact .max-h-56 { max-height: 16rem; }
+        .csp-stretch { min-height: 0; max-height: 420px; overflow-y: auto; }
+        .csp-stretch .fuentes-panel { max-height: none !important; }
+        .csp-compact .p-3 { padding: 0.5rem 0.625rem; }
+        .csp-compact .mb-1\.5 { margin-bottom: 0.25rem; }
+        .csp-compact .mt-1\.5 { margin-top: 0.25rem; }
+        .csp-compact .text-\[10px\] { font-size: 9px; }
         /* Gradient bars - verde=alta prob, amarillo=media, rojo=baja */
         .bar-verde { background: linear-gradient(90deg, rgba(46,125,50,0.4), #2e7d32); }
         .bar-amarillo { background: linear-gradient(90deg, rgba(198,151,43,0.4), #c6972b); }
@@ -7113,6 +7131,1749 @@
         }
 
         /* ================================================================
+           CONSOLA PERSONALIZADA (Fase 2 unificación)
+           Portado desde consola-pro.html. Componentes que YA existen en
+           index.html se reusan (SemaforoCard, FuentesMananera, MapaMexico,
+           ComisionDetalle, ScoreRing, PartidoBadge, HitRateGaugeMini,
+           RolBadge, _rolInstitucional, formatNombreLegislador, _catLabel,
+           CATEGORY_COLORS, SEMAFORO_COLOR_HEX, _nombreComisionDisplay,
+           WORKER_URL). RadarRow difiere materialmente (index usa Wilson LB;
+           consola usa elo_indice + percentil) → portado como RadarRowCP y
+           usado SOLO dentro de PageConsolePro.
+           ================================================================ */
+
+        function TerminalIAMockup() {
+          return (
+            <div className="rounded-xl p-5 h-full flex flex-col overflow-hidden border border-slate-700 relative" style={{background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)', color: '#e2e8f0', fontFamily: "'JetBrains Mono', ui-monospace, monospace"}}>
+              <div className="flex items-center justify-between mb-4 relative z-10">
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1.5">
+                    <div className="w-2.5 h-2.5 rounded-full" style={{background: 'rgba(244,63,94,0.7)'}}></div>
+                    <div className="w-2.5 h-2.5 rounded-full" style={{background: 'rgba(245,158,11,0.7)'}}></div>
+                    <div className="w-2.5 h-2.5 rounded-full" style={{background: 'rgba(16,185,129,0.7)'}}></div>
+                  </div>
+                  <div className="text-[10px] uppercase tracking-widest text-slate-400 ml-2 font-semibold">Fiat Console</div>
+                </div>
+                <div className="text-[9px] uppercase tracking-widest font-bold" style={{color: '#4ade80'}}>v2 PRÓXIMAMENTE</div>
+              </div>
+              <div className="flex-1 text-[12px] leading-relaxed space-y-2 relative z-10 overflow-hidden" style={{minHeight: 240}}>
+                <div style={{color: '#4ade80'}}>Fiat Console · Terminal IA</div>
+                <div className="text-slate-500">Modelo: Claude Haiku 4.5 + Sonnet 4.5</div>
+                <div className="text-slate-500">Datos: 16,352 instrumentos · 66,052 notas · 682 legisladores</div>
+                <div className="border-t border-slate-700/50 my-3"></div>
+                <div className="text-slate-200"><span style={{color: '#4ade80', fontWeight: 600}}>{'>'} </span>¿Cuál es la constante de Rubén Moreira?</div>
+                <div style={{color: '#4ade80'}}>[procesando...] análisis de trayectoria LXIV+LXV+LXVI</div>
+                <div className="text-slate-300">Tema dominante: <span style={{color: '#86efac'}}>Justicia</span> · 71 instrumentos · tasa aprobación 44.5%</div>
+                <div className="text-slate-300">Patrón: 87% de PA en LXV son exhortos al Ejecutivo en materia federal.</div>
+                <div className="border-t border-slate-700/50 my-3"></div>
+                <div style={{color: 'rgba(148,163,184,0.7)'}}><span style={{color: 'rgba(74,222,128,0.7)', fontWeight: 600}}>{'>'} </span>Cuando hay incendios forestales, ¿quién presenta PA?</div>
+                <div style={{color: 'rgba(148,163,184,0.7)'}}>Próximamente:</div>
+                <div className="pl-3" style={{color: 'rgba(148,163,184,0.7)'}}>· Resúmenes semanales de tus temas</div>
+                <div className="pl-3" style={{color: 'rgba(148,163,184,0.7)'}}>· Constantes históricas de cada legislador</div>
+                <div className="pl-3" style={{color: 'rgba(148,163,184,0.7)'}}>· Patrones de respuesta a eventos</div>
+                <div className="pl-3" style={{color: 'rgba(148,163,184,0.7)'}}>· Comparativas entre legisladores</div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-slate-700/50 relative z-10">
+                <div className="flex items-center gap-2 text-[11px]">
+                  <span style={{color: '#4ade80', fontWeight: 700}}>{'>'}</span>
+                  <span className="text-slate-500 italic">Pregunta lo que quieras sobre el Congreso...</span>
+                  <span style={{display: 'inline-block', width: 7, height: 14, background: '#4ade80', marginLeft: 2, verticalAlign: 'middle', animation: 'pulse-verde 1.1s step-end infinite'}}></span>
+                </div>
+                <div className="flex items-center justify-between mt-2 text-[9px] text-slate-500 uppercase tracking-widest">
+                  <span>200 queries/mes incluidas</span>
+                  <span style={{color: '#4ade80'}}>DISPONIBLE EN V2</span>
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        function ShareButton({ getText, title = 'Fiat Console', shareUrl = 'https://fiatmx.com/consola', size = 16 }) {
+          const [done, setDone] = useState(false);
+          const handler = (e) => {
+            e.stopPropagation();
+            const texto = getText ? getText() : title;
+            if (navigator.share) {
+              navigator.share({ title, text: texto, url: shareUrl }).catch(() => {});
+            } else {
+              try {
+                navigator.clipboard.writeText(`${texto}\n${shareUrl}`);
+                setDone(true);
+                setTimeout(() => setDone(false), 1500);
+              } catch (_) { /* ignore */ }
+            }
+          };
+          return (
+            <button onClick={handler} title={title}
+              className="text-gray-400 hover:text-acento p-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0">
+              {done ? (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{color: '#2e7d32'}}><polyline points="20 6 9 17 4 12"/></svg>
+              ) : (
+                <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              )}
+            </button>
+          );
+        }
+
+        /* TickerBar — scroll continuo de los 18 temas con delta + color */
+        function TickerBar({ semaforo, historial }) {
+          if (!semaforo || semaforo.length === 0) return null;
+          /* Calcular delta vs hace 7 días */
+          const items = semaforo.map(s => {
+            let delta = 0;
+            try {
+              const ser = historial?.categorias?.[s.categoria]?.scores || [];
+              const last = ser[ser.length - 1];
+              const prev = ser[Math.max(0, ser.length - 8)];
+              if (last != null && prev != null) delta = last - prev;
+            } catch(e) {}
+            return { ...s, delta };
+          });
+          const colorTxt = c => c === 'verde' ? '#2e7d32' : c === 'amarillo' ? '#c6972b' : '#c62828';
+          const arrow = d => d > 0.5 ? '▲' : d < -0.5 ? '▼' : '→';
+          const renderItem = (s, key) => (
+            <span key={key} className="inline-flex items-center gap-1.5 mx-3 whitespace-nowrap">
+              <span className="w-1.5 h-1.5 rounded-full" style={{background: colorTxt(s.color)}}></span>
+              <span className="text-[11px] text-gray-700 font-mono uppercase tracking-wider">{s.nombre}</span>
+              <span className="text-[11px] font-bold font-mono" style={{color: colorTxt(s.color)}}>{Math.round(s.score_total)}</span>
+              <span className="text-[10px] font-mono" style={{color: s.delta > 0.5 ? '#2e7d32' : s.delta < -0.5 ? '#c62828' : '#9ca3af'}}>{arrow(s.delta)}{Math.abs(s.delta) > 0.1 ? Math.abs(s.delta).toFixed(1) : ''}</span>
+              <span className="text-gray-300 ml-2">┃</span>
+            </span>
+          );
+          return (
+            <div className="border-y border-gray-200 overflow-hidden py-0.5 relative">
+              {/* Dot fijo a la izquierda; sin bg propio (hereda el del page) */}
+              <div className="absolute left-0 top-0 bottom-0 z-10 flex items-center pl-3 pr-3">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              </div>
+              {/* Track con scroll · mask con black (no importa el color, solo opacidad) */}
+              <div className="overflow-hidden" style={{maskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 6%, black 94%, transparent 100%)'}}>
+                <div className="ticker-track flex items-center" style={{paddingLeft: '32px'}}>
+                  {[...items, ...items].map((s, i) => renderItem(s, i))}
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        /* Fila de tema estilo Polymarket: score grande a la izquierda,
+           nombre + momentum al centro, sparkline + Δ7d a la derecha.
+           serie = array de scores históricos diarios de la categoría. */
+        function TemaRowPM({ t, serie, onClick, rank }) {
+          const hex = SEMAFORO_COLOR_HEX[t.color] || '#6B7280';
+          const s = Array.isArray(serie) ? serie.filter(v => v != null) : [];
+          // Δ de los últimos ~7 días (serie es diaria)
+          const n = s.length;
+          const prev = n >= 8 ? s[n - 8] : (n >= 2 ? s[0] : null);
+          const last = n >= 1 ? s[n - 1] : (t.score_total ?? null);
+          const delta = (prev != null && last != null) ? (last - prev) : null;
+          const subiendo = delta != null && delta > 0.5;
+          const bajando = delta != null && delta < -0.5;
+          const arrowCol = subiendo ? '#16a34a' : bajando ? '#dc2626' : '#9ca3af';
+          const arrow = subiendo ? '↗' : bajando ? '↘' : '→';
+          // Sparkline (últimos 30 puntos)
+          const sl = s.slice(-30);
+          const W = 112, H = 34;
+          let path = '';
+          if (sl.length >= 2) {
+            const mx = Math.max(...sl), mn = Math.min(...sl), rg = (mx - mn) || 1;
+            const stepX = W / (sl.length - 1);
+            path = sl.map((v, i) => `${(i * stepX).toFixed(1)},${(H - ((v - mn) / rg) * H).toFixed(1)}`).join(' ');
+          }
+          return (
+            <button onClick={() => onClick(t)}
+              className="group w-full flex items-center gap-3 px-2.5 py-3 bg-white hover:bg-gray-50 border-b border-gray-100 last:border-b-0 transition text-left">
+              {/* Número de fila (como Polymarket) */}
+              <span className="flex-shrink-0 w-5 text-center text-sm text-gray-300 font-medium tabular-nums">{rank}</span>
+              {/* Score en el lugar de la imagen (cuadro izquierdo) */}
+              <div className="flex-shrink-0 w-12 h-12 rounded-lg flex flex-col items-center justify-center"
+                style={{ background: hex + '14', border: `1px solid ${hex}33` }}>
+                <span className="text-[17px] font-black leading-none" style={{ color: hex }}>{Math.round(t.score_total ?? 0)}</span>
+                <span className="text-[7px] uppercase tracking-wider font-bold mt-0.5" style={{ color: hex }}>score</span>
+              </div>
+              {/* Título + (número grande implícito = score) flecha y cambio debajo */}
+              <div className="flex-1 min-w-0">
+                <div className="text-[15px] font-bold text-gray-900 truncate leading-tight">{t.nombre}</div>
+                <div className="flex items-baseline gap-1.5 mt-1">
+                  <span className="text-[19px] font-black text-gray-900 leading-none tabular-nums">{Math.round(t.score_total ?? 0)}</span>
+                  <span className="text-[13px] font-bold leading-none" style={{ color: arrowCol }}>
+                    {arrow} {delta != null ? (delta > 0 ? '+' : '') + delta.toFixed(1) : '—'}
+                  </span>
+                </div>
+              </div>
+              {/* Sparkline */}
+              <div className="flex-shrink-0">
+                {path ? (
+                  <svg width={W} height={H} className="block">
+                    <polyline points={`0,${H} ${path} ${W},${H}`} fill={arrowCol} fillOpacity="0.08" stroke="none" />
+                    <polyline points={path} fill="none" stroke={arrowCol} strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
+                  </svg>
+                ) : <span className="text-[10px] text-gray-300 font-mono">—</span>}
+              </div>
+              {/* Chevron (afordance de click, como Polymarket) */}
+              <span className="flex-shrink-0 text-gray-300 group-hover:text-gray-500 text-lg leading-none transition-colors pr-1">›</span>
+            </button>
+          );
+        }
+
+        /* RadarRowCP — versión consola (NAMESPACED). Difiere de RadarRow de
+           index.html: efectividad = elo_indice (no Wilson LB), columna 5 =
+           L3P total (no promovente único), tooltip con percentil de cámara.
+           PageConsolePro ordena por elo_indice/l3p → necesita esta variante. */
+        function RadarRowCP({ leg, onClick }) {
+            const nombreFmt = formatNombreLegislador(leg);
+            const foto = leg.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreFmt || '?')}&background=e5e7eb&color=374151&size=96`;
+            const hitPct = leg.hit_rate != null ? Math.round(leg.hit_rate * 100) : null;
+            const hitColor = hitPct == null ? 'text-gray-400' : hitPct >= 50 ? 'text-emerald-600' : hitPct >= 25 ? 'text-amber-600' : 'text-gray-500';
+            const iniProy = leg.iniciativas_proy_15d != null ? Number(leg.iniciativas_proy_15d).toFixed(1) : '—';
+            const propProy = leg.proposiciones_proy_15d != null ? Number(leg.proposiciones_proy_15d).toFixed(1) : '—';
+            const l3pTotal = (leg.l3p_iniciativas ?? 0) + (leg.l3p_proposiciones ?? 0);
+            const grade = leg.matchup_grade;
+            const gradeStyle = grade === 'A' ? 'text-emerald-600' : grade === 'B' ? 'text-lime-600' : grade === 'C' ? 'text-amber-600' : grade === 'D' ? 'text-orange-600' : grade === 'F' ? 'text-red-600' : 'text-gray-400';
+            const efInd = leg.elo_indice != null ? Math.round(leg.elo_indice) : null;
+            const efColor = efInd == null ? 'text-gray-400' : efInd >= 80 ? 'text-emerald-600' : efInd >= 60 ? 'text-lime-600' : efInd >= 40 ? 'text-gray-700' : efInd >= 20 ? 'text-amber-600' : 'text-red-600';
+
+            return (
+                <div onClick={onClick}
+                    className="grid grid-cols-[minmax(0,1fr)] md:grid-cols-[minmax(0,2.1fr)_0.85fr_0.85fr_0.85fr_0.85fr_0.8fr_0.75fr_0.85fr] gap-2 px-3 py-3 hover:bg-acento/5 cursor-pointer transition-colors items-center">
+                    {/* Player */}
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <img src={foto} alt={nombreFmt}
+                            onError={(e) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreFmt || '?')}&background=e5e7eb&color=374151&size=96`; }}
+                            className="w-10 h-10 rounded-full object-cover bg-gray-100 flex-shrink-0 border border-gray-200" />
+                        <div className="min-w-0 flex-1">
+                            <div className="text-sm font-semibold text-gray-800 truncate" title={nombreFmt}>{nombreFmt}</div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                                <PartidoBadge partido={leg.partido} size="sm" />
+                                <span className="text-[10px] text-gray-500 truncate font-mono">
+                                    {(leg.camara || '').replace('Cámara de ', '')}
+                                    {leg.estado ? ` · ${leg.estado}` : ''}
+                                </span>
+                            </div>
+                            <RolBadge leg={leg} />
+                        </div>
+                    </div>
+
+                    {/* Mobile: stats row under player */}
+                    <div className="md:hidden grid grid-cols-5 gap-1 mt-1 text-center">
+                        <div><div className="text-[8px] uppercase text-gray-400">Efect.</div><div className={`text-sm font-black font-mono ${efColor}`}>{efInd != null ? efInd : '—'}</div></div>
+                        <div><div className="text-[8px] uppercase text-gray-400">Hit</div><div className={`text-sm font-bold font-mono ${hitColor}`}>{hitPct != null ? `${hitPct}%` : '—'}</div></div>
+                        <div><div className="text-[8px] uppercase text-gray-400">Ini</div><div className="text-sm font-bold text-gray-800 font-mono">{iniProy}</div></div>
+                        <div><div className="text-[8px] uppercase text-gray-400">Prop</div><div className="text-sm font-bold text-gray-800 font-mono">{propProy}</div></div>
+                        <div><div className="text-[8px] uppercase text-gray-400">Match</div><div className={`text-sm font-black font-mono ${gradeStyle}`}>{grade || '—'}</div></div>
+                    </div>
+
+                    {/* Desktop columns */}
+                    <div className="hidden md:block text-center">
+                        {leg.categoria_dominante ? (
+                            <span className="text-[11px] text-gray-500 truncate block" title={leg.categoria_dominante}>
+                                {_catLabel(leg.categoria_dominante)}
+                            </span>
+                        ) : <span className="text-[11px] text-gray-400">—</span>}
+                    </div>
+                    <div className="hidden md:block text-center">
+                        <HitRateGaugeMini value={leg.hit_rate} />
+                    </div>
+                    <div className="hidden md:block text-center">
+                        <div className="text-base font-bold text-gray-800 leading-tight font-mono">{iniProy}</div>
+                    </div>
+                    <div className="hidden md:block text-center">
+                        <div className="text-base font-bold text-gray-800 leading-tight font-mono">{propProy}</div>
+                    </div>
+                    <div className="hidden md:block text-center">
+                        <div className="text-base font-bold text-gray-800 leading-tight font-mono">{l3pTotal}</div>
+                    </div>
+                    <div className="hidden md:flex flex-col items-center justify-center gap-0.5">
+                        <div className={`text-lg font-black font-mono ${gradeStyle}`}
+                            title={grade ? `Matchup vs ${leg.matchup_comision || 'comisión'}${leg.matchup_tasa != null ? ` · tasa de dictamen ${Math.round(leg.matchup_tasa*100)}%` : ''}` : 'Sin suficientes asuntos turnados'}>
+                            {grade || '—'}
+                        </div>
+                    </div>
+                    <div className="hidden md:flex flex-col items-center justify-center gap-0.5">
+                        {(() => {
+                            // Tasa absoluta de aprobación
+                            const aprob = leg.elo_aprobados ?? 0;
+                            const totalP = leg.elo_partidas ?? 0;
+                            const tasaAbs = totalP > 0 ? Math.round(aprob / totalP * 100) : null;
+                            const pctCam = leg.elo_percentil_camara != null ? Math.round(leg.elo_percentil_camara) : null;
+                            // Promedio por cámara (hardcoded para tooltip — recalcular si cambia)
+                            const camCorta = (leg.camara || '').toLowerCase();
+                            const promCam = camCorta.includes('senad') ? 8.4 : 5.6;
+                            const rolInst = _rolInstitucional(leg);
+                            const tooltip = efInd == null
+                                ? 'Sin índice (menos de 3 instrumentos dictaminables)'
+                                : `Índice ${efInd}/100 — más efectivo que el ${pctCam}% de su cámara`
+                                  + `\n• ${aprob} aprobados de ${totalP} dictaminables (${tasaAbs}% absoluto)`
+                                  + `\n• Promedio cámara ≈ ${promCam}%`
+                                  + (rolInst ? `\n⚠ ${rolInst.tooltip}` : '');
+                            return (
+                                <>
+                                    <div className={`text-lg font-black font-mono ${efColor} leading-none flex items-center gap-0.5`}
+                                        title={tooltip}>
+                                        {efInd != null ? efInd : '—'}
+                                        {rolInst && <span className="text-[8px] text-amber-600" title="Rol institucional sesga métricas">⚑</span>}
+                                    </div>
+                                    {tasaAbs != null && (
+                                      <div className="text-[8px] text-gray-400 font-mono mt-0.5"
+                                           title={`Tasa absoluta de aprobación · promedio ${camCorta.includes('senad') ? 'Senado' : 'Diputados'} ≈ ${promCam}%`}>
+                                        {tasaAbs}%·{aprob}/{totalP}
+                                      </div>
+                                    )}
+                                </>
+                            );
+                        })()}
+                        {efInd != null && (
+                            <div className="flex items-center gap-0.5 mt-0.5" aria-hidden>
+                                {[0,1,2,3,4,5,6,7,8,9].map(i => (
+                                    <div key={i}
+                                        className={`w-1 h-1.5 rounded-sm ${i < Math.round(efInd/10) ? (efInd >= 80 ? 'bg-emerald-500' : efInd >= 60 ? 'bg-lime-500' : efInd >= 40 ? 'bg-gray-500' : efInd >= 20 ? 'bg-amber-500' : 'bg-red-500') : 'bg-gray-200'}`} />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function PageConsolePro({ data, setSelected, onConfigClick, onLegSelect, allLegisladores, allComisiones, config, setConfig, userNombre }) {
+          const [estadoSeleccionado, setEstadoSeleccionado] = useState(null);
+          const [filtroCSP, setFiltroCSP] = useState(null);
+          const [actividadTab, setActividadTab] = useState('legisladores');
+          const [actividadSearch, setActividadSearch] = useState('');
+          const [showAlertaForm, setShowAlertaForm] = useState(false);
+          const [alertaTipo, setAlertaTipo] = useState('tema_score');
+          const [alertaTema, setAlertaTema] = useState('');
+          const [alertaUmbral, setAlertaUmbral] = useState(75);
+          const [alertaLeg, setAlertaLeg] = useState('');
+          /* Filtros para detalle de estado seleccionado */
+          const [periodoEstado, setPeriodoEstado] = useState('1w'); // 1w, 2w, 1m
+          const [paginaEstado, setPaginaEstado] = useState(1);
+          const [ordenTemas, setOrdenTemas] = useState('todos'); // todos | score | urgencia
+          const [vistaMapa, setVistaMapa] = useState('calor'); // calor | red | sat
+          const [ordenLeg, setOrdenLeg] = useState({ col: 'hit_rate', dir: 'desc' });
+
+          /* Reset paginación cuando cambia estado o periodo */
+          useEffect(() => { setPaginaEstado(1); }, [estadoSeleccionado, periodoEstado]);
+
+          const semaforo = data.semaforo || [];
+          const mapa = data.mapa || {};
+          const fuentes = data.fuentes || {};
+          const temasSelectos = new Set(config.temas);
+          const estadosSelectos = new Set(config.estados);
+          const comisionesSelectos = new Set(config.comisiones || []);
+          const legisladoresIds = new Set(config.legisladores);
+          const legisladoresEnConfig = allLegisladores.filter(l => legisladoresIds.has(l.id));
+          const temasEnConfig = semaforo.filter(s => temasSelectos.has(s.categoria));
+          const configCount = config.legisladores.length + config.temas.length + config.estados.length;
+          const alertas = config.alertas || [];
+
+          /* Estados filtrados solo a los seleccionados, formato MapaMexico */
+          const estadosFiltradosArr = Array.from(estadosSelectos)
+            .map(key => [key, mapa[key]])
+            .filter(([, info]) => info);
+          const maxArtsConfig = Math.max(...estadosFiltradosArr.map(([, v]) => v.total_articulos || 0), 1);
+          const selectedEstadoData = estadoSeleccionado ? mapa[estadoSeleccionado] : null;
+
+          /* Tendencia: filtra historial a temas selectos */
+          const historialFiltrado = useMemo(() => {
+            if (!data.historial_scores || temasSelectos.size === 0) return null;
+            const cats = {};
+            for (const k of Object.keys(data.historial_scores.categorias)) {
+              if (temasSelectos.has(k)) cats[k] = data.historial_scores.categorias[k];
+            }
+            return { fechas: data.historial_scores.fechas, categorias: cats };
+          }, [data.historial_scores, config.temas]);
+
+          /* Actividad reciente: notas de medios + instrumentos REALES de mis legisladores
+             (jala data.actividad_legisladores_reciente que viene del pipeline). Última semana. */
+          const actividad = useMemo(() => {
+            const ahora = new Date();
+            const haceUnaSem = new Date(ahora.getTime() - 7 * 24 * 60 * 60 * 1000);
+            const out_leg = [], out_tema = [];
+            /* Mis temas: notas de medios */
+            Array.from(temasSelectos).forEach(cat => {
+              const arts = (fuentes[cat]?.articulos_medios || []);
+              arts.forEach(a => {
+                if (!a.fecha || new Date(a.fecha) < haceUnaSem) return;
+                out_tema.push({ tipo: 'tema', ts: a.fecha, titulo: a.titulo, sub: `${a.fuente} · ${_catLabel(cat)}`, url: a.url });
+              });
+            });
+            /* Mis legisladores: actividad real de tabla actividad_legislador */
+            const actLegisladores = data.actividad_legisladores_reciente || [];
+            actLegisladores.forEach(act => {
+              if (!legisladoresIds.has(act.legislador_id)) return;
+              if (!act.fecha_presentacion || new Date(act.fecha_presentacion) < haceUnaSem) return;
+              const nombreFmt = formatNombreLegislador({ nombre: act.nombre_presentador, camara: '' });
+              const catNombre = act.categoria ? _catLabel(act.categoria) : (act.tipo_instrumento || '');
+              out_leg.push({
+                tipo: 'legislador',
+                ts: act.fecha_presentacion,
+                titulo: act.titulo || act.tipo_instrumento || 'Instrumento legislativo',
+                sub: `${nombreFmt}${act.tipo_instrumento ? ' · ' + act.tipo_instrumento : ''}${catNombre ? ' · ' + catNombre : ''}`,
+                url: null,
+                estatus: act.estatus,
+              });
+            });
+            const sortFn = (a,b) => (b.ts||'').localeCompare(a.ts||'');
+            out_leg.sort(sortFn); out_tema.sort(sortFn);
+            const todo = [...out_leg, ...out_tema].sort(sortFn);
+            return { todo, porLeg: out_leg, porTema: out_tema };
+          }, [data, config.legisladores, config.temas]);
+
+          const actividadFuente = actividadTab === 'legisladores' ? actividad.porLeg : actividadTab === 'medios' ? actividad.porTema : actividad.todo;
+          const actividadFiltrada = actividadSearch.length >= 2
+            ? actividadFuente.filter(it => (it.titulo || '').toLowerCase().includes(actividadSearch.toLowerCase()) || (it.sub || '').toLowerCase().includes(actividadSearch.toLowerCase()))
+            : actividadFuente;
+
+          /* Menciones CSP */
+          const cspTema = filtroCSP || Array.from(temasSelectos)[0] || null;
+          const cspMenciones = cspTema && fuentes[cspTema]?.menciones_csp ? fuentes[cspTema].menciones_csp.slice(0, 8) : [];
+
+          const submitAlerta = () => {
+            let nombre = '';
+            let trigger = {};
+            if (alertaTipo === 'tema_score') {
+              if (!alertaTema) return;
+              nombre = `${_catLabel(alertaTema)} score > ${alertaUmbral}`;
+              trigger = { tipo: alertaTipo, tema: alertaTema, umbral: alertaUmbral };
+            } else if (alertaTipo === 'legislador_actividad') {
+              if (!alertaLeg) return;
+              const leg = allLegisladores.find(l => l.id === Number(alertaLeg));
+              nombre = `${formatNombreLegislador(leg)} presenta nuevo instrumento`;
+              trigger = { tipo: alertaTipo, legislador_id: Number(alertaLeg) };
+            }
+            setConfig({ ...config, alertas: [...alertas, { id: Date.now(), nombre, trigger, activa: true, fecha_creada: new Date().toISOString() }] });
+            setShowAlertaForm(false);
+            setAlertaTema(''); setAlertaUmbral(75); setAlertaLeg('');
+          };
+
+          if (configCount === 0) {
+            return (
+              <div className="space-y-4">
+                <div className="text-[10px] text-gray-400 font-mono ml-1">Última actualización: {new Date(data.metadata?.generado || '').toLocaleString('es-MX', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'})}</div>
+
+              <TickerBar semaforo={semaforo} historial={data.historial_scores} />
+                <div className="glass border border-borde rounded-2xl overflow-hidden">
+                  <div className="px-8 md:px-12 pt-10 pb-2 text-center">
+                    <div className="inline-block mb-4" style={{background: '#1a365d', color: 'white', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 14px', borderRadius: 9999}}>Console Pro</div>
+                    <div className="text-3xl md:text-4xl font-black text-gray-900 leading-tight">
+                      {userNombre ? `Hola, ${userNombre}.` : 'Hola.'} Bienvenido a tu consola.
+                    </div>
+                    <p className="text-[15px] text-gray-600 mt-3 max-w-xl mx-auto leading-relaxed">
+                      Tu consola es tu sala de control del Congreso: vigila a los legisladores,
+                      temas, estados y comisiones que te importan, y FIAT te avisa cuando algo se mueve.
+                      Configúrala una vez — toma 2 minutos.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 px-8 md:px-12 py-6 max-w-3xl mx-auto">
+                    {[
+                      ['Legisladores', 'Sigue a quienes te interesan, agrupados por partido.'],
+                      ['Temas y estados', 'Monitorea los temas que escalan y las entidades clave.'],
+                      ['Alertas', 'Te avisamos por correo cuando se cumple lo que definiste.'],
+                    ].map(([t, d]) => (
+                      <div key={t} className="bg-white border border-gray-200 rounded-xl p-4 text-left">
+                        <div className="text-[13px] font-bold text-gray-900">{t}</div>
+                        <div className="text-[12px] text-gray-500 mt-1 leading-snug">{d}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="text-center pb-10">
+                    <button onClick={onConfigClick}
+                      className="text-white font-bold px-8 py-3.5 rounded-full text-sm shadow-md hover:scale-[1.02] transition-transform"
+                      style={{background: 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)'}}>
+                      Configurar mi consola →
+                    </button>
+                    <div className="text-[11px] text-gray-400 mt-3">Tus selecciones se guardan en tu cuenta.</div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
+          return (
+            <div className="space-y-4">
+              {/* Última actualización sutil */}
+              <div className="text-[10px] text-gray-400 font-mono ml-1">Última actualización: {new Date(data.metadata?.generado || '').toLocaleString('es-MX', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'})}</div>
+
+              <TickerBar semaforo={semaforo} historial={data.historial_scores} />
+
+              {/* ROW 1: Tendencia 50% + Terminal IA 50% */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                {temasSelectos.size > 0 && historialFiltrado ? (
+                  <ConsolaProTendencia historial={historialFiltrado} temasSelectos={temasSelectos} />
+                ) : (
+                  <div className="glass border border-borde rounded-xl p-8 text-center h-full flex flex-col items-center justify-center" style={{minHeight: 320}}>
+                    <div className="text-xs text-gray-500 font-bold">TENDENCIA DE MIS TEMAS</div>
+                    <div className="text-sm text-gray-500 mt-2">Selecciona temas en Configurar</div>
+                  </div>
+                )}
+                <TerminalIAMockup />
+              </div>
+
+              {/* Mis temas con filtros + agregar */}
+              {temasEnConfig.length > 0 && (() => {
+                const ordenado = [...temasEnConfig];
+                if (ordenTemas === 'score') ordenado.sort((a,b) => b.score_total - a.score_total);
+                else if (ordenTemas === 'urgencia') ordenado.sort((a,b) => (b.score_urgencia || 0) - (a.score_urgencia || 0));
+                return (
+                  <div>
+                    <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                      <div className="text-xs font-semibold text-gray-500">Mis temas · {temasEnConfig.length}/8</div>
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="text-gray-500 uppercase tracking-wider">Ordenar por</span>
+                        <div className="inline-flex rounded-lg border border-borde bg-white overflow-hidden">
+                          {[['todos','Todos'],['score','Score'],['urgencia','Urgencia']].map(([k,label], i) => (
+                            <button key={k} onClick={() => setOrdenTemas(k)}
+                              className={`px-3 py-1.5 font-medium transition-colors ${ordenTemas === k ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-50'} ${i > 0 ? 'border-l border-borde' : ''}`}>
+                              {label}
+                            </button>
+                          ))}
+                        </div>
+                        <button onClick={onConfigClick}
+                          className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition border bg-white border-gray-300 text-gray-700 hover:border-gray-500 ml-1">
+                          + Agregar
+                        </button>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                      {ordenado.map(t => <SemaforoCard key={t.categoria} data={t} onClick={setSelected} />)}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* ROW: Mapa (intel) | Menciones CSP — sin items-start para que estiren ambos al mismo alto */}
+              {(estadosSelectos.size > 0 || temasSelectos.size > 0) && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                  {estadosSelectos.size > 0 ? (
+                    <div className="glass border border-borde rounded-xl overflow-hidden flex flex-col">
+                      {/* Header consistente con el resto */}
+                      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                        <div>
+                          <div className="text-xs font-semibold text-gray-500">Mis estados</div>
+                          <div className="text-[10px] text-gray-400 mt-0.5">{estadosFiltradosArr.length} de 32 entidades vigiladas{estadosFiltradosArr[0] && ` · hotspot ${estadosFiltradosArr[0][1].nombre || estadosFiltradosArr[0][0]}`}</div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <ShareButton getText={() => `Mis estados FIAT — ${estadosFiltradosArr.length} entidades vigiladas\n${estadosFiltradosArr.slice(0,5).map(([,v])=>`${v.nombre}: ${v.total_articulos||0} notas`).join('\n')}\nhttps://fiatmx.com`} title="Compartir Mis estados" />
+                          <a href="/mapa" target="_blank" rel="noopener" className="text-[11px] font-semibold text-acento hover:underline whitespace-nowrap">Ver mapa completo →</a>
+                        </div>
+                      </div>
+                      {/* Mapa real Leaflet con capa de calor radar — solo estados configurados */}
+                      <div className="px-3 py-3">
+                        <MapaMexico estados={estadosFiltradosArr} maxArts={maxArtsConfig}
+                          onSelectEstado={(key) => setEstadoSeleccionado(estadoSeleccionado === key ? null : key)}
+                          estadoSeleccionado={estadoSeleccionado} />
+                      </div>
+                      {selectedEstadoData && (() => {
+                        /* Filtrar artículos del estado por periodo */
+                        const ahora = Date.now();
+                        const dias = { '1w': 7, '2w': 14, '1m': 30 }[periodoEstado] || 7;
+                        const desde = ahora - dias * 24 * 60 * 60 * 1000;
+                        const todosArts = (selectedEstadoData.articulos || []);
+                        const filtrados = todosArts.filter(a => {
+                          if (!a.fecha) return false;
+                          const t = new Date(a.fecha).getTime();
+                          return !isNaN(t) && t >= desde;
+                        }).sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+                        const PER_PAGE = 10;
+                        const totalPag = Math.max(1, Math.ceil(filtrados.length / PER_PAGE));
+                        const pag = Math.min(paginaEstado, totalPag);
+                        const slice = filtrados.slice((pag - 1) * PER_PAGE, pag * PER_PAGE);
+                        return (
+                          <div className="border-t border-gray-200 px-4 py-3 bg-gray-50">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] uppercase tracking-widest text-gray-500 font-mono font-bold">DETALLE</span>
+                                <span className="text-xs text-gray-800 font-semibold">{selectedEstadoData.nombre}</span>
+                                <span className="text-[10px] text-gray-400 font-mono">{selectedEstadoData.total_articulos} total · {filtrados.length} en filtro</span>
+                              </div>
+                              <button onClick={() => setEstadoSeleccionado(null)} className="text-gray-400 hover:text-gray-700 text-base leading-none w-5 h-5">×</button>
+                            </div>
+                            {/* Filtros de periodo compactos */}
+                            <div className="flex items-center gap-1 mb-2">
+                              {[['1w', '1 sem'], ['2w', '2 sem'], ['1m', '1 mes']].map(([k, label]) => (
+                                <button key={k} onClick={() => setPeriodoEstado(k)}
+                                  className={`text-[10px] font-semibold px-2 py-0.5 rounded-full transition border ${periodoEstado === k ? 'border-acento text-white' : 'border-gray-200 text-gray-600 hover:border-gray-400 bg-white'}`}
+                                  style={periodoEstado === k ? {background: '#1a365d'} : {}}>
+                                  {label}
+                                </button>
+                              ))}
+                            </div>
+                            {slice.length === 0 ? (
+                              <div className="text-[11px] text-gray-500 italic text-center py-3">Sin notas en este periodo</div>
+                            ) : (
+                              <div className="space-y-1 max-h-72 overflow-y-auto pr-1" style={{scrollbarWidth: 'thin'}}>
+                                {slice.map((art, i) => (
+                                  <div key={i} className="bg-white rounded p-1.5 border border-gray-100">
+                                    <a href={art.url} target="_blank" rel="noopener" className="text-[11px] text-blue-700 hover:underline block leading-snug">{art.titulo}</a>
+                                    <div className="text-[9px] text-gray-400 font-mono mt-0.5">{art.fuente} · {art.fecha}</div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {/* Paginación compacta */}
+                            {totalPag > 1 && (
+                              <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-200">
+                                <button onClick={() => setPaginaEstado(p => Math.max(1, p - 1))} disabled={pag === 1}
+                                  className="text-[10px] font-semibold px-2 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-gray-400 disabled:opacity-40">← Ant.</button>
+                                <div className="text-[10px] text-gray-500 font-mono">Pág. {pag}/{totalPag}</div>
+                                <button onClick={() => setPaginaEstado(p => Math.min(totalPag, p + 1))} disabled={pag === totalPag}
+                                  className="text-[10px] font-semibold px-2 py-1 rounded-full border border-gray-200 text-gray-600 hover:border-gray-400 disabled:opacity-40">Sig. →</button>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  ) : (
+                    <div className="glass border border-borde rounded-xl p-8 text-center h-full flex flex-col items-center justify-center">
+                      <div className="text-xs text-gray-500 font-bold">MIS ESTADOS</div>
+                      <div className="text-sm text-gray-500 mt-2">Selecciona estados en Configurar</div>
+                    </div>
+                  )}
+
+                  {/* Columna derecha: Menciones CSP (estira al mismo alto que el mapa con flex-col + flex-1) */}
+                  <div className="glass border border-borde rounded-xl p-4 flex flex-col h-full">
+                    <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                      <div>
+                        <div className="text-xs font-semibold text-gray-500">Menciones de la presidenta</div>
+                        <div className="text-[10px] text-gray-400 mt-0.5">Mañaneras de Claudia Sheinbaum {cspTema && `· ${_catLabel(cspTema)}`}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {temasSelectos.size > 0 && (
+                          <select value={cspTema || ''} onChange={e => setFiltroCSP(e.target.value)}
+                            className="text-xs px-2 py-1 border border-gray-200 rounded-lg bg-white">
+                            {Array.from(temasSelectos).map(t => <option key={t} value={t}>{_catLabel(t)}</option>)}
+                          </select>
+                        )}
+                        <ShareButton title={`Menciones CSP — ${cspTema ? _catLabel(cspTema) : 'temas vigilados'}`}
+                          getText={() => `Menciones de la Presidenta sobre ${cspTema ? _catLabel(cspTema) : 'mis temas'} (Fiat Console)\n${(cspMenciones||[]).slice(0,3).map(m => `· ${m.fecha}: «${(m.fragmento||'').slice(0,140)}…»`).join('\n')}`} />
+                      </div>
+                    </div>
+                    {/* Reusa el componente FuentesMananera REAL del DetalleModal con override compacto · flex-1 + scroll para llenar el alto */}
+                    <div className="csp-compact csp-stretch flex-1 overflow-y-auto pr-1" style={{scrollbarWidth: 'thin'}}>
+                      <FuentesMananera menciones={cspMenciones} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Comisiones · tabla terminal full-width, debajo de Mapa+CSP, antes de Mis Legisladores */}
+              <ComiteWatch
+                comisionesIds={comisionesSelectos}
+                allComisiones={allComisiones}
+                convocatorias={data.convocatorias}
+                onConfigClick={onConfigClick}
+                onRemove={(key) => setConfig({ ...config, comisiones: (config.comisiones || []).filter(c => c !== key) })}
+              />
+
+              {/* Mis legisladores con orden + agregar + export CSV */}
+              {legisladoresEnConfig.length > 0 && (() => {
+                /* Sort accessor por columna */
+                const accessors = {
+                  nombre: l => formatNombreLegislador(l).toLowerCase(),
+                  tema: l => (l.categoria_dominante || 'zzz').toLowerCase(),
+                  hit_rate: l => (l.hit_rate != null ? l.hit_rate : -1),
+                  ini: l => (l.iniciativas_proy_15d ?? -1),
+                  prop: l => (l.proposiciones_proy_15d ?? -1),
+                  l3p: l => ((l.l3p_iniciativas ?? 0) + (l.l3p_proposiciones ?? 0)),
+                  match: l => ({A:5, B:4, C:3, D:2, F:1}[l.matchup_grade] || 0),
+                  efectividad: l => (l.elo_indice ?? -1),
+                };
+                const ordenado = [...legisladoresEnConfig].sort((a, b) => {
+                  const av = accessors[ordenLeg.col](a);
+                  const bv = accessors[ordenLeg.col](b);
+                  if (av < bv) return ordenLeg.dir === 'asc' ? -1 : 1;
+                  if (av > bv) return ordenLeg.dir === 'asc' ? 1 : -1;
+                  return 0;
+                });
+
+                const toggleSort = (col) => {
+                  setOrdenLeg(prev => prev.col === col
+                    ? { col, dir: prev.dir === 'asc' ? 'desc' : 'asc' }
+                    : { col, dir: col === 'nombre' || col === 'tema' ? 'asc' : 'desc' });
+                };
+                const arrow = (col) => ordenLeg.col === col ? (ordenLeg.dir === 'asc' ? '↑' : '↓') : '';
+                const HeaderBtn = ({col, label, align='center', tip}) => (
+                  <button onClick={() => toggleSort(col)} title={tip}
+                    className={`text-[10px] uppercase tracking-wider font-bold font-mono transition hover:text-acento ${ordenLeg.col === col ? 'text-acento' : 'text-gray-500'} ${tip ? 'cursor-help underline decoration-dotted decoration-gray-300 underline-offset-2' : ''} text-${align} flex items-center gap-0.5 ${align === 'center' ? 'justify-center' : ''}`}>
+                    {label}{arrow(col) && <span className="text-[10px]">{arrow(col)}</span>}
+                  </button>
+                );
+
+                const exportCSV = () => {
+                  const headers = ['Nombre', 'Cámara', 'Partido', 'Estado', 'Tema dominante', 'Hit rate', 'Iniciativas 15d', 'Proposiciones 15d', 'L3P total', 'Matchup grade', 'Efectividad ELO', 'Marcador continuidad'];
+                  const rows = ordenado.map(l => [
+                    formatNombreLegislador(l),
+                    (l.camara || '').replace('Cámara de ', ''),
+                    l.partido || '',
+                    l.estado || '',
+                    l.categoria_dominante ? _catLabel(l.categoria_dominante) : '',
+                    l.hit_rate != null ? Math.round(l.hit_rate * 100) + '%' : '',
+                    l.iniciativas_proy_15d != null ? Number(l.iniciativas_proy_15d).toFixed(1) : '',
+                    l.proposiciones_proy_15d != null ? Number(l.proposiciones_proy_15d).toFixed(1) : '',
+                    (l.l3p_iniciativas ?? 0) + (l.l3p_proposiciones ?? 0),
+                    l.matchup_grade || '',
+                    l.elo_indice != null ? Math.round(l.elo_indice) : '',
+                    l.marcador_continuidad || '',
+                  ]);
+                  const escape = v => {
+                    const s = String(v ?? '');
+                    return s.includes(',') || s.includes('"') || s.includes('\n')
+                      ? '"' + s.replace(/"/g, '""') + '"' : s;
+                  };
+                  const csv = [headers, ...rows].map(r => r.map(escape).join(',')).join('\n');
+                  const bom = '﻿'; /* Para acentos en Excel */
+                  const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = `fiat-mis-legisladores-${new Date().toISOString().slice(0,10)}.csv`;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                };
+
+                return (
+                  <div>
+                    <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                      <div className="text-xs font-semibold text-gray-500">Mis legisladores · {legisladoresEnConfig.length}/20</div>
+                      <div className="flex items-center gap-2">
+                        <button onClick={exportCSV}
+                          className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition border bg-white border-gray-200 text-gray-700 hover:border-gray-400 inline-flex items-center gap-1.5">
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                          Exportar CSV
+                        </button>
+                        <button onClick={onConfigClick}
+                          className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition border bg-white border-gray-300 text-gray-700 hover:border-gray-500">
+                          + Agregar
+                        </button>
+                        <ShareButton title="Mis legisladores — Fiat Console"
+                          getText={() => `Vigilando a ${legisladoresEnConfig.length} legisladores en Fiat Console:\n${ordenado.slice(0,5).map(l => `· ${formatNombreLegislador(l)} (${l.partido || '—'})`).join('\n')}`} />
+                      </div>
+                    </div>
+                    <div className="glass border border-borde rounded-xl divide-y divide-gray-100 overflow-hidden">
+                      {/* Header de columnas clickables (sort) */}
+                      <div className="hidden md:grid md:grid-cols-[minmax(0,2.1fr)_0.85fr_0.85fr_0.85fr_0.85fr_0.8fr_0.75fr_0.85fr] gap-2 px-3 py-2 border-b-2 border-gray-300 bg-gray-50">
+                        <HeaderBtn col="nombre" label="Legislador" align="left" />
+                        <HeaderBtn col="tema" label="Categoría"
+                          tip="Categoría dominante del legislador (medio_ambiente, educación, etc.). Se calcula con ≥3 actos legislativos desde inicio LXVI, ponderando iniciativas 2x sobre proposiciones." />
+                        <HeaderBtn col="hit_rate" label="Hit rate"
+                          tip="Hit rate — % de los últimos 20 picos mediáticos en su categoría dominante donde el legislador presentó un instrumento dentro de los 7 días posteriores. Verde ≥70%, ámbar ≥40%, rojo <40%." />
+                        <HeaderBtn col="ini" label="Ini 15d"
+                          tip="Iniciativas proyectadas en los próximos 15 días, basadas en la tasa LXVI ajustada por actividad reciente (30d)." />
+                        <HeaderBtn col="prop" label="Prop 15d"
+                          tip="Proposiciones con punto de acuerdo proyectadas en los próximos 15 días. Misma fórmula que Ini 15d." />
+                        <HeaderBtn col="l3p" label="L3P total"
+                          tip="Total de instrumentos (iniciativas + proposiciones) presentados durante la LXVI Legislatura (sep 2024 – hoy)." />
+                        <HeaderBtn col="match" label="Matchup"
+                          tip="Matchup grade vs. la comisión a la que más turnan sus instrumentos. A = comisión que dictamina rápido; F = comisión donde los asuntos se quedan en pendiente. Grading relativo entre comisiones." />
+                        <HeaderBtn col="efectividad" label="Efectividad"
+                          tip="Índice de Efectividad (0–100) — capacidad del legislador para convertir instrumentos en avances dentro del proceso parlamentario, ajustada por la dificultad estructural de sus comisiones. 50 = mediana LXVI · 80+ = desempeño alto · 20- = bajo. Requiere ≥3 instrumentos dictaminables." />
+                      </div>
+                      {ordenado.map(l => <RadarRowCP key={l.id} leg={l} onClick={() => onLegSelect(l)} />)}
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* ROW: Actividad reciente | Mis alertas */}
+              {configCount > 0 && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                  {/* Actividad */}
+                  <div className="glass border border-borde rounded-xl p-4">
+                    <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                      <div>
+                        <div className="text-xs font-semibold text-gray-500">Actividad reciente</div>
+                        <div className="text-[10px] text-gray-400 mt-0.5">Tus legisladores y temas · última semana</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input type="text" placeholder="Buscar..." value={actividadSearch} onChange={e => setActividadSearch(e.target.value)}
+                          className="text-xs px-3 py-1.5 border border-gray-200 rounded-full bg-gray-50 w-32 focus:outline-none focus:border-acento focus:bg-white" />
+                        <ShareButton title="Actividad reciente — Fiat Console"
+                          getText={() => `Actividad reciente de mis legisladores y temas vigilados (Fiat Console):\n${(actividad.todo||[]).slice(0,5).map(it => `· ${it.titulo || ''}`).join('\n')}`} />
+                      </div>
+                    </div>
+                    <div className="flex gap-1 mb-3 border-b border-gray-100">
+                      <button onClick={() => setActividadTab('legisladores')} className={`px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition ${actividadTab === 'legisladores' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>Legisladores · {actividad.porLeg.length}</button>
+                      <button onClick={() => setActividadTab('medios')} className={`px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition ${actividadTab === 'medios' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>Medios · {actividad.porTema.length}</button>
+                      <button onClick={() => setActividadTab('todo')} className={`px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition ${actividadTab === 'todo' ? 'border-acento text-acento' : 'border-transparent text-gray-500 hover:text-gray-800'}`}>Todo · {actividad.todo.length}</button>
+                    </div>
+                    {actividadFiltrada.length === 0 ? (
+                      <div className="text-xs text-gray-500 italic text-center py-8">Sin actividad reciente en este filtro</div>
+                    ) : (
+                      <div className="max-h-96 overflow-y-auto pr-1 space-y-1.5" style={{scrollbarWidth: 'thin'}}>
+                        {actividadFiltrada.map((it, i) => (
+                          <div key={i} className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded -mx-1 transition">
+                            <div className="text-[10px] text-gray-400 font-mono w-16 flex-shrink-0 mt-0.5">{(it.ts || '').slice(5, 10) || '—'}</div>
+                            <div className="w-1 self-stretch rounded-full mt-1 flex-shrink-0" style={{background: it.tipo === 'legislador' ? '#2e7d32' : '#1a365d'}}></div>
+                            <div className="flex-1 min-w-0">
+                              {it.url ? (
+                                <a href={it.url} target="_blank" rel="noopener" className="text-xs text-gray-800 hover:underline block leading-snug">{it.titulo}</a>
+                              ) : (
+                                <div className="text-xs text-gray-800 leading-snug">{it.titulo}</div>
+                              )}
+                              <div className="text-[10px] text-gray-500 mt-0.5">{it.sub}</div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Trigger Desk: alertas con reglas combinables */}
+                  <TriggerDesk alertas={alertas} semaforo={semaforo} allLegisladores={allLegisladores}
+                    setConfig={setConfig} config={config} />
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        // Wrapper para Tendencia que reusa la lógica de HistorialScoresChart
+        function ConsolaProTendencia({ historial, temasSelectos }) {
+          const chartRef = useRef(null);
+          const chartInstance = useRef(null);
+
+          useEffect(() => {
+            if (!chartRef.current || !historial) return;
+            if (chartInstance.current) chartInstance.current.destroy();
+
+            const labels = historial.fechas.map(f => {
+              const d = new Date(f + 'T12:00:00');
+              return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+            });
+            const allKeys = Object.keys(historial.categorias);
+            const datasets = allKeys.map((cat) => {
+              const catData = historial.categorias[cat];
+              const colorIdx = allKeys.indexOf(cat);
+              const color = CATEGORY_COLORS[colorIdx % CATEGORY_COLORS.length];
+              const scores = catData.scores.map(s => s === null ? undefined : s);
+              const lastIdx = scores.length - 1;
+              return {
+                label: catData.nombre, data: scores, borderColor: color, backgroundColor: 'transparent',
+                borderWidth: 2, fill: false, stepped: 'before', tension: 0,
+                pointRadius: scores.map((_, i) => i === lastIdx ? 5 : 0),
+                pointHitRadius: 10, pointHoverRadius: 6,
+                pointBackgroundColor: color, pointBorderColor: '#fff', pointBorderWidth: 2,
+                spanGaps: true,
+              };
+            });
+            const thresholdPlugin = {
+              id: 'thresholds',
+              beforeDraw(chart) {
+                const { ctx, chartArea, scales } = chart;
+                if (!chartArea) return;
+                const yScale = scales.y;
+                ctx.save(); ctx.setLineDash([2, 6]); ctx.lineWidth = 0.8;
+                [{value: 65, color: 'rgba(46,125,50,0.15)'}, {value: 40, color: 'rgba(198,40,40,0.15)'}].forEach(t => {
+                  const y = yScale.getPixelForValue(t.value);
+                  ctx.beginPath(); ctx.strokeStyle = t.color;
+                  ctx.moveTo(chartArea.left, y); ctx.lineTo(chartArea.right, y); ctx.stroke();
+                });
+                ctx.restore();
+              }
+            };
+            /* Anillo pulsante en el último punto del top score (líder actual) */
+            const topPulsePlugin = {
+              id: 'topPulse',
+              afterDatasetsDraw(chart) {
+                let topIdx = -1, topValue = -Infinity;
+                chart.data.datasets.forEach((ds, i) => {
+                  const data = ds.data || [];
+                  for (let j = data.length - 1; j >= 0; j--) {
+                    const v = data[j];
+                    if (v != null && v !== undefined) {
+                      if (v > topValue) { topValue = v; topIdx = i; }
+                      break;
+                    }
+                  }
+                });
+                if (topIdx === -1) return;
+                const meta = chart.getDatasetMeta(topIdx);
+                const points = meta.data || [];
+                if (points.length === 0) return;
+                const lastPoint = points[points.length - 1];
+                if (!lastPoint) return;
+                const x = lastPoint.x, y = lastPoint.y;
+                const color = chart.data.datasets[topIdx].borderColor;
+                const t = ((Date.now() % 1500) / 1500);
+                const radius = 5 + t * 14;
+                const opacity = (1 - t) * 0.65;
+                const ctx = chart.ctx;
+                ctx.save();
+                ctx.beginPath(); ctx.arc(x, y, radius, 0, 2 * Math.PI);
+                ctx.strokeStyle = color; ctx.globalAlpha = opacity; ctx.lineWidth = 2; ctx.stroke();
+                ctx.beginPath(); ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                ctx.globalAlpha = 1; ctx.fillStyle = color; ctx.fill();
+                ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+                ctx.restore();
+              }
+            };
+            chartInstance.current = new Chart(chartRef.current, {
+              type: 'line', plugins: [thresholdPlugin, topPulsePlugin], data: { labels, datasets },
+              options: {
+                responsive: true, maintainAspectRatio: false,
+                animation: { duration: 600, easing: 'easeOutQuad' },
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                  legend: { display: false },
+                  tooltip: {
+                    backgroundColor: 'rgba(15,23,42,0.92)', titleColor: '#f1f5f9', bodyColor: '#cbd5e1',
+                    borderColor: 'rgba(255,255,255,0.08)', borderWidth: 1,
+                    padding: { top: 10, bottom: 10, left: 14, right: 14 }, cornerRadius: 10,
+                    displayColors: true, boxWidth: 8, boxHeight: 8, boxPadding: 6,
+                    titleFont: { size: 12, weight: '600', family: 'JetBrains Mono, monospace' },
+                    bodyFont: { size: 11, family: 'JetBrains Mono, monospace' },
+                    callbacks: { label: (item) => ` ${item.dataset.label}: ${item.raw?.toFixed(1)}%` },
+                    itemSort: (a, b) => (b.raw || 0) - (a.raw || 0),
+                  }
+                },
+                scales: {
+                  y: { min: 0, max: 100, position: 'right',
+                    ticks: { color: '#b0b8c4', font: { size: 10 }, stepSize: 25, padding: 12, callback: v => v + '%' },
+                    grid: { color: (ctx) => ctx.tick.value === 0 ? 'transparent' : 'rgba(0,0,0,0.04)', lineWidth: 0.5, drawBorder: false, drawTicks: false },
+                    border: { display: false }
+                  },
+                  x: { ticks: { color: '#b0b8c4', font: { size: 10 }, maxRotation: 0, maxTicksLimit: 8, padding: 8 },
+                    grid: { display: false }, border: { display: false } }
+                }
+              }
+            });
+            const pulseInterval = setInterval(() => {
+              if (chartInstance.current) try { chartInstance.current.draw(); } catch(e) {}
+            }, 60);
+            return () => {
+              clearInterval(pulseInterval);
+              if (chartInstance.current) try { chartInstance.current.destroy(); } catch(e) {}
+            };
+          }, [historial]);
+
+          return (
+            <div className="glass border border-borde rounded-xl p-4 h-full flex flex-col">
+              <div className="flex items-center justify-between mb-3">
+                <div>
+                  <div className="text-xs font-semibold text-gray-500">Tendencia de mis temas</div>
+                  <div className="text-[10px] text-gray-400 mt-0.5">Evolución del score compuesto durante el actual periodo de sesiones</div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="text-[10px] text-gray-400 font-mono">{temasSelectos.size}/8</div>
+                  <ShareButton title="Tendencia de mis temas — Fiat Console"
+                    getText={() => {
+                      const cats = Object.values(historial?.categorias || {});
+                      const top = cats.map(c => ({nombre: c.nombre, ult: c.scores?.[c.scores.length-1]||0}))
+                                      .sort((a,b)=>b.ult-a.ult).slice(0,3);
+                      return `Tendencia de mis temas vigilados (Fiat Console):\n${top.map(t=>`· ${t.nombre}: ${t.ult.toFixed(0)}`).join('\n')}`;
+                    }} />
+                </div>
+              </div>
+              <div className="flex-1" style={{minHeight: 260}}><canvas ref={chartRef}></canvas></div>
+            </div>
+          );
+        }
+
+        /* ComiteWatch — Tabla terminal full-width con sparkline de actividad 6m, próxima sesión y Δ30d.
+           Reusa endpoint /comisiones del Worker (mismos datos que la tab general).
+           Filtros: Mis · Diputados · Senado · Ver todas (modal). */
+        function ComiteWatch({ comisionesIds, allComisiones, convocatorias, onConfigClick, onRemove }) {
+          const [filtro, setFiltro] = useState('mis'); // mis | Diputados | Senado | todas
+          const [verTodas, setVerTodas] = useState(false);
+          const [comDetalle, setComDetalle] = useState(null); // comisión abierta en detalle
+
+          const total = (allComisiones || []).length;
+          const seleccionadas = (allComisiones || []).filter(c => comisionesIds.has(`${c.nombre}|${c.camara}`));
+
+          let visibles = [];
+          if (filtro === 'mis') visibles = seleccionadas;
+          else if (filtro === 'Diputados' || filtro === 'Senado') {
+            visibles = (allComisiones || []).filter(c => c.camara === filtro && comisionesIds.has(`${c.nombre}|${c.camara}`));
+            if (visibles.length === 0) visibles = (allComisiones || []).filter(c => c.camara === filtro).slice(0, 12);
+          } else visibles = (allComisiones || []).slice(0, 12);
+
+          /* Estado vacío */
+          if (seleccionadas.length === 0 && filtro === 'mis') {
+            return (
+              <div className="glass border border-borde rounded-xl">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                  <div>
+                    <div className="text-xs font-semibold text-gray-500">Comisiones</div>
+                    <div className="text-[10px] text-gray-400 mt-0.5">Sin comisiones seleccionadas</div>
+                  </div>
+                  <button onClick={onConfigClick}
+                    className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition border bg-white border-gray-300 text-gray-700 hover:border-gray-500">
+                    + Agregar comisión
+                  </button>
+                </div>
+                <div className="p-8 text-center">
+                  <div className="text-sm text-gray-500">Configura hasta 10 comisiones para vigilar productividad y próximas sesiones</div>
+                </div>
+              </div>
+            );
+          }
+
+          /* Indexar convocatorias por nombre normalizado, max fecha futura.
+             El matcher anterior era demasiado laxo: hacia split(' ')[0] del key
+             y matcheaba "hacienda" con cualquier comision que su norm incluyera
+             "hacienda". Ahora exigimos overlap de >=2 palabras significativas
+             (ignorando stopwords) entre la convocatoria y la comision. */
+          const STOPWORDS_COM = new Set(['de','la','el','los','las','y','del','en','para','sen','dip','comision','comisiones']);
+          const tokensRelevantes = (s) => (s || '')
+            .toLowerCase()
+            .normalize('NFD').replace(/[̀-ͯ]/g,'')   // sin acentos
+            .replace(/[^a-z0-9 ]/g, ' ')
+            .split(/\s+/)
+            .filter(t => t.length >= 4 && !STOPWORDS_COM.has(t));
+
+          const proximasMap = {};
+          ['Diputados', 'Senado'].forEach(cam => {
+            (convocatorias?.[cam] || []).forEach(c => {
+              const tokens = tokensRelevantes(c.comision || c.titulo || '');
+              if (tokens.length === 0) return;
+              const key = tokens.join('|');
+              if (!proximasMap[key] || (c.fecha && c.fecha > (proximasMap[key].fecha || ''))) {
+                proximasMap[key] = { ...c, _tokens: tokens, _camara: cam };
+              }
+            });
+          });
+
+          const buscarProxima = (com) => {
+            const tokensCom = tokensRelevantes(com.nombre || '');
+            if (tokensCom.length === 0) return null;
+            let best = null, bestOverlap = 0;
+            for (const conv of Object.values(proximasMap)) {
+              // Match estricto: misma cámara + overlap de tokens significativos
+              if (conv._camara !== com.camara) continue;
+              const overlap = conv._tokens.filter(t => tokensCom.includes(t)).length;
+              // Necesitamos al menos 2 palabras en común, o 1 si es palabra distintiva
+              // (la comision tiene pocas palabras, ej. "Marina")
+              const minRequerido = tokensCom.length === 1 ? 1 : 2;
+              if (overlap >= minRequerido && overlap > bestOverlap) {
+                best = conv;
+                bestOverlap = overlap;
+              }
+            }
+            return best;
+          };
+
+          /* Δ30d aproximado: último mes vs promedio meses anteriores en historico_mensual */
+          const delta30 = (c) => {
+            const h = c.historico_mensual || [];
+            if (h.length < 2) return null;
+            const ult = h[h.length - 1].count || 0;
+            const ant = h.slice(-4, -1);
+            if (ant.length === 0) return null;
+            const prom = ant.reduce((s, x) => s + (x.count || 0), 0) / ant.length;
+            return ult - prom;
+          };
+
+          /* Sparkline SVG simple, sin librerías */
+          const Sparkline = ({ data, color = '#2e7d32', width = 110, height = 24 }) => {
+            if (!data || data.length < 2) return <span className="text-[10px] text-gray-300 font-mono">—</span>;
+            const max = Math.max(...data, 1);
+            const min = Math.min(...data, 0);
+            const range = max - min || 1;
+            const stepX = width / (data.length - 1);
+            const pts = data.map((v, i) => `${(i * stepX).toFixed(1)},${(height - ((v - min) / range) * height).toFixed(1)}`).join(' ');
+            const last = data[data.length - 1];
+            const lastY = height - ((last - min) / range) * height;
+            return (
+              <svg width={width} height={height} className="inline-block align-middle">
+                <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" />
+                <polyline points={`0,${height} ${pts} ${width},${height}`} fill={color} fillOpacity="0.06" stroke="none" />
+                <circle cx={width} cy={lastY} r="2" fill={color} />
+              </svg>
+            );
+          };
+
+          /* Score actividad: tomar score_actividad y derivar serie 6m del histórico */
+          const serie6m = (c) => {
+            const h = c.historico_mensual || [];
+            const last6 = h.slice(-6);
+            return last6.map(x => x.count || 0);
+          };
+
+          /* Footer stats: sesiones hoy, dictámenes mes actual, hotspot */
+          const sesionesHoy = (() => {
+            const hoyDDMM = new Date().toLocaleDateString('es-MX', {day:'2-digit', month:'2-digit', year:'numeric'}).split('/').join('-');
+            const todas = [...(convocatorias?.Diputados || []), ...(convocatorias?.Senado || [])];
+            return todas.filter(c => c.fecha === hoyDDMM).length;
+          })();
+          const dictMesActual = visibles.reduce((acc, c) => {
+            const h = c.historico_mensual || [];
+            const ult = h[h.length - 1];
+            return acc + (ult?.dictamen || 0);
+          }, 0);
+          const hotspot = visibles.reduce((best, c) => (!best || (c.score_actividad || 0) > (best.score_actividad || 0)) ? c : best, null);
+
+          /* Helpers */
+          const camaraLabel = cam => cam === 'Senado' ? 'Sen.' : 'Dip.';
+          const camaraTag = cam => cam === 'Senado' ? 'bg-gray-900 text-white' : 'bg-gray-700 text-white';
+          const fmtFecha = f => f ? f.replace(/-/g, '·') : '—';
+          const colorScore = s => s >= 80 ? '#2e7d32' : s >= 50 ? '#c6972b' : '#c62828';
+
+          const FilterBtn = ({ k, label, first }) => (
+            <button onClick={() => setFiltro(k)}
+              className={`px-3 py-1.5 text-[11px] font-medium transition-colors ${filtro === k ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-50'} ${!first ? 'border-l border-borde' : ''}`}>
+              {label}
+            </button>
+          );
+
+          return (
+            <div className="glass border border-borde rounded-xl overflow-hidden">
+              {/* Header consistente con otros widgets — tipografía Inter, sin font-mono */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 flex-wrap gap-2">
+                <div>
+                  <div className="text-xs font-semibold text-gray-500">Comisiones</div>
+                  <div className="text-[10px] text-gray-400 mt-0.5">{seleccionadas.length} de {total} comisiones LXVI vigiladas</div>
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <div className="inline-flex rounded-lg border border-borde bg-white overflow-hidden">
+                    <FilterBtn k="mis" label={`Mis · ${seleccionadas.length}`} first />
+                    <FilterBtn k="Diputados" label="Diputados" />
+                    <FilterBtn k="Senado" label="Senado" />
+                  </div>
+                  <button onClick={onConfigClick}
+                    className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition border bg-white border-gray-300 text-gray-700 hover:border-gray-500">
+                    + Agregar
+                  </button>
+                  <button onClick={() => setVerTodas(true)}
+                    className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition border bg-white border-gray-300 text-gray-700 hover:border-gray-500">
+                    Ver todas · {total}
+                  </button>
+                  <ShareButton title="Comisiones vigiladas — Fiat Console"
+                    getText={() => `Comisiones vigiladas (${seleccionadas.length}/10):\n${seleccionadas.slice(0,5).map(c => `· ${c.nombre} (${c.camara}): ${(c.sitl?.turnadas ?? c.total_docs ?? 0)} turnados`).join('\n')}`} />
+                </div>
+              </div>
+
+              {/* Tabla principal */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-[9px] text-gray-500 font-bold border-b border-gray-200">
+                      <th className="text-left py-2 pl-4 pr-2 font-bold w-10">#</th>
+                      <th className="text-left py-2 px-2 font-bold">Comisión</th>
+                      <th className="text-center py-2 px-2 font-bold w-16">Dict</th>
+                      <th className="text-center py-2 px-2 font-bold w-16">Inic</th>
+                      <th className="text-center py-2 px-2 font-bold w-16">Prop</th>
+                      <th className="text-center py-2 px-2 font-bold w-16">Total</th>
+                      <th className="text-left py-2 px-3 font-bold w-44">Score·Actividad·6m</th>
+                      <th className="text-left py-2 px-2 font-bold w-56">Próx·Sesión</th>
+                      <th className="text-right py-2 px-3 pr-4 font-bold w-16">Δ30d</th>
+                      <th className="w-8"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibles.map((c, i) => {
+                      const key = `${c.nombre}|${c.camara}`;
+                      const proxima = buscarProxima(c);
+                      const d30 = delta30(c);
+                      const serie = serie6m(c);
+                      const scoreAct = c.score_actividad || 0;
+                      const colorAct = colorScore(scoreAct);
+                      /* Priorizar SITL cuando existe (Diputados): la clasificación
+                         por comisión de la Gaceta es incompleta (Medio Ambiente solo
+                         atrapa 1 doc cuando SITL reporta 314). SITL = fuente de verdad. */
+                      const sitl = c.sitl;
+                      const dictN = c.tipos?.dictamen || 0;  // dictámenes solo Gaceta los reporta
+                      const iniN = sitl?.iniciativas?.turnadas ?? c.tipos?.iniciativa ?? 0;
+                      const propN = sitl?.proposiciones?.turnadas ?? c.tipos?.proposicion ?? 0;
+                      const totalN = sitl?.turnadas ?? c.total_docs ?? 0;
+                      return (
+                        <tr key={key} className="border-b border-gray-100 hover:bg-gray-50 transition group">
+                          <td className="py-3 pl-4 pr-2 text-[10px] font-mono text-gray-400">{String(i + 1).padStart(2, '0')}</td>
+                          <td className="py-3 px-2">
+                            <button onClick={() => setComDetalle(c)}
+                              className="text-sm font-bold text-gray-900 leading-tight text-left hover:text-acento hover:underline decoration-dotted underline-offset-2 transition-colors"
+                              title={`Ver detalle de ${c.nombre}`}>{_nombreComisionDisplay(c.nombre)}</button>
+                            <div className="flex items-center gap-1.5 mt-1">
+                              <span className={`text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ${camaraTag(c.camara)}`}>{camaraLabel(c.camara)}</span>
+                              {c.categoria_nombre && <span className="text-[10px] text-gray-500">{c.categoria_nombre}</span>}
+                            </div>
+                          </td>
+                          <td className="text-center py-3 px-2 font-mono font-bold text-gray-800">{dictN}</td>
+                          <td className="text-center py-3 px-2 font-mono text-gray-700">{iniN}</td>
+                          <td className="text-center py-3 px-2 font-mono text-gray-700">{propN}</td>
+                          <td className="text-center py-3 px-2 font-mono font-bold text-gray-900">{totalN}</td>
+                          <td className="py-3 px-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-bold font-mono" style={{color: colorAct}}>{Math.round(scoreAct)}</span>
+                              <Sparkline data={serie} color={colorAct} />
+                            </div>
+                            <div className="text-[9px] text-gray-400 font-mono mt-0.5">OCT — ABR</div>
+                          </td>
+                          <td className="py-3 px-2">
+                            {proxima ? (
+                              <a href={proxima.url} target="_blank" rel="noopener" className="block text-acento hover:underline">
+                                <div className="text-[11px] font-mono font-bold">▸ {fmtFecha(proxima.fecha)}</div>
+                                <div className="text-[10px] text-gray-500 truncate" style={{maxWidth: '180px'}} title={proxima.titulo}>
+                                  {(proxima.comision || '').slice(0, 30)}
+                                </div>
+                              </a>
+                            ) : (
+                              <div>
+                                <div className="text-[11px] text-gray-400 italic">— sin convocatoria —</div>
+                                {c.ultimo_dictamen_url && (
+                                  <a href={c.ultimo_dictamen_url} target="_blank" rel="noopener" className="text-[10px] text-acento hover:underline">▸ Último dictamen</a>
+                                )}
+                              </div>
+                            )}
+                          </td>
+                          <td className="text-right py-3 px-3 pr-4 font-mono">
+                            {d30 == null ? <span className="text-gray-300">—</span> : (
+                              <span className="text-sm font-bold" style={{color: d30 > 0 ? '#2e7d32' : d30 < 0 ? '#c62828' : '#9ca3af'}}>
+                                {d30 > 0 ? '▲' : d30 < 0 ? '▼' : '·'} {Math.abs(d30).toFixed(0)}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 pr-3">
+                            {filtro === 'mis' && (
+                              <button onClick={() => onRemove(key)}
+                                className="text-gray-300 hover:text-rose-600 w-6 h-6 text-base leading-none opacity-0 group-hover:opacity-100 transition">×</button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {visibles.length === 0 && (
+                      <tr>
+                        <td colSpan="10" className="text-center py-6 text-[11px] text-gray-400 italic">Sin comisiones que mostrar con este filtro</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Footer terminal stats */}
+              <div className="px-4 py-2 border-t border-gray-200 bg-gray-50 flex items-center justify-between flex-wrap gap-2 text-[10px] font-mono">
+                <div className="flex items-center gap-4 text-gray-500">
+                  <span>SESIONES·HOY <span className="text-gray-800 font-bold">{sesionesHoy}</span></span>
+                  <span>DICT·MES·ACTUAL <span className="text-emerald-700 font-bold">+{dictMesActual}</span></span>
+                  {hotspot && (
+                    <span>HOTSPOT <span className="text-gray-800 font-bold">{(hotspot.nombre || '').slice(0, 24)}</span> · <span className="text-acento font-bold">{Math.round(hotspot.score_actividad || 0)}</span></span>
+                  )}
+                </div>
+                <a href="/comisiones" target="_blank" rel="noopener" className="text-acento font-semibold hover:underline">Abrir pestaña Comisiones →</a>
+              </div>
+
+              {/* Modal Ver todas */}
+              {verTodas && (
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setVerTodas(false)}>
+                  <div onClick={e => e.stopPropagation()} className="bg-white rounded-2xl max-w-5xl w-full max-h-[85vh] flex flex-col" style={{boxShadow: '0 20px 60px rgba(0,0,0,0.15)'}}>
+                    <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                      <div>
+                        <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">VER TODAS · COMISIONES LXVI</div>
+                        <h2 className="text-lg font-black text-gray-900 mt-0.5">{total} comisiones registradas</h2>
+                      </div>
+                      <button onClick={() => setVerTodas(false)} className="text-gray-400 hover:text-gray-700 text-2xl leading-none w-8 h-8 hover:bg-gray-100 rounded-full">×</button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-5">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="text-[9px] text-gray-500 font-bold border-b border-gray-200">
+                            <th className="text-left py-2 pl-2 pr-2">Comisión</th>
+                            <th className="text-center py-2 px-2 w-16">Cám.</th>
+                            <th className="text-center py-2 px-2 w-16">Dict</th>
+                            <th className="text-center py-2 px-2 w-16">Inic</th>
+                            <th className="text-center py-2 px-2 w-16">Prop</th>
+                            <th className="text-center py-2 px-2 w-16">Total</th>
+                            <th className="text-center py-2 px-2 w-16">Score</th>
+                            <th className="text-center py-2 px-2 w-20">Acción</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {(allComisiones || []).map((c) => {
+                            const key = `${c.nombre}|${c.camara}`;
+                            const sel = comisionesIds.has(key);
+                            const sitl = c.sitl;
+                            const dictN = c.tipos?.dictamen || 0;
+                            const iniN = sitl?.iniciativas?.turnadas ?? c.tipos?.iniciativa ?? 0;
+                            const propN = sitl?.proposiciones?.turnadas ?? c.tipos?.proposicion ?? 0;
+                            const totalN = sitl?.turnadas ?? c.total_docs ?? 0;
+                            return (
+                              <tr key={key} className={`border-b border-gray-100 ${sel ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}>
+                                <td className="py-2 pl-2 pr-2 text-sm truncate" style={{maxWidth: '320px'}}>
+                                  <button onClick={() => { setComDetalle(c); setVerTodas(false); }}
+                                    className="text-gray-800 hover:text-acento hover:underline decoration-dotted underline-offset-2 transition-colors text-left truncate max-w-full"
+                                    title={`Ver detalle de ${c.nombre}`}>{_nombreComisionDisplay(c.nombre)}</button>
+                                </td>
+                                <td className="text-center py-2 px-2 text-[10px] font-mono text-gray-600">{camaraLabel(c.camara)}</td>
+                                <td className="text-center py-2 px-2 font-mono text-gray-800">{dictN}</td>
+                                <td className="text-center py-2 px-2 font-mono text-gray-700">{iniN}</td>
+                                <td className="text-center py-2 px-2 font-mono text-gray-700">{propN}</td>
+                                <td className="text-center py-2 px-2 font-mono font-bold text-gray-900">{totalN}</td>
+                                <td className="text-center py-2 px-2 font-mono font-bold" style={{color: colorScore(c.score_actividad || 0)}}>{Math.round(c.score_actividad || 0)}</td>
+                                <td className="text-center py-2 px-2">
+                                  <button onClick={() => sel ? onRemove(key) : (comisionesIds.size < 10 && onConfigClick())}
+                                    className={`text-[10px] font-bold uppercase tracking-widest px-2 py-1 rounded border ${sel ? 'border-rose-300 text-rose-600 hover:bg-rose-50' : 'border-emerald-300 text-emerald-600 hover:bg-emerald-50'}`}>
+                                    {sel ? '× Quitar' : '+ Sumar'}
+                                  </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Modal detalle de comisión (click en el título) */}
+              {comDetalle && (
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setComDetalle(null)}>
+                  <div onClick={e => e.stopPropagation()} className="bg-white rounded-2xl max-w-3xl w-full max-h-[88vh] overflow-y-auto" style={{boxShadow: '0 20px 60px rgba(0,0,0,0.15)'}}>
+                    <div className="sticky top-0 bg-white px-5 py-3 border-b border-gray-100 flex items-center justify-between z-10">
+                      <div className="text-sm font-bold text-gray-900 truncate pr-3">{_nombreComisionDisplay(comDetalle.nombre)}</div>
+                      <button onClick={() => setComDetalle(null)} className="text-gray-400 hover:text-gray-700 text-2xl leading-none w-8 h-8 hover:bg-gray-100 rounded-full flex-shrink-0">×</button>
+                    </div>
+                    <div className="p-5">
+                      <ComisionDetalle comision={comDetalle} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        }
+
+        /* TriggerDesk — Alertas con reglas combinables AND/OR estilo terminal
+           Ahora con probabilidad real calculada desde Worker /probabilidad (Nivel 1):
+           - tema_score: frecuencia empírica de cruces en últimas 365d
+           - legislador_actividad: Poisson sobre iniciativas_proy_15d
+           - compuesta AND: producto · OR: 1-(1-p1)(1-p2) (asume independencia) */
+        function TriggerDesk({ alertas, semaforo, allLegisladores, setConfig, config }) {
+          const [showForm, setShowForm] = useState(false);
+          const [logica, setLogica] = useState('AND');
+          const [condiciones, setCondiciones] = useState([
+            { tipo: 'tema_score', tema: '', operador: '>=', valor: 75 }
+          ]);
+          const [canales, setCanales] = useState({ email: true, push: false });
+          /* Cache de probabilidades por alerta.id → { prob, confianza, descripcion, loading } */
+          const [probs, setProbs] = useState({});
+
+          /* Pide la probabilidad de UNA condición al endpoint /probabilidad */
+          const fetchProbCondicion = async (c, ventanaDias = 30) => {
+            const params = new URLSearchParams();
+            params.set('ventana_dias', String(ventanaDias));
+            if (c.tipo === 'tema_score') {
+              if (!c.tema || c.valor == null) return null;
+              params.set('tipo', 'tema_score');
+              params.set('categoria', c.tema);
+              params.set('operador', c.operador || '>=');
+              params.set('umbral', String(c.valor));
+            } else if (c.tipo === 'legislador_actividad') {
+              if (!c.legislador_id) return null;
+              params.set('tipo', 'legislador_actividad');
+              params.set('legislador_id', String(c.legislador_id));
+            } else {
+              return null;
+            }
+            try {
+              const r = await fetch(`${WORKER_URL}/probabilidad?${params.toString()}`);
+              const j = await r.json();
+              return j;
+            } catch (e) {
+              return null;
+            }
+          };
+
+          /* Para cada alerta esperando, calcular probabilidad combinando condiciones */
+          useEffect(() => {
+            let cancelled = false;
+            const calcular = async () => {
+              for (const a of alertas) {
+                if (a.estado !== 'esperando' && a.estado !== 'disparado') continue;
+                if (probs[a.id] && !probs[a.id].loading) continue;
+                setProbs(prev => ({ ...prev, [a.id]: { loading: true } }));
+                const conds = a.condiciones || [];
+                const results = await Promise.all(conds.map(c => fetchProbCondicion(c, 30)));
+                if (cancelled) return;
+                const valid = results.filter(r => r && r.prob != null);
+                if (valid.length === 0) {
+                  setProbs(prev => ({ ...prev, [a.id]: { prob: null, descripcion: 'datos insuficientes' } }));
+                  continue;
+                }
+                let probComb;
+                if (a.logica === 'OR') {
+                  probComb = 1 - valid.reduce((acc, r) => acc * (1 - r.prob), 1);
+                } else {
+                  probComb = valid.reduce((acc, r) => acc * r.prob, 1);
+                }
+                const confianzas = valid.map(r => r.confianza);
+                const conf = confianzas.includes('baja') ? 'baja' : confianzas.includes('media') ? 'media' : 'alta';
+                const desc = valid.length === 1 ? valid[0].descripcion : `${valid.length} condiciones combinadas (${a.logica || 'AND'}, asume independencia)`;
+                setProbs(prev => ({ ...prev, [a.id]: { prob: probComb, confianza: conf, descripcion: desc, base: valid[0].base } }));
+              }
+            };
+            calcular();
+            return () => { cancelled = true; };
+          }, [alertas]);
+
+          const addCondicion = () => {
+            setCondiciones([...condiciones, { tipo: 'tema_score', tema: '', operador: '>=', valor: 75 }]);
+          };
+          const removeCondicion = (i) => {
+            setCondiciones(condiciones.filter((_, idx) => idx !== i));
+          };
+          const updateCondicion = (i, patch) => {
+            setCondiciones(condiciones.map((c, idx) => idx === i ? { ...c, ...patch } : c));
+          };
+
+          const generarNombre = () => {
+            const partes = condiciones.map(c => {
+              if (c.tipo === 'tema_score') {
+                const cat = semaforo.find(s => s.categoria === c.tema);
+                return `${cat ? cat.nombre : 'tema'} ${c.operador} ${c.valor}`;
+              } else if (c.tipo === 'legislador_actividad') {
+                const leg = allLegisladores.find(l => l.id === Number(c.legislador_id));
+                return `${leg ? formatNombreLegislador(leg) : 'legislador'} presenta`;
+              }
+              return '?';
+            });
+            return partes.join(` ${logica} `);
+          };
+
+          /* ── Helpers de lenguaje natural (friendly) ── */
+          const [modoAvanzado, setModoAvanzado] = useState(false);
+
+          // Niveles amigables → {operador, valor}. "personalizado" deja editar.
+          const NIVELES = [
+            { k: 'alto',  label: 'llegue a nivel ALTO (75+)',   operador: '>=', valor: 75 },
+            { k: 'max',   label: 'llegue al MÁXIMO (90+)',       operador: '>=', valor: 90 },
+            { k: 'bajo',  label: 'baje a nivel BAJO (40 o menos)', operador: '<=', valor: 40 },
+          ];
+          const nivelDeCondicion = (c) => {
+            const m = NIVELES.find(n => n.operador === c.operador && n.valor === c.valor);
+            return m ? m.k : 'personalizado';
+          };
+          const aplicarNivel = (i, k) => {
+            if (k === 'personalizado') { updateCondicion(i, { operador: '>=', valor: 75 }); return; }
+            const n = NIVELES.find(x => x.k === k);
+            if (n) updateCondicion(i, { operador: n.operador, valor: n.valor });
+          };
+
+          // Frase en español de una condición
+          const fraseCondicion = (c) => {
+            if (c.tipo === 'tema_score') {
+              const cat = semaforo.find(s => s.categoria === c.tema);
+              const nom = cat ? cat.nombre : '(elige un tema)';
+              const op = c.operador === '<=' || c.operador === '<' ? 'baje a' : 'llegue a';
+              return `el tema ${nom} ${op} ${c.valor}`;
+            }
+            if (c.tipo === 'legislador_actividad') {
+              const leg = allLegisladores.find(l => l.id === Number(c.legislador_id));
+              return `${leg ? formatNombreLegislador(leg) : '(elige un legislador)'} presente un instrumento (iniciativa o proposición)`;
+            }
+            return '…';
+          };
+          // Preview completo: "Te avisaremos por correo cuando …"
+          const fraseAlerta = () => {
+            const partes = condiciones.map(fraseCondicion);
+            const union = logica === 'OR' ? ' o cuando ' : ' y además ';
+            const canal = canales.email ? 'por correo' : 'en la consola';
+            return `Te avisaremos ${canal} cuando ${partes.join(union)}.`;
+          };
+
+          // Plantillas de 1 clic — preconfiguran condiciones; el usuario solo
+          // elige el tema/legislador y guarda.
+          const plantillas = [
+            { id: 't_alto', icon: '📈', titulo: 'Un tema sube a nivel alto',
+              desc: 'Te avisamos cuando un tema que sigues llega a 75+',
+              setup: () => { setLogica('AND'); setModoAvanzado(false);
+                setCondiciones([{ tipo: 'tema_score', tema: '', operador: '>=', valor: 75 }]); } },
+            { id: 't_max', icon: '🚨', titulo: 'Un tema llega al máximo',
+              desc: 'Alerta fuerte: el tema alcanza 90+',
+              setup: () => { setLogica('AND'); setModoAvanzado(false);
+                setCondiciones([{ tipo: 'tema_score', tema: '', operador: '>=', valor: 90 }]); } },
+            { id: 't_leg', icon: '🧑‍⚖️', titulo: 'Un legislador presenta algo',
+              desc: 'Cuando alguien que vigilas presenta iniciativa o punto de acuerdo',
+              setup: () => { setLogica('AND'); setModoAvanzado(false);
+                setCondiciones([{ tipo: 'legislador_actividad', legislador_id: '' }]); } },
+          ];
+
+          const submit = () => {
+            /* Validar */
+            const validas = condiciones.every(c => {
+              if (c.tipo === 'tema_score') return c.tema && c.valor != null;
+              if (c.tipo === 'legislador_actividad') return c.legislador_id;
+              return false;
+            });
+            if (!validas) return;
+            const nueva = {
+              id: Date.now(),
+              nombre: generarNombre(),
+              condiciones: [...condiciones],
+              logica,
+              canales: Object.entries(canales).filter(([,v]) => v).map(([k]) => k),
+              estado: 'esperando',
+              fecha_creada: new Date().toISOString(),
+              disparos_total: 0,
+              ultima_disparada: null,
+            };
+            setConfig({ ...config, alertas: [...alertas, nueva] });
+            setShowForm(false);
+            setCondiciones([{ tipo: 'tema_score', tema: '', operador: '>=', valor: 75 }]);
+            setLogica('AND');
+            setModoAvanzado(false);
+          };
+
+          const togglePausar = (id) => {
+            setConfig({ ...config, alertas: alertas.map(a => a.id === id ? { ...a, estado: a.estado === 'pausada' ? 'esperando' : 'pausada' } : a) });
+          };
+          const eliminar = (id) => {
+            setConfig({ ...config, alertas: alertas.filter(a => a.id !== id) });
+          };
+
+          /* Renderizado de una condición individual en card */
+          const renderCondicion = (c, i, leyenda) => {
+            if (c.tipo === 'tema_score') {
+              const cat = semaforo.find(s => s.categoria === c.tema);
+              return (
+                <span key={i} className="font-mono">
+                  {leyenda && <span className="text-gray-400 mr-1.5">{leyenda}</span>}
+                  <span className="text-gray-800">{cat ? cat.nombre : '—'}</span>
+                  <span className="text-gray-500 mx-1.5">{c.operador}</span>
+                  <span className="text-gray-800 font-bold">{c.valor}</span>
+                </span>
+              );
+            } else if (c.tipo === 'legislador_actividad') {
+              const leg = allLegisladores.find(l => l.id === Number(c.legislador_id));
+              return (
+                <span key={i} className="font-mono">
+                  {leyenda && <span className="text-gray-400 mr-1.5">{leyenda}</span>}
+                  <span className="text-gray-800">{leg ? formatNombreLegislador(leg) : '—'}</span>
+                  <span className="text-gray-500 mx-1.5">presenta instrumento</span>
+                </span>
+              );
+            }
+            return null;
+          };
+
+          return (
+            <div className="glass border border-borde rounded-xl">
+              {/* Header consistente con el resto: tipografía Inter, sin font-mono */}
+              <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+                <div>
+                  <div className="text-xs font-semibold text-gray-500">Trigger Desk</div>
+                  <div className="text-[10px] text-gray-400 mt-0.5">{alertas.length} alerta{alertas.length === 1 ? '' : 's'} configurada{alertas.length === 1 ? '' : 's'}</div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setShowForm(!showForm)}
+                    className="text-[11px] font-semibold px-3 py-1.5 rounded-full transition border"
+                    style={showForm ? {background:'#f3f4f6', color:'#6b7280', borderColor:'#d1d5db'} : {background:'#1a365d', color:'white', borderColor:'#1a365d'}}>
+                    {showForm ? 'Cancelar' : '+ Nueva alerta'}
+                  </button>
+                  <ShareButton title="Trigger Desk — Fiat Console"
+                    getText={() => `Trigger Desk · ${alertas.length} alerta(s) configurada(s):\n${alertas.slice(0,5).map(a => `· ${a.nombre}`).join('\n')}`} /></div>
+              </div>
+
+              <div className="p-4 space-y-3">
+                {/* Form de nueva regla */}
+                {showForm && (
+                  <div className="border border-gray-200 bg-white rounded-xl p-4 space-y-4">
+                    <div className="text-sm font-bold text-gray-900">Crear una alerta</div>
+
+                    {/* Plantillas de 1 clic */}
+                    <div>
+                      <div className="text-[11px] font-semibold text-gray-500 mb-1.5">Empieza con una plantilla</div>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                        {plantillas.map(p => (
+                          <button key={p.id} onClick={p.setup}
+                            className="text-left p-3 rounded-lg border border-gray-200 hover:border-acento hover:bg-gray-50 transition">
+                            <div className="text-lg leading-none mb-1.5">{p.icon}</div>
+                            <div className="text-[12px] font-bold text-gray-800 leading-tight">{p.titulo}</div>
+                            <div className="text-[11px] text-gray-500 mt-0.5 leading-snug">{p.desc}</div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Builder guiado en lenguaje natural */}
+                    <div className="border-t border-gray-100 pt-3">
+                      <div className="text-[11px] font-semibold text-gray-500 mb-2">…o ajústala a tu medida</div>
+                      <div className="space-y-2">
+                        {condiciones.map((c, i) => (
+                          <div key={i} className="bg-gray-50 rounded-lg border border-gray-200 p-3">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[11px] font-semibold text-gray-500">
+                                {i === 0 ? 'Avísame cuando' : (logica === 'OR' ? 'o cuando' : 'y además cuando')}
+                              </span>
+                              {condiciones.length > 1 && (
+                                <button onClick={() => removeCondicion(i)} className="text-[11px] text-gray-400 hover:text-rose-600 font-medium">Quitar</button>
+                              )}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
+                              <select value={c.tipo}
+                                onChange={e => updateCondicion(i, { tipo: e.target.value, tema: '', legislador_id: '' })}
+                                className="px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white text-sm">
+                                <option value="tema_score">un tema</option>
+                                <option value="legislador_actividad">un legislador</option>
+                              </select>
+                              {c.tipo === 'tema_score' && (
+                                <React.Fragment>
+                                  <select value={c.tema} onChange={e => updateCondicion(i, { tema: e.target.value })}
+                                    className="px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white text-sm">
+                                    <option value="">elige tema…</option>
+                                    {semaforo.map(s => <option key={s.categoria} value={s.categoria}>{s.nombre}</option>)}
+                                  </select>
+                                  <select value={nivelDeCondicion(c)} onChange={e => aplicarNivel(i, e.target.value)}
+                                    className="px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white text-sm">
+                                    {NIVELES.map(n => <option key={n.k} value={n.k}>{n.label}</option>)}
+                                    <option value="personalizado">personalizado…</option>
+                                  </select>
+                                  {nivelDeCondicion(c) === 'personalizado' && (
+                                    <span className="flex items-center gap-1">
+                                      <select value={c.operador} onChange={e => updateCondicion(i, { operador: e.target.value })}
+                                        className="px-2 py-1.5 border border-gray-200 rounded-lg bg-white text-sm">
+                                        <option value=">=">≥</option><option value=">">&gt;</option>
+                                        <option value="<=">≤</option><option value="<">&lt;</option>
+                                      </select>
+                                      <input type="number" min="0" max="100" value={c.valor}
+                                        onChange={e => updateCondicion(i, { valor: Number(e.target.value) })}
+                                        className="w-16 px-2 py-1.5 border border-gray-200 rounded-lg bg-white text-sm" />
+                                    </span>
+                                  )}
+                                </React.Fragment>
+                              )}
+                              {c.tipo === 'legislador_actividad' && (
+                                <React.Fragment>
+                                  <select value={c.legislador_id || ''} onChange={e => updateCondicion(i, { legislador_id: e.target.value })}
+                                    className="px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white text-sm flex-1 min-w-[180px]">
+                                    <option value="">elige legislador…</option>
+                                    {allLegisladores.map(l => <option key={l.id} value={l.id}>{formatNombreLegislador(l)}</option>)}
+                                  </select>
+                                  <span className="text-sm text-gray-500">presente un instrumento</span>
+                                </React.Fragment>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Combinar condiciones (avanzado, opcional) */}
+                      <div className="mt-2">
+                        {!modoAvanzado && condiciones.length === 1 ? (
+                          <button onClick={() => { setModoAvanzado(true); addCondicion(); }}
+                            className="text-[12px] text-acento hover:underline font-medium">+ Combinar con otra condición</button>
+                        ) : (
+                          <div className="flex items-center gap-2 flex-wrap text-[12px]">
+                            <span className="text-gray-500">Combinar:</span>
+                            <button onClick={() => setLogica('AND')}
+                              className={`px-2.5 py-1 rounded-full border transition ${logica==='AND' ? 'bg-acento text-white border-acento' : 'border-gray-300 text-gray-600 hover:border-gray-500'}`}>y además (ambas)</button>
+                            <button onClick={() => setLogica('OR')}
+                              className={`px-2.5 py-1 rounded-full border transition ${logica==='OR' ? 'bg-acento text-white border-acento' : 'border-gray-300 text-gray-600 hover:border-gray-500'}`}>o (cualquiera)</button>
+                            <button onClick={addCondicion}
+                              className="px-2.5 py-1 rounded-full border border-dashed border-gray-300 text-gray-600 hover:border-acento transition">+ otra</button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Canal */}
+                    <div className="border-t border-gray-100 pt-3 space-y-1.5">
+                      <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input type="checkbox" checked={canales.email} onChange={e => setCanales({...canales, email: e.target.checked})} />
+                        Avisarme por correo
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-400 cursor-not-allowed">
+                        <input type="checkbox" checked={canales.push} disabled />
+                        Notificación push <span className="text-[11px]">(próximamente)</span>
+                      </label>
+                    </div>
+
+                    {/* Preview en español */}
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2.5 text-[13px] text-emerald-900 leading-snug">
+                      {fraseAlerta()}
+                    </div>
+
+                    <div className="flex items-center justify-end gap-2">
+                      <button onClick={() => setShowForm(false)}
+                        className="text-sm font-semibold px-4 py-2 rounded-full border border-gray-300 text-gray-600 hover:bg-gray-50 transition">Cancelar</button>
+                      <button onClick={submit}
+                        className="text-sm font-bold px-4 py-2 rounded-full text-white transition"
+                        style={{background:'#16a34a'}}>Crear alerta</button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Lista de alertas */}
+                {alertas.length === 0 && !showForm ? (
+                  <div className="text-center py-8">
+                    <div className="text-sm font-semibold text-gray-700">Aún no tienes alertas</div>
+                    <div className="text-[12px] text-gray-500 mt-1">Crea una para que te avisemos cuando pase algo que te importa.</div>
+                    <button onClick={() => setShowForm(true)}
+                      className="mt-4 text-sm font-bold px-4 py-2 rounded-full text-white" style={{background:'#16a34a'}}>
+                      Crear mi primera alerta
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {alertas.map((a, idx) => {
+                      const isDisparada = a.estado === 'disparado';
+                      const isPausada = a.estado === 'pausada';
+                      const borderColor = isDisparada ? '#16a34a' : isPausada ? '#9ca3af' : '#d97706';
+                      const bgColor = isDisparada ? '#f0fdf4' : isPausada ? '#f9fafb' : '#fffbeb';
+                      const estadoTxt = isDisparada ? 'Activa' : isPausada ? 'Pausada' : 'En espera';
+                      const estadoCls = isDisparada ? 'bg-emerald-100 text-emerald-700'
+                        : isPausada ? 'bg-gray-200 text-gray-600' : 'bg-amber-100 text-amber-700';
+                      const diasCreada = Math.floor((Date.now() - new Date(a.fecha_creada).getTime()) / (1000*60*60*24));
+                      const union = a.logica === 'OR' ? ' o cuando ' : ' y además ';
+                      const desc = (a.condiciones || []).map(fraseCondicion).join(union);
+                      const p = probs[a.id];
+                      return (
+                        <div key={a.id} className="rounded-xl border border-gray-200 border-l-4 p-3.5" style={{borderLeftColor: borderColor, background: bgColor}}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${estadoCls}`}>{estadoTxt}</span>
+                            <span className="text-[11px] text-gray-400">creada hace {diasCreada === 0 ? 'hoy' : diasCreada + 'd'}</span>
+                          </div>
+                          <div className="text-[14px] text-gray-900 mb-2 leading-snug">
+                            <span className="text-gray-500">Avísame cuando </span>{desc}.
+                          </div>
+                          <div className="flex items-center gap-x-5 gap-y-1 flex-wrap text-[12px] mb-2.5">
+                            {!isPausada && !isDisparada && (
+                              <span className="text-gray-600" title={p?.descripcion || 'Calculando…'}>
+                                Probabilidad:{' '}
+                                {(() => {
+                                  if (!p || p.loading) return <span className="text-gray-400">calculando…</span>;
+                                  if (p.prob == null) return <span className="text-gray-400 italic">sin datos suficientes</span>;
+                                  const pct = Math.round(p.prob * 100);
+                                  const color = pct >= 67 ? '#16a34a' : pct >= 33 ? '#d97706' : '#dc2626';
+                                  const conf = p.confianza ? ` · confianza ${p.confianza}` : '';
+                                  return <span className="font-bold" style={{color}}>{pct}%<span className="font-normal text-gray-400">{conf}</span></span>;
+                                })()}
+                              </span>
+                            )}
+                            {isDisparada && <span className="text-emerald-700 font-semibold">Se cumplió la condición</span>}
+                            <span className="text-gray-500">Aviso por {(a.canales || ['email']).map(c => c === 'email' ? 'correo' : c).join(' y ')}</span>
+                            <span className="text-gray-400">{a.disparos_total || 0} aviso{(a.disparos_total||0) === 1 ? '' : 's'} enviado{(a.disparos_total||0) === 1 ? '' : 's'}</span>
+                          </div>
+                          <div className="flex items-center gap-4 pt-2 border-t border-gray-200/70 text-[12px]">
+                            <button onClick={() => togglePausar(a.id)} className="text-acento hover:underline font-medium">{isPausada ? 'Activar' : 'Pausar'}</button>
+                            <button onClick={() => eliminar(a.id)} className="text-gray-400 hover:text-rose-600 font-medium ml-auto">Eliminar</button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {/* CTA crear nueva al final */}
+                    {!showForm && (
+                      <button onClick={() => setShowForm(true)}
+                        className="w-full border-2 border-dashed border-gray-300 hover:border-acento hover:bg-gray-50 transition py-3 rounded-xl text-[13px] text-gray-500 hover:text-acento font-semibold">
+                        + Crear otra alerta
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                <div className="text-[11px] text-gray-400 mt-2 leading-snug">
+                  Tus alertas se guardan en tu cuenta. El aviso por correo se activa en la siguiente versión.
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        /* ================================================================
            MAIN APP
            ================================================================ */
 
@@ -7123,8 +8884,8 @@
                /comisiones. Métricas (resoluciones) sin URL por ahora.
                Compat: sigue aceptando ?tab= (links viejos de consola-pro). */
             const PATH_TO_TAB = { '': 'actividad', '/': 'actividad', '/dashboard': 'actividad',
-                '/radar': 'radar', '/mapa': 'mapa', '/comisiones': 'comisiones' };
-            const TAB_TO_PATH = { actividad: '/dashboard', radar: '/radar', mapa: '/mapa', comisiones: '/comisiones' };
+                '/radar': 'radar', '/mapa': 'mapa', '/comisiones': 'comisiones', '/consola': 'consola' };
+            const TAB_TO_PATH = { actividad: '/dashboard', radar: '/radar', mapa: '/mapa', comisiones: '/comisiones', consola: '/consola' };
             const tabFromURL = (() => {
                 try {
                     const p = (window.location.pathname || '/').replace(/\/+$/, '') || '/';
@@ -7132,7 +8893,7 @@
                     if (p !== '/' && PATH_TO_TAB[p]) return PATH_TO_TAB[p];
                     // Compat: ?tab= (links viejos / compartidos).
                     const t = new URLSearchParams(window.location.search).get('tab');
-                    if (['actividad','radar','mapa','comisiones','resoluciones','legisladores','metodologia'].includes(t)) return t;
+                    if (['actividad','radar','mapa','comisiones','resoluciones','legisladores','metodologia','consola'].includes(t)) return t;
                     return PATH_TO_TAB[p] || 'actividad';
                 } catch { return 'actividad'; }
             })();
@@ -7153,6 +8914,10 @@
                se cargan del Worker solo cuando hay sesión (no cargar costo en
                visitantes anónimos). */
             const [showConfigWizard, setShowConfigWizard] = useState(false);
+            /* Legislador abierto desde la consola personalizada (Fase 2).
+               Estado propio para no interferir con `selected`/DetalleModal
+               (que espera objetos de categoría, no legisladores). */
+            const [legConsola, setLegConsola] = useState(null);
             const [consolaConfig, setConsolaConfigState] = useState(() => loadConsolaConfig(null));
             const [allLegisladores, setAllLegisladores] = useState([]);
             const [allComisiones, setAllComisiones] = useState([]);
@@ -7272,7 +9037,10 @@
                             <div className="hidden md:block w-px h-5 bg-gray-200 mx-1"></div>
                             {/* Nav tabs */}
                             <div className="nav-tabs-scroll flex items-center gap-0.5 flex-shrink-0 order-3 md:order-none w-full md:w-auto justify-center md:justify-start">
-                                {[['actividad', 'Actividad'], ['radar', 'Radar de Legisladores'], ['mapa', 'Mapa'], ['comisiones', 'Comisiones'], ['resoluciones', 'Métricas']].map(([key, label]) => (
+                                {[
+                                    ...(authUser ? [['consola', 'Mi consola']] : []),
+                                    ['actividad', 'Actividad'], ['radar', 'Radar de Legisladores'], ['mapa', 'Mapa'], ['comisiones', 'Comisiones'], ['resoluciones', 'Métricas']
+                                ].map(([key, label]) => (
                                     <button key={key} onClick={() => setPagina(key)}
                                         className={`nav-pill-tab ${pagina === key ? 'nav-pill-tab-active' : ''}`}>{label}</button>
                                 ))}
@@ -7307,6 +9075,45 @@
                     {pagina === 'radar' && <PageRadarLegisladores data={data} />}
                     {pagina === 'mapa' && <PageMapa data={data} />}
                     {pagina === 'comisiones' && <PageComisiones data={data} />}
+                    {pagina === 'consola' && (
+                        !authReady ? (
+                            <div className="text-center text-gray-400 text-sm py-20 font-mono">Cargando…</div>
+                        ) : authUser ? (
+                            <PageConsolePro
+                                data={data}
+                                setSelected={setSelected}
+                                onConfigClick={() => setShowConfigWizard(true)}
+                                onLegSelect={(leg) => setLegConsola(leg)}
+                                allLegisladores={allLegisladores}
+                                allComisiones={allComisiones}
+                                config={consolaConfig}
+                                setConfig={setConsolaConfig}
+                                userNombre={primerNombre(authUser)}
+                            />
+                        ) : (
+                            <div className="glass border border-borde rounded-2xl overflow-hidden max-w-2xl mx-auto mt-6">
+                                <div className="px-8 md:px-12 pt-10 pb-8 text-center">
+                                    <div className="inline-block mb-4" style={{background: '#1a365d', color: 'white', fontSize: 10, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '5px 14px', borderRadius: 9999}}>Console Pro</div>
+                                    <div className="text-3xl md:text-4xl font-black text-gray-900 leading-tight">Tu consola del Congreso</div>
+                                    <p className="text-[15px] text-gray-600 mt-3 max-w-md mx-auto leading-relaxed">
+                                        Vigila legisladores, temas, estados, comisiones y alertas que te importan en un solo panel.
+                                        Inicia sesión para configurarla y verla aquí.
+                                    </p>
+                                    <div className="flex items-center justify-center gap-3 mt-6">
+                                        <button onClick={() => { setShowRegistro(false); setShowLogin(true); }}
+                                            className="text-white font-bold px-6 py-3 rounded-full text-sm shadow-md hover:scale-[1.02] transition-transform"
+                                            style={{background: 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)'}}>
+                                            Inicia sesión
+                                        </button>
+                                        <button onClick={() => { setShowLogin(false); setShowRegistro(true); }}
+                                            className="text-gray-700 font-semibold px-6 py-3 rounded-full text-sm border border-gray-300 hover:border-gray-500 transition-colors">
+                                            Crear cuenta
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )
+                    )}
                     {pagina === 'resoluciones' && <ResolucionesGate data={data} />}
                     {pagina === 'metodologia' && <PageMetodologia data={data} />}
 
@@ -7412,6 +9219,11 @@
                         <DetalleModal data={selected} prediccion={predicciones[selected.categoria]} fuentes={fuentes} seriesTemporales={data.series_temporales} seriesTemporalesMedios={data.series_temporales_medios} autoria={data.autoria?.[selected.categoria]} generado={data.metadata.generado} onClose={() => setSelected(null)} />
                     )}
 
+                    {/* Modal legislador desde la consola personalizada (Fase 2) */}
+                    {legConsola && (
+                        <RadarPlayerModal leg={legConsola} autoria={data.autoria || {}} onClose={() => setLegConsola(null)} />
+                    )}
+
                     {/* Modal Registro */}
                     {showRegistro && <LoginModal initialMode="signup" onClose={() => setShowRegistro(false)} />}
                     {showLogin && <LoginModal initialMode="login" onClose={() => setShowLogin(false)} />}
@@ -7421,8 +9233,9 @@
                     {showCuenta && authUser && <MiCuentaModal user={authUser} onClose={() => setShowCuenta(false)} />}
 
                     {/* Wizard de configuración de consola (Fase 1 unificación).
-                        Solo para usuarios con sesión. Al cerrar: persiste +
-                        cierra (sin vista de consola personalizada todavía). */}
+                        Solo para usuarios con sesión. Al cerrar: persiste, cierra
+                        y — si quedó ≥1 selección — lleva al usuario a su consola
+                        personalizada (Fase 2). */}
                     {showConfigWizard && authUser && (
                         <ConsolaProConfigModal
                             data={data}
@@ -7430,7 +9243,14 @@
                             allComisiones={allComisiones}
                             config={consolaConfig}
                             setConfig={setConsolaConfig}
-                            onClose={() => setShowConfigWizard(false)}
+                            onClose={() => {
+                                setShowConfigWizard(false);
+                                try {
+                                    const c = loadConsolaConfig(authUser);
+                                    const total = (c.legisladores || []).length + (c.temas || []).length + (c.estados || []).length;
+                                    if (total > 0) { setSelected(null); setPagina('consola'); }
+                                } catch {}
+                            }}
                         />
                     )}
 
