@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generado": "2026-05-18T16:23:16.911152+00:00",
+    "generado": "2026-05-18T18:41:42.983543+00:00",
     "version": "3.3",
     "formula": "SCORE = (0.20*Media) + (0.15*Trends) + (0.25*Congreso) + (0.10*Mañanera) + (0.15*Urgencia) + (0.15*Dominancia)",
     "umbrales": {
@@ -17,11 +17,11 @@
     {
       "categoria": "seguridad_justicia",
       "nombre": "Seguridad y Justicia",
-      "score_total": 73.07,
+      "score_total": 74.27,
       "score_media": 100.0,
       "score_trends": 17.69,
       "score_congreso": 100.0,
-      "score_mananera": 34.35,
+      "score_mananera": 46.35,
       "score_urgencia": 46.53,
       "score_dominancia": 100.0,
       "color": "verde",
@@ -29,7 +29,7 @@
       "momentum": {
         "dias_consecutivos": 30,
         "semanas_en_agenda": 4,
-        "tendencia": "down",
+        "tendencia": "stable",
         "etiqueta": "Semana 4 en agenda"
       },
       "subcategorias_activas": [
@@ -39,38 +39,38 @@
           "peso": 1.0
         },
         {
-          "clave": "seguridad_publica",
-          "nombre": "Seguridad pública y policía",
-          "peso": 0.99
-        },
-        {
           "clave": "violencia_victimas",
           "nombre": "Violencia y víctimas",
-          "peso": 0.88
-        },
-        {
-          "clave": "crimen_organizado",
-          "nombre": "Crimen organizado",
-          "peso": 0.63
+          "peso": 0.78
         },
         {
           "clave": "fuerzas_armadas",
           "nombre": "Fuerzas armadas y defensa",
-          "peso": 0.58
+          "peso": 0.66
+        },
+        {
+          "clave": "crimen_organizado",
+          "nombre": "Crimen organizado",
+          "peso": 0.65
+        },
+        {
+          "clave": "seguridad_publica",
+          "nombre": "Seguridad pública y policía",
+          "peso": 0.6
         },
         {
           "clave": "justicia_constitucional",
           "nombre": "Justicia constitucional",
-          "peso": 0.36
+          "peso": 0.26
         },
         {
           "clave": "sistema_penitenciario",
           "nombre": "Sistema penitenciario",
-          "peso": 0.2
+          "peso": 0.16
         }
       ],
       "divergencia": {
-        "indice": 0.064,
+        "indice": 0.055,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -81,16 +81,16 @@
         "count": 0,
         "items": []
       },
-      "prob_extraordinario": 49.9
+      "prob_extraordinario": 52.3
     },
     {
       "categoria": "economia_hacienda",
       "nombre": "Economía y Hacienda",
-      "score_total": 72.5,
+      "score_total": 73.7,
       "score_media": 100.0,
       "score_trends": 19.34,
       "score_congreso": 100.0,
-      "score_mananera": 35.51,
+      "score_mananera": 47.51,
       "score_urgencia": 40.34,
       "score_dominancia": 100.0,
       "color": "verde",
@@ -108,19 +108,19 @@
           "peso": 1.0
         },
         {
-          "clave": "politica_monetaria",
-          "nombre": "Política monetaria y macroeconomía",
+          "clave": "fomento_economico",
+          "nombre": "Fomento económico",
           "peso": 0.94
         },
         {
-          "clave": "fomento_economico",
-          "nombre": "Fomento económico",
-          "peso": 0.91
+          "clave": "politica_monetaria",
+          "nombre": "Política monetaria y macroeconomía",
+          "peso": 0.92
         },
         {
           "clave": "politica_fiscal",
           "nombre": "Política fiscal y recaudación",
-          "peso": 0.53
+          "peso": 0.48
         },
         {
           "clave": "comercio_exterior",
@@ -134,7 +134,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.07,
+        "indice": 0.062,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -145,17 +145,71 @@
         "count": 0,
         "items": []
       },
-      "prob_extraordinario": 51.9
+      "prob_extraordinario": 54.3
+    },
+    {
+      "categoria": "electoral_politico",
+      "nombre": "Electoral y Político",
+      "score_total": 71.87,
+      "score_media": 100.0,
+      "score_trends": 10.57,
+      "score_congreso": 100.0,
+      "score_mananera": 46.98,
+      "score_urgencia": 37.26,
+      "score_dominancia": 100.0,
+      "color": "verde",
+      "fecha": "2026-05-18",
+      "momentum": {
+        "dias_consecutivos": 30,
+        "semanas_en_agenda": 4,
+        "tendencia": "stable",
+        "etiqueta": "Semana 4 en agenda"
+      },
+      "subcategorias_activas": [
+        {
+          "clave": "reforma_electoral",
+          "nombre": "Reforma electoral",
+          "peso": 1.0
+        },
+        {
+          "clave": "participacion_ciudadana",
+          "nombre": "Participación ciudadana",
+          "peso": 0.76
+        },
+        {
+          "clave": "gobernabilidad",
+          "nombre": "Gobernabilidad",
+          "peso": 0.14
+        },
+        {
+          "clave": "partidos_coaliciones",
+          "nombre": "Partidos y coaliciones",
+          "peso": 0.05
+        }
+      ],
+      "divergencia": {
+        "indice": 0.063,
+        "patron_id": "rebalanceo_tecnico",
+        "patron_label": "Rebalanceo del modelo",
+        "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
+        "sobre_representada": "Dominancia",
+        "sub_representada": "Urgencia"
+      },
+      "aprobados_14d": {
+        "count": 0,
+        "items": []
+      },
+      "prob_extraordinario": 50.8
     },
     {
       "categoria": "educacion",
       "nombre": "Educación",
-      "score_total": 71.6,
+      "score_total": 71.63,
       "score_media": 100.0,
       "score_trends": 12.14,
       "score_congreso": 100.0,
       "score_mananera": 37.56,
-      "score_urgencia": 40.13,
+      "score_urgencia": 40.34,
       "score_dominancia": 100.0,
       "color": "verde",
       "fecha": "2026-05-18",
@@ -174,7 +228,7 @@
         {
           "clave": "educacion_superior",
           "nombre": "Educación superior e investigación",
-          "peso": 0.39
+          "peso": 0.41
         },
         {
           "clave": "cultura_deporte",
@@ -188,7 +242,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.073,
+        "indice": 0.072,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
@@ -228,17 +282,17 @@
         {
           "clave": "megaproyectos",
           "nombre": "Megaproyectos federales",
-          "peso": 0.81
+          "peso": 0.87
         },
         {
           "clave": "agua_saneamiento",
           "nombre": "Agua y saneamiento",
-          "peso": 0.51
+          "peso": 0.29
         },
         {
           "clave": "vivienda_urbano",
           "nombre": "Vivienda y desarrollo urbano",
-          "peso": 0.27
+          "peso": 0.18
         },
         {
           "clave": "obra_publica",
@@ -266,68 +320,14 @@
       "prob_extraordinario": 47.6
     },
     {
-      "categoria": "electoral_politico",
-      "nombre": "Electoral y Político",
-      "score_total": 70.67,
-      "score_media": 100.0,
-      "score_trends": 10.57,
-      "score_congreso": 100.0,
-      "score_mananera": 34.98,
-      "score_urgencia": 37.26,
-      "score_dominancia": 100.0,
-      "color": "verde",
-      "fecha": "2026-05-18",
-      "momentum": {
-        "dias_consecutivos": 30,
-        "semanas_en_agenda": 4,
-        "tendencia": "stable",
-        "etiqueta": "Semana 4 en agenda"
-      },
-      "subcategorias_activas": [
-        {
-          "clave": "participacion_ciudadana",
-          "nombre": "Participación ciudadana",
-          "peso": 1.0
-        },
-        {
-          "clave": "reforma_electoral",
-          "nombre": "Reforma electoral",
-          "peso": 0.97
-        },
-        {
-          "clave": "gobernabilidad",
-          "nombre": "Gobernabilidad",
-          "peso": 0.32
-        },
-        {
-          "clave": "partidos_coaliciones",
-          "nombre": "Partidos y coaliciones",
-          "peso": 0.17
-        }
-      ],
-      "divergencia": {
-        "indice": 0.066,
-        "patron_id": "rebalanceo_tecnico",
-        "patron_label": "Rebalanceo del modelo",
-        "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
-        "sobre_representada": "Dominancia",
-        "sub_representada": "Urgencia"
-      },
-      "aprobados_14d": {
-        "count": 0,
-        "items": []
-      },
-      "prob_extraordinario": 48.4
-    },
-    {
       "categoria": "derechos_humanos",
       "nombre": "Derechos Humanos",
-      "score_total": 70.17,
-      "score_media": 89.36,
+      "score_total": 70.15,
+      "score_media": 89.29,
       "score_trends": 18.26,
       "score_congreso": 100.0,
       "score_mananera": 17.4,
-      "score_urgencia": 52.11,
+      "score_urgencia": 52.09,
       "score_dominancia": 100.0,
       "color": "verde",
       "fecha": "2026-05-18",
@@ -346,12 +346,12 @@
         {
           "clave": "genero_diversidad",
           "nombre": "Género y diversidad",
-          "peso": 0.69
+          "peso": 0.7
         },
         {
           "clave": "migracion_refugio",
           "nombre": "Migración y refugio",
-          "peso": 0.57
+          "peso": 0.59
         },
         {
           "clave": "pueblos_indigenas",
@@ -361,7 +361,7 @@
         {
           "clave": "derechos_ninez",
           "nombre": "Derechos de la niñez",
-          "peso": 0.13
+          "peso": 0.12
         }
       ],
       "divergencia": {
@@ -405,17 +405,17 @@
         {
           "clave": "diplomacia_organismos",
           "nombre": "Diplomacia y organismos",
-          "peso": 0.2
+          "peso": 0.23
+        },
+        {
+          "clave": "america_latina",
+          "nombre": "América Latina",
+          "peso": 0.15
         },
         {
           "clave": "soberania_fronteras",
           "nombre": "Soberanía y fronteras",
           "peso": 0.15
-        },
-        {
-          "clave": "america_latina",
-          "nombre": "América Latina",
-          "peso": 0.14
         }
       ],
       "divergencia": {
@@ -435,12 +435,12 @@
     {
       "categoria": "trabajo",
       "nombre": "Trabajo",
-      "score_total": 67.77,
-      "score_media": 83.53,
+      "score_total": 67.75,
+      "score_media": 83.46,
       "score_trends": 19.26,
       "score_congreso": 100.0,
       "score_mananera": 15.41,
-      "score_urgencia": 44.2,
+      "score_urgencia": 44.18,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-05-18",
@@ -452,19 +452,19 @@
       },
       "subcategorias_activas": [
         {
-          "clave": "seguridad_social_pensiones",
-          "nombre": "Seguridad social y pensiones",
+          "clave": "relaciones_laborales",
+          "nombre": "Relaciones laborales",
           "peso": 1.0
         },
         {
-          "clave": "relaciones_laborales",
-          "nombre": "Relaciones laborales",
-          "peso": 0.96
+          "clave": "seguridad_social_pensiones",
+          "nombre": "Seguridad social y pensiones",
+          "peso": 0.93
         },
         {
           "clave": "empleo_salario",
           "nombre": "Empleo y salarios",
-          "peso": 0.63
+          "peso": 0.61
         },
         {
           "clave": "derechos_laborales",
@@ -548,12 +548,12 @@
     {
       "categoria": "salud",
       "nombre": "Salud",
-      "score_total": 63.83,
-      "score_media": 87.02,
+      "score_total": 64.67,
+      "score_media": 86.95,
       "score_trends": 12.89,
       "score_congreso": 100.0,
-      "score_mananera": 11.7,
-      "score_urgencia": 22.15,
+      "score_mananera": 20.26,
+      "score_urgencia": 22.14,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-05-18",
@@ -572,38 +572,38 @@
         {
           "clave": "epidemiologia",
           "nombre": "Epidemiología",
-          "peso": 0.31
+          "peso": 0.37
         },
         {
           "clave": "salud_mental_adicciones",
           "nombre": "Salud mental y adicciones",
-          "peso": 0.09
+          "peso": 0.1
         },
         {
           "clave": "medicamentos_abasto",
           "nombre": "Medicamentos y abasto",
-          "peso": 0.0
+          "peso": 0.01
         }
       ],
       "divergencia": {
-        "indice": 0.106,
+        "indice": 0.085,
         "patron_id": "rebalanceo_tecnico",
         "patron_label": "Rebalanceo del modelo",
         "explicacion": "Las fuentes derivadas (Urgencia/Dominancia) dominan el reparto. Sin patrón narrativo asociado.",
         "sobre_representada": "Dominancia",
-        "sub_representada": "Mañanera"
+        "sub_representada": "Urgencia"
       },
       "aprobados_14d": {
         "count": 0,
         "items": []
       },
-      "prob_extraordinario": 39.8
+      "prob_extraordinario": 41.5
     },
     {
       "categoria": "anticorrupcion",
       "nombre": "Anticorrupción",
-      "score_total": 60.77,
-      "score_media": 86.96,
+      "score_total": 60.78,
+      "score_media": 87.0,
       "score_trends": 16.94,
       "score_congreso": 77.27999999999999,
       "score_mananera": 1.72,
@@ -626,17 +626,17 @@
         {
           "clave": "sistema_anticorrupcion",
           "nombre": "Sistema anticorrupción",
-          "peso": 0.98
+          "peso": 0.91
         },
         {
           "clave": "transparencia_acceso",
           "nombre": "Transparencia y acceso a información",
-          "peso": 0.58
+          "peso": 0.6
         },
         {
           "clave": "etica_publica",
           "nombre": "Ética pública",
-          "peso": 0.25
+          "peso": 0.24
         }
       ],
       "divergencia": {
@@ -657,7 +657,7 @@
       "categoria": "agro_rural",
       "nombre": "Agro y Desarrollo Rural",
       "score_total": 56.54,
-      "score_media": 71.99,
+      "score_media": 72.00999999999999,
       "score_trends": 12.77,
       "score_congreso": 74.38000000000001,
       "score_mananera": 10.61,
@@ -673,24 +673,24 @@
       },
       "subcategorias_activas": [
         {
-          "clave": "desarrollo_rural_tierra",
-          "nombre": "Desarrollo rural y tierra",
+          "clave": "agricultura_cultivos",
+          "nombre": "Agricultura y cultivos",
           "peso": 1.0
         },
         {
-          "clave": "agricultura_cultivos",
-          "nombre": "Agricultura y cultivos",
-          "peso": 0.97
+          "clave": "desarrollo_rural_tierra",
+          "nombre": "Desarrollo rural y tierra",
+          "peso": 0.89
         },
         {
           "clave": "ganaderia_pesca",
           "nombre": "Ganadería y pesca",
-          "peso": 0.47
+          "peso": 0.42
         },
         {
           "clave": "comercio_agropecuario",
           "nombre": "Comercio agropecuario",
-          "peso": 0.35
+          "peso": 0.33
         }
       ],
       "divergencia": {
@@ -764,13 +764,13 @@
     {
       "categoria": "medios_comunicacion",
       "nombre": "Medios de Comunicación",
-      "score_total": 43.49,
-      "score_media": 72.94,
+      "score_total": 43.53,
+      "score_media": 72.89,
       "score_trends": 12.86,
       "score_congreso": 36.839999999999996,
       "score_mananera": 0.0,
       "score_urgencia": 31.63,
-      "score_dominancia": 86.8,
+      "score_dominancia": 87.1,
       "color": "amarillo",
       "fecha": "2026-05-18",
       "momentum": {
@@ -813,13 +813,13 @@
         "count": 0,
         "items": []
       },
-      "prob_extraordinario": 32.3
+      "prob_extraordinario": 32.2
     },
     {
       "categoria": "politica_social",
       "nombre": "Política Social",
-      "score_total": 41.15,
-      "score_media": 62.78,
+      "score_total": 41.14,
+      "score_media": 62.730000000000004,
       "score_trends": 8.91,
       "score_congreso": 31.83,
       "score_mananera": 6.89,
@@ -872,12 +872,12 @@
     {
       "categoria": "igualdad_genero",
       "nombre": "Igualdad de género",
-      "score_total": 40.87,
-      "score_media": 59.26,
+      "score_total": 40.86,
+      "score_media": 59.22,
       "score_trends": 9.43,
       "score_congreso": 35.07,
       "score_mananera": 0.0,
-      "score_urgencia": 25.59,
+      "score_urgencia": 25.58,
       "score_dominancia": 100.0,
       "color": "amarillo",
       "fecha": "2026-05-18",
@@ -915,7 +915,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.071,
+        "indice": 0.072,
         "patron_id": "interes_ciudadano_elevado",
         "patron_label": "Interés ciudadano elevado",
         "explicacion": "Las búsquedas concentran el peso del score.",
@@ -926,13 +926,13 @@
         "count": 0,
         "items": []
       },
-      "prob_extraordinario": 25.2
+      "prob_extraordinario": 25.1
     },
     {
       "categoria": "turismo",
       "nombre": "Turismo",
       "score_total": 38.73,
-      "score_media": 61.86,
+      "score_media": 61.9,
       "score_trends": 12.37,
       "score_congreso": 17.32,
       "score_mananera": 7.92,
@@ -985,8 +985,8 @@
     {
       "categoria": "inteligencia_artificial",
       "nombre": "Inteligencia Artificial",
-      "score_total": 35.48,
-      "score_media": 63.64,
+      "score_total": 35.46,
+      "score_media": 63.58,
       "score_trends": 12.86,
       "score_congreso": 28.950000000000003,
       "score_mananera": 0.0,
@@ -1039,12 +1039,12 @@
     {
       "categoria": "administracion",
       "nombre": "Administración",
-      "score_total": 32.23,
-      "score_media": 34.65,
+      "score_total": 32.9,
+      "score_media": 34.64,
       "score_trends": 2.4,
       "score_congreso": 31.61,
       "score_mananera": 0.0,
-      "score_urgencia": 42.41,
+      "score_urgencia": 46.86,
       "score_dominancia": 71.2,
       "color": "rojo",
       "fecha": "2026-05-18",
@@ -1082,7 +1082,7 @@
         }
       ],
       "divergencia": {
-        "indice": 0.015,
+        "indice": 0.022,
         "patron_id": "convergencia",
         "patron_label": "Convergencia",
         "explicacion": "Las 6 fuentes alineadas con su distribución típica.",
@@ -1097,6 +1097,60 @@
     }
   ],
   "alertas": [
+    {
+      "id": 1999,
+      "categoria": "infraestructura",
+      "tipo_alerta": "score_alto",
+      "score": 71.6,
+      "color": "verde",
+      "mensaje": "ALERTA: Infraestructura con score 71.6 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-05-18T18:41:31.041409"
+    },
+    {
+      "id": 1998,
+      "categoria": "derechos_humanos",
+      "tipo_alerta": "score_alto",
+      "score": 70.15,
+      "color": "verde",
+      "mensaje": "ALERTA: Derechos Humanos con score 70.2 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-05-18T18:41:30.121651"
+    },
+    {
+      "id": 1997,
+      "categoria": "electoral_politico",
+      "tipo_alerta": "score_alto",
+      "score": 71.87,
+      "color": "verde",
+      "mensaje": "ALERTA: Electoral y Político con score 71.9 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-05-18T18:41:29.590001"
+    },
+    {
+      "id": 1996,
+      "categoria": "educacion",
+      "tipo_alerta": "score_alto",
+      "score": 71.63,
+      "color": "verde",
+      "mensaje": "ALERTA: Educación con score 71.6 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-05-18T18:41:28.261516"
+    },
+    {
+      "id": 1995,
+      "categoria": "economia_hacienda",
+      "tipo_alerta": "score_alto",
+      "score": 73.7,
+      "color": "verde",
+      "mensaje": "ALERTA: Economía y Hacienda con score 73.7 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-05-18T18:41:26.556213"
+    },
+    {
+      "id": 1994,
+      "categoria": "seguridad_justicia",
+      "tipo_alerta": "score_alto",
+      "score": 74.27,
+      "color": "verde",
+      "mensaje": "ALERTA: Seguridad y Justicia con score 74.3 - Alta probabilidad de actividad legislativa",
+      "fecha": "2026-05-18T18:41:25.345833"
+    },
     {
       "id": 1993,
       "categoria": "infraestructura",
@@ -1492,81 +1546,27 @@
       "color": "verde",
       "mensaje": "ALERTA: Electoral y Político con score 71.6 - Alta probabilidad de actividad legislativa",
       "fecha": "2026-05-17T04:36:55.382938"
-    },
-    {
-      "id": 1949,
-      "categoria": "educacion",
-      "tipo_alerta": "score_alto",
-      "score": 71.63,
-      "color": "verde",
-      "mensaje": "ALERTA: Educación con score 71.6 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-05-17T04:36:54.329199"
-    },
-    {
-      "id": 1948,
-      "categoria": "economia_hacienda",
-      "tipo_alerta": "score_alto",
-      "score": 73.36,
-      "color": "verde",
-      "mensaje": "ALERTA: Economía y Hacienda con score 73.4 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-05-17T04:36:52.983495"
-    },
-    {
-      "id": 1947,
-      "categoria": "seguridad_justicia",
-      "tipo_alerta": "score_alto",
-      "score": 73.51,
-      "color": "verde",
-      "mensaje": "ALERTA: Seguridad y Justicia con score 73.5 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-05-17T04:36:52.023563"
-    },
-    {
-      "id": 1946,
-      "categoria": "relaciones_exteriores",
-      "tipo_alerta": "score_alto",
-      "score": 72.99,
-      "color": "verde",
-      "mensaje": "ALERTA: Relaciones Exteriores con score 73.0 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-05-16T21:35:12.279565"
-    },
-    {
-      "id": 1945,
-      "categoria": "infraestructura",
-      "tipo_alerta": "score_alto",
-      "score": 72.54,
-      "color": "verde",
-      "mensaje": "ALERTA: Infraestructura con score 72.5 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-05-16T21:35:11.255881"
-    },
-    {
-      "id": 1944,
-      "categoria": "electoral_politico",
-      "tipo_alerta": "score_alto",
-      "score": 72.06,
-      "color": "verde",
-      "mensaje": "ALERTA: Electoral y Político con score 72.1 - Alta probabilidad de actividad legislativa",
-      "fecha": "2026-05-16T21:35:09.931330"
     }
   ],
   "distribucion_categorias": {
-    "derechos_humanos": 115,
+    "derechos_humanos": 116,
     "igualdad_genero": 25,
-    "seguridad_justicia": 615,
-    "electoral_politico": 381,
-    "educacion": 319,
-    "energia": 194,
-    "trabajo": 82,
-    "salud": 131,
-    "infraestructura": 170,
+    "seguridad_justicia": 630,
+    "electoral_politico": 397,
+    "educacion": 322,
+    "energia": 195,
+    "trabajo": 84,
+    "salud": 133,
+    "infraestructura": 173,
     "turismo": 36,
-    "economia_hacienda": 149,
-    "relaciones_exteriores": 271,
+    "economia_hacienda": 153,
+    "relaciones_exteriores": 276,
     "inteligencia_artificial": 30,
-    "anticorrupcion": 74,
-    "medio_ambiente": 89,
+    "anticorrupcion": 77,
+    "medio_ambiente": 91,
     "politica_social": 44,
-    "medios_comunicacion": 27,
-    "agro_rural": 31,
+    "medios_comunicacion": 28,
+    "agro_rural": 32,
     "administracion": 14
   },
   "predicciones": {
@@ -1766,6 +1766,54 @@
       "articulos_medios": [
         {
           "fuente": "el_universal",
+          "titulo": "Detienen a tres hombres con un arma de fuego en Gustavo A. Madero; realizaron disparos al aire",
+          "url": "https://www.eluniversal.com.mx/metropoli/detienen-a-tres-hombres-con-un-arma-de-fuego-en-gustavo-a-madero-realizaron-disparos-al-aire/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "la_razon",
+          "titulo": "Sexto golpe de Marina en el Pacífico; incauta 1.5 toneladas de cocaína",
+          "url": "https://www.razon.com.mx/mexico/2026/05/18/sexto-golpe-de-marina-en-el-pacifico-incauta-15-toneladas-de-cocaina/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Aseguran tonelada y media de cocaína y una embarcación en altamar; detienen a cinco personas en Chiapas",
+          "url": "https://www.eluniversal.com.mx/nacion/aseguran-15-toneladas-de-cocaina-y-una-embarcacion-en-altamar-detienen-a-cinco-personas-en-chiapas/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "24_horas",
+          "titulo": "Detienen a dos sujetos que agredieron a elementos de la SPF en Tamaulipas",
+          "url": "https://24-horas.mx/estados/detienen-a-dos-sujetos-que-agredieron-a-elementos-de-la-spf-en-tamaulipas/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "la_razon",
+          "titulo": "Ceci Flores reporta crematorio clandestino con más de 16 fosas en Lagos de Moreno",
+          "url": "https://www.razon.com.mx/mexico/2026/05/18/ceci-flores-reporta-crematorio-clandestino-con-mas-de-16-fosas-en-lagos-de-moreno/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "politico_mx",
+          "titulo": "Sobrino del exsecretario de Marina busca asilo en EUA para frenar extradición por huachicol fiscal",
+          "url": "https://www.politico.mx/2026/05/18/sobrino-del-exsecretario-de-marina-busca-asilo-en-eua-para-frenar-extradicion-por-huachicol-fiscal/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Sheinbaum: nadie puede acusar que no actuamos en contra de todos los cárteles; destaca envío de 92 narcotraficantes a EU",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-nadie-puede-acusar-que-no-actuamos-en-contra-de-todos-los-carteles-destaca-envio-de-92-narcotraficantes-a-eu/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Posponer elección judicial, simplificar boletas y capacitar a jueces; esta es la iniciativa que Sheinbaum enviará al Congreso",
+          "url": "https://www.eluniversal.com.mx/nacion/posponer-eleccion-judicial-simplificar-boletas-y-capacitar-a-jueces-esta-es-la-iniciativa-que-sheinbaum-enviara-al-congreso/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "el_universal",
           "titulo": "Sheinbaum anuncia reunión con funcionarios de EU; abordarán cooperación en combate a narcotráfico",
           "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-anuncia-reunion-con-funcionarios-de-eu-abordaran-cooperacion-en-combate-a-narcotrafico/",
           "fecha": "2026-05-18"
@@ -1780,6 +1828,12 @@
           "fuente": "24_horas",
           "titulo": "Gabinete localiza narcolaboratorios de 'El Jardinero'",
           "url": "https://24-horas.mx/mexico/gabinete-localiza-narcolaboratorios-de-el-jardinero/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "24_horas",
+          "titulo": "Envía Sheinbaum al Congreso, nueva reforma judicial",
+          "url": "https://24-horas.mx/mexico/sheinbaum-pide-aplazar-eleccion-judicial-a-2028/",
           "fecha": "2026-05-18"
         },
         {
@@ -1798,60 +1852,6 @@
           "fuente": "la_jornada",
           "titulo": "Ola de secuestros  en Nigeria deja 80 niños desaparecidos",
           "url": "https://www.jornada.com.mx/2026/05/18/mundo/031n3mun?partner=rss",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Aplazar elección de jueces, prueba de que la reforma se hizo al vapor: ONG",
-          "url": "https://www.jornada.com.mx/2026/05/18/politica/004n2pol?partner=rss",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Vinculan a proceso a 13 sujetos en Sinaloa que se enfrentaron a soldados",
-          "url": "https://www.jornada.com.mx/2026/05/18/estados/034n4est?partner=rss",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "La Marina retira 39 mil 500 toneladas de sargazo en QR",
-          "url": "https://www.jornada.com.mx/2026/05/18/estados/034n2est?partner=rss",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Diputado habló con la FBI sobre el asesinato de Carlos Manzo",
-          "url": "https://www.jornada.com.mx/2026/05/18/estados/033n1est?partner=rss",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "En Sinaloa, los hospitales también son “zonas de combate” para cárteles",
-          "url": "https://www.jornada.com.mx/2026/05/18/politica/010n1pol?partner=rss",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Hallan restos humanos cremados cerca del aeropuerto de Guadalajara",
-          "url": "https://www.jornada.com.mx/2026/05/18/estados/032n2est?partner=rss",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "En primeros 8 meses, la SCJN ha resuelto rezago de 2 mil 178 expedientes",
-          "url": "https://www.jornada.com.mx/2026/05/18/politica/007n1pol?partner=rss",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "el_financiero",
-          "titulo": "Ferias de Paz llevan acciones contra la violencia a seis estados del país",
-          "url": "https://www.elfinanciero.com.mx/nacional/2026/05/17/ferias-de-paz-llevan-acciones-contra-la-violencia-a-seis-estados-del-pais/",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Detienen a tres hombres por asalto en Cuajimalpa; vecinos ayudaron a retenerlos",
-          "url": "https://www.eluniversal.com.mx/metropoli/detienen-a-tres-hombres-por-asalto-en-cuajimalpa-vecinos-ayudaron-a-retenerlos/",
           "fecha": "2026-05-18"
         }
       ],
@@ -2197,6 +2197,11 @@
       ],
       "menciones_csp": [
         {
+          "fecha": "2026-05-18",
+          "fragmento": "Las elecciones judiciales posteriores seguirán siendo concurrentes con procesos ordinarios, 2030, 2033, 2036, para renovar las vacantes que se vayan generando. Como sabemos, se eligió la mitad de jueces, magistrados, Suprema Corte, Tribunal de Disciplina y Tribunal Electoral; ahora, elegiríamos a la otra mitad; y a partir de ahí únicamente las vacantes que se vayan generando. ¿Qué se va a elegir en 2028?",
+          "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-18-de-mayo-de-2026"
+        },
+        {
           "fecha": "2026-05-15",
           "fragmento": "Esos eran los gobiernos de antes. Si la Fiscalía tiene pruebas, que proceda, y el Poder Judicial también. Pero les corresponde a ellos, no es una decisión de la Presidenta.",
           "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-15-de-mayo-de-2026"
@@ -2240,14 +2245,33 @@
           "fecha": "2026-05-04",
           "fragmento": "¿Qué sucede en nuestro Sistema Penal Mexicano? El artículo 16 Constitucional, en relación con los artículos 141 y 142 del Código Nacional de Procedimientos Penales, establece que para poder solicitar una orden de aprehensión, cualquier Fiscalía requiere aportar datos de prueba a un juez. Y debe acreditar tres cosas: (I.) El hecho que la ley señala como delito.",
           "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-04-de-mayo-de-2026"
-        },
-        {
-          "fecha": "2026-04-30",
-          "fragmento": "Esto llevó a un extrañamiento del jurídico de Relaciones Exteriores, dado que estos procesos son confidenciales acorde con los Tratados en la materia. Ayer por la tarde, la Fiscalía General de la República emitió un comunicado en el que establece lo siguiente: Con fundamento en la Constitución Política de los Estados Unidos Mexicanos, el Código Nacional de Procedimientos Penales y las leyes aplica...",
-          "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-30-de-abril-de-2026"
         }
       ],
       "tweets": [
+        {
+          "usuario": "ClementeCH",
+          "nombre": "Clemente Castañeda Hoeflich",
+          "texto": "Durante meses Morena defendió la mal llamada reforma judicial y descalificó, sin escuchar ni debatir, a quienes advertíamos sus profundos errores. Hoy, desde Palacio Nacional, plantean mover la elección judicial al 2028, cambiar boletas y rehacer criterios de elegibilidad para",
+          "fecha": "2026-05-18"
+        },
+        {
+          "usuario": "RicardoMonrealA",
+          "nombre": "Ricardo Monreal Ávila",
+          "texto": "Con responsabilidad institucional y apego constitucional, nos preparamos para discutir la iniciativa de reforma judicial anunciada hoy por la Presidenta @Claudiashein.\nLa Cámara de @Mx_Diputados será espacio de diálogo, acuerdos y trabajo por México. https://t.co/IWnGBvulY2",
+          "fecha": "2026-05-18"
+        },
+        {
+          "usuario": "Juan_OrtizMX",
+          "nombre": "Juan Ortiz",
+          "texto": "En mi canal les dejo la presentación de la reforma para reformar la reforma judicial\n\nhttps://t.co/WpvSX5QqSy",
+          "fecha": "2026-05-18"
+        },
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "🍽️ El Tribunal Electoral, afín a la 4T, gastará hasta 22 mdp en menús gourmet\n\nHabrá comida francesa, griega, china y hasta ramen.\n\nEn sus comedores servirán crème brûlée, salmón glaseado y hasta pulpo a la menier\n\n📷 @El_Universal_Mx https://t.co/hKMzlCdmTr",
+          "fecha": "2026-05-18"
+        },
         {
           "usuario": "RutaElectoralmx",
           "nombre": "Ruta Electoral MX",
@@ -2283,35 +2307,29 @@
           "nombre": "Clemente Castañeda Hoeflich",
           "texto": "Lamento profundamente el fallecimiento de Eduardo Orendain Parra, hermano de @r_orendain, secretario de Administración del @GobiernoJalisco.\n\nEnvío mis más sinceras condolencias a Rafael Orendain, así como a todos sus seres queridos en este momento tan complicado.\n\nDescanse en ht",
           "fecha": "2026-05-18"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "La madre buscadora, Ceci Flores, denuncia centro de adiestramiento en Jalisco \n\nEn el lugar también hay un crematorio clandestino y más de 16 fosas con restos calcinados https://t.co/k4Puh7GXwq",
-          "fecha": "2026-05-18"
-        },
-        {
-          "usuario": "PollsMX_",
-          "nombre": "Polls MX",
-          "texto": "❌🚨⚽ 63% de los mexicanos cree que la violencia arruina la imagen del país rumbo al Mundial 2026 \n\n➡️ https://t.co/wpwLVvg2gh\n\nA escasas semanas del silbatazo inicial de la Copa del Mundo 2026, la percepción pública refleja una honda preocupación por el impacto de la crisis de htt",
-          "fecha": "2026-05-18"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "🚨Masacre en Puebla: 10 integrantes de una familia fueron asesinados en la comunidad de Texcalapa\n\nEntre las víctimas hay una bebé de apenas un mes, un niño de 11 años y un adolescente de 14 https://t.co/EQHieGvAJV",
-          "fecha": "2026-05-18"
-        },
-        {
-          "usuario": "Juan_OrtizMX",
-          "nombre": "Juan Ortiz",
-          "texto": "🗳️📌 PRENSA INTERNACIONAL NARRA COMO OPERÓ EL CÁRTEL DE SINALOA CON POLÍTICOS\n\nUna investigación de Paulina Villegas, de una página completa, para The New York Times narra lo siguiente:\n\n1. El Cártel de Sinaloa operó durante años con una red de protección dentro del gobierno de ht",
-          "fecha": "2026-05-17"
         }
       ]
     },
     "economia_hacienda": {
       "articulos_medios": [
+        {
+          "fuente": "cronica",
+          "titulo": "Bolsa Mexicana cierra con Cemex, Banorte y Coca-Cola Femsa a la alza",
+          "url": "https://www.cronica.com.mx/negocios/2026/05/18/bolsa-mexicana-cierra-con-cemex-banorte-y-coca-cola-femsa-a-la-alza/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "cronica",
+          "titulo": "La economía en México ¿Se recupera?",
+          "url": "https://www.cronica.com.mx/negocios/2026/05/18/la-economia-en-mexico-se-recupera/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "la_razon",
+          "titulo": "HSBC otorga crédito verde a Alpura por 27 mdd para equipo sustentable",
+          "url": "https://www.razon.com.mx/negocios/2026/05/18/hsbc-otorga-credito-verde-a-alpura-por-27-mdd-para-equipo-sustentable/",
+          "fecha": "2026-05-18"
+        },
         {
           "fuente": "el_financiero",
           "titulo": "El ‘tigre’ que Carpio se sacó en la rifa",
@@ -2334,6 +2352,12 @@
           "fuente": "el_universal",
           "titulo": "Gobernador de Tamaulipas reporta reducción en deuda pública; prevé impulsar nuevas inversiones",
           "url": "https://www.eluniversal.com.mx/estados/gobernador-de-tamaulipas-reporta-reduccion-en-deuda-publica-preve-impulsar-nuevas-inversiones/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "el_heraldo",
+          "titulo": "¿Por qué la UIF bloqueó cuentas de funcionarios de Sinaloa señalados por EU? Hacienda lo explica",
+          "url": "https://heraldodemexico.com.mx/nacional/2026/5/18/por-que-la-uif-bloqueo-cuentas-de-funcionarios-de-sinaloa-senalados-por-eu-hacienda-lo-explica-814674.html",
           "fecha": "2026-05-18"
         },
         {
@@ -2377,30 +2401,6 @@
           "titulo": "Tres motivos por los que el impacto económico del cierre de Ormuz fue moderado, según Goldman Sachs",
           "url": "https://www.bloomberglinea.com/economia/tres-motivos-por-los-que-el-impacto-economico-del-cierre-de-ormuz-fue-moderado-segun-goldman-sachs/",
           "fecha": "2026-05-17"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "El mundo atraviesa una crisis derivada del capitalismo, consideran expertos de la UNAM; economía solidaria, la alternativa",
-          "url": "https://www.eluniversal.com.mx/nacion/el-mundo-atraviesa-una-crisis-derivada-del-capitalismo-consideran-expertos-de-la-unam-economia-solidaria-la-alternativa/",
-          "fecha": "2026-05-16"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Jerome Powell deja presidencia de la Fed; su gestión estuvo marcada por el acoso de Trump y el Covid",
-          "url": "https://www.eluniversal.com.mx/cartera/jerome-powell-deja-presidencia-de-la-fed-su-gestion-estuvo-marcada-por-el-acoso-de-trump-y-el-covid/",
-          "fecha": "2026-05-16"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Aumenta Hacienda subsidio a gasolinas y lo reduce al diésel",
-          "url": "https://www.jornada.com.mx/2026/05/16/economia/014n2eco?partner=rss",
-          "fecha": "2026-05-16"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Editorial: Hiperconcentración de la riqueza: el verdadero mal",
-          "url": "https://www.jornada.com.mx/2026/05/16/opinion/002a1edi?partner=rss",
-          "fecha": "2026-05-16"
         }
       ],
       "documentos_gaceta": [
@@ -2643,6 +2643,11 @@
       ],
       "menciones_csp": [
         {
+          "fecha": "2026-05-18",
+          "fragmento": "Bien, continuamos con la estrategia de colocación de lonas para orientar a todas las personas a que no carguen en donde “se estén volando la barda con los precios”: Del 13 de abril al 15 de mayo, se han realizado 601 visitas al mismo número de estaciones y se han colocado 98 lonas para advertirle a todas las personas a no comprar ahí.",
+          "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-18-de-mayo-de-2026"
+        },
+        {
           "fecha": "2026-05-15",
           "fragmento": "Nosotros, cuando recibimos, el Presidente ―a ver si tienes la gráfica de la deuda de Pemex que presentó Víctor la última vez aquí―… El Presidente López Obrador bajó como 10 por ciento la deuda de Pemex y nosotros la bajamos en otros 20 mil millones de dólares. Esto es un trabajo conjunto entre Pemex, Secretaría de Hacienda y Secretaría de Energía.",
           "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-15-de-mayo-de-2026"
@@ -2686,14 +2691,33 @@
           "fecha": "2026-05-01",
           "fragmento": "Y vamos a seguir trabajando pa’que no aumente, si no… No estamos cruzados de brazos. No es como antes, que nomás decían: “auméntenle a la tasa de interés del Banco de México y ya con eso va a ser suficiente”. Y se paraba la economía.",
           "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-01-de-mayo-de-2026"
-        },
-        {
-          "fecha": "2026-04-29",
-          "fragmento": "Jesús Antonio Esteva Medina, secretario de Infraestructura, Comunicaciones y Transportes, que él va a garantizar que, en efecto, toda la obra pública que haga el Gobierno de México utilice acero producido en México. Édgar Amador, secretario de Hacienda y Crédito Público. Luz Elena González, a nombre de Pemex, CFE y de todas las… acuerdos de desarrollo de producción de energía en nuestro país, que también use acero mexicano producido en México.",
-          "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-29-de-abril-de-2026"
         }
       ],
       "tweets": [
+        {
+          "usuario": "RicardoMonrealA",
+          "nombre": "Ricardo Monreal Ávila",
+          "texto": "Con responsabilidad institucional y apego constitucional, nos preparamos para discutir la iniciativa de reforma judicial anunciada hoy por la Presidenta @Claudiashein.\nLa Cámara de @Mx_Diputados será espacio de diálogo, acuerdos y trabajo por México. https://t.co/IWnGBvulY2",
+          "fecha": "2026-05-18"
+        },
+        {
+          "usuario": "ivonnemelgar",
+          "nombre": "Ivonne Melgar",
+          "texto": "Varios de los cambios propuestos por @aramirezcuellar @Javier_Corral @marianabenitezt @M_OlgaSCordero hace un mes serían  retomados por la iniciativa de la presidenta @Claudiashein.\n\nAdemás del cambio de fecha, el tema de la capacitación con la Escuela Judicial y la recuperación ",
+          "fecha": "2026-05-18"
+        },
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "En público defienden a capa y espada al narcogobernador de Sinaloa, Rocha Moya, pero fuera de la mañanera le congelan las cuentas de manera “preventiva”\n\nSaben que tiene los días contados y lo esperan en EU donde ya se entregaron 2 de los 10 funcionarios acusados de narco https:/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "usuario": "letroblesrosa",
+          "nombre": "Leti Robles Rosa",
+          "texto": "No recuerdo con exactitud quién de los voceros oficialistas dijo que era falso el bloqueo de cuentas a los sinaloenses acusados de narco por el gobierno de Estados Unidos.\n\nPero bueno, @hacienda_mx confirma que es una realidad: las cuentas están bloqueadas. https://t.co/ybpSczBYc",
+          "fecha": "2026-05-18"
+        },
         {
           "usuario": "ivonnemelgar",
           "nombre": "Ivonne Melgar",
@@ -2729,30 +2753,6 @@
           "nombre": "Polls MX",
           "texto": "📊❌ 62% de los mexicanos creen que acusaciones de EUA sobre nexos de Rocha Moya con el narco, son verdaderas \n\n👉🏽 https://t.co/Qt3EPbWdCK\n\nLa más reciente encuesta de @TResearchMx expone un duro revés para la narrativa oficial, revelando que el 62% de los mexicanos considera https",
           "fecha": "2026-05-17"
-        },
-        {
-          "usuario": "PollsMX_",
-          "nombre": "Polls MX",
-          "texto": "🇧🇷 Uno que genera mucha expectativa será el de la selección brasileña que por primera vez contará con un técnico de otra nacionalidad pues 'Carleto' Ancelotti de origen italiano será el encargado de tratar de llevar a la canarinha a una nueva final. \n\n🏆 La Copa del Mundo tendrá h",
-          "fecha": "2026-05-17"
-        },
-        {
-          "usuario": "LatamData",
-          "nombre": "LatamData",
-          "texto": "CHILE | Maule activates plan to reconvert 2.5K hectares of sugar beet to corn and tomato for 140 producers after Iansa ends 73-year industry\n\n(Diario Financiero)",
-          "fecha": "2026-05-17"
-        },
-        {
-          "usuario": "RutaElectoralmx",
-          "nombre": "Ruta Electoral MX",
-          "texto": "⚖️La #ElecciónJudicial de 2027 podría moverse a 2028 porque el INE advierte riesgo de saturación electoral y más gasto público.\n\nEl objetivo es no empatarla con la renovación de la Cámara de Diputados, 17 gubernaturas, ayuntamientos en 30 entidades y 31 congresos locales. https:/",
-          "fecha": "2026-05-17"
-        },
-        {
-          "usuario": "RutaElectoralmx",
-          "nombre": "Ruta Electoral MX",
-          "texto": "📊 ENCUESTA | ¿Estás de acuerdo con que la elección judicial se mueva de 2027 a 2028 para evitar saturación electoral?\n\n🟢Sí, es mejor ordenar el proceso\n🔴No, deben cumplir con 2027\n 💸Depende del costo para el @INEMexico",
-          "fecha": "2026-05-17"
         }
       ]
     },
@@ -2768,6 +2768,12 @@
           "fuente": "cronica",
           "titulo": "A tres meses del derrame de Pemex, aún muchas respuestas pendientes",
           "url": "https://www.cronica.com.mx/nacional/2026/05/17/a-tres-meses-del-derrame-de-pemex-aun-muchas-respuestas-pendientes/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "excelsior",
+          "titulo": "De haber riesgo, se reubicarán escuelas que estén cerca de refinerías: Sheinbaum",
+          "url": "https://www.excelsior.com.mx/nacional/haber-riesgo-reubicaran-escuelas-que-ubican-cerca-refinerias-sheinbaum",
           "fecha": "2026-05-18"
         },
         {
@@ -2840,12 +2846,6 @@
           "fuente": "el_universal",
           "titulo": "“El fracking es incompatible con la vida digna en las comunidades”: Yuvelis Morales, Premio Goldman 2026",
           "url": "https://www.eluniversal.com.mx/cultura/confabulario/el-fracking-es-incompatible-con-la-vida-digna-en-las-comunidades-yuvelis-morales-premio-goldman-2026/",
-          "fecha": "2026-05-17"
-        },
-        {
-          "fuente": "el_financiero",
-          "titulo": "Director de Pemex, Juan Carlos Carpio, supervisa obra electromecánica en Campo Bakté, Tabasco",
-          "url": "https://www.elfinanciero.com.mx/estados/2026/05/16/director-de-pemex-juan-carlos-carpio-supervisa-obra-electromecanica-en-campo-bakte-tabasco/",
           "fecha": "2026-05-17"
         }
       ],
@@ -3029,6 +3029,18 @@
     "salud": {
       "articulos_medios": [
         {
+          "fuente": "el_universal",
+          "titulo": "OMS advierte que riesgo de nuevas pandemias va en aumento; “un mundo al límite”",
+          "url": "https://www.eluniversal.com.mx/mundo/oms-advierte-que-riesgo-de-nuevas-pandemias-va-en-aumento-un-mundo-al-limite/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Salud emite aviso preventivo a quienes viajen al Congo y Uganda por brote de ébola; advierte riesgo de propagación internacional",
+          "url": "https://www.eluniversal.com.mx/nacion/salud-emite-aviso-preventivo-a-quienes-viajen-al-congo-y-uganda-por-brote-de-ebola-advierte-riesgo-de-propagacion-internacional/",
+          "fecha": "2026-05-18"
+        },
+        {
           "fuente": "24_horas",
           "titulo": "El ébola entra en una ciudad en guerra y la OMS activa alerta mundial",
           "url": "https://24-horas.mx/mundo/el-ebola-entra-en-una-ciudad-en-guerra-y-la-oms-activa-alerta-mundial/",
@@ -3104,18 +3116,6 @@
           "fuente": "el_heraldo",
           "titulo": "Claudia Sheinbaum inaugura Hospital O’Horán, el más grande del sureste y Centroamérica",
           "url": "https://heraldodemexico.com.mx/nacional/2026/5/17/claudia-sheinbaum-inaugura-hospital-ohoran-el-mas-grande-del-sureste-centroamerica-814242.html",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "excelsior",
-          "titulo": "Sheinbaum invertirá 181 mil millones de pesos en hospitales",
-          "url": "https://www.excelsior.com.mx/nacional/sheinbaum-invertira-181-mil-millones-pesos-hospitales",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "excelsior",
-          "titulo": "Inhabilitan por un año a médico del ISSSTE por tocamientos indebidos a paciente",
-          "url": "https://www.excelsior.com.mx/nacional/inhabilitan-medico-issste",
           "fecha": "2026-05-18"
         }
       ],
@@ -3215,6 +3215,11 @@
       ],
       "menciones_csp": [
         {
+          "fecha": "2026-05-18",
+          "fragmento": "Muy impresionante, la verdad. Para todos aquellos que dicen que “el IMSS Bienestar no es un Sistema de Salud Público integral”, solo ver este hospital es algo impresionante. Y ayer estaba feliz la gente en Yucatán.",
+          "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-18-de-mayo-de-2026"
+        },
+        {
           "fecha": "2026-05-15",
           "fragmento": "Lo está atendiendo Alejandro Svarch. Ha aumentado el número de medicamentos y de insumos médicos que llegan a los hospitales y a los Centros de Salud. Tan es así que, cuando he ido a territorio y en la asamblea me dicen “no hay medicamentos”, me voy en el instante al Centro de Salud para corroborar cuántos medicamentos hay.",
           "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-15-de-mayo-de-2026"
@@ -3258,11 +3263,6 @@
           "fecha": "2026-04-10",
           "fragmento": "Cuando fui jefa de Gobierno de la Ciudad de México tuvimos dos proyectos muy importantes: El primero. Durante la pandemia, donaron 100 millones de pesos para arreglar el Hospital “La Pastora” para que pudiera ser utilizado por las personas enfermas por COVID. Hoy, ese hospital es el primer lugar de atención al cáncer de mama.",
           "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-10-de-abril-de-2026"
-        },
-        {
-          "fecha": "2026-04-09",
-          "fragmento": "Hay Centros de Salud pequeñitos que solamente tienen un consultorio con sus medicamentos. Hay Centros de Salud que son más grandes, tienen atención de especialidades, como las Unidades de Medicina Familiar del IMSS; pero, en general, no tienen hospitalización, es visita al médico, tus análisis, tus estudios, tu diagnóstico. ¡Ah!, si requieres una operación o requieres una intervención mayor, te vas a los hospitales de segundo nivel.",
-          "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-09-de-abril-de-2026"
         }
       ],
       "tweets": [
@@ -3331,6 +3331,18 @@
     "educacion": {
       "articulos_medios": [
         {
+          "fuente": "el_financiero",
+          "titulo": "Dos días históricos para Yucatán: La Presidenta Claudia Sheinbaum visita el estado",
+          "url": "https://www.elfinanciero.com.mx/opinion/victor-jose-lopez-martinez/2026/05/18/dos-dias-historicos-para-yucatan-la-presidenta-claudia-sheimbaum-visita-el-estado/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Sheinbaum minimiza huelga nacional y plantón anunciado por la CNTE; \"son algunos maestros\", señala",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-minimiza-huelga-nacional-y-planton-anunciado-por-la-cnte-son-algunos-maestros-senala/",
+          "fecha": "2026-05-18"
+        },
+        {
           "fuente": "el_universal",
           "titulo": "Rescatarán inmueble para un campus en Ecatepec",
           "url": "https://www.eluniversal.com.mx/metropoli/rescataran-inmueble-para-un-campus-en-ecatepec/",
@@ -3373,6 +3385,12 @@
           "fecha": "2026-05-18"
         },
         {
+          "fuente": "excelsior",
+          "titulo": "De haber riesgo, se reubicarán escuelas que estén cerca de refinerías: Sheinbaum",
+          "url": "https://www.excelsior.com.mx/nacional/haber-riesgo-reubicaran-escuelas-que-ubican-cerca-refinerias-sheinbaum",
+          "fecha": "2026-05-18"
+        },
+        {
           "fuente": "el_heraldo",
           "titulo": "SEP: Estados que suspenderán clases desde el 1 de junio por huelga nacional de maestros | LISTA",
           "url": "https://heraldodemexico.com.mx/nacional/2026/5/18/sep-estados-que-suspenderan-clases-desde-el-de-junio-por-huelga-nacional-de-maestros-lista-814613.html",
@@ -3401,24 +3419,6 @@
           "titulo": "CNTE confirma huelga nacional el 1 de junio y anuncia plantón en el Zócalo CDMX",
           "url": "https://heraldodemexico.com.mx/nacional/2026/5/17/cnte-confirma-huelga-nacional-el-de-junio-anuncia-planton-en-el-zocalo-cdmx-814209.html",
           "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "el_heraldo",
-          "titulo": "¿Plantón de la CNTE el próximo 1 de junio modificará el calendario escolar? Esto es lo que se sabe",
-          "url": "https://heraldodemexico.com.mx/nacional/2026/5/17/planton-de-la-cnte-el-proximo-de-junio-modificara-el-calendario-escolar-esto-es-lo-que-se-sabe-814248.html",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "el_economista",
-          "titulo": "CNTE anuncia paro nacional a partir del 1 de junio; alista plantón en la CDMX y durante el Mundial",
-          "url": "https://www.eleconomista.com.mx/politica/cnte-anuncia-paro-nacional-partir-1-junio-alista-planton-cdmx-mundial-20260517-813940.html",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "Paro nacional de la CNTE: Fecha, horarios y estados afectados por la protesta magisterial",
-          "url": "https://www.cronica.com.mx/nacional/2026/05/17/paro-nacional-de-la-cnte-fecha-horarios-y-estados-afectados-por-la-protesta-magisterial/",
-          "fecha": "2026-05-17"
         }
       ],
       "documentos_gaceta": [
@@ -3719,6 +3719,12 @@
       ],
       "tweets": [
         {
+          "usuario": "ivonnemelgar",
+          "nombre": "Ivonne Melgar",
+          "texto": "Varios de los cambios propuestos por @aramirezcuellar @Javier_Corral @marianabenitezt @M_OlgaSCordero hace un mes serían  retomados por la iniciativa de la presidenta @Claudiashein.\n\nAdemás del cambio de fecha, el tema de la capacitación con la Escuela Judicial y la recuperación ",
+          "fecha": "2026-05-18"
+        },
+        {
           "usuario": "MLopezSanMartin",
           "nombre": "Manuel López San Martín",
           "texto": "🚨 Sheinbaum confirma que la UIF bloqueó las cuentas de Rocha Moya y otros nueve acusados por EU\n\nDice que fue una medida “preventiva”\n\nNiega una investigación en México\n\nMorena se hunde en el fango\n\nEl mayor golpe es el relacionado con Rubén Rocha https://t.co/N3vk5M2jN8",
@@ -3771,17 +3777,23 @@
           "nombre": "Clemente Castañeda Hoeflich",
           "texto": "En Jalisco seguimos fortaleciendo el mejor modelo educativo del país con más infraestructura, inclusión y mejores oportunidades para niñas y niños. 🍊✏️\n\nYa son casi 2 mil escuelas rehabilitadas, 50 centros de educación múltiple renovados y el regreso de las escuelas de tiempo htt",
           "fecha": "2026-05-15"
-        },
-        {
-          "usuario": "RutaElectoralmx",
-          "nombre": "Ruta Electoral MX",
-          "texto": "🍎 En pleno #DíadelMaestro, Mario Delgado anunció un aumento salarial del 9% para los docentes del país, tras un acuerdo con el magisterio.\n\nEl titular de la @SEP_mx dijo que el incremento se integrará en distintos momentos, entre salario y prestaciones. https://t.co/ZpZbDMHDxW",
-          "fecha": "2026-05-15"
         }
       ]
     },
     "trabajo": {
       "articulos_medios": [
+        {
+          "fuente": "el_universal",
+          "titulo": "Sheinbaum minimiza huelga nacional y plantón anunciado por la CNTE; \"son algunos maestros\", señala",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-minimiza-huelga-nacional-y-planton-anunciado-por-la-cnte-son-algunos-maestros-senala/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "cronica",
+          "titulo": "¿Cómo va la huelga en Monte de Piedad?: Sindicato reporta avances en las negociaciones",
+          "url": "https://www.cronica.com.mx/nacional/2026/05/18/como-va-la-huelga-en-monte-de-piedad-sindicato-reporta-avances-en-las-negociaciones/",
+          "fecha": "2026-05-18"
+        },
         {
           "fuente": "el_universal",
           "titulo": "Pensiones Bienestar 2026: ¿qué letra recibe su depósito HOY, 18 de mayo?; entérate aquí",
@@ -3852,18 +3864,6 @@
           "fuente": "el_universal",
           "titulo": "Anticorrupción sanciona a 10 servidores del ISSSTE, GN y Semarnat por faltas no graves; impone inhabilitaciones de hasta 9 meses",
           "url": "https://www.eluniversal.com.mx/nacion/anticorrupcion-sanciona-a-10-servidores-del-issste-gn-y-semarnat-por-faltas-no-graves-impone-inhabilitaciones-de-hasta-9-meses/",
-          "fecha": "2026-05-17"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "Inhabilitan a médico del Issste por tocamientos indebidos a paciente",
-          "url": "https://24-horas.mx/cdmx/inhabilitan-a-medico-del-issste-por-tocamientos-indebidos-a-paciente/",
-          "fecha": "2026-05-17"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Anticorrupción sanciona a médico del ISSSTE por tocamientos indebidos a una paciente; recibe inhabilitación de un año",
-          "url": "https://www.eluniversal.com.mx/nacion/anticorrupcion-sanciona-a-medico-del-issste-por-tocamientos-indebidos-a-una-paciente-recibe-inhabilitacion-de-un-ano/",
           "fecha": "2026-05-17"
         }
       ],
@@ -4109,6 +4109,66 @@
     "electoral_politico": {
       "articulos_medios": [
         {
+          "fuente": "cronica",
+          "titulo": "PAN en Cuauhtémoc cierra filas: respaldo total a Alessandra Rojo de la Vega",
+          "url": "https://www.cronica.com.mx/metropoli/2026/05/18/pan-en-cuauhtemoc-cierra-filas-respaldo-total-a-alessandra-rojo-de-la-vega/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "la_razon",
+          "titulo": "Saúl Monreal causa polémica por cantar junto a músico con playera nazi | VIDEO",
+          "url": "https://www.razon.com.mx/mexico/2026/05/18/saul-monreal-causa-polemica-por-cantar-junto-a-musico-con-playera-nazi-video/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "politico_mx",
+          "titulo": "¿Cajas con videos y USB? Las revelaciones de Gerardo Mérida que pondrían en jaque a AMLO y Morena",
+          "url": "https://www.politico.mx/2026/05/18/cajas-con-videos-y-usb-las-revelaciones-de-gerardo-merida-que-pondrian-en-jaque-a-amlo/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "PRI y MC rechazan propuesta de recorrer elección judicial a 2028; \"no debe posponerse, sino cancelarse\", piden",
+          "url": "https://www.eluniversal.com.mx/nacion/pri-y-mc-rechazan-propuesta-de-recorrer-eleccion-judicial-a-2028-no-debe-posponerse-sino-cancelarse-piden/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "cronica",
+          "titulo": "IECM emite lineamientos para asegurar imparcialidad en procesos de revocación de mandato en la CDMX",
+          "url": "https://www.cronica.com.mx/metropoli/2026/05/18/iecm-emite-lineamientos-para-asegurar-imparcialidad-en-procesos-de-revocacion-de-mandato-en-la-cdmx/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "el_financiero",
+          "titulo": "Con menos candidatos y nuevas boletas: Los cambios de la reforma para mover Elección Judicial a 2028",
+          "url": "https://www.elfinanciero.com.mx/nacional/2026/05/18/con-menos-candidatos-y-nuevas-boletas-los-cambios-de-la-reforma-para-mover-eleccion-judicial-a-2028/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Sheinbaum no descarta reunirse con el rey Felipe VI durante el Mundial 2026; insiste en disculpa de España por la Conquista",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-no-descarta-reunirse-con-el-rey-felipe-vi-durante-el-mundial-2026-insiste-en-disculpa-de-espana-por-la-conquista/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "cronica",
+          "titulo": "Plantea Sheinbaum aplazar elección judicial del 2027 al 2028; admite problemas logísticos",
+          "url": "https://www.cronica.com.mx/nacional/2026/05/18/plantea-sheinbaum-aplazar-eleccion-judicial-del-2027-al-2028-admite-problemas-logisticos/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Posponer elección judicial, simplificar boletas y capacitar a jueces; esta es la iniciativa que Sheinbaum enviará al Congreso",
+          "url": "https://www.eluniversal.com.mx/nacion/posponer-eleccion-judicial-simplificar-boletas-y-capacitar-a-jueces-esta-es-la-iniciativa-que-sheinbaum-enviara-al-congreso/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "24_horas",
+          "titulo": "IECM define lineamientos para revocación de mandato",
+          "url": "https://24-horas.mx/cdmx/iecm-define-lineamientos-para-revocacion-de-mandato/",
+          "fecha": "2026-05-18"
+        },
+        {
           "fuente": "el_financiero",
           "titulo": "Sheinbaum descarta riesgos para México por lo que declaren exfuncionarios de Sinaloa en EU",
           "url": "https://www.elfinanciero.com.mx/nacional/2026/05/18/claudia-sheinbaum-mananera-temas-hoy-18-de-mayo-de-2026-en-vivo/",
@@ -4136,66 +4196,6 @@
           "fuente": "el_universal",
           "titulo": "Fue decisión de ellos entregarse: Sheinbaum sobre Gerardo Mérida y Enrique Díaz; no ve riesgo en declaraciones de exfuncionarios",
           "url": "https://www.eluniversal.com.mx/nacion/fue-decision-de-ellos-entregarse-sheinbaum-sobre-gerardo-merida-y-enrique-diaz-no-ve-riesgo-en-declaraciones-de-exfuncionarios/",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Trump retira demanda contra el Servicio de Impuestos por filtrar sus declaraciones; busca crear fondo para aliados",
-          "url": "https://www.eluniversal.com.mx/mundo/trump-retira-demanda-contra-el-servicio-de-impuestos-por-filtrar-sus-declaraciones-busca-crear-fondo-para-aliados/",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Sheinbaum enviará propuesta al Congreso para mover elección judicial al 2028; argumenta que en 2027 habrá votaciones",
-          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-enviara-propuesta-al-congreso-para-mover-eleccion-judicial-al-2028-argumenta-que-en-2027-habra-votaciones/",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "politico_mx",
-          "titulo": "Sheinbaum propondrá reforma al Congreso para aplazar la elección judicial hasta 2028",
-          "url": "https://www.politico.mx/2026/05/18/sheinbaum-propondra-reforma-al-congreso-para-aplazar-la-eleccion-judicial-hasta-2028/",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "Sheinbaum pide aplazar elección judicial a 2028",
-          "url": "https://24-horas.mx/mexico/sheinbaum-pide-aplazar-eleccion-judicial-a-2028/",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "Democracias bajo presión",
-          "url": "https://www.cronica.com.mx/opinion/2026/05/18/democracias-bajo-presion/",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "el_financiero",
-          "titulo": "Engañar con la verdad",
-          "url": "https://www.elfinanciero.com.mx/opinion/raymundo-riva-palacio/2026/05/19/enganar-con-la-verdad/",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Adán Augusto López asiste al festejo por los 50 años del senador Miguel Ángel Yunes; celebran con marimba en Veracruz",
-          "url": "https://www.eluniversal.com.mx/nacion/adan-augusto-lopez-asiste-al-festejo-por-los-50-anos-del-senador-miguel-angel-yunes-celebran-con-marimba-en-veracruz/",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "el_financiero",
-          "titulo": "Testigos protegidos escupen contra la 4T",
-          "url": "https://www.elfinanciero.com.mx/opinion/alejo-sanchez-cano/2026/05/18/testigos-protegidos-escupen-contra-la-4t/",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "El orden político conservador",
-          "url": "https://www.cronica.com.mx/opinion/2026/05/18/el-orden-politico-conservador/",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Tribunal Electoral gasta 22 mdp en menú gourmet",
-          "url": "https://www.eluniversal.com.mx/nacion/tribunal-electoral-gasta-22-mdp-en-menu-gourmet/",
           "fecha": "2026-05-18"
         }
       ],
@@ -4675,6 +4675,11 @@
       ],
       "menciones_csp": [
         {
+          "fecha": "2026-05-18",
+          "fragmento": "Y que, además, hay que hacer algunos ajustes. Por ejemplo, si fuera en este momento, en el ‘27, la elección, tendrían que ser casillas distintas, entonces la gente tendría que ir a votar por gobernador, presidentes municipales, diputados, en una casilla y luego, moverse a otra casilla para votar por el Poder Judicial.",
+          "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-18-de-mayo-de-2026"
+        },
+        {
           "fecha": "2026-05-15",
           "fragmento": "Pero el gran legado sería que el futbol social se convierta también en parte de la visión que tienen los clubes de futbol. Porque muchas veces se van solamente por el negocio, que es un negocio; pero que no solo sea el dinero, que también tenga que ver con un vínculo desde las niñas y los niños hasta la Selección Nacional. Bueno, por lo menos es una opinión, un sueño y lo que yo oigo cuando voy por el país.",
           "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-15-de-mayo-de-2026"
@@ -4718,14 +4723,57 @@
           "fecha": "2026-05-01",
           "fragmento": "Las detenciones, las incautaciones, la destrucción de laboratorios, y la protección de las y los mexicanos. Recientemente la encuesta de ENSU del Inegi reporta que hay una disminución en la percepción de inseguridad de las y los mexicanos. Nosotros trabajamos por la seguridad de las y los mexicanos.",
           "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-01-de-mayo-de-2026"
-        },
-        {
-          "fecha": "2026-04-30",
-          "fragmento": "Yo les voy a decir: actuaría exactamente de la misma manera tratándose de un gobernador del PRI, del PAN, de Movimiento Ciudadano. Imagínense que viniera una petición de extradición o de detención provisional con fines de extradición a un gobernador de otro partido o a una gobernadora de otro partido sin ninguna prueba. ¿Qué, “porque es de otro partido voy a actuar distinto”?",
-          "url": "https://www.gob.mx/presidencia/es/articulos/version-estenografica-conferencia-de-prensa-de-la-presidenta-claudia-sheinbaum-pardo-del-30-de-abril-de-2026"
         }
       ],
       "tweets": [
+        {
+          "usuario": "ClementeCH",
+          "nombre": "Clemente Castañeda Hoeflich",
+          "texto": "Durante meses Morena defendió la mal llamada reforma judicial y descalificó, sin escuchar ni debatir, a quienes advertíamos sus profundos errores. Hoy, desde Palacio Nacional, plantean mover la elección judicial al 2028, cambiar boletas y rehacer criterios de elegibilidad para",
+          "fecha": "2026-05-18"
+        },
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "🚰 Piden copias del INE para entregar “Agua del Bienestar” a nombre de Clara Brugada\n\nTodo, en medio de escasez y fugas por fallas de la CDMX\n\n📹 @nmas https://t.co/IZh9bx3EFi",
+          "fecha": "2026-05-18"
+        },
+        {
+          "usuario": "RutaElectoralmx",
+          "nombre": "Ruta Electoral MX",
+          "texto": "📊 ENCUESTA | Si hoy fueran las elecciones para la gubernatura de #Querétaro, ¿por quién votarías?\n\n🔴 Santiago Niego [@SNietoCastillo]\n\n🔵 Felipe Macías\n [@FeliFerMacias]\n\n🟠 Paul Ospital \n[@Pospital]\n\nVota y comenta quién crees que tendría más fuerza rumbo al 2027.",
+          "fecha": "2026-05-18"
+        },
+        {
+          "usuario": "ivonnemelgar",
+          "nombre": "Ivonne Melgar",
+          "texto": "El próximo jueves se estaría definiendo, en la Comisión Permanente, el periodo extraordinario para concretar la reforma que cambiaría la fecha de la elección judicial al 4 de junio de 2028, entre otros ajustes, anuncia @RicardoMonrealA https://t.co/ec198iD4UI",
+          "fecha": "2026-05-18"
+        },
+        {
+          "usuario": "RicardoMonrealA",
+          "nombre": "Ricardo Monreal Ávila",
+          "texto": "Con responsabilidad institucional y apego constitucional, nos preparamos para discutir la iniciativa de reforma judicial anunciada hoy por la Presidenta @Claudiashein.\nLa Cámara de @Mx_Diputados será espacio de diálogo, acuerdos y trabajo por México. https://t.co/IWnGBvulY2",
+          "fecha": "2026-05-18"
+        },
+        {
+          "usuario": "PollsMX_",
+          "nombre": "Polls MX",
+          "texto": "🇲🇽📈 La presidenta @Claudiashein registra una aprobación ciudadana del 69%, de acuerdo con nuestra Encuesta de Encuestas. En contraste, 30% de los ciudadanos se manifiestan en desacuerdo con su gestión. https://t.co/REmTqZTYL7",
+          "fecha": "2026-05-18"
+        },
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "En público defienden a capa y espada al narcogobernador de Sinaloa, Rocha Moya, pero fuera de la mañanera le congelan las cuentas de manera “preventiva”\n\nSaben que tiene los días contados y lo esperan en EU donde ya se entregaron 2 de los 10 funcionarios acusados de narco https:/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "usuario": "MLopezSanMartin",
+          "nombre": "Manuel López San Martín",
+          "texto": "🍽️ El Tribunal Electoral, afín a la 4T, gastará hasta 22 mdp en menús gourmet\n\nHabrá comida francesa, griega, china y hasta ramen.\n\nEn sus comedores servirán crème brûlée, salmón glaseado y hasta pulpo a la menier\n\n📷 @El_Universal_Mx https://t.co/hKMzlCdmTr",
+          "fecha": "2026-05-18"
+        },
         {
           "usuario": "RutaElectoralmx",
           "nombre": "Ruta Electoral MX",
@@ -4737,59 +4785,17 @@
           "nombre": "Polls MX",
           "texto": "📊🟤 Clara Luz y Andrés Mijes encabezan las preferencias por la candidatura de Morena por Nuevo Leon\n\nA falta de un año para la elección en Nuevo León, los careos para la candidatura de Morena comienzan a posicionar a los diferentes perfiles, donde ya se comienzan a definir las htt",
           "fecha": "2026-05-18"
-        },
-        {
-          "usuario": "ivonnemelgar",
-          "nombre": "Ivonne Melgar",
-          "texto": "El cambio de fecha para que la elección judicial sea el 4 de junio de 2028 se aprobaría a finales de este mes.\n\nEste es el plan a seguir:\n\nLa iniciativa de @Claudiashein llega el jueves 21 a la Comisión Permanente.\n\nDe inmediato se mandaría a @Mx_Diputados.\n\nLos diputados de la",
-          "fecha": "2026-05-18"
-        },
-        {
-          "usuario": "letroblesrosa",
-          "nombre": "Leti Robles Rosa",
-          "texto": "Ayer, hoy y siempre me parecerá una tragedia que se use una TÓMBOLA para decidir quién será juzgador. \n\nEl azar como criterio de justicia es una barbaridad. \n\nY eso lo mantiene la propuesta de reforma constitucional presidencial, que se aprobará a toda prisa en el Congreso de la ",
-          "fecha": "2026-05-18"
-        },
-        {
-          "usuario": "LatamData",
-          "nombre": "LatamData",
-          "texto": "PERU | Soldexa, with half the country's welding market and a hand in Navy frigate builds, robotizes lines to fend off Chinese imports.\n\n(Gestión)",
-          "fecha": "2026-05-18"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "La presidenta Sheinbaum busca arreglar el desastre de la elección judicial \n\nEnviará una propuesta al Congreso para “mover” los comicios hasta 2028 https://t.co/Udam8LCAIi",
-          "fecha": "2026-05-18"
-        },
-        {
-          "usuario": "Juan_OrtizMX",
-          "nombre": "Juan Ortiz",
-          "texto": "🗳️📌 Luisa Alcalde dicen que la reforma de la reforma judicial se aprobará a más tardar el 10 de junio en el Congreso. https://t.co/LFJmBuAUmh",
-          "fecha": "2026-05-18"
-        },
-        {
-          "usuario": "ivonnemelgar",
-          "nombre": "Ivonne Melgar",
-          "texto": "Preocupa al INE que doble votación genere rechazo ciudadano https://t.co/xXwlIywOUR\n\nLa presidenta @Claudiashein hace suyo el argumento del @INEMexico de que diferir la elección judicial a 2028 tendrá un ahorro de 2 mil mdp.\n\nLos riesgos de empalmar la votación, dijeron los",
-          "fecha": "2026-05-18"
-        },
-        {
-          "usuario": "MLopezSanMartin",
-          "nombre": "Manuel López San Martín",
-          "texto": "La Sedena reasignó al General Isaac Bravo López, quien estaba al frente de la 11 Zona Militar en Zacatecas\n\nEsto en medio de señalamientos en su contra por presuntamente recibir dinero del Cártel de Sinaloa\n\n@Reforma https://t.co/lH8xSlLXf7",
-          "fecha": "2026-05-18"
-        },
-        {
-          "usuario": "LatamData",
-          "nombre": "LatamData",
-          "texto": "PERU | Sends $2.7M to 91 municipalities to repair rain damage and prepare for the 2026 rainy season\n\n(La República)",
-          "fecha": "2026-05-18"
         }
       ]
     },
     "derechos_humanos": {
       "articulos_medios": [
+        {
+          "fuente": "el_universal",
+          "titulo": "SRE exige a Israel respetar derechos humanos de mexicanos detenidos en Flotilla Global Sumud; pide acceso consular y trato digno",
+          "url": "https://www.eluniversal.com.mx/nacion/sre-exige-a-israel-respetar-derechos-humanos-de-mexicanos-detenidos-en-flotilla-global-sumud-pide-acceso-consultar-y-trato-digno/",
+          "fecha": "2026-05-18"
+        },
         {
           "fuente": "el_financiero",
           "titulo": "‘I would prefer not to’: La aquiescencia del Estado mexicano ante las desapariciones, según la CIDH",
@@ -4873,12 +4879,6 @@
           "titulo": "Se dispara más de 300% atención a mexicanos en EU por violaciones a Derechos Humanos",
           "url": "https://www.elsoldemexico.com.mx/elsoldemexico/mexico/se-dispara-mas-de-300-atencion-a-mexicanos-en-eu-por-violaciones-a-derechos-humanos-30018473",
           "fecha": "2026-05-16"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Denuncian detención arbitraria del activista Macario García; es representante de la medida cautelar de la CIDH a favor de desplazados",
-          "url": "https://www.eluniversal.com.mx/estados/denuncian-detencion-arbitraria-del-activista-macario-garcia-es-representante-de-la-medida-cautelar-de-la-cidh-a-favor-de-desplazados/",
-          "fecha": "2026-05-15"
         }
       ],
       "documentos_gaceta": [
@@ -5087,6 +5087,24 @@
     "infraestructura": {
       "articulos_medios": [
         {
+          "fuente": "cronica",
+          "titulo": "Azucena Cisneros pone en marcha pozo Ejidos de Tulpetlac 2 con tecnología de última generación",
+          "url": "https://www.cronica.com.mx/metropoli/2026/05/18/azucena-cisneros-pone-en-marcha-pozo-ejidos-de-tulpetlac-2-con-tecnologia-de-ultima-generacion/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Semarnat analiza megaproyecto \"Perfect Day\" en Mahahual, dice Sheinbaum; garantiza \"no hacer nada que afecte al ecosistema\"",
+          "url": "https://www.eluniversal.com.mx/nacion/semarnat-analiza-megaproyecto-perfect-day-en-mahahual-dice-sheinbaum-garantiza-no-hacer-nada-que-afecte-al-ecosistema/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Metro CDMX presenta retrasos; afectación en 4 líneas",
+          "url": "https://www.eluniversal.com.mx/metropoli/metro-cdmx-presenta-retrasos-afectacion-en-4-lineas/",
+          "fecha": "2026-05-18"
+        },
+        {
           "fuente": "el_financiero",
           "titulo": "Los pendientes de Semovi en CDMX",
           "url": "https://www.elfinanciero.com.mx/opinion/jeanette-leyva/2026/05/19/los-pendientes-de-semovi-en-cdmx/",
@@ -5157,24 +5175,6 @@
           "titulo": "Durazo y Sheinbaum detonan inversión histórica de más de 10 mil mdp en carreteras para Sonora",
           "url": "https://www.milenio.com/politica/inversion-historica-de-mas-de-10-mil-mdp-en-carreteras-para-sonora",
           "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "el_heraldo",
-          "titulo": "¿Qué pasó en la Autopista México-Cuernavaca? Reportan largas filas de automóviles | ALTERNATIVAS VIALES",
-          "url": "https://heraldodemexico.com.mx/nacional/2026/5/17/que-paso-hoy-17-de-mayo-en-la-autopista-mexico-cuernavaca-reportan-largas-filas-de-automoviles-alternativas-viales-814207.html",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "el_financiero",
-          "titulo": "Inicia reducción de suministro de agua en CDMX y Edomex: ¿Cuál es el nivel de las presas del Cutzamala?",
-          "url": "https://www.elfinanciero.com.mx/cdmx/2026/05/17/sistema-cutzamala-nivel-de-almacenamiento-actual-inicia-reduccion-de-suministro-de-agua-en-cdmx-y-edomex/",
-          "fecha": "2026-05-17"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Diputado propone zonas de ascenso y descenso en aeropuertos para transporte por aplicación; pide optimizar movilidad",
-          "url": "https://www.eluniversal.com.mx/nacion/diputado-propone-zonas-de-ascenso-y-descenso-en-aeropuertos-para-transporte-por-aplicacion-pide-optimizar-movilidad/",
-          "fecha": "2026-05-17"
         }
       ],
       "documentos_gaceta": [
@@ -5457,6 +5457,12 @@
           "fecha": "2026-05-18"
         },
         {
+          "fuente": "excelsior",
+          "titulo": "Tortilla de maíz, aliada contra la anemia durante el embarazo",
+          "url": "https://www.excelsior.com.mx/nacional/tortilla-maiz-anemia-embarazo",
+          "fecha": "2026-05-18"
+        },
+        {
           "fuente": "bloomberg_linea",
           "titulo": "El acuerdo agrícola entre EE.UU. y China dispara los precios del maíz y el trigo",
           "url": "https://www.bloomberglinea.com/mundo/estados-unidos/el-acuerdo-agricola-entre-eeuu-y-china-dispara-los-precios-del-maiz-y-el-trigo/",
@@ -5515,12 +5521,6 @@
           "titulo": "Conapesca y Alianza del Pacífico impulsan a mujeres de la pesca y acuacultura artesanal",
           "url": "https://www.cronica.com.mx/nacional/2026/05/15/conapesca-y-alianza-del-pacifico-impulsan-a-mujeres-de-la-pesca-y-acuacultura-artesanal/",
           "fecha": "2026-05-16"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "Impulsa Gobierno de Tamaulipas modernización del rastro municipal de González",
-          "url": "https://www.cronica.com.mx/estados/2026/05/15/impulsa-gobierno-de-tamaulipas-modernizacion-del-rastro-municipal-de-gonzalez/",
-          "fecha": "2026-05-15"
         }
       ],
       "documentos_gaceta": [
@@ -5783,6 +5783,24 @@
     "relaciones_exteriores": {
       "articulos_medios": [
         {
+          "fuente": "24_horas",
+          "titulo": "Sheinbaum recibirá a encargados de Seguridad y Drogas de EU",
+          "url": "https://24-horas.mx/mexico/sheinbaum-recibira-a-encargados-de-seguridad-y-drogas-de-eu/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "SRE exige a Israel respetar derechos humanos de mexicanos detenidos en Flotilla Global Sumud; pide acceso consular y trato digno",
+          "url": "https://www.eluniversal.com.mx/nacion/sre-exige-a-israel-respetar-derechos-humanos-de-mexicanos-detenidos-en-flotilla-global-sumud-pide-acceso-consultar-y-trato-digno/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "politico_mx",
+          "titulo": "Sobrino del exsecretario de Marina busca asilo en EUA para frenar extradición por huachicol fiscal",
+          "url": "https://www.politico.mx/2026/05/18/sobrino-del-exsecretario-de-marina-busca-asilo-en-eua-para-frenar-extradicion-por-huachicol-fiscal/",
+          "fecha": "2026-05-18"
+        },
+        {
           "fuente": "el_universal",
           "titulo": "Sheinbaum anuncia reunión con funcionarios de EU; abordarán cooperación en combate a narcotráfico",
           "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-anuncia-reunion-con-funcionarios-de-eu-abordaran-cooperacion-en-combate-a-narcotrafico/",
@@ -5849,28 +5867,10 @@
           "fecha": "2026-05-18"
         },
         {
-          "fuente": "el_pais",
-          "titulo": "El nuevo acuerdo comercial de México y la Unión Europea apunta a una tasa cero de aranceles para el sector agroalimentario",
-          "url": "https://elpais.com/mexico/economia/2026-05-18/el-nuevo-acuerdo-comercial-de-mexico-y-la-union-europea-apunta-a-una-tasa-cero-de-aranceles-para-el-sector-agroalimentario.html",
+          "fuente": "sol_de_mexico",
+          "titulo": "Sheinbaum refrenda apoyo a Michelle Bachelet para encabezar la ONU",
+          "url": "https://www.elsoldemexico.com.mx/elsoldemexico/mexico/sheinbaum-refrenda-apoyo-a-michelle-bachelet-para-encabezar-la-onu-30009562",
           "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "el_heraldo",
-          "titulo": "Claudia Sheinbaum inaugura Hospital O’Horán, el más grande del sureste y Centroamérica",
-          "url": "https://heraldodemexico.com.mx/nacional/2026/5/17/claudia-sheinbaum-inaugura-hospital-ohoran-el-mas-grande-del-sureste-centroamerica-814242.html",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "excelsior",
-          "titulo": "Alcaldes y CBP analizan seguridad y desarrollo en frontera Sonora-Arizona",
-          "url": "https://www.excelsior.com.mx/nacional/alcaldes-y-cbp-analizan-seguridad-y-desarrollo-frontera-sonora-arizona",
-          "fecha": "2026-05-18"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Asesores de Trump alertan que China puede atacar Taiwán tras encuentro; \"no busco que nadie se independice”",
-          "url": "https://www.eluniversal.com.mx/mundo/asesores-de-trump-alertan-que-china-puede-atacar-taiwan-tras-encuentro-no-busco-que-nadie-se-independice/",
-          "fecha": "2026-05-17"
         }
       ],
       "documentos_gaceta": [
@@ -6007,6 +6007,12 @@
       ],
       "tweets": [
         {
+          "usuario": "letroblesrosa",
+          "nombre": "Leti Robles Rosa",
+          "texto": "No recuerdo con exactitud quién de los voceros oficialistas dijo que era falso el bloqueo de cuentas a los sinaloenses acusados de narco por el gobierno de Estados Unidos.\n\nPero bueno, @hacienda_mx confirma que es una realidad: las cuentas están bloqueadas. https://t.co/ybpSczBYc",
+          "fecha": "2026-05-18"
+        },
+        {
           "usuario": "Juan_OrtizMX",
           "nombre": "Juan Ortiz",
           "texto": "🗳️📌SHEINBAUM CONFIRMA CUENTAS CONGELADAS EN CASO ROCHA MOYA\n\nSheinbaum confirmó que la Unidad de Inteligencia Financiera (UIF) congeló cuentas relacionadas con los 10 señalados por Estados Unidos.\n\nEntre ellos está Rubén Rocha Moya.\n\nTambién funcionarios de su gobierno.\n\nLa https",
@@ -6059,12 +6065,6 @@
           "nombre": "Juan Ortiz",
           "texto": "Enrique Inzunza, senador de Morena por Sinaloa y buscado por Estados Unidos, dice que sigue en México.\n\nAhora no sube ningún video o foto. https://t.co/LvdPXjSdYU",
           "fecha": "2026-05-17"
-        },
-        {
-          "usuario": "Juan_OrtizMX",
-          "nombre": "Juan Ortiz",
-          "texto": "🗳️📌NO SE ENTREGARÁ A ESTADOS UNIDOS, DICE\n\n¿No quiere o no lo dejan?\n\nEnrique Inzunza negó que vaya a entregarse a Estados Unidos, según La Jornada.\n\nEs senador de Morena por Sinaloa.\n\nFue señalado por autoridades estadounidenses por presuntos vínculos con el Cártel de Sinaloa. h",
-          "fecha": "2026-05-17"
         }
       ]
     },
@@ -6108,6 +6108,24 @@
         },
         {
           "fuente": "el_heraldo",
+          "titulo": "¿Por qué la UIF bloqueó cuentas de funcionarios de Sinaloa señalados por EU? Hacienda lo explica",
+          "url": "https://heraldodemexico.com.mx/nacional/2026/5/18/por-que-la-uif-bloqueo-cuentas-de-funcionarios-de-sinaloa-senalados-por-eu-hacienda-lo-explica-814674.html",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "proceso",
+          "titulo": "Sheinbaum confirma que la UIF congelГі cuentas de Rocha Moya y nueve acusados de narcotrГЎfico",
+          "url": "https://www.proceso.com.mx/nacional/2026/5/18/sheinbaum-confirma-que-la-uif-congelo-cuentas-de-rocha-moya-nueve-acusados-de-narcotrafico-374236.html",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "el_economista",
+          "titulo": "Sheinbaum aclara que la UIF congeló las cuentas de Rocha Moya de \"manera preventiva\"",
+          "url": "https://www.eleconomista.com.mx/politica/sheinbaum-aclara-uif-congelo-cuentas-rocha-moya-manera-preventiva-20260518-814058.html",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "el_heraldo",
           "titulo": "Sheinbaum confirma que la UIF congeló cuentas de los 10 funcionarios señalados por EU",
           "url": "https://heraldodemexico.com.mx/nacional/2026/5/18/sheinbaum-confirma-que-la-uif-congelo-cuentas-de-los-10-funcionarios-senalados-por-eu-814660.html",
           "fecha": "2026-05-18"
@@ -6140,24 +6158,6 @@
           "fuente": "24_horas",
           "titulo": "Secretaría Anticorrupción sanciona a 10 funcionarios federales",
           "url": "https://24-horas.mx/mexico/secretaria-anticorrupcion-sanciona-a-10-funcionarios-federales/",
-          "fecha": "2026-05-17"
-        },
-        {
-          "fuente": "24_horas",
-          "titulo": "PT pide que delitos de corrupción sean imprescriptibles",
-          "url": "https://24-horas.mx/mexico/pt-pide-que-delitos-de-corrupcion-sean-imprescriptibles/",
-          "fecha": "2026-05-17"
-        },
-        {
-          "fuente": "la_jornada",
-          "titulo": "Pide Ramírez Cuéllar erradicar de Morena corrupción e impunidad",
-          "url": "https://www.jornada.com.mx/2026/05/17/politica/003n3pol?partner=rss",
-          "fecha": "2026-05-17"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Alex Saab y su vínculo en México; el entramado de corrupción del programa de alimentos del chavismo",
-          "url": "https://www.eluniversal.com.mx/mundo/alex-saab-y-su-vinculo-en-mexico-el-entramado-de-corrupcion-del-programa-de-alimentos-del-chavismo/",
           "fecha": "2026-05-17"
         }
       ],
@@ -6325,6 +6325,18 @@
     "medio_ambiente": {
       "articulos_medios": [
         {
+          "fuente": "el_universal",
+          "titulo": "¿La basura ahora llega con recordatorio ecológico?; CDMX lanza “Separa con Turbo” junto a Rappi",
+          "url": "https://www.eluniversal.com.mx/metropoli/la-basura-ahora-llega-con-recordatorio-ecologico-cdmx-lanza-separa-con-turbo-junto-a-rappi/",
+          "fecha": "2026-05-18"
+        },
+        {
+          "fuente": "el_universal",
+          "titulo": "Semarnat analiza megaproyecto \"Perfect Day\" en Mahahual, dice Sheinbaum; garantiza \"no hacer nada que afecte al ecosistema\"",
+          "url": "https://www.eluniversal.com.mx/nacion/semarnat-analiza-megaproyecto-perfect-day-en-mahahual-dice-sheinbaum-garantiza-no-hacer-nada-que-afecte-al-ecosistema/",
+          "fecha": "2026-05-18"
+        },
+        {
           "fuente": "cronica",
           "titulo": "La contaminación derivada del lanzamiento de satélites se acumula rápidamente en la atmósfera superior",
           "url": "https://www.cronica.com.mx/academia/2026/05/18/la-contaminacion-derivada-del-lanzamiento-de-satelites-se-acumula-rapidamente-en-la-atmosfera-superior/",
@@ -6400,18 +6412,6 @@
           "fuente": "el_universal",
           "titulo": "Fracking: Los objetivos climáticos pasan a segundo término",
           "url": "https://www.eluniversal.com.mx/cultura/confabulario/fracking-los-objetivos-climaticos-pasan-a-segundo-termino/",
-          "fecha": "2026-05-17"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "“El fracking es incompatible con la vida digna en las comunidades”: Yuvelis Morales, Premio Goldman 2026",
-          "url": "https://www.eluniversal.com.mx/cultura/confabulario/el-fracking-es-incompatible-con-la-vida-digna-en-las-comunidades-yuvelis-morales-premio-goldman-2026/",
-          "fecha": "2026-05-17"
-        },
-        {
-          "fuente": "el_universal",
-          "titulo": "Tras 200 años de ausencia, regresa el bisonte americano a Sonora; han nacido 10 crías como parte de estrategia de conservación",
-          "url": "https://www.eluniversal.com.mx/estados/tras-200-anos-de-ausencia-regresa-el-bisonte-americano-a-sonora-han-nacido-10-crias-como-parte-de-estrategia-de-conservacion/",
           "fecha": "2026-05-17"
         }
       ],
@@ -7314,6 +7314,12 @@
     "medios_comunicacion": {
       "articulos_medios": [
         {
+          "fuente": "cronica",
+          "titulo": "“Idea con goteras”, la Paradoja de Celebrar Museos en México, con presupuestos contraídos",
+          "url": "https://www.cronica.com.mx/cultura/2026/05/18/idea-con-goteras-la-paradoja-de-celebrar-museos-en-mexico-con-presupuestos-contraidos/",
+          "fecha": "2026-05-18"
+        },
+        {
           "fuente": "la_razon",
           "titulo": "Paweł Pawlikowski: El cine es político, pero no debe ser propaganda",
           "url": "https://www.razon.com.mx/entretenimiento/2026/05/18/pawel-pawlikowski-el-cine-es-politico-pero-no-debe-ser-propaganda/",
@@ -7395,12 +7401,6 @@
           "fuente": "la_jornada",
           "titulo": "Leonardo García Tsao: Otra vez, el cine mexicano salva el día",
           "url": "https://www.jornada.com.mx/2026/05/14/espectaculos/a08a1esp?partner=rss",
-          "fecha": "2026-05-14"
-        },
-        {
-          "fuente": "cronica",
-          "titulo": "Cine Hecho en Jalisco llevará producciones locales a plazas, recintos culturales y municipios",
-          "url": "https://www.cronica.com.mx/jalisco/cronomicon/2026/05/13/cine-hecho-en-jalisco-llevara-producciones-locales-a-plazas-recintos-culturales-y-municipios/",
           "fecha": "2026-05-14"
         }
       ],
@@ -8393,7 +8393,7 @@
           77.1,
           74.0,
           71.4,
-          73.1
+          74.3
         ],
         "colores": [
           "amarillo",
@@ -8518,7 +8518,7 @@
           75.4,
           74.0,
           73.0,
-          72.5
+          73.7
         ],
         "colores": [
           "amarillo",
@@ -8768,7 +8768,7 @@
           68.9,
           67.5,
           66.9,
-          63.8
+          64.7
         ],
         "colores": [
           "amarillo",
@@ -9143,7 +9143,7 @@
           73.3,
           72.1,
           71.2,
-          70.7
+          71.9
         ],
         "colores": [
           "amarillo",
@@ -10643,7 +10643,7 @@
           37.8,
           34.2,
           31.4,
-          32.2
+          32.9
         ],
         "colores": [
           null,
@@ -51909,7 +51909,7 @@
       },
       {
         "fecha": "2026-05-18",
-        "count": 10
+        "count": 16
       }
     ],
     "economia_hacienda": [
@@ -52031,7 +52031,7 @@
       },
       {
         "fecha": "2026-05-18",
-        "count": 3
+        "count": 4
       }
     ],
     "energia": [
@@ -52153,7 +52153,7 @@
       },
       {
         "fecha": "2026-05-18",
-        "count": 1
+        "count": 2
       }
     ],
     "salud": [
@@ -52397,7 +52397,7 @@
       },
       {
         "fecha": "2026-05-18",
-        "count": 7
+        "count": 8
       }
     ],
     "trabajo": [
@@ -52641,7 +52641,7 @@
       },
       {
         "fecha": "2026-05-18",
-        "count": 8
+        "count": 14
       }
     ],
     "derechos_humanos": [
@@ -53007,7 +53007,7 @@
       },
       {
         "fecha": "2026-05-18",
-        "count": 2
+        "count": 3
       }
     ],
     "relaciones_exteriores": [
@@ -53129,7 +53129,7 @@
       },
       {
         "fecha": "2026-05-18",
-        "count": 3
+        "count": 5
       }
     ],
     "anticorrupcion": [
@@ -53251,7 +53251,7 @@
       },
       {
         "fecha": "2026-05-18",
-        "count": 4
+        "count": 7
       }
     ],
     "medio_ambiente": [
@@ -80435,9 +80435,15 @@
     "baja_california": {
       "nombre": "Baja California",
       "abreviatura": "BCN",
-      "total_articulos": 6,
+      "total_articulos": 7,
       "categorias": [],
       "articulos": [
+        {
+          "titulo": "Paris Hilton y el cierre del Tecate Emblema; este año reunió alrededor de 46 mil personas por día",
+          "fecha": "2026-05-18 17:26:13",
+          "url": "https://www.eluniversal.com.mx/espectaculos/paris-hilton-y-el-cierre-del-tecate-emblema-este-ano-reunio-alrededor-de-46-mil-personas-por-dia/",
+          "categorias": ""
+        },
         {
           "titulo": "Kenia Os deslumbra a sus fans en Tecate Emblema 2026; recuerda su trayectoria musical",
           "fecha": "2026-05-18 11:08:56",
@@ -80525,11 +80531,18 @@
     "chiapas": {
       "nombre": "Chiapas",
       "abreviatura": "CHP",
-      "total_articulos": 1,
+      "total_articulos": 2,
       "categorias": [
-        "relaciones_exteriores:0.5467"
+        "relaciones_exteriores:0.5467",
+        "seguridad_justicia:0.75"
       ],
       "articulos": [
+        {
+          "titulo": "Aseguran tonelada y media de cocaína y una embarcación en altamar; detienen a cinco personas en Chiapas",
+          "fecha": "2026-05-18 17:28:42",
+          "url": "https://www.eluniversal.com.mx/nacion/aseguran-15-toneladas-de-cocaina-y-una-embarcacion-en-altamar-detienen-a-cinco-personas-en-chiapas/",
+          "categorias": "seguridad_justicia:0.75"
+        },
         {
           "titulo": "Deportan a  712 migrantes  a Chiapas; ya van 203 mil en la era Trump",
           "fecha": "2026-05-18 08:36:34",
@@ -80589,10 +80602,12 @@
     "ciudad_de_mexico": {
       "nombre": "Ciudad de Mexico",
       "abreviatura": "CMX",
-      "total_articulos": 36,
+      "total_articulos": 41,
       "categorias": [
         "derechos_humanos:0.4877",
+        "electoral_politico:0.5074",
         "igualdad_genero:0.75",
+        "infraestructura:0.4441",
         "infraestructura:0.4486",
         "infraestructura:0.75",
         "medio_ambiente:0.75",
@@ -80601,6 +80616,36 @@
         "seguridad_justicia:0.75"
       ],
       "articulos": [
+        {
+          "titulo": "Detienen a tres hombres con un arma de fuego en Gustavo A. Madero; realizaron disparos al aire",
+          "fecha": "2026-05-18 17:52:12",
+          "url": "https://www.eluniversal.com.mx/metropoli/detienen-a-tres-hombres-con-un-arma-de-fuego-en-gustavo-a-madero-realizaron-disparos-al-aire/",
+          "categorias": "seguridad_justicia:0.75"
+        },
+        {
+          "titulo": "¿La basura ahora llega con recordatorio ecológico?; CDMX lanza “Separa con Turbo” junto a Rappi",
+          "fecha": "2026-05-18 17:45:37",
+          "url": "https://www.eluniversal.com.mx/metropoli/la-basura-ahora-llega-con-recordatorio-ecologico-cdmx-lanza-separa-con-turbo-junto-a-rappi/",
+          "categorias": "medio_ambiente:0.75"
+        },
+        {
+          "titulo": "Clima CDMX y Edomex: Temperaturas entre 8 y 28°C para el martes 19 de mayo",
+          "fecha": "2026-05-18 17:32:05",
+          "url": "https://www.elfinanciero.com.mx/cdmx/2026/05/18/clima-cdmx-y-edomex-temperaturas-entre-8-y-28c-para-el-martes-19-de-mayo/",
+          "categorias": ""
+        },
+        {
+          "titulo": "IECM emite lineamientos para asegurar imparcialidad en procesos de revocación de mandato en la CDMX",
+          "fecha": "2026-05-18 16:45:26",
+          "url": "https://www.cronica.com.mx/metropoli/2026/05/18/iecm-emite-lineamientos-para-asegurar-imparcialidad-en-procesos-de-revocacion-de-mandato-en-la-cdmx/",
+          "categorias": "electoral_politico:0.5074"
+        },
+        {
+          "titulo": "Metro CDMX presenta retrasos; afectación en 4 líneas",
+          "fecha": "2026-05-18 15:48:18",
+          "url": "https://www.eluniversal.com.mx/metropoli/metro-cdmx-presenta-retrasos-afectacion-en-4-lineas/",
+          "categorias": "infraestructura:0.4441"
+        },
         {
           "titulo": "La Ola más grande del mundo en CDMX: fecha y registro para buscar romper un Récord Guiness",
           "fecha": "2026-05-18 15:39:32",
@@ -80630,36 +80675,6 @@
           "fecha": "2026-05-18 14:10:08",
           "url": "https://www.eluniversal.com.mx/metropoli/reaviva-incendio-en-bodega-en-iztapalapa-bomberos-controlan-las-llamas/",
           "categorias": ""
-        },
-        {
-          "titulo": "Estas concentraciones que marcarán agenda en la CDMX hoy 18 de mayo",
-          "fecha": "2026-05-18 13:47:36",
-          "url": "https://24-horas.mx/cdmx/estas-concentraciones-que-marcaran-agenda-en-la-cdmx-hoy-18-de-mayo/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Hoy No Circula lunes 18 de mayo: Restricciones vehiculares CDMX y EDOMEX",
-          "fecha": "2026-05-18 12:54:28",
-          "url": "https://www.cronica.com.mx/metropoli/2026/05/18/hoy-no-circula-lunes-18-de-mayo-restricciones-vehiculares-cdmx-y-edomex/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Los pendientes de Semovi en CDMX",
-          "fecha": "2026-05-18 11:13:45",
-          "url": "https://www.elfinanciero.com.mx/opinion/jeanette-leyva/2026/05/19/los-pendientes-de-semovi-en-cdmx/",
-          "categorias": "infraestructura:0.75"
-        },
-        {
-          "titulo": "Han utilizado 13 millones  el Trolebús a Chalco",
-          "fecha": "2026-05-18 10:33:06",
-          "url": "https://www.eluniversal.com.mx/metropoli/han-utilizado-13-millones-el-trolebus-a-chalco/",
-          "categorias": "infraestructura:0.75"
-        },
-        {
-          "titulo": "Coyoacán inicia censo de autos de vecinos cercanos al Estadio Ciudad de México",
-          "fecha": "2026-05-18 10:03:47",
-          "url": "https://www.eluniversal.com.mx/metropoli/coyoacan-inicia-censo-de-autos-de-vecinos-cercanos-al-estadio-ciudad-de-mexico/",
-          "categorias": "infraestructura:0.75"
         }
       ]
     },
@@ -80694,13 +80709,25 @@
     "estado_de_mexico": {
       "nombre": "Estado de Mexico",
       "abreviatura": "MEX",
-      "total_articulos": 10,
+      "total_articulos": 12,
       "categorias": [
         "agro_rural:0.5705",
         "educacion:0.75",
         "infraestructura:0.75"
       ],
       "articulos": [
+        {
+          "titulo": "Llevan a cabo el “Mega-Reciclatón” en Naucalpan",
+          "fecha": "2026-05-18 18:01:47",
+          "url": "https://www.cronica.com.mx/metropoli/2026/05/18/llevan-a-cabo-el-mega-reciclaton-en-naucalpan/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Clima CDMX y Edomex: Temperaturas entre 8 y 28°C para el martes 19 de mayo",
+          "fecha": "2026-05-18 17:32:05",
+          "url": "https://www.elfinanciero.com.mx/cdmx/2026/05/18/clima-cdmx-y-edomex-temperaturas-entre-8-y-28c-para-el-martes-19-de-mayo/",
+          "categorias": ""
+        },
         {
           "titulo": "Hoy No Circula lunes 18 de mayo: Restricciones vehiculares CDMX y EDOMEX",
           "fecha": "2026-05-18 12:54:28",
@@ -80748,18 +80775,6 @@
           "fecha": "2026-05-18 03:15:00",
           "url": "https://www.razon.com.mx/ciudad/2026/05/17/hoy-no-circula-lunes-18-de-mayo-de-2026-aplica-para-estos-autos-en-cdmx-y-edomex/",
           "categorias": ""
-        },
-        {
-          "titulo": "POV: Mañana te toca Metro; Así queda el Hoy No Circula para este lunes 18 de mayo en CDMX y Edomex",
-          "fecha": "2026-05-18 02:51:09",
-          "url": "https://www.elfinanciero.com.mx/nacional/2026/05/17/pov-manana-te-toca-metro-asi-queda-el-hoy-no-circula-para-este-lunes-18-de-mayo-en-cdmx-y-edomex/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Reinaugura Azucena Cisneros pozo de Ejidos de Tulpetlac 2",
-          "fecha": "2026-05-18 01:21:33",
-          "url": "https://24-horas.mx/estados/reinauguran-azucena-cisneros-pozo-de-ejidos-de-tulpetlac-2/",
-          "categorias": "agro_rural:0.5705"
         }
       ]
     },
@@ -80863,12 +80878,44 @@
     "jalisco": {
       "nombre": "Jalisco",
       "abreviatura": "JAL",
-      "total_articulos": 9,
+      "total_articulos": 14,
       "categorias": [
+        "electoral_politico:0.5027",
         "infraestructura:0.5528",
-        "seguridad_justicia:0.5073"
+        "seguridad_justicia:0.5073",
+        "seguridad_justicia:0.75"
       ],
       "articulos": [
+        {
+          "titulo": "Jalisco estrecha lazos con la Corona española rumbo al Mundial 2026",
+          "fecha": "2026-05-18 17:27:35",
+          "url": "https://www.cronica.com.mx/jalisco/cronomicon/2026/05/18/jalisco-estrecha-lazos-con-la-corona-espanola-rumbo-al-mundial-2026/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Ceci Flores reporta crematorio clandestino con más de 16 fosas en Lagos de Moreno",
+          "fecha": "2026-05-18 17:20:48",
+          "url": "https://www.razon.com.mx/mexico/2026/05/18/ceci-flores-reporta-crematorio-clandestino-con-mas-de-16-fosas-en-lagos-de-moreno/",
+          "categorias": "seguridad_justicia:0.75"
+        },
+        {
+          "titulo": "Clima en Jalisco: Calor extremo en la Zona Metropolitana el martes 19 de mayo",
+          "fecha": "2026-05-18 17:03:38",
+          "url": "https://www.elfinanciero.com.mx/estados/2026/05/18/clima-en-jalisco-calor-extremo-en-la-zona-metropolitana-el-martes-19-de-mayo/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Sheinbaum no descarta reunirse con el rey Felipe VI durante el Mundial 2026; insiste en disculpa de España por la Conquista",
+          "fecha": "2026-05-18 16:15:47",
+          "url": "https://www.eluniversal.com.mx/nacion/sheinbaum-no-descarta-reunirse-con-el-rey-felipe-vi-durante-el-mundial-2026-insiste-en-disculpa-de-espana-por-la-conquista/",
+          "categorias": "electoral_politico:0.5027"
+        },
+        {
+          "titulo": "Trágico choque en la autopista Tepic-Guadalajara; mueren dos personas y hay 42 lesionados",
+          "fecha": "2026-05-18 16:04:46",
+          "url": "https://www.eluniversal.com.mx/estados/tragico-choque-en-la-autopista-tepic-guadalajara-mueren-dos-personas-y-hay-42-lesionados/",
+          "categorias": ""
+        },
         {
           "titulo": "Rey Felipe VI estará en el España-Uruguay en Guadalajara, el 26 de junio, partido del Mundial",
           "fecha": "2026-05-18 13:07:21",
@@ -80897,30 +80944,6 @@
           "titulo": "Decomisan droga a El Jardinero y desmantelan 5 narcolaboratorios",
           "fecha": "2026-05-18 08:36:34",
           "url": "https://www.jornada.com.mx/2026/05/18/politica/011n1pol?partner=rss",
-          "categorias": ""
-        },
-        {
-          "titulo": "Federales incautan 5 laboratorios de narcos en 3 estados del país",
-          "fecha": "2026-05-18 08:27:18",
-          "url": "https://www.razon.com.mx/mexico/2026/05/18/federales-incautan-5-laboratorios-de-narcos-en-3-estados-del-pais/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Fiesta de la Música convierte a Guadalajara en un gran escenario urbano con récord de asistencia",
-          "fecha": "2026-05-18 05:32:11",
-          "url": "https://www.cronica.com.mx/jalisco/cronomicon/2026/05/17/fiesta-de-la-musica-convierte-a-guadalajara-en-un-gran-escenario-urbano-con-record-de-asistencia/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Hallan madres buscadoras presunto crematorio clandestino en Lagos de Moreno",
-          "fecha": "2026-05-18 01:13:42",
-          "url": "https://24-horas.mx/mexico/hallan-madres-buscadoras-presunto-crematorio-clandestino-en-lagos-de-moreno/",
-          "categorias": ""
-        },
-        {
-          "titulo": "Universidad Autónoma de Yucatán avanza con proyecto contra el dengue; iniciará despliegue en Campeche y Tabasco",
-          "fecha": "2026-05-18 00:09:12",
-          "url": "https://www.eluniversal.com.mx/ciencia-y-salud/universidad-autonoma-de-yucatan-avanza-con-proyecto-contra-el-dengue-iniciara-despliegue-en-campeche-y-tabasco/",
           "categorias": ""
         }
       ]
@@ -80958,11 +80981,17 @@
     "morelos": {
       "nombre": "Morelos",
       "abreviatura": "MOR",
-      "total_articulos": 2,
+      "total_articulos": 3,
       "categorias": [
         "seguridad_justicia:0.6236"
       ],
       "articulos": [
+        {
+          "titulo": "Clima en Puebla y Morelos: Martes 19 de mayo con cielos nublados y lluvias fuertes",
+          "fecha": "2026-05-18 17:47:44",
+          "url": "https://www.elfinanciero.com.mx/estados/2026/05/18/clima-en-puebla-y-morelos-martes-19-de-mayo-con-cielos-nublados-y-lluvias-fuertes/",
+          "categorias": ""
+        },
         {
           "titulo": "La Marina retira 39 mil 500 toneladas de sargazo en QR",
           "fecha": "2026-05-18 08:36:34",
@@ -80980,9 +81009,15 @@
     "nayarit": {
       "nombre": "Nayarit",
       "abreviatura": "NAY",
-      "total_articulos": 2,
+      "total_articulos": 3,
       "categorias": [],
       "articulos": [
+        {
+          "titulo": "Trágico choque en la autopista Tepic-Guadalajara; mueren dos personas y hay 42 lesionados",
+          "fecha": "2026-05-18 16:04:46",
+          "url": "https://www.eluniversal.com.mx/estados/tragico-choque-en-la-autopista-tepic-guadalajara-mueren-dos-personas-y-hay-42-lesionados/",
+          "categorias": ""
+        },
         {
           "titulo": "Decomisan droga a El Jardinero y desmantelan 5 narcolaboratorios",
           "fecha": "2026-05-18 08:36:34",
@@ -81000,9 +81035,15 @@
     "nuevo_leon": {
       "nombre": "Nuevo Leon",
       "abreviatura": "NLE",
-      "total_articulos": 5,
+      "total_articulos": 6,
       "categorias": [],
       "articulos": [
+        {
+          "titulo": "Clima en Nuevo León: Se espera calor y posibles lluvias este 19 de mayo",
+          "fecha": "2026-05-18 16:43:51",
+          "url": "https://www.elfinanciero.com.mx/estados/2026/05/18/clima-en-nuevo-leon-se-espera-calor-y-posibles-lluvias-este-19-de-mayo/",
+          "categorias": ""
+        },
         {
           "titulo": "Nueva riña con machetes en Ahome; adolescente de 17 años termina hospitalizado tras ataque",
           "fecha": "2026-05-18 13:40:15",
@@ -81066,11 +81107,23 @@
     "puebla": {
       "nombre": "Puebla",
       "abreviatura": "PUE",
-      "total_articulos": 4,
+      "total_articulos": 6,
       "categorias": [
         "infraestructura:0.75"
       ],
       "articulos": [
+        {
+          "titulo": "Clima en Puebla y Morelos: Martes 19 de mayo con cielos nublados y lluvias fuertes",
+          "fecha": "2026-05-18 17:47:44",
+          "url": "https://www.elfinanciero.com.mx/estados/2026/05/18/clima-en-puebla-y-morelos-martes-19-de-mayo-con-cielos-nublados-y-lluvias-fuertes/",
+          "categorias": ""
+        },
+        {
+          "titulo": "¿Cómo es Tehuitzingo, Puebla, municipio donde fueron asesinados 10 integrantes de una familia?; aquí te lo decimos",
+          "fecha": "2026-05-18 16:55:12",
+          "url": "https://www.eluniversal.com.mx/tendencias/como-es-tehuitzingo-puebla-municipio-donde-fueron-asesinados-10-integrantes-de-una-familia-aqui-te-lo-decimos/",
+          "categorias": ""
+        },
         {
           "titulo": "Han utilizado 13 millones  el Trolebús a Chalco",
           "fecha": "2026-05-18 10:33:06",
@@ -81107,12 +81160,20 @@
     "quintana_roo": {
       "nombre": "Quintana Roo",
       "abreviatura": "ROO",
-      "total_articulos": 3,
+      "total_articulos": 4,
       "categorias": [
+        "infraestructura:0.4533",
         "medio_ambiente:0.75",
+        "medio_ambiente:0.9939",
         "seguridad_justicia:0.6236"
       ],
       "articulos": [
+        {
+          "titulo": "Semarnat analiza megaproyecto \"Perfect Day\" en Mahahual, dice Sheinbaum; garantiza \"no hacer nada que afecte al ecosistema\"",
+          "fecha": "2026-05-18 16:16:25",
+          "url": "https://www.eluniversal.com.mx/nacion/semarnat-analiza-megaproyecto-perfect-day-en-mahahual-dice-sheinbaum-garantiza-no-hacer-nada-que-afecte-al-ecosistema/",
+          "categorias": "medio_ambiente:0.9939,infraestructura:0.4533"
+        },
         {
           "titulo": "La Marina retira 39 mil 500 toneladas de sargazo en QR",
           "fecha": "2026-05-18 08:36:34",
@@ -81143,7 +81204,7 @@
     "sinaloa": {
       "nombre": "Sinaloa",
       "abreviatura": "SIN",
-      "total_articulos": 16,
+      "total_articulos": 18,
       "categorias": [
         "anticorrupcion:0.5925",
         "anticorrupcion:0.75",
@@ -81155,6 +81216,18 @@
         "seguridad_justicia:0.7081"
       ],
       "articulos": [
+        {
+          "titulo": "Sheinbaum descarta riesgo para México por la entrega de exfuncionarios de Sinaloa a EU",
+          "fecha": "2026-05-18 16:57:35",
+          "url": "https://www.cronica.com.mx/nacional/2026/05/18/sheinbaum-descarta-riesgo-para-mexico-por-la-entrega-de-exfuncionarios-de-sinaloa-a-eu/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Sheinbaum descarta amenazas o ‘riesgos’ tras entrega voluntaria de funcionarios de Sinaloa a EU",
+          "fecha": "2026-05-18 16:40:55",
+          "url": "https://www.razon.com.mx/mexico/2026/05/18/sheinbaum-descarta-amenazas-o-riesgos-tras-entrega-voluntaria-de-funcionarios-de-sinaloa-a-eu/",
+          "categorias": ""
+        },
         {
           "titulo": "UIF ‘congeló’ cuentas de Rubén Rocha por mecanismo automático entre bancos de México y EU",
           "fecha": "2026-05-18 15:41:25",
@@ -81202,18 +81275,6 @@
           "fecha": "2026-05-18 08:36:34",
           "url": "https://www.jornada.com.mx/2026/05/18/politica/010n1pol?partner=rss",
           "categorias": "salud:0.8388,seguridad_justicia:0.5914"
-        },
-        {
-          "titulo": "Decomisan droga a El Jardinero y desmantelan 5 narcolaboratorios",
-          "fecha": "2026-05-18 08:36:34",
-          "url": "https://www.jornada.com.mx/2026/05/18/politica/011n1pol?partner=rss",
-          "categorias": ""
-        },
-        {
-          "titulo": "Vinculan a proceso a 13 sujetos en Sinaloa que se enfrentaron a soldados",
-          "fecha": "2026-05-18 08:36:34",
-          "url": "https://www.jornada.com.mx/2026/05/18/estados/034n4est?partner=rss",
-          "categorias": "seguridad_justicia:0.7081"
         }
       ]
     },
@@ -81266,13 +81327,19 @@
     "tamaulipas": {
       "nombre": "Tamaulipas",
       "abreviatura": "TAM",
-      "total_articulos": 9,
+      "total_articulos": 10,
       "categorias": [
         "economia_hacienda:0.7682",
         "electoral_politico:0.6311",
         "seguridad_justicia:0.75"
       ],
       "articulos": [
+        {
+          "titulo": "Detienen a dos sujetos que agredieron a elementos de la SPF en Tamaulipas",
+          "fecha": "2026-05-18 17:26:03",
+          "url": "https://24-horas.mx/estados/detienen-a-dos-sujetos-que-agredieron-a-elementos-de-la-spf-en-tamaulipas/",
+          "categorias": "seguridad_justicia:0.75"
+        },
         {
           "titulo": "Caen 2 que balearon y asesinaron a elemento de la SSPC en Tamaulipas",
           "fecha": "2026-05-18 15:10:11",
@@ -81362,9 +81429,23 @@
     "yucatan": {
       "nombre": "Yucatan",
       "abreviatura": "YUC",
-      "total_articulos": 5,
-      "categorias": [],
+      "total_articulos": 7,
+      "categorias": [
+        "educacion:0.75"
+      ],
       "articulos": [
+        {
+          "titulo": "Clima en Península de Yucatán: El martes 19 de mayo se espera una ola de calor y cielos despejados",
+          "fecha": "2026-05-18 17:26:54",
+          "url": "https://www.elfinanciero.com.mx/estados/2026/05/18/clima-en-peninsula-de-yucatan-el-martes-19-de-mayo-se-espera-una-ola-de-calor-y-cielos-despejados/",
+          "categorias": ""
+        },
+        {
+          "titulo": "Dos días históricos para Yucatán: La Presidenta Claudia Sheinbaum visita el estado",
+          "fecha": "2026-05-18 17:23:49",
+          "url": "https://www.elfinanciero.com.mx/opinion/victor-jose-lopez-martinez/2026/05/18/dos-dias-historicos-para-yucatan-la-presidenta-claudia-sheimbaum-visita-el-estado/",
+          "categorias": "educacion:0.75"
+        },
         {
           "titulo": "Dos días históricos para Yucatán: La Presidenta Claudia Sheimbaum visita el estado",
           "fecha": "2026-05-18 12:28:06",
@@ -84655,11 +84736,11 @@
     }
   ],
   "prob_extraordinario_global": {
-    "probabilidad": 65,
+    "probabilidad": 70,
     "señales": {
-      "notas_30d": 25,
-      "notas_14d": 16,
-      "notas_7d": 3,
+      "notas_30d": 28,
+      "notas_14d": 19,
+      "notas_7d": 6,
       "convocatorias_formales_30d": 0,
       "iniciativas_sil_30d": 0,
       "tweets_coordinadores_30d": 0,
@@ -84667,15 +84748,33 @@
     },
     "puntos": {
       "volumen": 45,
-      "aceleracion": 5,
+      "aceleracion": 10,
       "convocatorias": 0,
       "iniciativas_sil": 0,
       "tweets": 0,
       "penalizacion_desmentidos": 0
     },
-    "explicacion": "25 notas en 30d (3 en últimos 7d) · 5 declaración(es) confirmatorias",
+    "explicacion": "28 notas en 30d (6 en últimos 7d) · 6 declaración(es) confirmatorias",
     "ventana_dias": 30,
     "notas": [
+      {
+        "titulo": "Con menos candidatos y nuevas boletas: Los cambios de la reforma para mover Elección Judicial a 2028",
+        "fuente": "el_financiero",
+        "fecha": "2026-05-18",
+        "url": "https://www.elfinanciero.com.mx/nacional/2026/05/18/con-menos-candidatos-y-nuevas-boletas-los-cambios-de-la-reforma-para-mover-eleccion-judicial-a-2028/"
+      },
+      {
+        "titulo": "Plantea Sheinbaum aplazar elección judicial del 2027 al 2028; admite problemas logísticos",
+        "fuente": "cronica",
+        "fecha": "2026-05-18",
+        "url": "https://www.cronica.com.mx/nacional/2026/05/18/plantea-sheinbaum-aplazar-eleccion-judicial-del-2027-al-2028-admite-problemas-logisticos/"
+      },
+      {
+        "titulo": "Posponer elección judicial, simplificar boletas y capacitar a jueces; esta es la iniciativa que Sheinbaum enviará al Congreso",
+        "fuente": "el_universal",
+        "fecha": "2026-05-18",
+        "url": "https://www.eluniversal.com.mx/nacion/posponer-eleccion-judicial-simplificar-boletas-y-capacitar-a-jueces-esta-es-la-iniciativa-que-sheinbaum-enviara-al-congreso/"
+      },
       {
         "titulo": "Ramírez Cuéllar: ya se trabaja hacia periodo extraordinario para aplazar elección judicial",
         "fuente": "la_jornada",
@@ -84729,24 +84828,6 @@
         "fuente": "talla_senadores",
         "fecha": "2026-05-05",
         "url": "https://www.tallapolitica.com.mx/monreal-avila-informo-que-se-esta-revisando-la-conveniencia-o-no-de-un-periodo-extraordinario-antes-de-que-concluya-mayo/"
-      },
-      {
-        "titulo": "Yasmín Esquivel afirma que la democracia real exige tribunales confiables; derechos no deben ser promesas de campaña, señala",
-        "fuente": "el_universal",
-        "fecha": "2026-05-05",
-        "url": "https://www.eluniversal.com.mx/nacion/yasmin-esquivel-afirma-que-la-democracia-real-exige-tribunales-confiables-derechos-no-deben-ser-promesas-de-campana-senala/"
-      },
-      {
-        "titulo": "Mensaje del diputado Ricardo Monreal Ávila, presidente de la Junta de Coordinación Política y coordinador del Grupo Parlamentario de Morena",
-        "fuente": "talla_senadores",
-        "fecha": "2026-05-05",
-        "url": "https://www.tallapolitica.com.mx/mensaje-del-diputado-ricardo-monreal-avila-presidente-de-la-junta-de-coordinacion-politica-y-coordinador-del-grupo-parlamentario-de-morena-5/"
-      },
-      {
-        "titulo": "Sigue en análisis periodo extraordinario para posponer elección del PJ: Monreal",
-        "fuente": "24_horas",
-        "fecha": "2026-05-05",
-        "url": "https://24-horas.mx/mexico/sigue-en-analisis-periodo-extraordinario-para-posponer-eleccion-del-pj-monreal/"
       }
     ]
   },
