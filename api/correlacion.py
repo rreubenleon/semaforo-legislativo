@@ -533,18 +533,25 @@ def calcular_momentum(categoria_clave, umbral=40.0):
     }
 
 
-def calcular_todos_los_scores():
+def calcular_todos_los_scores(persistir=True):
     """
-    Calcula scores para las 12 categorías.
-    Almacena en BD y genera alertas.
+    Calcula scores para las categorías.
+
+    persistir=True (default): escribe a tabla `scores` y genera alertas
+        (comportamiento histórico).
+    persistir=False: solo calcula y devuelve la lista, sin tocar BD.
+        Usado por paso_5_scoring para la cadencia de snapshots intradía
+        + consolidación diaria (ver main.py:paso_5_scoring).
     """
     conn = init_db()
     resultados = []
-    fecha_hoy = datetime.now().strftime("%Y-%m-%d")
 
     for cat_clave in CATEGORIAS:
         resultado = calcular_score_categoria(cat_clave)
         resultados.append(resultado)
+
+        if not persistir:
+            continue
 
         # Guardar score en BD
         try:
@@ -604,7 +611,8 @@ def calcular_todos_los_scores():
                 datetime.now().isoformat(),
             ))
 
-    conn.commit()
+    if persistir:
+        conn.commit()
 
     # Ordenar por score descendente
     resultados.sort(key=lambda x: x["score_total"], reverse=True)

@@ -1121,20 +1121,159 @@ def paso_4_clasificacion_nlp():
 
 
 def paso_5_scoring():
-    """Paso 5: Calcular scores del semáforo."""
+    """Paso 5: Cálculo de Scores con consolidación diaria.
+
+    Cadencia:
+      - Cada corrida (cada 4h): computa el snapshot y lo escribe a
+        `scores_intradia`. NO toca el score oficial.
+      - Última corrida del día (20:00 UTC): consolida los snapshots
+        del día (promedio de cada componente) y escribe a `scores`
+        (UPSERT). El número visible se actualiza una sola vez al día.
+      - Robustez: si un día anterior tiene snapshots pero no fila
+        consolidada en `scores`, también se consolida (catches missed
+        runs de las 20 UTC).
+
+    El scraping sigue corriendo cada 4h. Lo que se estabiliza es
+    cuándo se actualiza el número visible: antes 6×/día (jitter sin
+    info nueva), ahora 1×/día consolidado.
+    """
     logger.info("=" * 60)
-    logger.info("PASO 5: Cálculo de Scores")
+    logger.info("PASO 5: Cálculo de Scores (snapshot + consolidación diaria)")
     logger.info("=" * 60)
+
+    conn = get_connection()
+
+    # Migración idempotente: tabla intradía
+    try:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS scores_intradia (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                categoria TEXT NOT NULL,
+                fecha TEXT NOT NULL,
+                hora_utc INTEGER NOT NULL,
+                score_total REAL NOT NULL,
+                score_media REAL,
+                score_trends REAL,
+                score_congreso REAL,
+                score_mananera REAL,
+                score_urgencia REAL,
+                score_dominancia REAL,
+                color TEXT,
+                UNIQUE(categoria, fecha, hora_utc)
+            )
+        """)
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_scores_intradia_fecha "
+            "ON scores_intradia(fecha)"
+        )
+        conn.commit()
+    except Exception as e:
+        logger.warning(f"Migración scores_intradia falló (no crítico): {e}")
 
     inicio = time.time()
-    scores = calcular_todos_los_scores()
+    # persistir=False: calcular_todos_los_scores devuelve la lista pero
+    # NO escribe a `scores` (eso lo hacemos abajo, vía consolidación).
+    scores = calcular_todos_los_scores(persistir=False)
+
+    hoy = datetime.utcnow().strftime("%Y-%m-%d")
+    hora_utc = datetime.utcnow().hour
+
+    # 1) Snapshot a scores_intradia
+    snap_count = 0
+    for s in scores:
+        try:
+            conn.execute("""
+                INSERT INTO scores_intradia
+                    (categoria, fecha, hora_utc, score_total, score_media,
+                     score_trends, score_congreso, score_mananera,
+                     score_urgencia, score_dominancia, color)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                s["categoria"], hoy, hora_utc,
+                s["score_total"], s.get("score_media", 0),
+                s.get("score_trends", 0), s.get("score_congreso", 0),
+                s.get("score_mananera", 0), s.get("score_urgencia", 0),
+                s.get("score_dominancia", 0), s.get("color", ""),
+            ))
+            snap_count += 1
+        except sqlite3.IntegrityError:
+            pass  # Misma corrida re-ejecutada
+    conn.commit()
+    logger.info(
+        f"Snapshot intradía: {snap_count} categorías "
+        f"({hoy} {hora_utc:02d}:00 UTC)"
+    )
+
+    # 2) Consolidar día(s) pendiente(s) → tabla `scores`
+    dias_a_consolidar = []
+    if hora_utc == 20:
+        dias_a_consolidar.append(hoy)
+    # Días anteriores con snapshots pero sin fila consolidada
+    pendientes = conn.execute("""
+        SELECT DISTINCT si.fecha FROM scores_intradia si
+        WHERE si.fecha < ?
+          AND si.fecha NOT IN (SELECT DISTINCT fecha FROM scores)
+        ORDER BY si.fecha
+    """, (hoy,)).fetchall()
+    for r in pendientes:
+        if r[0] not in dias_a_consolidar:
+            dias_a_consolidar.append(r[0])
+
+    consolidados = 0
+    for dia in dias_a_consolidar:
+        rows = conn.execute("""
+            SELECT categoria,
+                   AVG(score_total) total,
+                   AVG(score_media) media, AVG(score_trends) trends,
+                   AVG(score_congreso) cong, AVG(score_mananera) manan,
+                   AVG(score_urgencia) urg, AVG(score_dominancia) dom,
+                   COUNT(*) n_snaps
+            FROM scores_intradia
+            WHERE fecha = ?
+            GROUP BY categoria
+        """, (dia,)).fetchall()
+        for r in rows:
+            cat, total, media, trends, cong, manan, urg, dom, n_snaps = r
+            color = (
+                "verde" if total >= 70
+                else "amarillo" if total >= 40
+                else "rojo"
+            )
+            detalle = f"consolidado:{n_snaps}snaps"
+            try:
+                conn.execute("""
+                    INSERT INTO scores
+                        (categoria, score_total, score_media, score_trends,
+                         score_congreso, score_mananera, score_urgencia,
+                         score_dominancia, color, fecha, detalle)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (cat, total, media, trends, cong, manan, urg, dom,
+                      color, dia, detalle))
+            except sqlite3.IntegrityError:
+                conn.execute("""
+                    UPDATE scores
+                    SET score_total=?, score_media=?, score_trends=?,
+                        score_congreso=?, score_mananera=?, score_urgencia=?,
+                        score_dominancia=?, color=?, detalle=?
+                    WHERE categoria=? AND fecha=?
+                """, (total, media, trends, cong, manan, urg, dom,
+                      color, detalle, cat, dia))
+            consolidados += 1
+    if dias_a_consolidar:
+        conn.commit()
+        logger.info(
+            f"Consolidados a `scores`: {consolidados} filas "
+            f"({', '.join(dias_a_consolidar)})"
+        )
+
     duracion = time.time() - inicio
-
-    verdes = sum(1 for s in scores if s["color"] == "verde")
-    amarillos = sum(1 for s in scores if s["color"] == "amarillo")
-    rojos = sum(1 for s in scores if s["color"] == "rojo")
-
-    logger.info(f"Scores: {verdes} verdes, {amarillos} amarillos, {rojos} rojos ({duracion:.1f}s)")
+    verdes = sum(1 for s in scores if s.get("color") == "verde")
+    amarillos = sum(1 for s in scores if s.get("color") == "amarillo")
+    rojos = sum(1 for s in scores if s.get("color") == "rojo")
+    logger.info(
+        f"Scores: {verdes} verdes, {amarillos} amarillos, {rojos} rojos "
+        f"({duracion:.1f}s)"
+    )
     return scores
 
 
