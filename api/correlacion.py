@@ -323,16 +323,16 @@ def calcular_dominancia_discursiva(categoria_clave, keywords, dias=30):
 
     n_legislativo = n_gaceta + n_sil
 
-    # Normalizar: escalar a 0-100
-    # Basado en datos reales: mediana ~100 arts/cat/mes, ~30 docs legislativos/mes
-    # Usamos percentil 80 como techo para que no todos saturen
-    media_norm = min(n_articulos / 200.0, 1.0) * 100
-    legis_norm = min(n_legislativo / 60.0, 1.0) * 100
+    # Topes = percentil 95 REAL de throughput por categoría/mes en
+    # ordinario (no adivinanza): noticias p95≈547, docs legis p95≈149.
+    # Recalcular contra datos si el corpus crece; no hardcodear a ojo.
+    media_norm = min(n_articulos / 550.0, 1.0) * 100
+    legis_norm = min(n_legislativo / 150.0, 1.0) * 100
 
     # Calcular dominancia
     if media_norm >= 60 and legis_norm >= 60:
         # Convergencia: ambos activos → máxima señal
-        score = min((media_norm + legis_norm) / 2 * 1.2, 100)
+        score = min((media_norm + legis_norm) / 2 * 1.05, 100)
     elif media_norm >= 40 and legis_norm < 30:
         # Presión mediática sin respuesta legislativa → tema calentándose
         score = media_norm * 0.85

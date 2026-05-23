@@ -938,7 +938,9 @@ def obtener_score_congreso(categoria_keywords, dias=7):
     if total_docs == 0:
         return 0
 
-    ratio = min(docs_relevantes / max(total_docs * 0.1, 1), 1.0)
+    # Saturación = fracción semanal real categoría/total, ~p95 (0.12).
+    # El 0.10 original ya estaba bien calibrado; no era el problema.
+    ratio = min(docs_relevantes / max(total_docs * 0.12, 1), 1.0)
     return min(round(ratio * 100, 2), 100)
 
 
