@@ -9,6 +9,13 @@ Factores (pesos):
   3. Comisión + Agenda Setting (20%)  — ¿está en la comisión y hay actividad reciente?
   4. Patrón de Instrumento (10%)      — ¿tiene un patrón claro de tipo/ley?
   5. Penalización Inactividad (10%)   — ¿está activo o dormido?
+
+TODO (Permanente exclusion): este predictor consume `actividad_legislador`
+sin filtrar Comisión Permanente. Para hacerlo period-aware sin cambiar
+10+ queries hay que denormalizar `camara` en actividad_legislador
+(ALTER TABLE + UPDATE backfill desde sil_documentos), luego agregar
+`AND camara != 'Comisión Permanente'` en los SELECT relevantes.
+ELO y H2H (los score overall principales) ya lo excluyen.
 """
 
 import logging

@@ -112,12 +112,16 @@ def calcular_tasas_comision(conn):
     # Solo instrumentos legislativos sustantivos (filtra licencias,
     # informes, comunicaciones, efemérides, intervenciones genéricas).
     # Ver scripts/clasificar_instrumentos.py para las reglas.
+    # Excluir Comisión Permanente: la actividad de la Permanente (sus
+    # comisiones de trabajo efímeras) NO debe incidir en las tasas
+    # históricas de las comisiones ordinarias del Pleno.
     rows = conn.execute("""
         SELECT comision, estatus, fecha_presentacion
         FROM sil_documentos
         WHERE fecha_presentacion >= '2024-09-01'
           AND comision IS NOT NULL AND comision != ''
           AND (clasificacion = 'legislativo_sustantivo' OR clasificacion IS NULL)
+          AND (camara IS NULL OR camara != 'Comisión Permanente')
     """).fetchall()
 
     por_comision = {}  # nombre → [aprobados, desechados, pendiente_largo]
@@ -154,6 +158,10 @@ def calcular_elos(conn):
     # con bloque no recibe ELO. Eso es honesto, no es bug.
     # El widget del Radar ya muestra los totales (ind+grupo) en el desglose
     # de la columna Ind/Grupo, separados de la calificación de Efectividad.
+    # Excluir Comisión Permanente del ELO overall: la actividad de un
+    # legislador en la Permanente NO debe sumar/restar a su rating
+    # general. Es un mecanismo distinto (sesiona solo en receso, otras
+    # reglas). Si se quiere medir, va aparte (no en este script).
     rows = conn.execute("""
         SELECT
             al.legislador_id,
@@ -172,6 +180,7 @@ def calcular_elos(conn):
           AND sd.fecha_presentacion >= '2024-09-01'
           AND (sd.clasificacion = 'legislativo_sustantivo' OR sd.clasificacion IS NULL)
           AND (al.co_firmantes IS NULL OR al.co_firmantes = '')
+          AND (sd.camara IS NULL OR sd.camara != 'Comisión Permanente')
         ORDER BY sd.fecha_presentacion
     """).fetchall()
 

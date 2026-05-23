@@ -77,12 +77,16 @@ def calcular_baseline_comisiones(conn):
     """Tasa de dictamen por comisión usando TODOS los presentadores en LXVI.
     Solo cuenta instrumentos con verdict (excluye pendientes <90d).
     Retorna dict comision → {tasa, n_aprobados, n_desechados, n_pendientes_largo, n_total}."""
+    # Excluir Comisión Permanente: sus comisiones de trabajo son
+    # efímeras y no deben mezclarse con las tasas históricas de las
+    # comisiones ordinarias.
     rows = conn.execute("""
         SELECT comision, estatus, fecha_presentacion
         FROM sil_documentos
         WHERE fecha_presentacion >= '2024-09-01'
           AND comision IS NOT NULL AND comision != ''
           AND (clasificacion = 'legislativo_sustantivo' OR clasificacion IS NULL)
+          AND (camara IS NULL OR camara != 'Comisión Permanente')
     """).fetchall()
 
     por_com = defaultdict(lambda: {"apr": 0, "des": 0, "pen_largo": 0, "total": 0})
@@ -120,6 +124,7 @@ def construir_h2h(conn):
     logger.info(f"  {len(baselines)} comisiones con baseline (≥{MIN_BASELINE_COMISION} instrumentos)")
 
     logger.info("Cargando instrumentos LXVI…")
+    # Excluir Comisión Permanente del H2H overall (mismo criterio que ELO).
     rows = conn.execute("""
         SELECT id, presentador, partido, camara, tipo, comision, estatus,
                fecha_presentacion, titulo
@@ -128,6 +133,7 @@ def construir_h2h(conn):
           AND presentador != ''
           AND comision IS NOT NULL AND comision != ''
           AND (clasificacion = 'legislativo_sustantivo' OR clasificacion IS NULL)
+          AND (camara IS NULL OR camara != 'Comisión Permanente')
         ORDER BY fecha_presentacion DESC
     """).fetchall()
     logger.info(f"  {len(rows)} instrumentos con comisión")
