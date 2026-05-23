@@ -720,8 +720,20 @@ def _calcular_prob_extraordinario_global():
         except Exception as e:
             logger.warning(f"  notas_ticker fallo: {e}")
 
+        # OVERRIDE MANUAL (2026-05-23). QUITAR cuando se arregle:
+        #   (1) Scraper de Gaceta Diputados no cubre la sección de
+        #       citatorios/convocatorias del periodo extraordinario.
+        #   (2) Filtro SIL solo busca 'titulo LIKE %periodo extraordinari%';
+        #       la iniciativa del Ejecutivo (Sheinbaum, 20-may, tipo='Otro')
+        #       no entra porque el título describe la sustancia.
+        # Realidad: citatorio publicado + iniciativa formal en SIL → 100%.
+        prob_final = 100
+        explicacion_final = (
+            "Override manual: citatorio en Gaceta Diputados + iniciativa del "
+            "Ejecutivo (20-may). Algoritmo en revisión para captar estos casos."
+        )
         return {
-            "probabilidad": prob,
+            "probabilidad": prob_final,
             "señales": {
                 "notas_30d": int(n_30),
                 "notas_14d": int(n_14),
@@ -739,9 +751,11 @@ def _calcular_prob_extraordinario_global():
                 "tweets": pts_tw,
                 "penalizacion_desmentidos": -pts_neg,
             },
-            "explicacion": explicacion,
+            "explicacion": explicacion_final,
             "ventana_dias": 30,
             "notas": notas_ticker,
+            "override_manual": True,
+            "probabilidad_algoritmo": prob,
         }
     except Exception as e:
         logger.warning(f"_calcular_prob_extraordinario_global fallo: {e}")
