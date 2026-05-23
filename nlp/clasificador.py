@@ -641,16 +641,34 @@ def actualizar_categorias_en_db():
     LOG_CADA = 500
     COMMIT_CADA = 500
 
-    # Artículos sin categoría o con categoría vacía (con cap)
+    # Flag de procesado: separa "nunca clasificado" de "clasificado,
+    # sin tema legislativo". Sin esto, los no-legislativos quedaban en
+    # categorias='' y re-entraban al SELECT cada corrida → el backlog
+    # viejo nunca se alcanzaba (90% inalcanzable) y el cap se quemaba
+    # re-evaluando lo mismo. ALTER idempotente; el backfill corre una
+    # sola vez (cuando la columna se crea por primera vez).
+    try:
+        conn.execute("ALTER TABLE articulos ADD COLUMN clasificado INTEGER DEFAULT 0")
+        conn.execute(
+            "UPDATE articulos SET clasificado = 1 "
+            "WHERE categorias IS NOT NULL AND categorias != ''"
+        )
+        conn.commit()
+        logger.info("Columna 'clasificado' agregada a articulos + backfill inicial")
+    except Exception:
+        pass  # Ya existe
+
+    # Artículos nunca clasificados (con cap). El SELECT ahora drena el
+    # backlog real porque lo procesado sale de la cola para siempre.
     sin_clasificar = conn.execute("""
         SELECT id, titulo, resumen FROM articulos
-        WHERE categorias IS NULL OR categorias = ''
+        WHERE clasificado = 0
         ORDER BY fecha DESC, id DESC
         LIMIT ?
     """, (NLP_MAX,)).fetchall()
 
     total_pendiente = conn.execute(
-        "SELECT COUNT(*) FROM articulos WHERE categorias IS NULL OR categorias = ''"
+        "SELECT COUNT(*) FROM articulos WHERE clasificado = 0"
     ).fetchone()[0]
 
     logger.info(
@@ -665,13 +683,20 @@ def actualizar_categorias_en_db():
 
     clasificados = 0
     for i, row in enumerate(sin_clasificar):
-        categorias = clasificar_y_etiquetar(dict(row), conn=conn)
+        # SOLO keyword (clasificar_texto): determinista, $0 API, Haiku
+        # imposible por esta ruta. NUNCA clasificar_y_etiquetar aquí.
+        res = clasificar_texto(row["titulo"] or "", row["resumen"] or "", None)
+        categorias = ",".join(f"{c}:{s}" for c, s in res.items()) if res else ""
         if categorias:
             conn.execute(
-                "UPDATE articulos SET categorias = ? WHERE id = ?",
+                "UPDATE articulos SET categorias = ?, clasificado = 1 WHERE id = ?",
                 (categorias, row["id"]),
             )
             clasificados += 1
+        else:
+            conn.execute(
+                "UPDATE articulos SET clasificado = 1 WHERE id = ?", (row["id"],)
+            )
         if (i + 1) % LOG_CADA == 0:
             logger.info(f"  Clasificados {i+1:,}/{len(sin_clasificar):,} ({clasificados:,} ok)")
         if (i + 1) % COMMIT_CADA == 0:
@@ -689,15 +714,27 @@ def actualizar_categorias_en_db():
     except Exception:
         pass  # Ya existe
 
+    # Mismo flag de procesado para gaceta (mismo bug que articulos).
+    try:
+        conn.execute("ALTER TABLE gaceta ADD COLUMN clasificado INTEGER DEFAULT 0")
+        conn.execute(
+            "UPDATE gaceta SET clasificado = 1 "
+            "WHERE categorias IS NOT NULL AND categorias != ''"
+        )
+        conn.commit()
+        logger.info("Columna 'clasificado' agregada a gaceta + backfill inicial")
+    except Exception:
+        pass  # Ya existe
+
     GACETA_MAX = int(os.environ.get("NLP_MAX_GACETA_POR_RUN", "3000"))
     gaceta_sin = conn.execute("""
         SELECT id, titulo, resumen, comision FROM gaceta
-        WHERE categorias IS NULL OR categorias = ''
+        WHERE clasificado = 0
         ORDER BY fecha DESC, id DESC
         LIMIT ?
     """, (GACETA_MAX,)).fetchall()
     gaceta_pendiente_total = conn.execute(
-        "SELECT COUNT(*) FROM gaceta WHERE categorias IS NULL OR categorias = ''"
+        "SELECT COUNT(*) FROM gaceta WHERE clasificado = 0"
     ).fetchone()[0]
     logger.info(
         f"Gaceta por clasificar: {len(gaceta_sin):,} ahora "
@@ -707,10 +744,20 @@ def actualizar_categorias_en_db():
     gaceta_ok = 0
     for i, row in enumerate(gaceta_sin):
         d = dict(row)
-        cats = clasificar_y_etiquetar(d, conn=conn)
+        # SOLO keyword. Haiku imposible por esta ruta.
+        res = clasificar_texto(d.get("titulo") or "", d.get("resumen") or "",
+                               d.get("comision"))
+        cats = ",".join(f"{c}:{s}" for c, s in res.items()) if res else ""
         if cats:
-            conn.execute("UPDATE gaceta SET categorias = ? WHERE id = ?", (cats, d["id"]))
+            conn.execute(
+                "UPDATE gaceta SET categorias = ?, clasificado = 1 WHERE id = ?",
+                (cats, d["id"]),
+            )
             gaceta_ok += 1
+        else:
+            conn.execute(
+                "UPDATE gaceta SET clasificado = 1 WHERE id = ?", (d["id"],)
+            )
         if (i + 1) % 500 == 0:
             logger.info(f"  Gaceta {i+1:,}/{len(gaceta_sin):,} ({gaceta_ok:,} ok)")
             conn.commit()
