@@ -22,6 +22,57 @@ from scrapers.twitter import obtener_boost_twitter
 from scrapers.camara_monitoreo import obtener_boost_atencion_camara
 
 
+_CALIBRACION_CACHE = None
+
+
+def _cargar_calibracion():
+    """Lazy-load del lookup score → expectativa de instrumentos.
+
+    Generado por scripts/construir_calibracion.py contra outcomes reales
+    feb-abr 2026. Spearman score↔conteo_14d = +0.56 (n=1,103).
+    Actualizar cuando crezca la historia significativamente.
+    """
+    global _CALIBRACION_CACHE
+    if _CALIBRACION_CACHE is not None:
+        return _CALIBRACION_CACHE
+    try:
+        import json
+        from pathlib import Path
+        p = Path(__file__).resolve().parent.parent / "data" / "calibracion_score.json"
+        if p.exists():
+            _CALIBRACION_CACHE = json.loads(p.read_text(encoding="utf-8"))
+        else:
+            _CALIBRACION_CACHE = {}
+    except Exception:
+        _CALIBRACION_CACHE = {}
+    return _CALIBRACION_CACHE
+
+
+def expectativa_intensidad(raw_score, ventana_dias=14):
+    """Traduce score raw → # esperado de instrumentos sustantivos en N días.
+
+    Usa lookup empírico generado contra outcomes reales feb-abr 2026.
+    Score 70 ≈ 56 instrumentos esperados en 14d; score 10 ≈ 15;
+    score 0 ≈ 9. Ratio 6-7x entre extremos.
+
+    Esto es lo que vuelve el score DEFENDIBLE como predictor: no es
+    "70% de probabilidad" sino "expectativa de volumen calibrada
+    contra historia real, rho=0.56".
+    """
+    cal = _cargar_calibracion()
+    key = f"expected_{ventana_dias}d_smoothed"
+    bins = cal.get("lookup_bins", {})
+    if not bins:
+        return None
+    # Buscar bin que contenga raw_score
+    score_int = int(min(max(raw_score, 0), 100))
+    for bin_key, vals in bins.items():
+        lo, hi = bin_key.split("-")
+        if int(lo) <= score_int <= int(hi):
+            return vals.get(key)
+    return None
+
+
 def obtener_score_legisladores(categoria_clave, top_n=5):
     """Score 0-100 de 'músculo legislativo armado' para la categoría.
 
@@ -481,6 +532,8 @@ def calcular_score_categoria(categoria_clave):
         "score_dominancia": score_dominancia,
         "score_legisladores": score_legisladores,
         "color": color,
+        "expectativa_volumen_14d": expectativa_intensidad(score_total, 14),
+        "expectativa_volumen_30d": expectativa_intensidad(score_total, 30),
         "factor_calendario": calcular_factor_urgencia(),
         "fecha": datetime.now().strftime("%Y-%m-%d"),
     }

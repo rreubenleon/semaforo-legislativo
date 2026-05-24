@@ -1,0 +1,115 @@
+{
+  "fecha_calculo": "2026-05-24T11:43:05.540760",
+  "metodo": "Lookup score_bin -> # instrumentos esperados en N días",
+  "fuente_datos": "1103 pares (fecha,cat,score) feb-abr 2026 régimen CI",
+  "outcome": "Conteo de instrumentos sustantivos (Iniciativa + Proposición con PA) en ventana forward",
+  "spearman_rho": {
+    "7d": 0.331,
+    "14d": 0.56,
+    "30d": 0.57
+  },
+  "interpretacion": "Score 70 corresponde a ~55 instrumentos esperados en 14d. Score 10 a ~8. Ratio ~7x.",
+  "caveat": "No es probabilidad binaria. Es expectativa de volumen calibrada contra historia real.",
+  "lookup_bins": {
+    "000-009": {
+      "n_obs": 28,
+      "expected_7d": 6.7,
+      "expected_14d": 8.6,
+      "expected_30d": 17.1,
+      "median_14d": 9.0,
+      "expected_7d_smoothed": 6.7,
+      "expected_14d_smoothed": 8.6,
+      "expected_30d_smoothed": 17.1
+    },
+    "010-019": {
+      "n_obs": 64,
+      "expected_7d": 7.3,
+      "expected_14d": 15.1,
+      "expected_30d": 34.8,
+      "median_14d": 12.0,
+      "expected_7d_smoothed": 7.3,
+      "expected_14d_smoothed": 15.1,
+      "expected_30d_smoothed": 34.8
+    },
+    "020-029": {
+      "n_obs": 113,
+      "expected_7d": 7.5,
+      "expected_14d": 15.1,
+      "expected_30d": 29.6,
+      "median_14d": 11,
+      "expected_7d_smoothed": 7.5,
+      "expected_14d_smoothed": 15.1,
+      "expected_30d_smoothed": 34.8
+    },
+    "030-039": {
+      "n_obs": 172,
+      "expected_7d": 10.2,
+      "expected_14d": 17.6,
+      "expected_30d": 36.0,
+      "median_14d": 12.0,
+      "expected_7d_smoothed": 10.2,
+      "expected_14d_smoothed": 17.6,
+      "expected_30d_smoothed": 36.0
+    },
+    "040-049": {
+      "n_obs": 194,
+      "expected_7d": 15.2,
+      "expected_14d": 26.1,
+      "expected_30d": 52.4,
+      "median_14d": 19.0,
+      "expected_7d_smoothed": 15.2,
+      "expected_14d_smoothed": 26.1,
+      "expected_30d_smoothed": 52.4
+    },
+    "050-059": {
+      "n_obs": 166,
+      "expected_7d": 15.7,
+      "expected_14d": 32.5,
+      "expected_30d": 62.5,
+      "median_14d": 30.0,
+      "expected_7d_smoothed": 15.7,
+      "expected_14d_smoothed": 32.5,
+      "expected_30d_smoothed": 62.5
+    },
+    "060-069": {
+      "n_obs": 198,
+      "expected_7d": 20.2,
+      "expected_14d": 42.7,
+      "expected_30d": 86.5,
+      "median_14d": 39.5,
+      "expected_7d_smoothed": 20.2,
+      "expected_14d_smoothed": 42.7,
+      "expected_30d_smoothed": 86.5
+    },
+    "070-079": {
+      "n_obs": 136,
+      "expected_7d": 23.1,
+      "expected_14d": 55.9,
+      "expected_30d": 102.4,
+      "median_14d": 57.0,
+      "expected_7d_smoothed": 23.1,
+      "expected_14d_smoothed": 55.9,
+      "expected_30d_smoothed": 102.4
+    },
+    "080-089": {
+      "n_obs": 24,
+      "expected_7d": 11.8,
+      "expected_14d": 35.0,
+      "expected_30d": 105.6,
+      "median_14d": 28.0,
+      "expected_7d_smoothed": 23.1,
+      "expected_14d_smoothed": 55.9,
+      "expected_30d_smoothed": 105.6
+    },
+    "090-100": {
+      "n_obs": 8,
+      "expected_7d": 6.4,
+      "expected_14d": 37.4,
+      "expected_30d": 133.1,
+      "median_14d": 38.0,
+      "expected_7d_smoothed": 23.1,
+      "expected_14d_smoothed": 55.9,
+      "expected_30d_smoothed": 133.1
+    }
+  }
+}
