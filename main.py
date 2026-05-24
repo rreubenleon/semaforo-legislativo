@@ -1158,10 +1158,16 @@ def paso_5_scoring():
                 score_mananera REAL,
                 score_urgencia REAL,
                 score_dominancia REAL,
+                score_legisladores REAL,
                 color TEXT,
                 UNIQUE(categoria, fecha, hora_utc)
             )
         """)
+        # Migración idempotente: agregar score_legisladores si la tabla existía
+        try:
+            conn.execute("ALTER TABLE scores_intradia ADD COLUMN score_legisladores REAL DEFAULT 0")
+        except Exception:
+            pass  # Ya existe
         conn.execute(
             "CREATE INDEX IF NOT EXISTS idx_scores_intradia_fecha "
             "ON scores_intradia(fecha)"
@@ -1186,14 +1192,15 @@ def paso_5_scoring():
                 INSERT INTO scores_intradia
                     (categoria, fecha, hora_utc, score_total, score_media,
                      score_trends, score_congreso, score_mananera,
-                     score_urgencia, score_dominancia, color)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     score_urgencia, score_dominancia, score_legisladores, color)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 s["categoria"], hoy, hora_utc,
                 s["score_total"], s.get("score_media", 0),
                 s.get("score_trends", 0), s.get("score_congreso", 0),
                 s.get("score_mananera", 0), s.get("score_urgencia", 0),
-                s.get("score_dominancia", 0), s.get("color", ""),
+                s.get("score_dominancia", 0), s.get("score_legisladores", 0),
+                s.get("color", ""),
             ))
             snap_count += 1
         except sqlite3.IntegrityError:
@@ -1227,13 +1234,14 @@ def paso_5_scoring():
                    AVG(score_media) media, AVG(score_trends) trends,
                    AVG(score_congreso) cong, AVG(score_mananera) manan,
                    AVG(score_urgencia) urg, AVG(score_dominancia) dom,
+                   AVG(score_legisladores) leg,
                    COUNT(*) n_snaps
             FROM scores_intradia
             WHERE fecha = ?
             GROUP BY categoria
         """, (dia,)).fetchall()
         for r in rows:
-            cat, total, media, trends, cong, manan, urg, dom, n_snaps = r
+            cat, total, media, trends, cong, manan, urg, dom, leg, n_snaps = r
             color = (
                 "verde" if total >= 70
                 else "amarillo" if total >= 40
@@ -1245,18 +1253,18 @@ def paso_5_scoring():
                     INSERT INTO scores
                         (categoria, score_total, score_media, score_trends,
                          score_congreso, score_mananera, score_urgencia,
-                         score_dominancia, color, fecha, detalle)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (cat, total, media, trends, cong, manan, urg, dom,
+                         score_dominancia, score_legisladores, color, fecha, detalle)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (cat, total, media, trends, cong, manan, urg, dom, leg or 0,
                       color, dia, detalle))
             except sqlite3.IntegrityError:
                 conn.execute("""
                     UPDATE scores
                     SET score_total=?, score_media=?, score_trends=?,
                         score_congreso=?, score_mananera=?, score_urgencia=?,
-                        score_dominancia=?, color=?, detalle=?
+                        score_dominancia=?, score_legisladores=?, color=?, detalle=?
                     WHERE categoria=? AND fecha=?
-                """, (total, media, trends, cong, manan, urg, dom,
+                """, (total, media, trends, cong, manan, urg, dom, leg or 0,
                       color, detalle, cat, dia))
             consolidados += 1
     if dias_a_consolidar:

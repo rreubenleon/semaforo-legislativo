@@ -21,6 +21,31 @@ from scrapers.sintesis_legislativa import obtener_boost_sintesis
 from scrapers.twitter import obtener_boost_twitter
 from scrapers.camara_monitoreo import obtener_boost_atencion_camara
 
+
+def obtener_score_legisladores(categoria_clave, top_n=5):
+    """Score 0-100 de 'músculo legislativo armado' para la categoría.
+
+    Agrega la predicción del modelo reactivo (predictor_autoria) a un
+    número único por categoría: promedio del score_total de los top-N
+    legisladores con más probabilidad de presentar instrumento sobre el
+    tema. Si no hay reactivos identificados → 0.
+
+    Por qué importa: si muchos legisladores están posicionados (han
+    reaccionado a picos antes, están en la comisión, tienen track
+    record en el tema), la probabilidad de un instrumento sube — esa
+    es señal directa que el score venía ignorando.
+    """
+    try:
+        from api.predictor_autoria import predecir_autores
+        preds = predecir_autores(categoria_clave, top_n=top_n)
+        if not preds:
+            return 0.0
+        scores = [p.get("score_total", 0) or 0 for p in preds]
+        return round(sum(scores) / len(scores), 2)
+    except Exception as e:
+        logger.warning(f"obtener_score_legisladores({categoria_clave}) falló: {e}")
+        return 0.0
+
 logger = logging.getLogger(__name__)
 
 
@@ -44,7 +69,7 @@ def init_db():
         )
     """)
     # Migración: agregar columnas si no existen
-    for col in ["score_mananera", "score_dominancia"]:
+    for col in ["score_mananera", "score_dominancia", "score_legisladores"]:
         try:
             conn.execute(f"ALTER TABLE scores ADD COLUMN {col} REAL DEFAULT 0")
             conn.commit()
@@ -389,9 +414,15 @@ def calcular_score_categoria(categoria_clave):
         categoria_clave, score_media, score_trends, score_congreso
     )
 
-    # Componente 6: Dominancia discursiva (0.15)
+    # Componente 6: Dominancia discursiva (0.05)
     # Relación entre presión mediática y actividad legislativa
     score_dominancia = calcular_dominancia_discursiva(categoria_clave, keywords)
+
+    # Componente 7: Músculo legislativo armado (0.10) — señal directa de
+    # qué tan posicionados están los legisladores reactivos al tema. Sale
+    # del modelo predictor_autoria (top-5 promedio). Agregada 24-may-2026
+    # como parte del Paso 2 del plan de hacer el score un predictor real.
+    score_legisladores = obtener_score_legisladores(categoria_clave)
 
     # Métrica derivada (no pondera en score_total): ratio de reactividad observada
     # Útil para diferenciar "tema con ley real" vs "tema con ruido mediático".
@@ -427,6 +458,7 @@ def calcular_score_categoria(categoria_clave):
         + pesos["mananera"] * score_mananera
         + pesos["urgencia"] * score_urgencia
         + pesos["dominancia"] * score_dominancia
+        + pesos.get("legisladores", 0) * score_legisladores
     )
 
     score_total = min(round(score_total, 2), 100)
@@ -447,6 +479,7 @@ def calcular_score_categoria(categoria_clave):
             "baseline_mensual": round(baseline_mensual, 1) if baseline_mensual else 0,
         },
         "score_dominancia": score_dominancia,
+        "score_legisladores": score_legisladores,
         "color": color,
         "factor_calendario": calcular_factor_urgencia(),
         "fecha": datetime.now().strftime("%Y-%m-%d"),
@@ -456,7 +489,8 @@ def calcular_score_categoria(categoria_clave):
         f"[{color.upper():8s}] {cat_config['nombre']:30s} "
         f"Score: {score_total:6.2f} "
         f"(M:{score_media:.1f} T:{score_trends:.1f} C:{score_congreso:.1f} "
-        f"CSP:{score_mananera:.1f} U:{score_urgencia:.1f} D:{score_dominancia:.1f})"
+        f"CSP:{score_mananera:.1f} U:{score_urgencia:.1f} D:{score_dominancia:.1f} "
+        f"L:{score_legisladores:.1f})"
     )
 
     return resultado
@@ -559,8 +593,8 @@ def calcular_todos_los_scores(persistir=True):
                 INSERT INTO scores
                     (categoria, score_total, score_media, score_trends,
                      score_congreso, score_mananera, score_urgencia,
-                     score_dominancia, color, fecha, detalle)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                     score_dominancia, score_legisladores, color, fecha, detalle)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 resultado["categoria"],
                 resultado["score_total"],
@@ -570,6 +604,7 @@ def calcular_todos_los_scores(persistir=True):
                 resultado["score_mananera"],
                 resultado["score_urgencia"],
                 resultado["score_dominancia"],
+                resultado.get("score_legisladores", 0),
                 resultado["color"],
                 resultado["fecha"],
                 f"cal:{resultado['factor_calendario']}",
@@ -580,7 +615,7 @@ def calcular_todos_los_scores(persistir=True):
                 UPDATE scores
                 SET score_total=?, score_media=?, score_trends=?,
                     score_congreso=?, score_mananera=?, score_urgencia=?,
-                    score_dominancia=?, color=?, detalle=?
+                    score_dominancia=?, score_legisladores=?, color=?, detalle=?
                 WHERE categoria=? AND fecha=?
             """, (
                 resultado["score_total"],
@@ -590,6 +625,7 @@ def calcular_todos_los_scores(persistir=True):
                 resultado["score_mananera"],
                 resultado["score_urgencia"],
                 resultado["score_dominancia"],
+                resultado.get("score_legisladores", 0),
                 resultado["color"],
                 f"cal:{resultado['factor_calendario']}",
                 resultado["categoria"],

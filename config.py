@@ -1387,12 +1387,16 @@ def obtener_keywords_categoria(cat_clave):
 # ─────────────────────────────────────────────
 SCORING = {
     "pesos": {
-        "media": 0.20,       # Cobertura mediática (volumen + concentración + diversidad)
-        "trends": 0.15,      # Google Trends (atención pública, no intención política)
-        "congreso": 0.25,    # Actividad en Gaceta Parlamentaria (señal institucional)
-        "mananera": 0.10,    # Mención de la Presidenta en conferencia matutina
-        "urgencia": 0.15,    # Factor de urgencia condicional (amplifica si convergen señales)
-        "dominancia": 0.15,  # Dominancia discursiva: relación media vs congreso
+        "media": 0.20,         # Cobertura mediática (volumen + concentración + diversidad)
+        "trends": 0.15,        # Google Trends (atención pública, no intención política)
+        "congreso": 0.25,      # Actividad en Gaceta Parlamentaria (señal institucional)
+        "mananera": 0.10,      # Mención de la Presidenta en conferencia matutina
+        "urgencia": 0.15,      # Factor de urgencia condicional (amplifica si convergen señales)
+        "dominancia": 0.05,    # Dominancia discursiva (bajado 0.15→0.05; era el más heurístico,
+                               # se cubre parcialmente con legisladores que es señal directa).
+        "legisladores": 0.10,  # Músculo legislativo armado: predicción de qué legisladores
+                               # reactivos están posicionados para presentar instrumento sobre
+                               # el tema. Sale de api/predictor_autoria. Agregado Paso 2 plan.
     },
     "umbrales": {
         "verde": 70,         # ≥70: alta probabilidad de actividad legislativa
