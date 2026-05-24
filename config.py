@@ -1435,7 +1435,12 @@ GOOGLE_TRENDS = {
 # ANÁLISIS TEMPORAL (LAG)
 # ─────────────────────────────────────────────
 LAG_CONFIG = {
-    "ventana_dias": 90,                 # Ventana de análisis (90 días para patrones robustos)
+    "ventana_dias": 600,                # ~20 meses. Antes 90d; subido tras
+                                        # arreglar lag.py para usar todos los
+                                        # keywords + congreso filtrado por
+                                        # categoría. Con la fórmula anterior,
+                                        # 90d ya era marginal — con la nueva,
+                                        # más datos = más estabilidad.
     "max_lag_dias": 30,                 # Lag máximo a evaluar
     "granger_max_lag": 14,              # Lags para test de Granger
     "p_value_threshold": 0.05,          # Significancia estadística

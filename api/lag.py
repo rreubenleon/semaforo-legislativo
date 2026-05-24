@@ -260,10 +260,61 @@ def detectar_picos(serie, umbral_zscore=2.0):
     return picos
 
 
+def _contar_menciones_multi(keywords, dias):
+    """Notas/día que matcheen CUALQUIERA de los keywords (no solo el primero).
+
+    Antes (bug): se usaba solo keywords[0], descartando 50-150 keywords
+    por categoría. Para temas como 'energia' eso reducía la cobertura
+    al ~0% (el primer keyword era el nombre de una ley específica).
+    """
+    if not keywords:
+        return {}
+    conn = get_connection()
+    fl = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
+    likes = " OR ".join(["titulo LIKE ? OR resumen LIKE ?"] * len(keywords))
+    params = [fl]
+    for kw in keywords:
+        params.append(f"%{kw}%")
+        params.append(f"%{kw}%")
+    rows = conn.execute(
+        f"SELECT DATE(fecha) d, COUNT(DISTINCT id) "
+        f"FROM articulos WHERE fecha >= ? AND ({likes}) GROUP BY d", params
+    ).fetchall()
+    return {r[0]: r[1] for r in rows}
+
+
+def _contar_congreso_categoria(categoria_clave, dias):
+    """Actividad legislativa/día FILTRADA por categoría (gaceta + SIL).
+
+    Antes (bug): contar_actividad_por_fecha devolvía actividad GENERAL
+    del Congreso, sin filtrar por tema → correlación con medios de un
+    tema vs ruido total del Congreso. Ahora se cuenta solo lo que
+    matchea la categoría en gaceta.categorias o sil_documentos.categoria.
+    """
+    conn = get_connection()
+    fl = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
+    cat_pat = f"%{categoria_clave}%"
+    rows = conn.execute(
+        "SELECT d, SUM(n) FROM ("
+        "  SELECT DATE(fecha) d, COUNT(*) n FROM gaceta "
+        "    WHERE fecha >= ? AND LOWER(categorias) LIKE LOWER(?) GROUP BY d "
+        "  UNION ALL "
+        "  SELECT DATE(fecha_presentacion) d, COUNT(*) n FROM sil_documentos "
+        "    WHERE fecha_presentacion >= ? AND LOWER(categoria) LIKE LOWER(?) GROUP BY d"
+        ") GROUP BY d", (fl, cat_pat, fl, cat_pat)
+    ).fetchall()
+    return {r[0]: r[1] for r in rows}
+
+
 def analizar_categoria(categoria_clave, dias=None):
     """
     Análisis completo de correlación temporal para una categoría.
     Combina Granger + cross-correlation + detección de picos.
+
+    Usa TODOS los keywords de la categoría para la serie de medios
+    (no solo el primero) y filtra la actividad de Congreso por categoría
+    (no usa el total general). Estos dos fixes eran críticos: el cálculo
+    previo basaba todo en ~1% de los datos reales en muchas categorías.
     """
     if dias is None:
         dias = LAG_CONFIG["ventana_dias"]
@@ -271,13 +322,10 @@ def analizar_categoria(categoria_clave, dias=None):
     cat_config = CATEGORIAS[categoria_clave]
     logger.info(f"Analizando correlación temporal: {cat_config['nombre']}")
 
-    # Obtener series temporales
-    # Serie 1: Menciones en medios (usar keyword principal)
-    keyword_principal = obtener_keywords_categoria(categoria_clave)[0]
-    menciones_medios = contar_menciones_por_fecha(keyword_principal, dias)
-
-    # Serie 2: Actividad en Gaceta (general, no filtrada por keyword)
-    actividad_congreso = contar_actividad_por_fecha(dias)
+    # Series temporales — ahora usando TODOS los keywords + filtro por cat
+    keywords = obtener_keywords_categoria(categoria_clave)
+    menciones_medios = _contar_menciones_multi(keywords, dias)
+    actividad_congreso = _contar_congreso_categoria(categoria_clave, dias)
 
     # Serie 3: Google Trends
     trends = obtener_serie_temporal(categoria_clave, dias)
