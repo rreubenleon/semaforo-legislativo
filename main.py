@@ -638,11 +638,26 @@ def _calcular_prob_extraordinario_global():
         pts_conv = 25 if n_conv >= 1 else 0
 
         # C. Iniciativas/proposiciones SIL sobre extraordinario.
-        n_sil = conn.execute(f"""
+        # Antes solo buscaba en titulo "periodo extraordinari" — perdíamos
+        # iniciativas del Ejecutivo que llegan con tipo='Otro' y título
+        # sobre la sustancia (reforma constitucional). Ahora también:
+        #   - busca en sinopsis (no solo título)
+        #   - reconoce iniciativas del Ejecutivo Federal (tipo='Otro' incluido)
+        #     que justifiquen extraordinario
+        n_sil = conn.execute("""
             SELECT COUNT(*) FROM sil_documentos
             WHERE fecha_presentacion >= ?
-              AND (LOWER(titulo) LIKE '%periodo extraordinari%'
-                   OR LOWER(titulo) LIKE '%periodos extraordinari%')
+              AND (
+                LOWER(titulo) LIKE '%periodo extraordinari%'
+                OR LOWER(titulo) LIKE '%periodos extraordinari%'
+                OR LOWER(sinopsis) LIKE '%periodo extraordinari%'
+                OR LOWER(sinopsis) LIKE '%periodos extraordinari%'
+                OR (
+                  LOWER(titulo) LIKE '%ejecutivo federal%'
+                  AND (LOWER(titulo) LIKE '%iniciativa%'
+                       OR LOWER(titulo) LIKE '%proyecto de decreto%')
+                )
+              )
         """, (d30,)).fetchone()[0]
         pts_sil = min(15, n_sil * 5)
 
