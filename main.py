@@ -735,17 +735,17 @@ def _calcular_prob_extraordinario_global():
         except Exception as e:
             logger.warning(f"  notas_ticker fallo: {e}")
 
-        # OVERRIDE MANUAL (2026-05-23). QUITAR cuando se arregle:
-        #   (1) Scraper de Gaceta Diputados no cubre la sección de
-        #       citatorios/convocatorias del periodo extraordinario.
-        #   (2) Filtro SIL solo busca 'titulo LIKE %periodo extraordinari%';
-        #       la iniciativa del Ejecutivo (Sheinbaum, 20-may, tipo='Otro')
-        #       no entra porque el título describe la sustancia.
-        # Realidad: citatorio publicado + iniciativa formal en SIL → 100%.
-        prob_final = 100
+        # OVERRIDE MANUAL — actualizado 2026-05-29. El periodo extraordinario
+        # YA EMPEZÓ (martes 27-may), entonces la pregunta "qué probabilidad
+        # hay de que se convoque" ya está resuelta. Bajamos a 25% para
+        # reflejar el residual: solo queda saber si se EXTIENDE / convocan
+        # más sesiones / etc. (Antes estaba en 100% porque era inminente
+        # pero el algoritmo no lo detectaba.) Quitar override completo
+        # cuando el algoritmo se recalibre para "post-evento".
+        prob_final = 25
         explicacion_final = (
-            "Override manual: citatorio en Gaceta Diputados + iniciativa del "
-            "Ejecutivo (20-may). Algoritmo en revisión para captar estos casos."
+            "Override manual: el periodo extraordinario ya inició (27-may). "
+            "Probabilidad residual de extensión/sesiones adicionales."
         )
         return {
             "probabilidad": prob_final,
