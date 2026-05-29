@@ -293,14 +293,21 @@ def obtener_score_media(categoria_keywords, dias=7):
         return 0
 
     # Recopilar artículos relevantes con metadata (deduplicando por id)
+    # FIX (may-2026): word-boundary matching para keywords cortos. Antes
+    # con 'titulo LIKE %kw%' los acrónimos ≤4 chars capturaban basura por
+    # subcadena: ISR→"Israel"/"crisis" (98% espurio), INE→"define" (84%),
+    # IFT→"lifting". Reusamos _build_like_conditions de gaceta (word-boundary
+    # para cortos, substring para largos). El componente congreso ya lo usaba;
+    # esto cierra el hueco en el componente media.
+    from scrapers.gaceta import _build_like_conditions
     articulos_vistos = set()
     articulos_data = []
     for kw in categoria_keywords:
-        rows = conn.execute("""
+        cond, params_kw = _build_like_conditions(kw, campos=("titulo", "resumen"))
+        rows = conn.execute(f"""
             SELECT id, peso_fuente, fuente, DATE(fecha) as dia FROM articulos
-            WHERE fecha >= ?
-              AND (titulo LIKE ? OR resumen LIKE ?)
-        """, (fecha_limite, f"%{kw}%", f"%{kw}%")).fetchall()
+            WHERE fecha >= ? AND {cond}
+        """, [fecha_limite] + params_kw).fetchall()
 
         for row in rows:
             if row[0] not in articulos_vistos:
