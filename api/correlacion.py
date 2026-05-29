@@ -23,6 +23,35 @@ from scrapers.camara_monitoreo import obtener_boost_atencion_camara
 
 
 _CALIBRACION_CACHE = None
+_PESOS_CAT_CACHE = None
+
+
+def _pesos_de_categoria(categoria_clave):
+    """Pesos de scoring específicos de la categoría (cada tema = mercado propio).
+
+    Lee data/pesos_por_categoria.json (generado por
+    scripts/generar_pesos_categoria.py a partir de la responsividad
+    mediática histórica de cada sub-tema, lift 2-ventanas). Si no existe
+    el archivo o la categoría, cae al peso global SCORING["pesos"].
+
+    El peso de 'media' sube en temas reactivos a prensa (electoral, energía)
+    y baja en temas de calendario propio (trabajo, presupuesto); los otros
+    6 se renormalizan para sumar 1.0.
+    """
+    global _PESOS_CAT_CACHE
+    if _PESOS_CAT_CACHE is None:
+        try:
+            import json
+            from pathlib import Path
+            p = Path(__file__).resolve().parent.parent / "data" / "pesos_por_categoria.json"
+            _PESOS_CAT_CACHE = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
+        except Exception:
+            _PESOS_CAT_CACHE = {}
+    cats = _PESOS_CAT_CACHE.get("categorias", {})
+    entry = cats.get(categoria_clave)
+    if entry and "pesos" in entry:
+        return entry["pesos"]
+    return SCORING["pesos"]
 
 
 def _cargar_calibracion():
@@ -435,7 +464,9 @@ def calcular_score_categoria(categoria_clave):
     """
     cat_config = CATEGORIAS[categoria_clave]
     keywords = obtener_keywords_categoria(categoria_clave)
-    pesos = SCORING["pesos"]
+    # Pesos POR CATEGORÍA (media ajustada por responsividad histórica).
+    # Fallback al global si no hay entrada para esta categoría.
+    pesos = _pesos_de_categoria(categoria_clave)
 
     # Componente 1: Presión mediática (0.20)
     # Base: RSS/HTML + boost de Twitter (periodistas y coordinadores)
