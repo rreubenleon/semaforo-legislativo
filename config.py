@@ -562,7 +562,7 @@ CATEGORIAS = {
             },
             "cultura_deporte": {
                 "nombre": "Cultura y deporte",
-                "keywords": ["cultura", "patrimonio cultural", "juventud", "deporte", "biblioteca",
+                "keywords": ["cultura", "patrimonio cultural", "juventud", "biblioteca",
                              # Leyes federales
                              "Ley General de Cultura y Derechos Culturales", "Ley General de Bibliotecas",
                              "Ley de Fomento para la Lectura y el Libro", "Ley de Derechos Lingüísticos",
@@ -1042,7 +1042,7 @@ CATEGORIAS = {
                 "nombre": "Regulación de IA",
                 "keywords": ["inteligencia artificial", "regulación de inteligencia artificial", "ley de inteligencia artificial",
                              "iniciativa inteligencia artificial", "ética de la inteligencia artificial",
-                             "ChatGPT", "OpenAI", "Claude", "Gemini", "automatización", "robot", "empleo automatizado"],
+                             "automatización", "empleo automatizado"],
             },
             "gobernanza_digital": {
                 "nombre": "Gobernanza digital",
@@ -1141,12 +1141,10 @@ CATEGORIAS = {
             "industria_audiovisual": {
                 "nombre": "Industria audiovisual",
                 "keywords": ["cinematografía", "producción audiovisual", "industria cinematográfica",
-                             "cine mexicano", "cine nacional", "película", "guión cinematográfico",
-                             "cine", "audiovisual", "Ley Federal de Cinematografía",
-                             "Ley de Cine", "Ley Federal de Cine", "sector audiovisual",
-                             "derechos de creadores", "productor cinematográfico", "cortometraje",
-                             "largometraje", "documental cinematográfico", "IMCINE",
-                             "estímulo fiscal cinematográfico", "EFICINE"],
+                             "cine mexicano", "cine nacional", "audiovisual",
+                             "Ley Federal de Cinematografía", "Ley de Cine", "Ley Federal de Cine",
+                             "sector audiovisual", "derechos de creadores", "productor cinematográfico",
+                             "IMCINE", "estímulo fiscal cinematográfico", "EFICINE"],
             },
         },
     },
