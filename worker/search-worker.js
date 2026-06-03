@@ -1210,7 +1210,48 @@ async function handleProbabilidad(request, env) {
       }, 200, request);
     }
 
-    return corsResponse({ prob: null, razon: 'tipo_no_soportado', tipos: ['tema_score', 'legislador_actividad', 'comision_dictamen'] }, 400, request);
+    if (tipo === 'evento_respuesta') {
+      // Pieza evento→respuesta: precomputado por scripts/computar_evento_respuesta.py
+      // en tabla evento_respuesta_subcat. Param: subcat="categoria/subcategoria"
+      // o categoria= (devuelve el sub-tema más reactivo de esa categoría).
+      const subcat = url.searchParams.get('subcat');
+      const categoria = (url.searchParams.get('categoria') || '').toLowerCase();
+      let row;
+      if (subcat) {
+        const r = await db.prepare(
+          `SELECT * FROM evento_respuesta_subcat WHERE subcat = ?`
+        ).bind(subcat).all();
+        row = (r.results || [])[0];
+      } else if (categoria) {
+        const r = await db.prepare(
+          `SELECT * FROM evento_respuesta_subcat WHERE categoria = ?
+           ORDER BY p_respuesta DESC LIMIT 1`
+        ).bind(categoria).all();
+        row = (r.results || [])[0];
+      } else {
+        return corsResponse({ prob: null, razon: 'subcat_o_categoria_requerido' }, 400, request);
+      }
+      if (!row) {
+        return corsResponse({ prob: null, razon: 'sin_datos_subcat' }, 200, request);
+      }
+      const partidos = [];
+      if (row.partido_1) partidos.push({ partido: row.partido_1, n: row.partido_1_n });
+      if (row.partido_2) partidos.push({ partido: row.partido_2, n: row.partido_2_n });
+      return corsResponse({
+        prob: row.p_respuesta,
+        base: 'evento_respuesta_precomputado',
+        subcat: row.subcat,
+        n_picos: row.n_picos,
+        partido_probable: row.partido_1 || null,
+        partidos,
+        ventana_dias: 21,
+        confianza: row.n_picos >= 15 ? 'alta' : row.n_picos >= 8 ? 'media' : 'baja',
+        descripcion: `Tras eventos similares, ${Math.round(row.p_respuesta * 100)}% generó respuesta legislativa en 21d` +
+          (row.partido_1 ? `, típicamente del ${row.partido_1}` : '')
+      }, 200, request);
+    }
+
+    return corsResponse({ prob: null, razon: 'tipo_no_soportado', tipos: ['tema_score', 'legislador_actividad', 'comision_dictamen', 'evento_respuesta'] }, 400, request);
   } catch (err) {
     return corsResponse({ prob: null, razon: 'error_interno', detalle: err.message }, 500, request);
   }
