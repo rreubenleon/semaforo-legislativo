@@ -140,7 +140,9 @@ def init_db():
         )
     """)
     # Agregar columnas nuevas si no existen (migración)
-    for col, default in [("presentador", "''"), ("tipo_presentador", "''")]:
+    for col, default in [("presentador", "''"), ("tipo_presentador", "''"),
+                         ("estatus_estado", "''"), ("estatus_situacion", "''"),
+                         ("estatus_fecha", "''"), ("estatus_canon", "''")]:
         try:
             conn.execute(f"ALTER TABLE sil_documentos ADD COLUMN {col} TEXT DEFAULT {default}")
         except (sqlite3.OperationalError, ValueError):
@@ -346,6 +348,12 @@ def _obtener_detalle(seg_id, asu_id):
     if com_match:
         comision = com_match.group(1).strip()
 
+    # Estatus: el SIL lo entrega como 3 sub-campos pegados sin separador
+    # ("Pendiente en comisión(es) de origenPendiente09/04/2025"). Parsear
+    # upstream a estado/situación/fecha/canon para no guardarlo roto.
+    estatus_raw = meta.get("último estatus", meta.get("ultimo estatus", ""))
+    est_estado, est_sit, est_fecha, est_canon = _parsear_estatus(estatus_raw)
+
     return {
         "camara": meta.get("cámara origen", meta.get("camara origen", "")),
         "fecha_presentacion": fecha,
@@ -356,8 +364,44 @@ def _obtener_detalle(seg_id, asu_id):
         "presentador": presentador_raw,
         "tipo_presentador": tipo_presentador,
         "comision": comision,
-        "estatus": meta.get("último estatus", meta.get("ultimo estatus", "")),
+        "estatus": estatus_raw,
+        "estatus_estado": est_estado,
+        "estatus_situacion": est_sit,
+        "estatus_fecha": est_fecha,
+        "estatus_canon": est_canon,
     }
+
+
+# Situaciones canónicas que el SIL repite al final del bloque de estatus.
+_SIL_SITUACIONES = ("Pendiente", "Aprobado", "Desechado", "Resuelto",
+                    "Retirada", "Concluido", "Precluido")
+
+
+def _parsear_estatus(e):
+    """Separa el estatus pegado del SIL en (estado, situación, fecha, canon).
+    'Pendiente en comisión(es) de origenPendiente09/04/2025' →
+    ('Pendiente en comisión(es) de origen', 'Pendiente', '09/04/2025', 'Pendiente')
+    """
+    if not e:
+        return "", "", "", "SinEstado"
+    m = re.search(r"(\d{2}/\d{2}/\d{4})\s*$", e)
+    fecha = m.group(1) if m else ""
+    resto = e[:m.start()] if m else e
+    sm = re.search(r"(" + "|".join(_SIL_SITUACIONES) + r")\s*$", resto)
+    sit = sm.group(1) if sm else ""
+    estado = (resto[:sm.start()] if sm else resto).strip()
+    t = (estado + " " + sit).lower()
+    if "publicado en dof" in t or "aprobado" in t or "turnado al ejecutivo" in t or "resuelto" in t:
+        canon = "Aprobado"
+    elif "desechado" in t or "precluido" in t or "concluido" in t:
+        canon = "Desechado"
+    elif "retirad" in t:
+        canon = "Retirada"
+    elif "pendiente" in t or "turnado" in t or "lectura" in t or "presentado" in t:
+        canon = "Pendiente"
+    else:
+        canon = "Otro" if estado else "SinEstado"
+    return estado, sit, fecha, canon
 
 
 def _parsear_fecha(fecha_raw):
@@ -506,13 +550,21 @@ def scrape_sil_completo(fecha_desde="2025-09-01", detalle_max=200):
             categoria = _clasificar_documento(info["titulo"], info["sinopsis"])
 
             try:
-                conn.execute("""
+                cur = conn.execute("""
                     INSERT INTO sil_documentos
                         (seguimiento_id, asunto_id, tipo, titulo, sinopsis,
                          camara, fecha_presentacion, legislatura, periodo,
                          estatus, partido, comision, categoria,
-                         presentador, tipo_presentador, fecha_scraping)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                         presentador, tipo_presentador, fecha_scraping,
+                         estatus_estado, estatus_situacion, estatus_fecha, estatus_canon)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(seguimiento_id, asunto_id) DO UPDATE SET
+                        estatus=excluded.estatus,
+                        estatus_estado=excluded.estatus_estado,
+                        estatus_situacion=excluded.estatus_situacion,
+                        estatus_fecha=excluded.estatus_fecha,
+                        estatus_canon=excluded.estatus_canon,
+                        comision=excluded.comision
                 """, (
                     seg_id, asu_id,
                     detalle["tipo"], info["titulo"], info["sinopsis"],
@@ -523,6 +575,10 @@ def scrape_sil_completo(fecha_desde="2025-09-01", detalle_max=200):
                     detalle.get("presentador", ""),
                     detalle.get("tipo_presentador", ""),
                     datetime.now().isoformat(),
+                    detalle.get("estatus_estado", ""),
+                    detalle.get("estatus_situacion", ""),
+                    detalle.get("estatus_fecha", ""),
+                    detalle.get("estatus_canon", ""),
                 ))
                 nuevos += 1
             except (sqlite3.IntegrityError, ValueError):
