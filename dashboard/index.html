@@ -8528,6 +8528,10 @@
               if (!c.legislador_id) return null;
               params.set('tipo', 'legislador_actividad');
               params.set('legislador_id', String(c.legislador_id));
+            } else if (c.tipo === 'evento_respuesta') {
+              if (!c.tema) return null;
+              params.set('tipo', 'evento_respuesta');
+              params.set('categoria', c.tema);
             } else {
               return null;
             }
@@ -8590,6 +8594,9 @@
               } else if (c.tipo === 'legislador_actividad') {
                 const leg = allLegisladores.find(l => l.id === Number(c.legislador_id));
                 return `${leg ? formatNombreLegislador(leg) : 'legislador'} presenta`;
+              } else if (c.tipo === 'evento_respuesta') {
+                const cat = semaforo.find(s => s.categoria === c.tema);
+                return `respuesta en ${cat ? cat.nombre : 'tema'}`;
               }
               return '?';
             });
@@ -8627,6 +8634,11 @@
               const leg = allLegisladores.find(l => l.id === Number(c.legislador_id));
               return `${leg ? formatNombreLegislador(leg) : '(elige un legislador)'} presente un instrumento (iniciativa o proposición)`;
             }
+            if (c.tipo === 'evento_respuesta') {
+              const cat = semaforo.find(s => s.categoria === c.tema);
+              const nom = cat ? cat.nombre : '(elige un tema)';
+              return `tras un evento en ${nom}, el Congreso responda con un instrumento`;
+            }
             return '…';
           };
           // Preview completo: "Te avisaremos por correo cuando …"
@@ -8652,6 +8664,10 @@
               desc: 'Cuando alguien que vigilas presenta iniciativa o punto de acuerdo',
               setup: () => { setLogica('AND'); setModoAvanzado(false);
                 setCondiciones([{ tipo: 'legislador_actividad', legislador_id: '' }]); } },
+            { id: 't_evento', icon: '⚡', titulo: 'Evento → respuesta del Congreso',
+              desc: 'Probabilidad de que el Congreso reaccione a un evento mediático en un tema',
+              setup: () => { setLogica('AND'); setModoAvanzado(false);
+                setCondiciones([{ tipo: 'evento_respuesta', tema: '' }]); } },
           ];
 
           const submit = () => {
@@ -8659,6 +8675,7 @@
             const validas = condiciones.every(c => {
               if (c.tipo === 'tema_score') return c.tema && c.valor != null;
               if (c.tipo === 'legislador_actividad') return c.legislador_id;
+              if (c.tipo === 'evento_respuesta') return c.tema;
               return false;
             });
             if (!validas) return;
@@ -8706,6 +8723,15 @@
                   {leyenda && <span className="text-gray-400 mr-1.5">{leyenda}</span>}
                   <span className="text-gray-800">{leg ? formatNombreLegislador(leg) : '—'}</span>
                   <span className="text-gray-500 mx-1.5">presenta instrumento</span>
+                </span>
+              );
+            } else if (c.tipo === 'evento_respuesta') {
+              const cat = semaforo.find(s => s.categoria === c.tema);
+              return (
+                <span key={i} className="font-mono">
+                  {leyenda && <span className="text-gray-400 mr-1.5">{leyenda}</span>}
+                  <span className="text-gray-500 mr-1.5">evento→respuesta</span>
+                  <span className="text-gray-800">{cat ? cat.nombre : '—'}</span>
                 </span>
               );
             }
@@ -8771,6 +8797,7 @@
                                 className="px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white text-sm">
                                 <option value="tema_score">un tema</option>
                                 <option value="legislador_actividad">un legislador</option>
+                                <option value="evento_respuesta">un evento → respuesta del Congreso</option>
                               </select>
                               {c.tipo === 'tema_score' && (
                                 <React.Fragment>
@@ -8806,6 +8833,17 @@
                                     {allLegisladores.map(l => <option key={l.id} value={l.id}>{formatNombreLegislador(l)}</option>)}
                                   </select>
                                   <span className="text-sm text-gray-500">presente un instrumento</span>
+                                </React.Fragment>
+                              )}
+                              {c.tipo === 'evento_respuesta' && (
+                                <React.Fragment>
+                                  <span className="text-sm text-gray-500">en</span>
+                                  <select value={c.tema} onChange={e => updateCondicion(i, { tema: e.target.value })}
+                                    className="px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white text-sm">
+                                    <option value="">elige tema…</option>
+                                    {semaforo.map(s => <option key={s.categoria} value={s.categoria}>{s.nombre}</option>)}
+                                  </select>
+                                  <span className="text-sm text-gray-500">el Congreso responda con un instrumento</span>
                                 </React.Fragment>
                               )}
                             </div>
