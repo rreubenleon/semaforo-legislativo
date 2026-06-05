@@ -1099,6 +1099,46 @@ def normalizar_partidos_existentes():
     return actualizados
 
 
+def obtener_metrica_iniciativas(fecha_desde="2025-09-01", fecha_hasta="2026-04-29"):
+    """Métrica DUAL de iniciativas para reporte/dashboard, comparable con
+    análisis externos (Integralia, etc.).
+
+    Devuelve dos números porque miden cosas distintas:
+      - cobertura_total: TODOS los expedientes únicos que FIAT captura
+        (ventaja de FIAT: ve el flujo completo del SIL).
+      - con_tramite_formal: solo los que tienen estatus/trámite real
+        (comparable con metodología de terceros, que filtran a esto).
+      - sin_detalle: capturados pero a los que les falta el detalle
+        (re-fetcheables; explica la diferencia con conteos externos).
+      - tasa_aprobacion: aprobadas / resueltas, sobre los formales.
+
+    Usa estatus_canon (poblado por _parsear_estatus upstream + el
+    re-parseo de BD existente).
+    """
+    conn = get_connection()
+    base = ("FROM sil_documentos WHERE tipo_grupo='Iniciativa' "
+            "AND fecha_presentacion BETWEEN ? AND ?")
+    p = (fecha_desde, fecha_hasta)
+
+    def n(extra=""):
+        return conn.execute(
+            f"SELECT COUNT(DISTINCT seguimiento_id) {base}{extra}", p).fetchone()[0]
+
+    total = n()
+    formal = n(" AND estatus_estado != ''")
+    aprob = n(" AND estatus_canon='Aprobado'")
+    resueltas = n(" AND estatus_canon IN ('Aprobado','Desechado','Retirada')")
+    return {
+        "cobertura_total": total,
+        "con_tramite_formal": formal,
+        "sin_detalle": total - formal,
+        "aprobadas": aprob,
+        "resueltas": resueltas,
+        "tasa_aprobacion": round(100 * aprob / resueltas, 1) if resueltas else None,
+        "periodo": {"desde": fecha_desde, "hasta": fecha_hasta},
+    }
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(message)s")
 
