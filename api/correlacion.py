@@ -366,7 +366,7 @@ def asignar_color(score):
         return "rojo"
 
 
-def calcular_dominancia_discursiva(categoria_clave, keywords, dias=30):
+def calcular_dominancia_discursiva(categoria_clave, keywords, dias=30, ref_date=None):
     """
     Mide la relación entre presión mediática y actividad legislativa.
     Inspirado en Gutiérrez-Meave (2024): la coalición que domina el discurso
@@ -378,17 +378,25 @@ def calcular_dominancia_discursiva(categoria_clave, keywords, dias=30):
     - Media baja + Congreso alto = tema cocinándose en silencio (score medio-alto)
     - Media baja + Congreso bajo = tema inactivo (score bajo)
 
+    ref_date: ancla (YYYY-MM-DD). None = hoy. Con ancla, ventana cerrada
+    para recálculo histórico. Sin ancla, comportamiento idéntico al previo.
+
     Returns: float 0-100
     """
     conn = get_connection()
     cat_pattern = f"%{categoria_clave}%"
 
+    # Anclaje: con ref_date usamos date(ref,...) y tope <= ref; sin él, date('now',...)
+    base = f"date('{ref_date}'" if ref_date else "date('now'"
+    tope_art = f" AND fecha <= '{ref_date}'" if ref_date else ""
+    tope_sil = f" AND fecha_presentacion <= '{ref_date}'" if ref_date else ""
+
     # Contar artículos de medios clasificados en esta categoría (últimos N días)
     # Usa columna 'categorias' del clasificador NLP (más preciso que keywords en título)
     try:
-        n_articulos = conn.execute("""
+        n_articulos = conn.execute(f"""
             SELECT COUNT(*) FROM articulos
-            WHERE fecha >= date('now', ? || ' days')
+            WHERE fecha >= {base}, ? || ' days'){tope_art}
               AND LOWER(categorias) LIKE ?
         """, (f"-{dias}", cat_pattern)).fetchone()[0]
     except Exception:
@@ -401,7 +409,7 @@ def calcular_dominancia_discursiva(categoria_clave, keywords, dias=30):
         try:
             n_articulos = conn.execute(f"""
                 SELECT COUNT(*) FROM articulos
-                WHERE fecha >= date('now', '-{dias} days')
+                WHERE fecha >= {base}, '-{dias} days'){tope_art}
                   AND ({like_conditions})
             """, params_like).fetchone()[0]
         except Exception:
@@ -409,18 +417,18 @@ def calcular_dominancia_discursiva(categoria_clave, keywords, dias=30):
 
     # Contar documentos legislativos (gaceta + SIL) clasificados en esta categoría
     try:
-        n_gaceta = conn.execute("""
+        n_gaceta = conn.execute(f"""
             SELECT COUNT(*) FROM gaceta
-            WHERE fecha >= date('now', ? || ' days')
+            WHERE fecha >= {base}, ? || ' days'){tope_art}
               AND LOWER(categorias) LIKE ?
         """, (f"-{dias}", cat_pattern)).fetchone()[0]
     except Exception:
         n_gaceta = 0
 
     try:
-        n_sil = conn.execute("""
+        n_sil = conn.execute(f"""
             SELECT COUNT(*) FROM sil_documentos
-            WHERE fecha_presentacion >= date('now', ? || ' days')
+            WHERE fecha_presentacion >= {base}, ? || ' days'){tope_sil}
               AND LOWER(categoria) LIKE ?
         """, (f"-{dias}", cat_pattern)).fetchone()[0]
     except Exception:

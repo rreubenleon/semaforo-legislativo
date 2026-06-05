@@ -886,7 +886,7 @@ def _build_like_conditions(kw, campos=("titulo", "resumen", "comision")):
         return f"({conds})", params
 
 
-def obtener_score_congreso(categoria_keywords, dias=7):
+def obtener_score_congreso(categoria_keywords, dias=7, ref_date=None):
     """Calcula un score 0-100 de actividad legislativa para una categoría.
 
     Cuenta actividad de TODAS las fuentes legislativas:
@@ -900,18 +900,29 @@ def obtener_score_congreso(categoria_keywords, dias=7):
 
     Resultado: durante receso (cuando solo sesiona la Permanente) el score
     daba 0 aunque hubiera actividad. Cambio: actividad legislativa = unión.
+
+    ref_date: ancla (YYYY-MM-DD). None = hoy. Con ancla, ventana cerrada
+    [ancla-dias, ancla] para recálculo histórico. Sin ancla, idéntico.
     """
     conn = get_connection()
 
-    fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
+    if ref_date:
+        ancla = datetime.strptime(ref_date, "%Y-%m-%d")
+        fecha_limite = (ancla - timedelta(days=dias)).strftime("%Y-%m-%d")
+        gt = " AND fecha <= ?"; st = " AND fecha_presentacion <= ?"
+        ft = ref_date
+    else:
+        fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
+        gt = ""; st = ""; ft = None
 
     # Total: gaceta + sil_documentos en la ventana
     total_gaceta = conn.execute(
-        "SELECT COUNT(*) FROM gaceta WHERE fecha >= ?", (fecha_limite,)
+        f"SELECT COUNT(*) FROM gaceta WHERE fecha >= ?{gt}",
+        ([fecha_limite, ft] if ft else [fecha_limite])
     ).fetchone()[0]
     total_sil = conn.execute(
-        "SELECT COUNT(*) FROM sil_documentos WHERE fecha_presentacion >= ?",
-        (fecha_limite,),
+        f"SELECT COUNT(*) FROM sil_documentos WHERE fecha_presentacion >= ?{st}",
+        ([fecha_limite, ft] if ft else [fecha_limite]),
     ).fetchone()[0]
     total_docs = total_gaceta + total_sil
 
@@ -920,18 +931,18 @@ def obtener_score_congreso(categoria_keywords, dias=7):
         # Gaceta (campos: titulo, resumen, comision)
         cond_g, params_g = _build_like_conditions(kw)
         n_g = conn.execute(
-            f"SELECT COUNT(*) FROM gaceta WHERE fecha >= ? AND {cond_g}",
-            [fecha_limite] + params_g,
+            f"SELECT COUNT(*) FROM gaceta WHERE fecha >= ?{gt} AND {cond_g}",
+            ([fecha_limite, ft] if ft else [fecha_limite]) + params_g,
         ).fetchone()[0]
         # SIL (campos: titulo, sinopsis, comision)
         like = f"%{kw}%"
         n_s = conn.execute(
-            """
+            f"""
             SELECT COUNT(*) FROM sil_documentos
-            WHERE fecha_presentacion >= ?
+            WHERE fecha_presentacion >= ?{st}
               AND (titulo LIKE ? OR sinopsis LIKE ? OR comision LIKE ?)
             """,
-            (fecha_limite, like, like, like),
+            ([fecha_limite, ft] if ft else [fecha_limite]) + [like, like, like],
         ).fetchone()[0]
         docs_relevantes += n_g + n_s
 

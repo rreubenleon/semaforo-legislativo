@@ -267,7 +267,7 @@ def contar_menciones_por_fecha(keyword, dias=30):
     return {row[0]: row[1] for row in rows}
 
 
-def obtener_score_media(categoria_keywords, dias=7):
+def obtener_score_media(categoria_keywords, dias=7, ref_date=None):
     """
     Calcula score 0-100 de presión mediática para una categoría.
 
@@ -276,17 +276,29 @@ def obtener_score_media(categoria_keywords, dias=7):
     2. Concentración temporal (20%) — en cuántos de los N días apareció el tema
     3. Días consecutivos (20%) — streak desde hoy hacia atrás
     4. Diversidad de medios (20%) — cuántas fuentes distintas cubren el tema (√)
+
+    ref_date: ancla de la ventana (YYYY-MM-DD). None = hoy (producción).
+    Con ancla, la ventana es CERRADA [ancla-dias, ancla] para recálculo
+    histórico fiel (backfill). Sin ancla, comportamiento idéntico al previo.
     """
     import math
 
     conn = get_connection()
 
-    fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
+    if ref_date:
+        ancla = datetime.strptime(ref_date, "%Y-%m-%d")
+        fecha_limite = (ancla - timedelta(days=dias)).strftime("%Y-%m-%d")
+        fecha_tope = ref_date
+        cond_tope = " AND fecha <= ?"
+    else:
+        fecha_limite = (datetime.now() - timedelta(days=dias)).strftime("%Y-%m-%d")
+        fecha_tope = None
+        cond_tope = ""
 
     # Peso total de todos los artículos en el periodo
     total_peso = conn.execute(
-        "SELECT COALESCE(SUM(peso_fuente), 0) FROM articulos WHERE fecha >= ?",
-        (fecha_limite,)
+        f"SELECT COALESCE(SUM(peso_fuente), 0) FROM articulos WHERE fecha >= ?{cond_tope}",
+        ([fecha_limite, fecha_tope] if fecha_tope else [fecha_limite])
     ).fetchone()[0]
 
     if total_peso == 0:
@@ -306,8 +318,8 @@ def obtener_score_media(categoria_keywords, dias=7):
         cond, params_kw = _build_like_conditions(kw, campos=("titulo", "resumen"))
         rows = conn.execute(f"""
             SELECT id, peso_fuente, fuente, DATE(fecha) as dia FROM articulos
-            WHERE fecha >= ? AND {cond}
-        """, [fecha_limite] + params_kw).fetchall()
+            WHERE fecha >= ?{cond_tope} AND {cond}
+        """, ([fecha_limite, fecha_tope] if fecha_tope else [fecha_limite]) + params_kw).fetchall()
 
         for row in rows:
             if row[0] not in articulos_vistos:
@@ -338,7 +350,7 @@ def obtener_score_media(categoria_keywords, dias=7):
     conc_score = min((len(dias_con_cobertura) / dias) * 100.0, 100.0)
 
     # ── Subfactor 3: Días consecutivos recientes (20%) ──
-    hoy = datetime.now().date()
+    hoy = datetime.strptime(ref_date, "%Y-%m-%d").date() if ref_date else datetime.now().date()
     dias_consecutivos = 0
     for i in range(dias):
         dia_check = (hoy - timedelta(days=i)).strftime("%Y-%m-%d")
