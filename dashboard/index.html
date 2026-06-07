@@ -2091,8 +2091,39 @@
                 return result;
             })();
 
+            const mi = data.metrica_iniciativas || {};
+
             return (
                 <div className="space-y-6">
+                    {/* Métrica de iniciativas: cobertura total + desenlace real (LXVI 2do año) */}
+                    {mi.total_presentadas ? (
+                        <div className="glass border border-borde rounded-xl p-4">
+                            <div className="flex items-center justify-between mb-3">
+                                <div>
+                                    <div className="text-xs font-semibold text-gray-500">Iniciativas presentadas · 2.° año LXVI</div>
+                                    <div className="text-[10px] text-gray-400 mt-0.5">Sep 2025 – Abr 2026 · cobertura completa y desenlace real (fuente: SIL)</div>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                                <div>
+                                    <div className="text-2xl font-bold text-gray-800">{mi.total_presentadas.toLocaleString()}</div>
+                                    <div className="text-[10px] text-gray-500 uppercase tracking-wide">Presentadas</div>
+                                </div>
+                                <div>
+                                    <div className="text-2xl font-bold text-semaforo-verde">{mi.aprobadas}</div>
+                                    <div className="text-[10px] text-gray-500 uppercase tracking-wide">Aprobadas</div>
+                                </div>
+                                <div>
+                                    <div className="text-2xl font-bold text-gray-500">{mi.en_tramite.toLocaleString()}</div>
+                                    <div className="text-[10px] text-gray-500 uppercase tracking-wide">En trámite</div>
+                                </div>
+                                <div>
+                                    <div className="text-2xl font-bold text-gray-800">{mi.tasa_aprobacion != null ? mi.tasa_aprobacion + '%' : '—'}</div>
+                                    <div className="text-[10px] text-gray-500 uppercase tracking-wide">Tasa aprob. (de resueltas)</div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : null}
                     {/* Hero Spotlight (3/5) + Twitter Feed (2/5) */}
                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
                     {(() => {

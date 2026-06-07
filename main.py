@@ -1933,6 +1933,15 @@ def paso_7_exportar_dashboard():
         logger.warning(f"Error en predicciones de autoría: {e}")
         autoria_stats = {}
 
+    # Métrica dual de iniciativas (cobertura total + desenlace real).
+    # Para reporte/cliente: FIAT muestra el universo completo Y su estatus.
+    try:
+        from scrapers.sil import obtener_metrica_iniciativas
+        metrica_iniciativas = obtener_metrica_iniciativas()
+    except Exception as e:
+        logger.warning(f"Error en métrica de iniciativas: {e}")
+        metrica_iniciativas = {}
+
     # Detectar si estamos en modo receso (mayo-ago, dic-ene)
     try:
         from modo_receso import es_modo_receso as _es_receso
@@ -1983,6 +1992,7 @@ def paso_7_exportar_dashboard():
         "historial_scores": historial_scores,
         "series_temporales": series_temporales,
         "series_temporales_medios": series_temporales_medios,
+        "metrica_iniciativas": metrica_iniciativas,
         "partidos": partidos,
         "autoria": autoria,
         "autoria_stats": autoria_stats,
