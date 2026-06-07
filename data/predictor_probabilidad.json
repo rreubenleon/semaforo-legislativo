@@ -1,0 +1,461 @@
+{
+  "fecha_entrenamiento": "2026-05-26T10:50:06.966648",
+  "ventana_outcome_dias": 14,
+  "outcome": "iniciativas+proposiciones con PA > mediana histórica per cat per periodo",
+  "regimen_signals": "2026-02-13 → 2026-04-30",
+  "train_period": "≤ 2026-03-30",
+  "test_period": "2026-03-31 → 2026-04-30",
+  "features": [
+    "media",
+    "trends",
+    "congreso",
+    "mananera",
+    "urgencia",
+    "dominancia",
+    "legisladores"
+  ],
+  "modelos": {
+    "agro_rural": {
+      "ordinario": {
+        "coefs": {
+          "intercept": -0.5827819376317132,
+          "media": -0.4475991923666628,
+          "trends": 0.07828715515341482,
+          "congreso": -0.33813290267725166,
+          "mananera": -0.009012679836655078,
+          "urgencia": -0.9888639842547057,
+          "dominancia": 0.0,
+          "legisladores": 0.0
+        },
+        "baseline_sin_senales": 0.35829272137727175,
+        "baseline_dia_promedio": 0.22647338415097554,
+        "mediana_outcome_14d": 16.0,
+        "n_train": 43,
+        "n_test": 21,
+        "accuracy_train": 0.7674418604651163,
+        "accuracy_test_walk_forward": 0.047619047619047616
+      },
+      "receso": {
+        "baseline_solo": 0.4725,
+        "mediana_outcome_14d": 10.0,
+        "nota": "Sin coeficientes — no hay señales válidas en receso pre-2026."
+      }
+    },
+    "anticorrupcion": {
+      "ordinario": {
+        "coefs": {
+          "intercept": -0.8342577860842134,
+          "media": -0.10534643053112792,
+          "trends": 0.1984921968193578,
+          "congreso": 0.6065589137309115,
+          "mananera": 0.08212654706748478,
+          "urgencia": -0.5169879626038265,
+          "dominancia": 0.0,
+          "legisladores": 0.0
+        },
+        "baseline_sin_senales": 0.3027455371002257,
+        "baseline_dia_promedio": 0.30138119199464786,
+        "mediana_outcome_14d": 10.0,
+        "n_train": 43,
+        "n_test": 21,
+        "accuracy_train": 0.6976744186046512,
+        "accuracy_test_walk_forward": 0.0
+      },
+      "receso": {
+        "baseline_solo": 0.4312,
+        "mediana_outcome_14d": 3.0,
+        "nota": "Sin coeficientes — no hay señales válidas en receso pre-2026."
+      }
+    },
+    "derechos_humanos": {
+      "ordinario": {
+        "coefs": {
+          "intercept": 0.4635279367455394,
+          "media": 1.686890670361242,
+          "trends": 0.26988707787314775,
+          "congreso": -0.8041297562869382,
+          "mananera": 0.45083339189723154,
+          "urgencia": -0.21170282420478723,
+          "dominancia": 0.0,
+          "legisladores": 0.0
+        },
+        "baseline_sin_senales": 0.6138507663759002,
+        "baseline_dia_promedio": 0.6158050037447637,
+        "mediana_outcome_14d": 36.0,
+        "n_train": 43,
+        "n_test": 21,
+        "accuracy_train": 0.7906976744186046,
+        "accuracy_test_walk_forward": 0.3333333333333333
+      },
+      "receso": {
+        "baseline_solo": 0.4862,
+        "mediana_outcome_14d": 21.0,
+        "nota": "Sin coeficientes — no hay señales válidas en receso pre-2026."
+      }
+    },
+    "economia_hacienda": {
+      "ordinario": {
+        "coefs": {
+          "intercept": -0.13348442100197333,
+          "media": 0.6648267129657829,
+          "trends": 0.3456746070397692,
+          "congreso": -0.5271228909349792,
+          "mananera": -0.0467723312093025,
+          "urgencia": -0.3840013978945381,
+          "dominancia": 0.0,
+          "legisladores": 0.0
+        },
+        "baseline_sin_senales": 0.4666783573999146,
+        "baseline_dia_promedio": 0.3928071228179973,
+        "mediana_outcome_14d": 53.0,
+        "n_train": 43,
+        "n_test": 21,
+        "accuracy_train": 0.6046511627906976,
+        "accuracy_test_walk_forward": 0.047619047619047616
+      },
+      "receso": {
+        "baseline_solo": 0.5,
+        "mediana_outcome_14d": 26.5,
+        "nota": "Sin coeficientes — no hay señales válidas en receso pre-2026."
+      }
+    },
+    "educacion": {
+      "ordinario": {
+        "coefs": {
+          "intercept": 1.4292794652054837,
+          "media": 1.9130337341949541,
+          "trends": 0.6427542946576374,
+          "congreso": -0.7118747643814036,
+          "mananera": -0.24286457669227826,
+          "urgencia": -1.2768504834595418,
+          "dominancia": 0.0,
+          "legisladores": 0.0
+        },
+        "baseline_sin_senales": 0.8067890232735635,
+        "baseline_dia_promedio": 0.7059808107682739,
+        "mediana_outcome_14d": 58.0,
+        "n_train": 43,
+        "n_test": 21,
+        "accuracy_train": 0.9534883720930233,
+        "accuracy_test_walk_forward": 0.38095238095238093
+      },
+      "receso": {
+        "baseline_solo": 0.4817,
+        "mediana_outcome_14d": 24.0,
+        "nota": "Sin coeficientes — no hay señales válidas en receso pre-2026."
+      }
+    },
+    "electoral_politico": {
+      "ordinario": {
+        "coefs": {
+          "intercept": 0.3316187963184455,
+          "media": 2.0886128036002978,
+          "trends": 0.203769247284846,
+          "congreso": -0.834279287392125,
+          "mananera": -0.2069863432455987,
+          "urgencia": 0.5507910850111127,
+          "dominancia": 0.0,
+          "legisladores": 0.0
+        },
+        "baseline_sin_senales": 0.5821532027129794,
+        "baseline_dia_promedio": 0.7437523534971996,
+        "mediana_outcome_14d": 44.0,
+        "n_train": 43,
+        "n_test": 21,
+        "accuracy_train": 0.8604651162790697,
+        "accuracy_test_walk_forward": 0.47619047619047616
+      },
+      "receso": {
+        "baseline_solo": 0.5,
+        "mediana_outcome_14d": 19.5,
+        "nota": "Sin coeficientes — no hay señales válidas en receso pre-2026."
+      }
+    },
+    "energia": {
+      "ordinario": {
+        "coefs": {
+          "intercept": 1.0305322019146146,
+          "media": -0.5640499632216466,
+          "trends": -0.356592455797936,
+          "congreso": 0.7380120392256398,
+          "mananera": 0.09965922059991496,
+          "urgencia": -1.165298287650481,
+          "dominancia": 0.0,
+          "legisladores": 0.0
+        },
+        "baseline_sin_senales": 0.7370190612651318,
+        "baseline_dia_promedio": 0.6072293078914366,
+        "mediana_outcome_14d": 8.0,
+        "n_train": 43,
+        "n_test": 21,
+        "accuracy_train": 0.6976744186046512,
+        "accuracy_test_walk_forward": 0.9523809523809523
+      },
+      "receso": {
+        "baseline_solo": 0.4633,
+        "mediana_outcome_14d": 7.0,
+        "nota": "Sin coeficientes — no hay señales válidas en receso pre-2026."
+      }
+    },
+    "igualdad_genero": {
+      "ordinario": {
+        "coefs": {
+          "intercept": -0.6409988275407339,
+          "media": 1.1316655600377032,
+          "trends": 0.0,
+          "congreso": 0.34557157640952574,
+          "mananera": 0.13638265868791896,
+          "urgencia": 1.548110463063293,
+          "dominancia": 0.0,
+          "legisladores": 0.0
+        },
+        "baseline_sin_senales": 0.34502078797689023,
+        "baseline_dia_promedio": 0.502978038149144,
+        "mediana_outcome_14d": 13.0,
+        "n_train": 24,
+        "n_test": 21,
+        "accuracy_train": 0.9166666666666666,
+        "accuracy_test_walk_forward": 0.0
+      },
+      "receso": {
+        "baseline_solo": 0.3899,
+        "mediana_outcome_14d": 3.0,
+        "nota": "Sin coeficientes — no hay señales válidas en receso pre-2026."
+      }
+    },
+    "infraestructura": {
+      "ordinario": {
+        "coefs": {
+          "intercept": 0.5133537000848392,
+          "media": 0.721931460330637,
+          "trends": 0.9174628669594297,
+          "congreso": -0.8516276037140087,
+          "mananera": -0.45755894179565115,
+          "urgencia": -0.6408749134011931,
+          "dominancia": 1.9005295920323865e-08,
+          "legisladores": 1.9005295920323865e-08
+        },
+        "baseline_sin_senales": 0.6255923303897026,
+        "baseline_dia_promedio": 0.44096538729084633,
+        "mediana_outcome_14d": 41.5,
+        "n_train": 43,
+        "n_test": 21,
+        "accuracy_train": 0.6744186046511628,
+        "accuracy_test_walk_forward": 0.38095238095238093
+      },
+      "receso": {
+        "baseline_solo": 0.4679,
+        "mediana_outcome_14d": 17.0,
+        "nota": "Sin coeficientes — no hay señales válidas en receso pre-2026."
+      }
+    },
+    "inteligencia_artificial": {
+      "ordinario": {
+        "coefs": {
+          "intercept": -1.1846101853975368,
+          "media": 1.705091854295678,
+          "trends": 0.29650803980578544,
+          "congreso": 0.502358419131494,
+          "mananera": -0.06514227861821986,
+          "urgencia": -0.5785602147166087,
+          "dominancia": 0.0,
+          "legisladores": 0.0
+        },
+        "baseline_sin_senales": 0.23422428535789128,
+        "baseline_dia_promedio": 0.294794781294621,
+        "mediana_outcome_14d": 5.0,
+        "n_train": 42,
+        "n_test": 21,
+        "accuracy_train": 0.6904761904761905,
+        "accuracy_test_walk_forward": 0.19047619047619047
+      },
+      "receso": {
+        "baseline_solo": 0.3945,
+        "mediana_outcome_14d": 1.0,
+        "nota": "Sin coeficientes — no hay señales válidas en receso pre-2026."
+      }
+    },
+    "medio_ambiente": {
+      "ordinario": {
+        "coefs": {
+          "intercept": 0.6486173981861113,
+          "media": 1.8981331015982161,
+          "trends": 0.13370555544580762,
+          "congreso": 0.23956404500817224,
+          "mananera": -0.8834338442049704,
+          "urgencia": -0.8512386493088044,
+          "dominancia": 0.0,
+          "legisladores": 0.0
+        },
+        "baseline_sin_senales": 0.6566988289137888,
+        "baseline_dia_promedio": 0.6969442070614758,
+        "mediana_outcome_14d": 21.0,
+        "n_train": 42,
+        "n_test": 21,
+        "accuracy_train": 0.8333333333333334,
+        "accuracy_test_walk_forward": 1.0
+      },
+      "receso": {
+        "baseline_solo": 0.5,
+        "mediana_outcome_14d": 10.5,
+        "nota": "Sin coeficientes — no hay señales válidas en receso pre-2026."
+      }
+    },
+    "medios_comunicacion": {
+      "ordinario": {
+        "coefs": {
+          "intercept": 0.9895573197520499,
+          "media": -0.6709974944453294,
+          "trends": 0.061402028110313846,
+          "congreso": -1.023286278542675,
+          "mananera": -0.450317959580499,
+          "urgencia": -1.2005884251374057,
+          "dominancia": 0.0,
+          "legisladores": 0.0
+        },
+        "baseline_sin_senales": 0.7290004758449071,
+        "baseline_dia_promedio": 0.5170031889768233,
+        "mediana_outcome_14d": 8.0,
+        "n_train": 31,
+        "n_test": 21,
+        "accuracy_train": 0.6129032258064516,
+        "accuracy_test_walk_forward": 0.09523809523809523
+      },
+      "receso": {
+        "baseline_solo": 0.4679,
+        "mediana_outcome_14d": 3.0,
+        "nota": "Sin coeficientes — no hay señales válidas en receso pre-2026."
+      }
+    },
+    "politica_social": {
+      "ordinario": {
+        "coefs": {
+          "intercept": -2.2987641348276577,
+          "media": 0.33913755781344185,
+          "trends": -0.049384776928233856,
+          "congreso": -0.1845324026554499,
+          "mananera": -0.09916076734825482,
+          "urgencia": -0.7581501093889534,
+          "dominancia": -5.126153994314335e-08,
+          "legisladores": -5.126153994314335e-08
+        },
+        "baseline_sin_senales": 0.09122536656750987,
+        "baseline_dia_promedio": 0.0624235865455593,
+        "mediana_outcome_14d": 13.0,
+        "n_train": 31,
+        "n_test": 21,
+        "accuracy_train": 0.9354838709677419,
+        "accuracy_test_walk_forward": 0.9523809523809523
+      },
+      "receso": {
+        "baseline_solo": 0.4679,
+        "mediana_outcome_14d": 9.0,
+        "nota": "Sin coeficientes — no hay señales válidas en receso pre-2026."
+      }
+    },
+    "salud": {
+      "ordinario": {
+        "coefs": {
+          "intercept": 0.34889471272711514,
+          "media": 2.0176640395084506,
+          "trends": 0.6076524324946335,
+          "congreso": -0.8148450581898894,
+          "mananera": 0.42673460087291853,
+          "urgencia": 0.08864764750093018,
+          "dominancia": 0.0,
+          "legisladores": 0.0
+        },
+        "baseline_sin_senales": 0.586349523997337,
+        "baseline_dia_promedio": 0.7004351095649078,
+        "mediana_outcome_14d": 37.0,
+        "n_train": 43,
+        "n_test": 21,
+        "accuracy_train": 0.9534883720930233,
+        "accuracy_test_walk_forward": 0.6666666666666666
+      },
+      "receso": {
+        "baseline_solo": 0.4908,
+        "mediana_outcome_14d": 19.0,
+        "nota": "Sin coeficientes — no hay señales válidas en receso pre-2026."
+      }
+    },
+    "seguridad_justicia": {
+      "ordinario": {
+        "coefs": {
+          "intercept": 1.1283260474584376,
+          "media": 0.3155934090983386,
+          "trends": 0.40246593023444954,
+          "congreso": -1.651763489524531,
+          "mananera": 0.15290062676222907,
+          "urgencia": -0.7546700146340741,
+          "dominancia": 0.0,
+          "legisladores": 0.0
+        },
+        "baseline_sin_senales": 0.7555298447987793,
+        "baseline_dia_promedio": 0.3670757712926483,
+        "mediana_outcome_14d": 79.0,
+        "n_train": 43,
+        "n_test": 21,
+        "accuracy_train": 0.813953488372093,
+        "accuracy_test_walk_forward": 0.047619047619047616
+      },
+      "receso": {
+        "baseline_solo": 0.4817,
+        "mediana_outcome_14d": 41.0,
+        "nota": "Sin coeficientes — no hay señales válidas en receso pre-2026."
+      }
+    },
+    "trabajo": {
+      "ordinario": {
+        "coefs": {
+          "intercept": 0.9660148655083697,
+          "media": 1.553307942909522,
+          "trends": 0.3385890628000786,
+          "congreso": -0.9515789787469252,
+          "mananera": -0.22775195634443182,
+          "urgencia": -0.9335238012507645,
+          "dominancia": 0.0,
+          "legisladores": 0.0
+        },
+        "baseline_sin_senales": 0.7243244637562298,
+        "baseline_dia_promedio": 0.6158849467880467,
+        "mediana_outcome_14d": 37.0,
+        "n_train": 43,
+        "n_test": 21,
+        "accuracy_train": 0.7906976744186046,
+        "accuracy_test_walk_forward": 0.19047619047619047
+      },
+      "receso": {
+        "baseline_solo": 0.4908,
+        "mediana_outcome_14d": 55.0,
+        "nota": "Sin coeficientes — no hay señales válidas en receso pre-2026."
+      }
+    },
+    "turismo": {
+      "ordinario": {
+        "coefs": {
+          "intercept": -0.2670698347751726,
+          "media": -0.025085923321494348,
+          "trends": 0.2799932191874892,
+          "congreso": 0.3388099724931929,
+          "mananera": -0.1846820548161485,
+          "urgencia": -1.2574202564789738,
+          "dominancia": 0.0,
+          "legisladores": 0.0
+        },
+        "baseline_sin_senales": 0.43362658725792214,
+        "baseline_dia_promedio": 0.3124276868737553,
+        "mediana_outcome_14d": 6.0,
+        "n_train": 31,
+        "n_test": 21,
+        "accuracy_train": 0.6774193548387096,
+        "accuracy_test_walk_forward": 0.38095238095238093
+      },
+      "receso": {
+        "baseline_solo": 0.3716,
+        "mediana_outcome_14d": 2.0,
+        "nota": "Sin coeficientes — no hay señales válidas en receso pre-2026."
+      }
+    }
+  }
+}
