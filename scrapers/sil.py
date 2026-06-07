@@ -828,18 +828,15 @@ def obtener_stats_por_partido(dias=180):
         GROUP BY partido, cam_canon
     """, (fecha_limite, *PARTIDOS_VALIDOS)).fetchall()
 
-    # Por partido y estado canonicalizado
+    # Por partido y estado — usa estatus_canon (columna limpia reparada por
+    # _parsear_estatus, en vez de LIKE sobre el string pegado que daba
+    # números inconsistentes). 'SinEstado' = en trámite sin resolución.
     rows_est = conn.execute(f"""
         SELECT partido,
                CASE
-                 WHEN estatus LIKE '%Aprobado%' OR estatus LIKE '%DOF%'
-                      OR estatus LIKE '%Resuelt%' THEN 'Aprobado'
-                 WHEN estatus LIKE 'Desechado%' OR estatus LIKE 'Concluido%'
-                      THEN 'Desechado'
-                 WHEN estatus LIKE 'Retirad%' THEN 'Retirada'
-                 WHEN estatus LIKE 'Pendiente%' THEN 'Pendiente'
-                 WHEN estatus IS NULL OR estatus = '' THEN 'SinEstado'
-                 ELSE 'Otro'
+                 WHEN estatus_canon IN ('Aprobado','Desechado','Retirada','Pendiente')
+                      THEN estatus_canon
+                 ELSE 'Pendiente'
                END as estado_canon,
                COUNT(*) as n
         FROM sil_documentos
