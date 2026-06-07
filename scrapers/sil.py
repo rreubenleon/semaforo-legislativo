@@ -1125,15 +1125,20 @@ def obtener_metrica_iniciativas(fecha_desde="2025-09-01", fecha_hasta="2026-04-2
             f"SELECT COUNT(DISTINCT seguimiento_id) {base}{extra}", p).fetchone()[0]
 
     total = n()
-    formal = n(" AND estatus_estado != ''")
     aprob = n(" AND estatus_canon='Aprobado'")
-    resueltas = n(" AND estatus_canon IN ('Aprobado','Desechado','Retirada')")
+    desech = n(" AND estatus_canon IN ('Desechado','Retirada')")
+    resueltas = aprob + desech
+    # Todo lo demás está EN TRÁMITE: las marcadas 'Pendiente' + las que el
+    # SIL aún no les pone estatus de resolución (siguen en comisión). No son
+    # "cajas vacías" — tienen presentador, fecha y último trámite; solo no
+    # tienen desenlace todavía. en_tramite = total - resueltas.
+    en_tramite = total - resueltas
     return {
-        "cobertura_total": total,
-        "con_tramite_formal": formal,
-        "sin_detalle": total - formal,
+        "total_presentadas": total,        # cobertura completa FIAT (expedientes únicos)
         "aprobadas": aprob,
-        "resueltas": resueltas,
+        "desechadas_retiradas": desech,
+        "resueltas": resueltas,            # con desenlace (apr + desech/retir)
+        "en_tramite": en_tramite,          # presentadas, aún sin desenlace
         "tasa_aprobacion": round(100 * aprob / resueltas, 1) if resueltas else None,
         "periodo": {"desde": fecha_desde, "hasta": fecha_hasta},
     }
