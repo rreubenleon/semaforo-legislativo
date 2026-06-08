@@ -771,6 +771,30 @@ def obtener_stats_por_partido(dias=180):
     se mantiene en signatura por retrocompat.
     """
     conn = get_connection()
+
+    # Auto-sanado: pobla estatus_canon donde falte a partir del estatus
+    # crudo ya scrapeado. Sin esto, una BD (p.ej. la cacheada de CI) cuyos
+    # docs viejos no tienen canon exportaba TODO como 'Pendiente' (la rama
+    # ELSE del CASE), aplanando el widget de partidos. Idempotente, $0,
+    # segundos. NO re-scrapea — solo re-parsea lo que ya está en BD.
+    try:
+        faltantes = conn.execute(
+            "SELECT id, estatus FROM sil_documentos "
+            "WHERE (estatus_canon IS NULL OR estatus_canon = '') "
+            "AND estatus IS NOT NULL AND estatus != ''"
+        ).fetchall()
+        if faltantes:
+            for doc_id, est in faltantes:
+                e_estado, e_sit, e_fecha, e_canon = _parsear_estatus(est)
+                conn.execute(
+                    "UPDATE sil_documentos SET estatus_estado=?, "
+                    "estatus_situacion=?, estatus_fecha=?, estatus_canon=? WHERE id=?",
+                    (e_estado, e_sit, e_fecha, e_canon, doc_id))
+            conn.commit()
+            logger.info(f"SIL estatus_canon auto-sanado: {len(faltantes)} filas re-parseadas")
+    except Exception as e:
+        logger.warning(f"Auto-sanado de estatus_canon falló (no crítico): {e}")
+
     # LXVI start (coherente con resto del dashboard)
     fecha_limite = "2024-09-01"
 
