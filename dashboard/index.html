@@ -6674,13 +6674,95 @@
            _nombreComisionDisplay, MapaSeleccionEstados).
            Cada paso requiere ≥1 selección para avanzar. Botón "Siguiente"
            se vuelve "Listo" en el último paso. */
+        /* Chip input interactivo: el usuario teclea y con Enter/coma agrega
+           un chip; click en × lo quita. Definido a NIVEL DE MÓDULO (identidad
+           estable) para que React no remonte el input en cada tecla — si se
+           define dentro del render, pierde el foco tras cada letra. */
+        function ChipInput({ label, ayuda, placeholder, value, onChange, chipClass = 'bg-gray-100 text-gray-700 border-gray-200' }) {
+          const [draft, setDraft] = React.useState('');
+          const arr = Array.isArray(value) ? value : [];
+          const add = (raw) => {
+            const partes = (raw || '').split(',').map(s => s.trim()).filter(Boolean);
+            if (!partes.length) { setDraft(''); return; }
+            const next = [...arr];
+            partes.forEach(p => { if (!next.some(x => x.toLowerCase() === p.toLowerCase())) next.push(p); });
+            onChange(next);
+            setDraft('');
+          };
+          const remove = (i) => onChange(arr.filter((_, j) => j !== i));
+          return (
+            <div>
+              <label className="block text-[12px] font-semibold text-gray-800">{label}</label>
+              {ayuda && <div className="text-[11px] text-gray-500 mb-1.5 leading-snug">{ayuda}</div>}
+              {!ayuda && <div className="mb-1.5"></div>}
+              <div className="flex flex-wrap gap-1.5 items-center px-2 py-2 bg-gray-50 border border-gray-200 rounded-lg focus-within:border-acento focus-within:bg-white transition-colors" style={{minHeight: 42}}>
+                {arr.map((chip, i) => (
+                  <span key={i} className={`inline-flex items-center gap-1 text-[12px] font-medium px-2 py-1 rounded-full border ${chipClass}`}>
+                    {chip}
+                    <button onClick={() => remove(i)} className="hover:text-rose-600 leading-none text-[13px]">×</button>
+                  </span>
+                ))}
+                <input type="text" value={draft}
+                  onChange={e => setDraft(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); add(draft); }
+                    else if (e.key === 'Backspace' && !draft && arr.length) { remove(arr.length - 1); }
+                  }}
+                  onBlur={() => add(draft)}
+                  placeholder={arr.length === 0 ? placeholder : 'Agregar otro…'}
+                  className="flex-1 bg-transparent text-[13px] text-gray-800 placeholder-gray-400 focus:outline-none py-0.5" style={{minWidth: 120}} />
+              </div>
+            </div>
+          );
+        }
+
+        /* Selector interactivo de riesgo: reúsa los temas que el usuario ya
+           eligió y deja marcar el nivel (Alto/Medio/Bajo) de cada uno con
+           toggles de semáforo. A nivel de módulo (identidad estable). */
+        function RiesgoTemasSelector({ categorias, labelFn, value, onChange }) {
+          const map = value || {};
+          const NIVELES = [
+            { k: 'alto',  label: 'Alto',  dot: '🔴', cls: 'bg-rose-50 text-rose-700' },
+            { k: 'medio', label: 'Medio', dot: '🟡', cls: 'bg-amber-50 text-amber-700' },
+            { k: 'bajo',  label: 'Bajo',  dot: '🟢', cls: 'bg-emerald-50 text-emerald-700' },
+          ];
+          const set = (cat, nivel) => onChange({ ...map, [cat]: nivel });
+          if (!categorias || categorias.length === 0) {
+            return <div className="text-[12px] text-gray-400 italic px-3 py-3 bg-gray-50 border border-dashed border-gray-200 rounded-lg text-center">Elige temas en el paso anterior para definir su nivel de riesgo.</div>;
+          }
+          return (
+            <div className="space-y-1.5">
+              {categorias.map(cat => {
+                const actual = map[cat] || 'medio';
+                return (
+                  <div key={cat} className="flex items-center justify-between gap-3 px-3 py-2 bg-white border border-gray-200 rounded-lg">
+                    <div className="text-[13px] font-medium text-gray-800 truncate">{labelFn ? labelFn(cat) : cat}</div>
+                    <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
+                      {NIVELES.map((n, i) => {
+                        const active = actual === n.k;
+                        return (
+                          <button key={n.k} onClick={() => set(cat, n.k)}
+                            className={`text-[11px] font-semibold px-2.5 py-1.5 transition ${i > 0 ? 'border-l border-gray-200' : ''} ${active ? n.cls : 'bg-white text-gray-400 hover:bg-gray-50'}`}>
+                            <span className="hidden sm:inline">{n.dot} </span>{n.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
+
         function ConsolaProConfigModal({ data, allLegisladores, allComisiones, config, setConfig, onClose }) {
-          const PASOS = ['legisladores', 'temas', 'estados', 'comisiones'];
+          const PASOS = ['legisladores', 'temas', 'estados', 'comisiones', 'perfil'];
           const PASOS_LABEL = {
             legisladores: 'Legisladores',
             temas:        'Temas',
             estados:      'Estados',
             comisiones:   'Comisiones',
+            perfil:       'Afinar',
           };
           const [paso, setPaso] = useState(PASOS[0]);
           const [search, setSearch] = useState('');
@@ -6708,6 +6790,11 @@
             if (set.has(key)) set.delete(key); else if (set.size < 10) set.add(key);
             setConfig({ ...config, comisiones: Array.from(set) });
           };
+          /* Perfil de empresa (alimenta el análisis "Mi industria"). Texto libre. */
+          const setPerfilField = (campo, valor) => {
+            setConfig({ ...config, perfil: { ...(config.perfil || {}), [campo]: valor } });
+          };
+          const perfil = config.perfil || {};
 
           /* Validación de avance: cada paso requiere ≥1 selección */
           const counts = {
@@ -6717,7 +6804,8 @@
             comisiones:   (config.comisiones || []).length,
           };
           const limites = { legisladores: 20, temas: 8, estados: 12, comisiones: 10 };
-          const puedeAvanzar = counts[paso] >= 1;
+          /* El paso 'perfil' es opcional (texto libre): nunca bloquea el avance. */
+          const puedeAvanzar = paso === 'perfil' ? true : counts[paso] >= 1;
 
           const semaforo = data?.semaforo || [];
           const mapa = data?.mapa || {};
@@ -6873,6 +6961,7 @@
                       {paso === 'temas'        && 'Elige los temas legislativos relevantes'}
                       {paso === 'estados'      && 'Elige los estados que te interesan'}
                       {paso === 'comisiones'   && 'Elige las comisiones a seguir'}
+                      {paso === 'perfil'       && 'Afina tu riesgo y palabras clave'}
                     </h2>
                   </div>
                   <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-2xl leading-none w-8 h-8 hover:bg-gray-100 rounded-full">×</button>
@@ -7120,6 +7209,66 @@
                       </div>
                     </div>
                   )}
+
+                  {/* === PASO 5 — AFINAR: riesgo, palabras clave y exclusiones === */}
+                  {paso === 'perfil' && (
+                    <div>
+                      <div className="text-xs text-gray-600 mb-4">
+                        Último paso: dinos qué te preocupa y qué tan riesgoso es para ti.
+                        Esto afina tus alertas y tu análisis. <span className="text-gray-400">Todo opcional.</span>
+                      </div>
+                      <div className="space-y-5">
+                        {/* Temas / riesgos que preocupan — chips */}
+                        <ChipInput
+                          label="Temas o riesgos que te preocupan"
+                          ayuda="Escribe y presiona Enter. Ej. impuestos, etiquetado, competencia económica, datos personales, energía…"
+                          value={perfil.temas_riesgo}
+                          onChange={v => setPerfilField('temas_riesgo', v)}
+                          placeholder="Escribe un tema y Enter…"
+                          chipClass="bg-blue-50 text-blue-700 border-blue-200" />
+
+                        {/* Palabras clave + competidores — chips, lado a lado */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <ChipInput
+                            label="Palabras clave a monitorear"
+                            ayuda="Productos, conceptos o leyes concretas."
+                            value={perfil.palabras_clave}
+                            onChange={v => setPerfilField('palabras_clave', v)}
+                            placeholder="Ej. outsourcing, IEPS, etiquetado frontal…"
+                            chipClass="bg-gray-100 text-gray-700 border-gray-200" />
+                          <ChipInput
+                            label="Competidores o cámaras de referencia"
+                            ayuda="Actores cuyas posturas te interesan."
+                            value={perfil.competidores}
+                            onChange={v => setPerfilField('competidores', v)}
+                            placeholder="Ej. CANACINTRA, CONMÉXICO…"
+                            chipClass="bg-violet-50 text-violet-700 border-violet-200" />
+                        </div>
+
+                        {/* Selector interactivo de riesgo por tema elegido */}
+                        <div>
+                          <div className="text-[12px] font-semibold text-gray-800">¿Qué tan riesgoso es cada tema para ti?</div>
+                          <div className="text-[11px] text-gray-500 mb-2 leading-snug">
+                            Marca el nivel de cada tema que elegiste. FIAT prioriza tus alertas según esto.
+                          </div>
+                          <RiesgoTemasSelector
+                            categorias={config.temas}
+                            labelFn={_catLabel}
+                            value={perfil.riesgo_temas}
+                            onChange={v => setPerfilField('riesgo_temas', v)} />
+                        </div>
+
+                        {/* Temas a excluir — chips */}
+                        <ChipInput
+                          label="Temas a excluir"
+                          ayuda="Para no llenarte de alertas que no te sirven. Escribe y Enter."
+                          value={perfil.temas_excluir}
+                          onChange={v => setPerfilField('temas_excluir', v)}
+                          placeholder="Temas que prefieres no ver…"
+                          chipClass="bg-rose-50 text-rose-700 border-rose-200" />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* === FOOTER con Atrás / Siguiente / Listo === */}
@@ -7130,8 +7279,11 @@
                     ← Atrás
                   </button>
                   <div className="text-[11px] text-gray-500 font-mono">
-                    {!puedeAvanzar && <span>Selecciona al menos 1 para continuar</span>}
-                    {puedeAvanzar && <span>{counts[paso]} de {limites[paso]} seleccionados</span>}
+                    {paso === 'perfil'
+                      ? <span>Opcional — afina tu riesgo y alertas</span>
+                      : (!puedeAvanzar
+                          ? <span>Selecciona al menos 1 para continuar</span>
+                          : <span>{counts[paso]} de {limites[paso]} seleccionados</span>)}
                   </div>
                   {idx < PASOS.length - 1 ? (
                     <button onClick={() => setPaso(PASOS[idx + 1])}
@@ -7685,6 +7837,15 @@
                   </div>
                 );
               })()}
+
+              {/* ROW: Actividad legislativa por partido — mismos datos completos del
+                   Dashboard (ranking, por cámara, por tipo, por estatus, individuales). */}
+              {data.partidos && Object.keys(data.partidos).length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold text-gray-500 mb-2">Actividad por partido</div>
+                  <PartidosPoliticosPanel partidos={data.partidos} />
+                </div>
+              )}
 
               {/* ROW: Mapa (intel) | Menciones CSP — sin items-start para que estiren ambos al mismo alto */}
               {(estadosSelectos.size > 0 || temasSelectos.size > 0) && (
