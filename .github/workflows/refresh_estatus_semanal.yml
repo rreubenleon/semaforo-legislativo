@@ -1,0 +1,91 @@
+name: Refresh Estatus SIL (semanal)
+
+# Re-visita TODOS los ~26K expedientes SIL y refresca su estatus (UPSERT con
+# guard anti-vaciado). Esto corrige el DESFASE: el scraper del pipeline solo
+# baja docs nuevos, así que los viejos quedan congelados con el estatus del
+# día que se scrapearon (una iniciativa puede pasar Pendiente→Desechada y
+# FIAT no se entera). $0, sin Haiku.
+#
+# DISEÑO de propagación: se monta sobre la MISMA cadena de caché del pipeline.
+# Restaura la BD (cache prefijo `semaforo-db-` o seed db-seed-v4), corre el
+# refresh, y guarda la BD corregida con una key que también matchea el prefijo
+# `semaforo-db-`. El siguiente run del pipeline (cada 4h) la recoge vía sus
+# restore-keys y, al exportar, regenera data.json con el estatus corregido.
+# Si durante el refresh el pipeline agregó docs nuevos, el scraper incremental
+# los vuelve a insertar en el siguiente run (auto-sanado), así que no se pierden.
+
+on:
+  schedule:
+    - cron: '0 6 * * 0'   # Domingos 06:00 UTC (baja actividad; antes de
+                          # calibracion.yml de las 16:00 UTC)
+  workflow_dispatch:       # Permite dispararlo a mano
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "refresh-estatus"
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340   # margen bajo el límite duro de 360 (6h).
+                           # Con REFRESH_SLEEP=0.4 son ~3h; sobra colchón.
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      # Restaura la BD de la cadena del pipeline (misma key/prefijo).
+      - name: Restaurar SQLite DB
+        id: cache-db
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - name: Descargar DB seed si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            echo "No se encontró DB en cache, descargando seed..."
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          else
+            echo "DB restaurada del cache ($(du -h semaforo.db | cut -f1))"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      # El refresh real. --reset para recorrer todo el universo.
+      # REFRESH_SLEEP=0.4 → ~3h para ~26K docs, holgado bajo el timeout.
+      # SEMAFORO_DB_MODE=local: SQLite puro. Sin ANTHROPIC_API_KEY (no Haiku).
+      - name: Refresh estatus completo
+        run: python scripts/refresh_estatus_completo.py --reset
+        env:
+          SEMAFORO_DB_MODE: local
+          REFRESH_SLEEP: '0.4'
+
+      # Guarda la BD corregida en la cadena de caché del pipeline. La key
+      # matchea el prefijo `semaforo-db-`, así el siguiente pipeline la toma
+      # como la más reciente y exporta data.json con el estatus corregido.
+      - name: Guardar SQLite DB corregida en cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-${{ github.run_id }}-refresh

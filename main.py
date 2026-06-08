@@ -139,6 +139,63 @@ def _obtener_actividad_legisladores_reciente():
         return []
 
 
+def _obtener_ultimas_instrumentos_legislador(n=3):
+    """Para cada legislador, sus últimas N iniciativas/proposiciones con punto
+    de acuerdo (sustantivos), SIN importar recencia. Para el panel "Mis
+    legisladores" de Console Pro. Datos reales del SIL — cero IA.
+
+    Retorna dict {legislador_id: [ {tipo, fecha, titulo, comision, estatus,
+    sil_documento_id}, ... ]} ordenado de más reciente a más antigua.
+    """
+    try:
+        import sqlite3
+        from db import get_connection
+        conn = get_connection()
+        conn.row_factory = sqlite3.Row
+        # Cruza con sil_documentos (estatus refrescado) vía sil_documento_id
+        # para mostrar un estatus_canon LIMPIO y al día, no el crudo/desfasado
+        # de actividad_legislador.
+        rows = conn.execute("""
+            SELECT legislador_id, tipo_instrumento, fecha_presentacion,
+                   titulo, comision_turno, estatus_canon,
+                   seguimiento_id, asunto_id
+            FROM (
+                SELECT a.legislador_id, a.tipo_instrumento, a.fecha_presentacion,
+                       a.titulo, a.comision_turno, a.id,
+                       COALESCE(s.estatus_canon, '') AS estatus_canon,
+                       s.seguimiento_id, s.asunto_id,
+                       ROW_NUMBER() OVER (
+                         PARTITION BY a.legislador_id
+                         ORDER BY a.fecha_presentacion DESC, a.id DESC
+                       ) AS rn
+                FROM actividad_legislador a
+                LEFT JOIN sil_documentos s ON s.id = a.sil_documento_id
+                WHERE a.legislador_id IS NOT NULL
+                  AND a.fecha_presentacion IS NOT NULL
+                  AND (LOWER(a.tipo_instrumento) LIKE '%iniciativ%'
+                       OR LOWER(a.tipo_instrumento) LIKE '%proposici%')
+            )
+            WHERE rn <= ?
+            ORDER BY legislador_id, fecha_presentacion DESC
+        """, (n,)).fetchall()
+        out = {}
+        for r in rows:
+            lid = str(r["legislador_id"])
+            out.setdefault(lid, []).append({
+                "tipo": r["tipo_instrumento"],
+                "fecha": r["fecha_presentacion"],
+                "titulo": r["titulo"],
+                "comision": r["comision_turno"] or "",
+                "estatus": r["estatus_canon"] or "",
+                "seguimiento_id": r["seguimiento_id"] or "",
+                "asunto_id": r["asunto_id"] or "",
+            })
+        return out
+    except Exception as e:
+        logger.warning(f"No se pudo obtener ultimas_instrumentos_legislador: {e}")
+        return {}
+
+
 def _obtener_aprobaciones_por_categoria(dias=14, items_max_por_cat=15):
     """
     Devuelve dict {categoria: {'count': N, 'items': [...]}} con aprobaciones
@@ -2014,6 +2071,7 @@ def paso_7_exportar_dashboard():
         "prob_extraordinario_global": _calcular_prob_extraordinario_global(),
         "convocatorias": obtener_convocatorias(),
         "actividad_legisladores_reciente": _obtener_actividad_legisladores_reciente(),
+        "ultimas_instrumentos_legislador": _obtener_ultimas_instrumentos_legislador(n=3),
         # comisiones_actividad: migrado a D1 (Worker /comisiones)
         # haiku_status: NO se expone en data.json (visible públicamente).
         # Se usa solo internamente en commit message + GitHub Actions warning.

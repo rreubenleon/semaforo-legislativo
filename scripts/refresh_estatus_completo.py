@@ -47,7 +47,10 @@ logging.basicConfig(
 log = logging.getLogger("refresh_estatus")
 
 CHECKPOINT = ROOT / "scripts" / ".refresh_estatus_checkpoint.json"
-SLEEP = 0.7  # seg entre fichas; SIL no bloquea pero conviene ser amable
+# seg entre fichas; SIL no bloquea pero conviene ser amable. Configurable
+# por env para que en CI (límite de 6h por job) corra más rápido sin
+# perder el ritmo seguro local. Default local 0.7; en CI usamos ~0.4.
+SLEEP = float(os.environ.get("REFRESH_SLEEP", "0.7"))
 
 
 def cargar_checkpoint():
