@@ -158,12 +158,13 @@ def _obtener_ultimas_instrumentos_legislador(n=3):
         rows = conn.execute("""
             SELECT legislador_id, tipo_instrumento, fecha_presentacion,
                    titulo, comision_turno, estatus_canon,
-                   seguimiento_id, asunto_id
+                   seguimiento_id, asunto_id, url
             FROM (
                 SELECT a.legislador_id, a.tipo_instrumento, a.fecha_presentacion,
                        a.titulo, a.comision_turno, a.id,
                        COALESCE(s.estatus_canon, '') AS estatus_canon,
                        s.seguimiento_id, s.asunto_id,
+                       COALESCE(s.url, '') AS url,
                        ROW_NUMBER() OVER (
                          PARTITION BY a.legislador_id
                          ORDER BY a.fecha_presentacion DESC, a.id DESC
@@ -189,6 +190,7 @@ def _obtener_ultimas_instrumentos_legislador(n=3):
                 "estatus": r["estatus_canon"] or "",
                 "seguimiento_id": r["seguimiento_id"] or "",
                 "asunto_id": r["asunto_id"] or "",
+                "url": r["url"] or "",
             })
         return out
     except Exception as e:
@@ -2071,7 +2073,7 @@ def paso_7_exportar_dashboard():
         "prob_extraordinario_global": _calcular_prob_extraordinario_global(),
         "convocatorias": obtener_convocatorias(),
         "actividad_legisladores_reciente": _obtener_actividad_legisladores_reciente(),
-        "ultimas_instrumentos_legislador": _obtener_ultimas_instrumentos_legislador(n=3),
+        "ultimas_instrumentos_legislador": _obtener_ultimas_instrumentos_legislador(n=5),
         # comisiones_actividad: migrado a D1 (Worker /comisiones)
         # haiku_status: NO se expone en data.json (visible públicamente).
         # Se usa solo internamente en commit message + GitHub Actions warning.

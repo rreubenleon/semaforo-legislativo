@@ -1064,7 +1064,12 @@
             };
         }
 
-        function SemaforoCard({ data, onClick }) {
+        function SemaforoCard({ data, onClick, riesgo }) {
+            const RIESGO_CHIP = {
+                alto:  ['Riesgo alto',  'bg-rose-50 text-rose-700 border-rose-200'],
+                medio: ['Riesgo medio', 'bg-amber-50 text-amber-700 border-amber-200'],
+                bajo:  ['Riesgo bajo',  'bg-emerald-50 text-emerald-700 border-emerald-200'],
+            };
             const colorClasses = {
                 verde: 'border-semaforo-verde/40 hover:border-semaforo-verde',
                 amarillo: 'border-semaforo-amarillo/40 hover:border-semaforo-amarillo',
@@ -1095,7 +1100,14 @@
                                 )}
                             </div>
                         </div>
-                        <ScoreRing score={data.score_total} color={data.color} size={56} />
+                        <div className="flex flex-col items-end gap-1">
+                            {riesgo && RIESGO_CHIP[riesgo] && (
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border whitespace-nowrap ${RIESGO_CHIP[riesgo][1]}`}>
+                                    {RIESGO_CHIP[riesgo][0]}
+                                </span>
+                            )}
+                            <ScoreRing score={data.score_total} color={data.color} size={56} />
+                        </div>
                     </div>
                     {(() => {
                         const tieneReact = data.ratio_reactividad !== null && data.ratio_reactividad !== undefined && data.ratio_reactividad >= 1.3;
@@ -7634,15 +7646,20 @@
                     <button onClick={(e) => { e.stopPropagation(); setOpenInstr(o => !o); }}
                       className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-semibold text-acento hover:bg-acento/5 transition">
                       <svg className={`w-3.5 h-3.5 transition-transform flex-shrink-0 ${openInstr ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                      {openInstr ? 'Ocultar' : 'Ver'} últimas {insArr.length} propuestas
+                      <span className="font-mono uppercase tracking-wider">Últimas {insArr.length} propuestas</span>
                       <span className="text-[10px] font-normal text-gray-400 font-mono ml-auto whitespace-nowrap">última · {fmtFechaInstr(insArr[0].fecha)}</span>
                     </button>
                     {openInstr && (
                       <div className="px-3 pb-2.5">
                         {insArr.map((it, i) => {
-                          const silUrl = it.seguimiento_id
+                          // Solo los ids SIL numéricos sirven en pp_ReporteSeguimiento.
+                          // Los SEN_/DIP_/PERM_ son ids internos del scraper → daban
+                          // "No hay resultados" (el bug de Añorve). Para esos usamos
+                          // la URL real ya guardada (gaceta Senado/Diputados).
+                          const _segNum = /^\d+$/.test(it.seguimiento_id || '');
+                          const silUrl = _segNum
                             ? `https://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?Seguimiento=${it.seguimiento_id}&Asunto=${it.asunto_id}`
-                            : null;
+                            : (it.url || null);
                           const Wrapper = silUrl ? 'a' : 'div';
                           const wprops = silUrl ? { href: silUrl, target: '_blank', rel: 'noopener', onClick: (e) => e.stopPropagation() } : {};
                           return (
@@ -7753,6 +7770,7 @@
           const [filtroCSP, setFiltroCSP] = useState(null);
           const [actividadTab, setActividadTab] = useState('legisladores');
           const [actividadSearch, setActividadSearch] = useState('');
+          const [soloKeywords, setSoloKeywords] = useState(false);
           const [showAlertaForm, setShowAlertaForm] = useState(false);
           const [alertaTipo, setAlertaTipo] = useState('tema_score');
           const [alertaTema, setAlertaTema] = useState('');
@@ -7834,9 +7852,44 @@
           }, [data, config.legisladores, config.temas]);
 
           const actividadFuente = actividadTab === 'legisladores' ? actividad.porLeg : actividadTab === 'medios' ? actividad.porTema : actividad.todo;
-          const actividadFiltrada = actividadSearch.length >= 2
-            ? actividadFuente.filter(it => (it.titulo || '').toLowerCase().includes(actividadSearch.toLowerCase()) || (it.sub || '').toLowerCase().includes(actividadSearch.toLowerCase()))
-            : actividadFuente;
+
+          /* === Data de "Afinar" aplicada (palabras clave, exclusiones, riesgo) ===
+             Convierte la captura del wizard en señal real, sin IA: resalta y
+             filtra por tus keywords, y quita del feed los temas que excluiste. */
+          const perfilCfg = config.perfil || {};
+          const misKeywords = [
+            ...(perfilCfg.palabras_clave || []),
+            ...(perfilCfg.temas_riesgo || []),
+            ...(perfilCfg.competidores || []),
+          ].map(s => (s || '').trim().toLowerCase()).filter(s => s.length >= 2);
+          const temasExcluir = (perfilCfg.temas_excluir || [])
+            .map(s => (s || '').trim().toLowerCase()).filter(s => s.length >= 2);
+          const _hayTermino = (it, terms) => {
+            if (!terms.length) return false;
+            const h = ((it.titulo || '') + ' ' + (it.sub || '')).toLowerCase();
+            return terms.some(t => h.includes(t));
+          };
+          /* Resalta coincidencias de keywords en un texto (devuelve nodos React). */
+          const _escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const resaltarKW = (text) => {
+            if (!misKeywords.length || !text) return text;
+            const re = new RegExp('(' + misKeywords.map(_escRe).join('|') + ')', 'ig');
+            const reTest = new RegExp('^(' + misKeywords.map(_escRe).join('|') + ')$', 'i');
+            return String(text).split(re).map((p, i) =>
+              reTest.test(p)
+                ? <mark key={i} className="bg-yellow-200/70 text-gray-900 rounded px-0.5">{p}</mark>
+                : p);
+          };
+          const nKeywordMatches = misKeywords.length
+            ? actividadFuente.filter(it => _hayTermino(it, misKeywords)).length : 0;
+
+          let actividadFiltrada = actividadFuente;
+          if (temasExcluir.length)
+            actividadFiltrada = actividadFiltrada.filter(it => !_hayTermino(it, temasExcluir));
+          if (soloKeywords && misKeywords.length)
+            actividadFiltrada = actividadFiltrada.filter(it => _hayTermino(it, misKeywords));
+          if (actividadSearch.length >= 2)
+            actividadFiltrada = actividadFiltrada.filter(it => (it.titulo || '').toLowerCase().includes(actividadSearch.toLowerCase()) || (it.sub || '').toLowerCase().includes(actividadSearch.toLowerCase()));
 
           /* Menciones CSP */
           const cspTema = filtroCSP || Array.from(temasSelectos)[0] || null;
@@ -7969,7 +8022,7 @@
                       </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                      {ordenado.map(t => <SemaforoCard key={t.categoria} data={t} onClick={setSelected} />)}
+                      {ordenado.map(t => <SemaforoCard key={t.categoria} data={t} onClick={setSelected} riesgo={(config.perfil?.riesgo_temas || {})[t.categoria]} />)}
                     </div>
                   </div>
                 );
