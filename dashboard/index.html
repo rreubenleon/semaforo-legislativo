@@ -7656,10 +7656,12 @@
                           // Los SEN_/DIP_/PERM_ son ids internos del scraper → daban
                           // "No hay resultados" (el bug de Añorve). Para esos usamos
                           // la URL real ya guardada (gaceta Senado/Diputados).
-                          const _segNum = /^\d+$/.test(it.seguimiento_id || '');
-                          const silUrl = _segNum
-                            ? `https://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?Seguimiento=${it.seguimiento_id}&Asunto=${it.asunto_id}`
-                            : (it.url || null);
+                          const _seg = it.seguimiento_id || '';
+                          const silUrl = /^\d+$/.test(_seg)
+                            ? `https://sil.gobernacion.gob.mx/Librerias/pp_ReporteSeguimiento.php?Seguimiento=${_seg}&Asunto=${it.asunto_id}`
+                            : _seg.startsWith('PERM_')
+                              ? `https://www.senado.gob.mx/66/gaceta_comision_permanente/documento/${_seg.slice(5)}`
+                              : (it.url || null);
                           const Wrapper = silUrl ? 'a' : 'div';
                           const wprops = silUrl ? { href: silUrl, target: '_blank', rel: 'noopener', onClick: (e) => e.stopPropagation() } : {};
                           return (

@@ -148,50 +148,86 @@ def _obtener_ultimas_instrumentos_legislador(n=3):
     sil_documento_id}, ... ]} ordenado de más reciente a más antigua.
     """
     try:
-        import sqlite3
+        import sqlite3, re, unicodedata
         from db import get_connection
+        from scrapers.legisladores import _normalizar_nombre, _buscar_legislador
         conn = get_connection()
         conn.row_factory = sqlite3.Row
-        # Cruza con sil_documentos (estatus refrescado) vía sil_documento_id
-        # para mostrar un estatus_canon LIMPIO y al día, no el crudo/desfasado
-        # de actividad_legislador.
-        rows = conn.execute("""
-            SELECT legislador_id, tipo_instrumento, fecha_presentacion,
-                   titulo, comision_turno, estatus_canon,
-                   seguimiento_id, asunto_id, url
-            FROM (
-                SELECT a.legislador_id, a.tipo_instrumento, a.fecha_presentacion,
-                       a.titulo, a.comision_turno, a.id,
-                       COALESCE(s.estatus_canon, '') AS estatus_canon,
-                       s.seguimiento_id, s.asunto_id,
-                       COALESCE(s.url, '') AS url,
-                       ROW_NUMBER() OVER (
-                         PARTITION BY a.legislador_id
-                         ORDER BY a.fecha_presentacion DESC, a.id DESC
-                       ) AS rn
-                FROM actividad_legislador a
-                LEFT JOIN sil_documentos s ON s.id = a.sil_documento_id
-                WHERE a.legislador_id IS NOT NULL
-                  AND a.fecha_presentacion IS NOT NULL
-                  AND (LOWER(a.tipo_instrumento) LIKE '%iniciativ%'
-                       OR LOWER(a.tipo_instrumento) LIKE '%proposici%')
-            )
-            WHERE rn <= ?
-            ORDER BY legislador_id, fecha_presentacion DESC
-        """, (n,)).fetchall()
-        out = {}
-        for r in rows:
-            lid = str(r["legislador_id"])
-            out.setdefault(lid, []).append({
-                "tipo": r["tipo_instrumento"],
-                "fecha": r["fecha_presentacion"],
-                "titulo": r["titulo"],
-                "comision": r["comision_turno"] or "",
-                "estatus": r["estatus_canon"] or "",
-                "seguimiento_id": r["seguimiento_id"] or "",
-                "asunto_id": r["asunto_id"] or "",
-                "url": r["url"] or "",
+
+        def _clave_dedup(fecha, titulo):
+            """Identidad de un instrumento para deduplicar la MISMA propuesta
+            que aparece como doc SIL numérico Y como PERM_ de la gaceta. Los
+            títulos arrancan distinto ('Que reforma...' vs 'De la Sen. X...
+            con proyecto...') pero TERMINAN igual (el objeto del proyecto)."""
+            t = (titulo or "").lower()
+            t = "".join(ch for ch in unicodedata.normalize("NFD", t)
+                        if unicodedata.category(ch) != "Mn")
+            t = re.sub(r"[^a-z0-9 ]", " ", t)
+            t = re.sub(r"\s+", " ", t).strip()
+            return (fecha or "", t[-55:])
+
+        candidatos = {}  # lid -> list de dicts (con _fuente y _clave)
+
+        def _add(lid, fecha, tipo, titulo, comision, estatus, seg, asu, url, fuente):
+            candidatos.setdefault(str(lid), []).append({
+                "tipo": tipo, "fecha": fecha, "titulo": titulo,
+                "comision": comision or "", "estatus": estatus or "",
+                "seguimiento_id": seg or "", "asunto_id": asu or "", "url": url or "",
+                "_fuente": fuente, "_clave": _clave_dedup(fecha, titulo),
             })
+
+        # 1) Instrumentos YA atribuidos (numérico/SEN_/DIP_) vía actividad_legislador
+        for r in conn.execute("""
+            SELECT a.legislador_id, a.tipo_instrumento, a.fecha_presentacion,
+                   a.titulo, a.comision_turno,
+                   COALESCE(s.estatus_canon, '') AS estatus_canon,
+                   s.seguimiento_id, s.asunto_id, COALESCE(s.url, '') AS url
+            FROM actividad_legislador a
+            LEFT JOIN sil_documentos s ON s.id = a.sil_documento_id
+            WHERE a.legislador_id IS NOT NULL AND a.fecha_presentacion IS NOT NULL
+              AND (LOWER(a.tipo_instrumento) LIKE '%iniciativ%'
+                   OR LOWER(a.tipo_instrumento) LIKE '%proposici%')
+        """).fetchall():
+            _add(r["legislador_id"], r["fecha_presentacion"], r["tipo_instrumento"],
+                 r["titulo"], r["comision_turno"], r["estatus_canon"],
+                 r["seguimiento_id"], r["asunto_id"], r["url"], "sil")
+
+        # 2) ENRIQUECER con la Gaceta Permanente: docs PERM_ con presentador,
+        #    atribuidos al vuelo (NO viven en actividad_legislador para no
+        #    contaminar conteos). Captura lo que el SIL aún no ingestó.
+        legs = {}
+        for r in conn.execute("SELECT id, nombre_normalizado FROM legisladores WHERE nombre_normalizado IS NOT NULL AND nombre_normalizado != ''"):
+            legs[r["nombre_normalizado"]] = r["id"]
+        for r in conn.execute("""
+            SELECT presentador, tipo, fecha_presentacion, titulo, comision,
+                   COALESCE(estatus_canon, '') AS estatus_canon,
+                   seguimiento_id, asunto_id, COALESCE(url, '') AS url
+            FROM sil_documentos
+            WHERE seguimiento_id LIKE 'PERM_%' AND presentador != ''
+              AND (LOWER(tipo) LIKE '%iniciativ%' OR LOWER(tipo) LIKE '%proposici%')
+        """).fetchall():
+            nombre = re.sub(r'^(Dip\.|Sen\.)\s*', '', r["presentador"]).strip()
+            lid = _buscar_legislador(_normalizar_nombre(nombre), legs)
+            if not lid:
+                continue
+            # Título de display: quitar el prefijo de autoría ("De la Sen. X, ")
+            tit = re.sub(r'^De(?:\s+la|l)?\s+(?:Sen\.|Dip\.|senador[a]?|diputad[oa]|legislador[a]?)\s+.+?,\s*(?:del?\s+Grupo[^,]*,\s*)?',
+                         '', r["titulo"], flags=re.IGNORECASE).strip()
+            tit = tit[0].upper() + tit[1:] if tit else r["titulo"]
+            _add(lid, r["fecha_presentacion"], r["tipo"], tit, r["comision"],
+                 r["estatus_canon"], r["seguimiento_id"], r["asunto_id"], r["url"], "perm")
+
+        # 3) Dedup por legislador (prefiere 'sil' sobre 'perm') + top N por fecha
+        out = {}
+        for lid, items in candidatos.items():
+            vistos = {}
+            for it in items:
+                k = it["_clave"]
+                prev = vistos.get(k)
+                if prev is None or (prev["_fuente"] == "perm" and it["_fuente"] == "sil"):
+                    vistos[k] = it
+            finales = sorted(vistos.values(), key=lambda x: x["fecha"] or "", reverse=True)[:n]
+            out[lid] = [{kk: vv for kk, vv in it.items() if not kk.startswith("_")} for it in finales]
         return out
     except Exception as e:
         logger.warning(f"No se pudo obtener ultimas_instrumentos_legislador: {e}")

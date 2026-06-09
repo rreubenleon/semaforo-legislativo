@@ -120,6 +120,38 @@ def clasificar_tipo(titulo: str) -> tuple[str, str]:
     return "Otro", "Otro"
 
 
+def extraer_presentador(titulo: str) -> str:
+    """Extrae el AUTOR primario del título de un doc de la Gaceta Permanente.
+    El título trae quién presenta, ej.:
+      'Del Dip. Mario Alberto López Hernández, del Grupo Parlamentario...'
+      'De la Sen. Paloma Sánchez Ramos, del Grupo Parlamentario...'
+      'Del senador Alberto Anaya Gutiérrez y de las senadoras ...'
+    Devuelve 'Sen. Nombre' / 'Dip. Nombre' (formato del resto del SIL) o ''.
+
+    OJO: solo guardamos `presentador` (metadato). NO marcamos
+    tipo_presentador='legislador' a propósito — así poblar_actividad_desde_sil
+    NO mete estos docs a actividad_legislador (evita contaminar conteos como
+    l3p). La atribución a un legislador se hace en el export de "últimas
+    propuestas", con DEDUP contra el SIL numérico.
+    """
+    if not titulo:
+        return ""
+    m = re.match(
+        r"^De(?:\s+la|l)?\s+"
+        r"(Sen\.|Dip\.|senador(?:a)?|diputad[oa]|legislador(?:a)?)\s+"
+        r"(.+?)"
+        r"(?:,|\s+del?\s+Grupo|\s+y\s+de\s+l|\s+a\s+nombre|\s+con\s+(?:proyecto|punto)|\s+integrante)",
+        titulo, flags=re.IGNORECASE)
+    if not m:
+        return ""
+    rol = m.group(1).lower()
+    nombre = m.group(2).strip().rstrip(",").strip()
+    if len(nombre) < 4:
+        return ""
+    prefijo = "Sen." if rol.startswith(("sen", "senador")) else "Dip."
+    return f"{prefijo} {nombre}"
+
+
 MESES_ES = {
     "enero": "01", "febrero": "02", "marzo": "03", "abril": "04",
     "mayo": "05", "junio": "06", "julio": "07", "agosto": "08",
@@ -252,20 +284,26 @@ def scrape(solo_count: bool = False) -> dict:
         # Fallback solo si el scraper no encontró el header (raro).
         fecha = doc.get("fecha") or fecha_default_para_id(int(doc["doc_id"]))
         clasificacion = "legislativo_sustantivo" if tipo_grupo in ("Iniciativa", "Proposición con PA") else ""
+        # Extraer el promovente del título (metadato) + url del doc. NO se
+        # marca tipo_presentador='legislador' (ver extraer_presentador).
+        presentador = extraer_presentador(doc["titulo"])
+        url = doc.get("url", "")
         try:
             cur = conn.execute("""
                 INSERT INTO sil_documentos
                   (seguimiento_id, asunto_id, tipo, titulo, sinopsis, camara,
                    fecha_presentacion, legislatura, periodo, estatus, partido,
                    comision, categoria, fecha_scraping, presentador,
-                   tipo_presentador, tipo_grupo, clasificacion)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                   tipo_presentador, tipo_grupo, clasificacion, url)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(seguimiento_id, asunto_id) DO UPDATE SET
                     tipo=excluded.tipo,
                     tipo_grupo=excluded.tipo_grupo,
                     clasificacion=excluded.clasificacion,
                     titulo=excluded.titulo,
-                    fecha_presentacion=excluded.fecha_presentacion
+                    fecha_presentacion=excluded.fecha_presentacion,
+                    presentador=excluded.presentador,
+                    url=excluded.url
             """, (
                 seg_id, asu_id, tipo,
                 doc["titulo"][:500],
@@ -273,9 +311,9 @@ def scrape(solo_count: bool = False) -> dict:
                 "Comisión Permanente",
                 fecha, "LXVI", "2do Receso",
                 "", "", "", "",
-                ahora, "", "",
+                ahora, presentador, "",
                 tipo_grupo,
-                clasificacion,
+                clasificacion, url,
             ))
             if cur.rowcount > 0:
                 insertados += 1
