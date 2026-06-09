@@ -7681,6 +7681,8 @@
           if (arr.length === 0) return null;
           const ABBR = { MORENA: 'MOR' };
           const fmtK = (n) => n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n);
+          const maxTotal = arr[0][1].total || 1;
+          const grandTotal = arr.reduce((s, [, p]) => s + p.total, 0) || 1;
           return (
             <div className="space-y-2">
               <button onClick={() => setOpen(o => !o)}
@@ -7701,7 +7703,46 @@
                 </div>
                 <svg className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </button>
-              {open && <PartidosPoliticosPanel partidos={partidos} />}
+              {open && (
+                <div className="glass border border-borde rounded-xl divide-y divide-gray-100 overflow-hidden">
+                  {arr.map(([k, p]) => {
+                    const color = p.color || PARTIDO_COLORS[k] || '#6B7280';
+                    const pct = (p.total / maxTotal) * 100;
+                    const share = (p.total / grandTotal) * 100;
+                    const est = p.por_estado || {};
+                    const cam = p.por_camara || {};
+                    const chips = [
+                      ['Aprob.', est.Aprobado || 0, 'text-emerald-600'],
+                      ['Pend.', est.Pendiente || 0, 'text-amber-600'],
+                      ['Desech.', est.Desechado || 0, 'text-rose-600'],
+                      ['Retir.', est.Retirada || 0, 'text-gray-400'],
+                    ].filter(([, n]) => n > 0);
+                    return (
+                      <div key={k} className="px-4 py-2.5">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }}></span>
+                          <span className="text-[13px] font-semibold text-gray-800 w-28 flex-shrink-0 truncate">{p.nombre || k}</span>
+                          <div className="flex-1 min-w-0 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                            <div className="h-full rounded-full" style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${hexToRgba(color, 0.4)}, ${color})` }}></div>
+                          </div>
+                          <span className="text-[13px] font-bold font-mono text-gray-800 w-14 text-right flex-shrink-0">{p.total.toLocaleString()}</span>
+                          <span className="text-[10px] font-mono text-gray-400 w-10 text-right flex-shrink-0">{share.toFixed(0)}%</span>
+                        </div>
+                        <div className="flex items-center gap-x-3 gap-y-0.5 flex-wrap mt-1 ml-[18px] text-[10px] font-mono text-gray-500">
+                          {chips.map(([label, n, cls]) => (
+                            <span key={label}><span className={`font-semibold ${cls}`}>{n.toLocaleString()}</span> {label}</span>
+                          ))}
+                          <span className="text-gray-300">·</span>
+                          <span>Dip {(cam.Diputados || 0).toLocaleString()} · Sen {(cam.Senado || 0).toLocaleString()}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div className="px-4 py-1.5 text-[9px] text-gray-400 font-mono bg-gray-50/50">
+                    Iniciativas + proposiciones · LXVI · {grandTotal.toLocaleString()} total
+                  </div>
+                </div>
+              )}
             </div>
           );
         }
