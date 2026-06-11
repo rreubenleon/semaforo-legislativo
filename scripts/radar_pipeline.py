@@ -590,17 +590,15 @@ def _leer_refs_en_d1() -> list[int]:
 # ────────────────────────────────────────────
 # Paso 2: Hit rate por legislador (Fase 2)
 # ────────────────────────────────────────────
-# Umbral para considerar un día como "pico mediático" en una categoría.
-# Empírico: sobre ~18 meses de `scores` diarios, score_media ≥ 55 cae en
-# ~top 15-20% de los días — se alinea con la noción de "pico" del Radar.
-# Inicio de la LXVI Legislatura — toda la muestra del Radar se ancla aquí
-FECHA_INICIO_LXVI = "2024-09-01"
-
-PICO_SCORE_MEDIA_MIN = 55.0
-
-# Ventanas del hit rate
-HITRATE_VENTANA_PICOS = 20   # últimos N picos por categoría (LXVI completa)
-HITRATE_VENTANA_DIAS = 14     # días para considerar que el legislador respondió
+# Constantes de la metodología (pico, ventanas, ancla LXVI) movidas a
+# config.py — UNA SOLA FUENTE DE VERDAD compartida con
+# api/predictor_autoria.py (predicción de autoría usa el mismo hit rate).
+from config import (  # noqa: E402
+    FECHA_INICIO_LXVI,
+    PICO_SCORE_MEDIA_MIN,
+    HITRATE_VENTANA_PICOS,
+    HITRATE_VENTANA_DIAS,
+)
 
 
 def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:

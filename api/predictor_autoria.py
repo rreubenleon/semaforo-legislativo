@@ -125,10 +125,13 @@ def extraer_ley_de_titulo(titulo):
     return None
 
 
-def _detectar_picos_score(conn, categoria):
+def _detectar_picos_score(conn, categoria, ref_date=None):
     """
     Detecta picos en los scores de una categoría.
     Un pico = incremento >5 puntos día a día O score absoluto > 50.
+
+    ref_date: si se da (YYYY-MM-DD), solo considera scores HASTA esa fecha
+    (modo punto-en-el-tiempo para backtest sin fuga de datos).
 
     Returns:
         Lista de dicts: [{"fecha": "YYYY-MM-DD", "score": float, "delta": float}, ...]
@@ -136,9 +139,9 @@ def _detectar_picos_score(conn, categoria):
     rows = conn.execute("""
         SELECT fecha, score_total
         FROM scores
-        WHERE categoria = ?
+        WHERE categoria = ?""" + (" AND fecha <= ?" if ref_date else "") + """
         ORDER BY fecha ASC
-    """, (categoria,)).fetchall()
+    """, (categoria, ref_date) if ref_date else (categoria,)).fetchall()
 
     if not rows:
         return []
@@ -162,306 +165,189 @@ def _detectar_picos_score(conn, categoria):
     return picos
 
 
-def predecir_autores(categoria, top_n=10):
+def predecir_autores(categoria, top_n=10, ref_date=None):
     """
     Predice los legisladores más probables de presentar un instrumento
-    legislativo sobre la categoría dada, usando el modelo reactivo de
-    correlación.
+    en la categoría dada.
+
+    MODELO CONSOLIDADO (jun 2026): construye sobre las MISMAS métricas del
+    tab Legisladores (radar_pipeline) — no un modelo paralelo. Tres señales:
+
+      1. Volumen ponderado en la categoría (55%) — misma ponderación que la
+         "categoría dominante" del radar (iniciativa indiv 2.0, prop indiv
+         1.0, iniciativa colectiva 0.6, prop colectiva 0.3). El backtest
+         demostró que el volumen es la señal #1: el baseline por volumen le
+         ganaba al modelo anterior de 5 factores en todos los top-K.
+      2. Hit rate en la categoría (30%) — MISMA metodología del radar
+         (paso_hit_rate): picos = días con score_media ≥ PICO_SCORE_MEDIA_MIN,
+         últimos HITRATE_VENTANA_PICOS, ventana bidireccional de
+         HITRATE_VENTANA_DIAS días centrada en el pico.
+      3. Recencia (15%) — días desde su última presentación en la categoría
+         (la base de proy_15d): quien presentó hace poco tiende a repetir.
+
+    Las constantes se importan de scripts.radar_pipeline (una sola fuente de
+    verdad metodológica). El modelo anterior de 5 factores (correlación
+    reactiva paralela, comisión-agenda, patrón de instrumento) se ELIMINÓ:
+    duplicaba el hit_rate con otra metodología y reprobó el backtest
+    (top-5 2.5% vs baseline 6.5%).
 
     Args:
         categoria: clave de categoría (ej: 'seguridad_justicia')
-        top_n: número de resultados a retornar
+        top_n: número de resultados
+        ref_date: si se da (YYYY-MM-DD), usa SOLO datos hasta esa fecha
+            (backtest punto-en-el-tiempo, sin fuga). None = producción.
 
     Returns:
-        Lista de dicts con legislador, score, desglose y metadatos enriquecidos
+        Lista de dicts con el MISMO contrato que el modelo anterior
+        (legislador_id, nombre, …, score_total 0-100, desglose, metadatos).
     """
+    from config import (
+        FECHA_INICIO_LXVI, PICO_SCORE_MEDIA_MIN,
+        HITRATE_VENTANA_PICOS, HITRATE_VENTANA_DIAS,
+    )
+
     conn = get_connection()
     conn.row_factory = sqlite3.Row
-
     if categoria not in CATEGORIAS:
         return []
 
-    # ══════════════════════════════════════════════════════════════
-    # CARGA BULK DE DATOS (evitar N+1)
-    # ══════════════════════════════════════════════════════════════
+    # Corte temporal para backtest punto-en-el-tiempo (sin fuga).
+    _fc = " AND fecha_presentacion <= ?" if ref_date else ""
+    _fp = [ref_date] if ref_date else []
 
-    # Legisladores
-    legisladores = conn.execute("""
-        SELECT id, nombre, camara, partido, estado, distrito,
-               comisiones, comisiones_cargo, foto_url
-        FROM legisladores
-        WHERE nombre != ''
-    """).fetchall()
+    # ── Señales 1 y 3: volumen ponderado + última fecha, en la categoría ──
+    vol = {}        # leg_id -> volumen ponderado (pesos del radar)
+    docs_cat = {}   # leg_id -> count crudo
+    ultima = {}     # leg_id -> última fecha de presentación
+    for row in conn.execute("""
+        SELECT legislador_id,
+               LOWER(COALESCE(tipo_instrumento,'')) AS tipo,
+               CASE WHEN co_firmantes IS NULL OR co_firmantes = ''
+                    THEN 1 ELSE 0 END AS es_indiv,
+               COUNT(*) AS n, MAX(fecha_presentacion) AS fmax
+        FROM actividad_legislador
+        WHERE legislador_id IS NOT NULL AND categoria = ?
+          AND fecha_presentacion >= ?""" + _fc + """
+        GROUP BY legislador_id, tipo, es_indiv
+    """, (categoria, FECHA_INICIO_LXVI, *_fp)):
+        lid = row["legislador_id"]
+        es_ini = "iniciativa" in row["tipo"]
+        peso = (2.0 if es_ini else 1.0) if row["es_indiv"] else (0.6 if es_ini else 0.3)
+        vol[lid] = vol.get(lid, 0.0) + row["n"] * peso
+        docs_cat[lid] = docs_cat.get(lid, 0) + row["n"]
+        if row["fmax"] and (lid not in ultima or row["fmax"] > ultima[lid]):
+            ultima[lid] = row["fmax"][:10]
 
-    if not legisladores:
+    if not vol:
         return []
 
-    # --- Factor 1: datos para correlación reactiva ---
-    picos = _detectar_picos_score(conn, categoria)
+    # ── Señal 2: hit_rate en la categoría (metodología del radar) ──
+    q_picos = ("SELECT fecha FROM scores WHERE categoria = ? "
+               "AND score_media >= ? AND fecha >= ?")
+    p_picos = [categoria, PICO_SCORE_MEDIA_MIN, FECHA_INICIO_LXVI]
+    if ref_date:
+        q_picos += " AND fecha <= ?"
+        p_picos.append(ref_date)
+    q_picos += " ORDER BY fecha DESC"
+    picos = [r["fecha"][:10] for r in conn.execute(q_picos, p_picos)][:HITRATE_VENTANA_PICOS]
     total_picos = len(picos)
 
-    # Presentaciones por legislador en esta categoría con fecha
-    presentaciones_cat = conn.execute("""
-        SELECT legislador_id, fecha_presentacion
-        FROM actividad_legislador
-        WHERE categoria = ?
-          AND legislador_id IS NOT NULL
-          AND fecha_presentacion IS NOT NULL AND fecha_presentacion != ''
-        ORDER BY fecha_presentacion ASC
-    """, (categoria,)).fetchall()
+    actividad_fechas = {}   # leg_id -> set de fechas con actividad en la cat
+    for row in conn.execute("""
+        SELECT legislador_id, fecha_presentacion FROM actividad_legislador
+        WHERE legislador_id IS NOT NULL AND categoria = ?
+          AND fecha_presentacion IS NOT NULL AND fecha_presentacion != ''""" + _fc + """
+    """, (categoria, *_fp)):
+        actividad_fechas.setdefault(row["legislador_id"], set()).add(
+            row["fecha_presentacion"][:10])
 
-    # Agrupar por legislador
-    pres_por_leg = defaultdict(list)
-    for row in presentaciones_cat:
-        pres_por_leg[row["legislador_id"]].append(row["fecha_presentacion"][:10])
-
-    # Pre-calcular: por cada legislador, cuántos picos "respondió"
-    # (presentó algo dentro de 30 días después del pico)
-    reacciones_por_leg = {}
-    if total_picos > 0:
-        for leg_id, fechas_pres in pres_por_leg.items():
-            veces = 0
+    mitad = HITRATE_VENTANA_DIAS // 2
+    hit_por_leg = {}
+    if total_picos:
+        for lid, fechas in actividad_fechas.items():
+            respondio = 0
             for pico in picos:
-                fecha_pico = pico["fecha"]
-                # Buscar si presentó algo en los 30 días siguientes
-                for fp in fechas_pres:
-                    if fp >= fecha_pico:
-                        try:
-                            d_pico = datetime.strptime(fecha_pico, "%Y-%m-%d")
-                            d_pres = datetime.strptime(fp, "%Y-%m-%d")
-                            dias = (d_pres - d_pico).days
-                        except ValueError:
-                            continue
-                        if 0 <= dias <= 30:
-                            veces += 1
-                            break  # Solo cuenta una vez por pico
-                        elif dias > 30:
-                            break  # Ya pasó la ventana, siguiente pico
-            reacciones_por_leg[leg_id] = veces
+                try:
+                    d0 = datetime.strptime(pico, "%Y-%m-%d").date()
+                except ValueError:
+                    continue
+                if any((d0 + timedelta(days=dd)).isoformat() in fechas
+                       for dd in range(-mitad, HITRATE_VENTANA_DIAS - mitad + 1)):
+                    respondio += 1
+            hit_por_leg[lid] = respondio / total_picos
 
-    # --- Factor 2: datos para especialización temática ---
-    docs_en_cat_por_leg = {}
+    # ── Metadatos: roster + tipos/títulos (instrumento/ley probable) ──
+    roster = {r["id"]: r for r in conn.execute("""
+        SELECT id, nombre, camara, partido, estado, comisiones, foto_url
+        FROM legisladores WHERE nombre != ''
+    """)}
+    tipos_por_leg, titulos_por_leg = defaultdict(list), defaultdict(list)
     for row in conn.execute("""
-        SELECT legislador_id, COUNT(*) as cnt
-        FROM actividad_legislador
-        WHERE categoria = ?
-        GROUP BY legislador_id
-    """, (categoria,)).fetchall():
-        docs_en_cat_por_leg[row["legislador_id"]] = row["cnt"]
-
-    docs_total_por_leg = {}
-    for row in conn.execute("""
-        SELECT legislador_id, COUNT(*) as cnt
-        FROM actividad_legislador
-        WHERE legislador_id IS NOT NULL
-        GROUP BY legislador_id
-    """).fetchall():
-        docs_total_por_leg[row["legislador_id"]] = row["cnt"]
-
-    # --- Factor 3: datos para comisión + agenda setting ---
-    comisiones_afines = COMISIONES_POR_CATEGORIA.get(categoria, [])
-
-    # Actividad reciente de comisiones en Gaceta
-    comisiones_con_actividad = set()
-    if comisiones_afines:
-        try:
-            eventos_gaceta = conn.execute("""
-                SELECT comision FROM gaceta
-                WHERE fecha >= date('now', '-30 days')
-                  AND comision != 'No especificada'
-            """).fetchall()
-            for ev in eventos_gaceta:
-                com_gaceta = (ev["comision"] or "").upper()
-                for com_afin in comisiones_afines:
-                    if com_afin.upper() in com_gaceta:
-                        comisiones_con_actividad.add(com_afin)
-        except Exception:
-            pass
-
-    # --- Factor 4: datos para patrón de instrumento ---
-    # tipo_instrumento y titulo por legislador en esta categoría
-    instrumentos_por_leg = defaultdict(list)
-    titulos_por_leg = defaultdict(list)
-    for row in conn.execute("""
-        SELECT legislador_id, tipo_instrumento, titulo
-        FROM actividad_legislador
-        WHERE categoria = ?
-          AND legislador_id IS NOT NULL
-    """, (categoria,)).fetchall():
-        if row["tipo_instrumento"]:
-            instrumentos_por_leg[row["legislador_id"]].append(row["tipo_instrumento"])
+        SELECT legislador_id, tipo_instrumento, titulo FROM actividad_legislador
+        WHERE legislador_id IS NOT NULL AND categoria = ?""" + _fc + """
+    """, (categoria, *_fp)):
+        if row["tipo_instrumento"] and row["tipo_instrumento"] != "Asunto":
+            tipos_por_leg[row["legislador_id"]].append(row["tipo_instrumento"])
         if row["titulo"]:
             titulos_por_leg[row["legislador_id"]].append(row["titulo"])
 
-    # --- Factor 5: última actividad por legislador ---
-    ultima_actividad_por_leg = {}
-    for row in conn.execute("""
-        SELECT legislador_id, MAX(fecha_presentacion) as ultima
-        FROM actividad_legislador
-        WHERE legislador_id IS NOT NULL
-          AND fecha_presentacion IS NOT NULL AND fecha_presentacion != ''
-        GROUP BY legislador_id
-    """).fetchall():
-        ultima_actividad_por_leg[row["legislador_id"]] = row["ultima"][:10]
-
-    hoy = datetime.now()
-
-    # ══════════════════════════════════════════════════════════════
-    # CÁLCULO DE SCORES POR LEGISLADOR
-    # ══════════════════════════════════════════════════════════════
+    comisiones_afines = COMISIONES_POR_CATEGORIA.get(categoria, [])
+    hoy = datetime.strptime(ref_date, "%Y-%m-%d") if ref_date else datetime.now()
+    vol_max = max(vol.values()) or 1.0
 
     predicciones = []
-
-    for leg in legisladores:
-        leg_id = leg["id"]
-        scores = {}
-
-        # ── Factor 1: Correlación Reactiva (35%) ──
-        if total_picos > 0:
-            veces = reacciones_por_leg.get(leg_id, 0)
-            scores["correlacion_reactiva"] = (veces / total_picos) * 100
-        else:
-            # Sin picos detectados, usar presencia en categoría como proxy
-            docs_cat = docs_en_cat_por_leg.get(leg_id, 0)
-            scores["correlacion_reactiva"] = min(docs_cat * 10, 50)
-
-        # ── Factor 2: Especialización Temática (25%) ──
-        docs_cat = docs_en_cat_por_leg.get(leg_id, 0)
-        docs_total = docs_total_por_leg.get(leg_id, 0)
-
-        if docs_cat >= 3 and docs_total > 0:
-            ratio = docs_cat / docs_total
-            scores["especializacion_tematica"] = ratio * 100
-        elif docs_cat > 0 and docs_total > 0:
-            # Menos de 3 docs: penalización proporcional
-            ratio = docs_cat / docs_total
-            scores["especializacion_tematica"] = ratio * 100 * (docs_cat / 3)
-        else:
-            scores["especializacion_tematica"] = 0
-
-        # ── Factor 3: Comisión + Agenda Setting (20%) ──
-        comisiones_leg = (leg["comisiones"] or "").lower()
-        comisiones_cargo = leg["comisiones_cargo"] or ""
-
-        comision_base = 0
-        for com_afin in comisiones_afines:
-            if com_afin.lower() in comisiones_leg:
-                # Determinar cargo
-                cargos = comisiones_cargo.split("|")
-                if any(f"{com_afin}:President" in cc for cc in cargos):
-                    comision_base = 100
-                elif any(f"{com_afin}:Secretar" in cc for cc in cargos):
-                    comision_base = max(comision_base, 80)
-                else:
-                    comision_base = max(comision_base, 60)
-
-        # Boost si su comisión tiene actividad reciente en Gaceta
-        if comision_base > 0 and comisiones_con_actividad:
-            tiene_actividad = any(
-                c.lower() in comisiones_leg for c in comisiones_con_actividad
-            )
-            if tiene_actividad:
-                comision_base = min(comision_base * 1.3, 100)
-
-        scores["comision_agenda"] = comision_base
-
-        # ── Factor 4: Patrón de Instrumento (10%) ──
-        tipos = instrumentos_por_leg.get(leg_id, [])
-        # Filtrar "Asunto" que es genérico
-        tipos_sustantivos = [t for t in tipos if t != "Asunto"]
-
-        if tipos_sustantivos:
-            counter = Counter(tipos_sustantivos)
-            mas_comun, freq = counter.most_common(1)[0]
-            total_sustantivos = len(tipos_sustantivos)
-            # Score = qué tan concentrado está en un tipo
-            concentracion = freq / total_sustantivos
-            scores["patron_instrumento"] = concentracion * 100
-        elif tipos:
-            # Solo tiene "Asunto" -- bajo score
-            scores["patron_instrumento"] = 20
-        else:
-            scores["patron_instrumento"] = 0
-
-        # ── Factor 5: Penalización por Inactividad (10%) ──
-        ultima = ultima_actividad_por_leg.get(leg_id)
-        if ultima:
+    for lid, v in vol.items():
+        leg = roster.get(lid)
+        if leg is None:
+            continue
+        s_vol = 100.0 * v / vol_max
+        s_hit = 100.0 * hit_por_leg.get(lid, 0.0)
+        f_ult = ultima.get(lid)
+        dias = 999
+        if f_ult:
             try:
-                d_ultima = datetime.strptime(ultima, "%Y-%m-%d")
-                dias_desde = (hoy - d_ultima).days
+                dias = (hoy - datetime.strptime(f_ult, "%Y-%m-%d")).days
             except ValueError:
-                dias_desde = 999
+                pass
+        s_rec = 100.0 if dias <= 30 else 60.0 if dias <= 60 else 30.0 if dias <= 90 else 0.0
 
-            if dias_desde > 90:
-                scores["penalizacion_inactividad"] = 0
-            elif dias_desde > 60:
-                scores["penalizacion_inactividad"] = 30
-            elif dias_desde > 30:
-                scores["penalizacion_inactividad"] = 60
-            else:
-                scores["penalizacion_inactividad"] = 100
-        else:
-            scores["penalizacion_inactividad"] = 0
-
-        # ── Score final ponderado ──
-        score_total = sum(scores[k] * PESOS[k] for k in PESOS)
-
+        score_total = 0.55 * s_vol + 0.30 * s_hit + 0.15 * s_rec
         if score_total <= 0:
             continue
 
-        # ── Metadatos enriquecidos ──
-
-        # Instrumento probable
-        instrumento_probable = None
-        if tipos_sustantivos:
-            instrumento_probable = Counter(tipos_sustantivos).most_common(1)[0][0]
-
-        # Ley probable (la más mencionada en sus títulos para esta categoría)
-        ley_probable = None
-        titulos = titulos_por_leg.get(leg_id, [])
-        if titulos:
-            leyes = []
-            for t in titulos:
-                ley = extraer_ley_de_titulo(t)
-                if ley:
-                    leyes.append(ley)
-            if leyes:
-                ley_probable = Counter(leyes).most_common(1)[0][0]
-
-        # Narrativa del patrón
-        veces_reaccionado = reacciones_por_leg.get(leg_id, 0)
-        patron_narrativo = _generar_narrativa(
-            nombre=leg["nombre"],
-            partido=leg["partido"],
-            categoria=categoria,
-            veces_reaccionado=veces_reaccionado,
-            total_picos=total_picos,
-            instrumento_probable=instrumento_probable,
-            ley_probable=ley_probable,
-            docs_cat=docs_cat,
-            comision_base=comision_base,
-        )
+        tipos = tipos_por_leg.get(lid, [])
+        instrumento_probable = Counter(tipos).most_common(1)[0][0] if tipos else None
+        leyes = [l for l in (extraer_ley_de_titulo(t) for t in titulos_por_leg.get(lid, [])) if l]
+        ley_probable = Counter(leyes).most_common(1)[0][0] if leyes else None
+        veces = round(hit_por_leg.get(lid, 0.0) * total_picos)
+        comisiones_leg = (leg["comisiones"] or "").lower()
 
         predicciones.append({
-            "legislador_id": leg_id,
+            "legislador_id": lid,
             "nombre": leg["nombre"],
             "camara": leg["camara"],
             "partido": leg["partido"],
             "estado": leg["estado"],
             "foto_url": leg["foto_url"],
             "score_total": round(score_total, 2),
-            "desglose": {k: round(v, 1) for k, v in scores.items()},
-            "docs_en_categoria": docs_cat,
+            "desglose": {
+                "volumen_categoria": round(s_vol, 1),
+                "hit_rate": round(s_hit, 1),
+                "recencia": round(s_rec, 1),
+            },
+            "docs_en_categoria": docs_cat.get(lid, 0),
             "instrumento_probable": instrumento_probable,
             "ley_probable": ley_probable,
-            "patron_narrativo": patron_narrativo,
-            "correlacion_score": round(scores["correlacion_reactiva"], 1),
-            "veces_reaccionado": veces_reaccionado,
+            "patron_narrativo": _generar_narrativa(
+                nombre=leg["nombre"], partido=leg["partido"], categoria=categoria,
+                veces_reaccionado=veces, total_picos=total_picos,
+                instrumento_probable=instrumento_probable, ley_probable=ley_probable,
+                docs_cat=docs_cat.get(lid, 0), comision_base=0,
+            ),
+            "correlacion_score": round(s_hit, 1),
+            "veces_reaccionado": veces,
             "total_picos": total_picos,
-            "comisiones_afines": [
-                c for c in comisiones_afines
-                if c.lower() in comisiones_leg
-            ],
+            "comisiones_afines": [c for c in comisiones_afines if c.lower() in comisiones_leg],
         })
 
     predicciones.sort(key=lambda x: x["score_total"], reverse=True)

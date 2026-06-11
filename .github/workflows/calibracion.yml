@@ -76,14 +76,21 @@ jobs:
       - name: Calcular walk-forward backtest
         run: python scripts/backtest_walkforward.py
 
+      # Calificación del predictor de AUTORÍA (separada del score, como pidió
+      # el user): backtest punto-en-el-tiempo del modelo consolidado vs
+      # baseline por volumen. La página Métricas la lee vía data.json.
+      - name: Validar predictor de autoría
+        run: python eval/validar_predictor_autoria.py --n 500 --json dashboard/validacion_autoria.json
+        continue-on-error: true
+
       - name: Commitear artefactos si cambiaron
         run: |
-          if git diff --quiet dashboard/calibracion.json dashboard/backtest.json; then
+          if git diff --quiet dashboard/calibracion.json dashboard/backtest.json dashboard/validacion_autoria.json; then
             echo "Sin cambios"
             exit 0
           fi
           git config user.name "fiat-bot"
           git config user.email "fiat-bot@users.noreply.github.com"
-          git add dashboard/calibracion.json dashboard/backtest.json
+          git add dashboard/calibracion.json dashboard/backtest.json dashboard/validacion_autoria.json
           git commit -m "Métricas semanales: $(date -u +%Y-%m-%d)"
           git push

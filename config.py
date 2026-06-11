@@ -2200,3 +2200,20 @@ def normalizar_comision_senado(nombre_raw):
         return normalizar_comision_senado(nombre[4:].strip())
 
     return None
+
+
+# ────────────────────────────────────────────
+# Metodología del Radar de Legisladores (hit rate)
+# UNA SOLA FUENTE DE VERDAD: las consumen scripts/radar_pipeline.py
+# (tab Legisladores → D1) y api/predictor_autoria.py (predicción de
+# autoría). Si cambias una, cambian las dos — a propósito.
+# ────────────────────────────────────────────
+# Inicio de la LXVI Legislatura — toda la muestra del Radar se ancla aquí
+FECHA_INICIO_LXVI = "2024-09-01"
+# Umbral para considerar un día como "pico mediático" en una categoría.
+# Empírico: sobre ~18 meses de `scores` diarios, score_media ≥ 55 cae en
+# ~top 15-20% de los días — se alinea con la noción de "pico" del Radar.
+PICO_SCORE_MEDIA_MIN = 55.0
+# Ventanas del hit rate
+HITRATE_VENTANA_PICOS = 20   # últimos N picos por categoría (LXVI completa)
+HITRATE_VENTANA_DIAS = 14    # días para considerar que el legislador respondió

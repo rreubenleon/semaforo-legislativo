@@ -6225,6 +6225,54 @@
                         </div>
                     )}
 
+                    {/* SECCIÓN 7 — PREDICCIÓN DE AUTORÍA (separada del score) */}
+                    {data.validacion_autoria && (() => {
+                        const va = data.validacion_autoria;
+                        const filas = [
+                            ["Autor en top-1", va.autor.top_1],
+                            ["Autor en top-3", va.autor.top_3],
+                            ["Autor en top-5", va.autor.top_5],
+                            ["Autor en top-10", va.autor.top_10],
+                            ["Partido del autor", va.partido],
+                        ];
+                        return (
+                            <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                                <MetricasSectionHeader idx={7} label="predicción de autoría"
+                                    sub={`separada del score · test general · n=${va.n_instrumentos}`} />
+                                <div className="p-4 space-y-3">
+                                    <div className="text-[11px] text-gray-500 leading-snug">
+                                        Califica el eslabón "¿qué legislador?" — backtest punto-en-el-tiempo
+                                        (sin fuga). <span className="font-semibold text-gray-700">Independiente del score</span> (no se combinan).
+                                        Comparado contra un baseline por volumen.
+                                    </div>
+                                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                        <div className="grid grid-cols-[1.6fr_0.8fr_0.8fr_0.7fr] bg-gray-50/60 px-3 py-1.5 text-[9px] font-mono font-bold uppercase tracking-widest text-gray-500 border-b border-gray-100">
+                                            <div>métrica</div>
+                                            <div className="text-right">predictor</div>
+                                            <div className="text-right">baseline</div>
+                                            <div className="text-right">lift</div>
+                                        </div>
+                                        {filas.map(([label, m], i) => {
+                                            const lift = (m.predictor - m.baseline);
+                                            const cls = lift > 0 ? "text-emerald-600" : lift < 0 ? "text-rose-600" : "text-gray-500";
+                                            return (
+                                                <div key={i} className="grid grid-cols-[1.6fr_0.8fr_0.8fr_0.7fr] px-3 py-1.5 text-[11px] font-mono border-b border-gray-50 last:border-0 items-center">
+                                                    <div className="text-gray-800">{label}</div>
+                                                    <div className="text-right text-gray-700">{m.predictor.toFixed(1)}%</div>
+                                                    <div className="text-right text-gray-400">{m.baseline.toFixed(1)}%</div>
+                                                    <div className={`text-right font-bold ${cls}`}>{lift >= 0 ? "+" : ""}{lift.toFixed(1)}pp</div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="text-[10px] text-gray-400 font-mono">
+                                        {va.autores_sin_historial_pct}% de los autores no tenían historial previo en su categoría (techo de lo predecible) · {va.metodologia}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
+
                     {/* MÉTODO A AMPLIO */}
                     {calib && (
                         <details className="bg-white border border-gray-200 rounded-xl overflow-hidden">

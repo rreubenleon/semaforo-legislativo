@@ -139,6 +139,21 @@ def _obtener_actividad_legisladores_reciente():
         return []
 
 
+def _leer_validacion_autoria():
+    """Lee la calificación del predictor de autoría desde el JSON que produce
+    eval/validar_predictor_autoria.py (corre semanal). Passthrough a data.json;
+    None si no existe (no rompe el pipeline)."""
+    try:
+        import json as _json
+        from pathlib import Path as _P
+        p = _P(__file__).resolve().parent / "dashboard" / "validacion_autoria.json"
+        if p.exists():
+            return _json.loads(p.read_text())
+    except Exception as e:
+        logger.warning(f"validacion_autoria no disponible: {e}")
+    return None
+
+
 def _obtener_ultimas_instrumentos_legislador(n=3):
     """Para cada legislador, sus últimas N iniciativas/proposiciones con punto
     de acuerdo (sustantivos), SIN importar recencia. Para el panel "Mis
@@ -2110,6 +2125,10 @@ def paso_7_exportar_dashboard():
         "convocatorias": obtener_convocatorias(),
         "actividad_legisladores_reciente": _obtener_actividad_legisladores_reciente(),
         "ultimas_instrumentos_legislador": _obtener_ultimas_instrumentos_legislador(n=5),
+        # Calificación del predictor de AUTORÍA (SEPARADA del score). Se calcula
+        # semanal (calibracion.yml) y se escribe a dashboard/validacion_autoria.json;
+        # aquí solo se pasa a data.json para que la página Métricas la renderice.
+        "validacion_autoria": _leer_validacion_autoria(),
         # comisiones_actividad: migrado a D1 (Worker /comisiones)
         # haiku_status: NO se expone en data.json (visible públicamente).
         # Se usa solo internamente en commit message + GitHub Actions warning.
