@@ -34,6 +34,12 @@ ROOT = Path(__file__).resolve().parent.parent
 DB = ROOT / "semaforo.db"
 sys.path.insert(0, str(ROOT))
 
+# Definición canónica de "sustantivo" (una sola verdad — ver config.py).
+# Antes el ELO filtraba clasificacion='legislativo_sustantivo', que dejaba
+# fuera los SIL-numéricos (los únicos con estatus) → 0 desenlaces. Ahora usa
+# el filtro por tipo, igual que Partidos.
+from config import SQL_SUSTANTIVO_T
+
 # Parámetros del sistema
 K = 24                  # factor de ajuste ELO (reducido para estabilidad)
 ELO_INICIAL = 1500.0
@@ -120,7 +126,7 @@ def calcular_tasas_comision(conn):
         FROM sil_documentos
         WHERE fecha_presentacion >= '2024-09-01'
           AND comision IS NOT NULL AND comision != ''
-          AND (clasificacion = 'legislativo_sustantivo' OR clasificacion IS NULL)
+          AND """ + SQL_SUSTANTIVO_T("") + """
           AND (camara IS NULL OR camara != 'Comisión Permanente')
     """).fetchall()
 
@@ -178,7 +184,7 @@ def calcular_elos(conn):
         JOIN sil_documentos sd ON sd.id = al.sil_documento_id
         WHERE al.legislador_id IS NOT NULL
           AND sd.fecha_presentacion >= '2024-09-01'
-          AND (sd.clasificacion = 'legislativo_sustantivo' OR sd.clasificacion IS NULL)
+          AND """ + SQL_SUSTANTIVO_T("sd") + """
           AND (al.co_firmantes IS NULL OR al.co_firmantes = '')
           AND (sd.camara IS NULL OR sd.camara != 'Comisión Permanente')
         ORDER BY sd.fecha_presentacion

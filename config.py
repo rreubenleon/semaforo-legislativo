@@ -2217,3 +2217,31 @@ PICO_SCORE_MEDIA_MIN = 55.0
 # Ventanas del hit rate
 HITRATE_VENTANA_PICOS = 20   # últimos N picos por categoría (LXVI completa)
 HITRATE_VENTANA_DIAS = 14    # días para considerar que el legislador respondió
+
+
+# ────────────────────────────────────────────
+# UNA SOLA VERDAD — definiciones canónicas de la plataforma
+# (auditoría jun-2026). TODO conteo público debe usar estas:
+#   · sustantivo := por TIPO (iniciativa | proposición con PA) — SQL_SUSTANTIVO
+#   · aprobado   := estatus_canon = 'Aprobado'
+#   · pico       := score_media >= PICO_SCORE_MEDIA_MIN (arriba)
+#   · LXVI       := fecha_presentacion >= FECHA_INICIO_LXVI (arriba)
+#
+# OJO: NO usar la columna `clasificacion` como filtro de "sustantivo".
+# Mezcla dos ejes: scope ('legislativo_sustantivo', que escriben los
+# integradores de SEN/DIP — y esos docs NO tienen estatus) vs función
+# ('legislativa/administrativa/ceremonial', del clasificador SIL). Filtrar por
+# 'legislativo_sustantivo' deja fuera los SIL-numéricos, que son los ÚNICOS
+# con estatus real → el ELO quedaba con 0 desenlaces (degenerado). Verificado
+# jun-2026: filtro por tipo = 2,555 desenlaces vs 0 del filtro por clasificacion.
+# ────────────────────────────────────────────
+# Tuplas (por si se necesita en Python):
+SUSTANTIVO_TIPOS_LIKE = ("iniciativ", "proposici")
+# Fragmento SQL canónico (constantes seguras, sin params). `tipo` sin alias:
+SQL_SUSTANTIVO = "(LOWER(tipo) LIKE '%iniciativ%' OR LOWER(tipo) LIKE '%proposici%')"
+
+
+def SQL_SUSTANTIVO_T(alias=""):
+    """Filtro canónico de 'sustantivo' con alias de tabla (ej. 'sd' → sd.tipo)."""
+    col = f"{alias}.tipo" if alias else "tipo"
+    return f"(LOWER({col}) LIKE '%iniciativ%' OR LOWER({col}) LIKE '%proposici%')"
