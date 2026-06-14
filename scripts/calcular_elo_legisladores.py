@@ -472,6 +472,27 @@ def main():
     elos = calcular_elos(conn)
     imprimir_ranking(elos, args.top)
 
+    # ── TRIPWIRE anti-degeneración (lo que faltó en abr-may 2026) ──
+    # El ELO estuvo degenerado SEMANAS sin que nada avisara: un filtro roto
+    # dejó 0 desenlaces y el workflow seguía commiteando basura en silencio.
+    # Si el cálculo se degenera otra vez (por la causa que sea: cambio de
+    # `tipo`, estatus borrado, vínculos rotos), esto TRUENA EN ROJO en vez
+    # de persistir un ELO vacío. Pisos conservadores sobre la realidad LXVI
+    # (jun-2026: 485 con ≥3 partidas, 2,555 desenlaces).
+    con_3 = sum(1 for v in elos.values() if v["partidas"] >= 3)
+    desenlaces = sum(v["wins"] + v["losses"] for v in elos.values())
+    PISO_LEGISLADORES = 150
+    PISO_DESENLACES = 800
+    if con_3 < PISO_LEGISLADORES or desenlaces < PISO_DESENLACES:
+        raise SystemExit(
+            f"\n  🔴 ELO DEGENERADO — abortando para NO commitear basura.\n"
+            f"     legisladores con ≥3 partidas: {con_3} (piso {PISO_LEGISLADORES})\n"
+            f"     desenlaces (aprob+desech):    {desenlaces} (piso {PISO_DESENLACES})\n"
+            f"     Causa probable: el filtro de 'sustantivo' o el estatus dejó\n"
+            f"     de capturar instrumentos. Revisar config.SQL_SUSTANTIVO y\n"
+            f"     la cobertura de `estatus` en sil_documentos ANTES de re-sync.")
+    print(f"  ✓ Tripwire OK: {con_3} legisladores con ≥3, {desenlaces} desenlaces")
+
     if args.guardar:
         guardar_en_db(conn, elos)
 
