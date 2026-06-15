@@ -13,6 +13,12 @@ name: Scrape Estatus Comisiones Senado (one-off)
 #   4. Verificación Camarillo
 
 on:
+  schedule:
+    # Sábados 06:00 UTC — mantener al día el estatus de los SEN_* (gaceta solo
+    # trae el "primer print"; el estatus se sigue aquí en las comisiones del
+    # Senado). Antes esto era one-off manual (corrió por última vez en mayo) →
+    # el estatus de todo lo presentado después quedaba sin matchear.
+    - cron: '0 6 * * 6'
   workflow_dispatch:
     inputs:
       solo_id:
@@ -78,8 +84,16 @@ jobs:
           fi
 
       # 2. Match y UPDATE sil_documentos.estatus
-      - name: Match estatus a sil_documentos
+      #    2a. Match exacto por ID de gaceta
+      - name: Match estatus a sil_documentos (por ID)
         run: python scripts/match_estatus_a_sil_documentos.py
+      #    2b. Match fuzzy por TÍTULO — los SEN_* del scrape oficial NO tienen
+      #        enlace_gaceta, así que el match por ID no los alcanza. Sin este
+      #        paso quedan ~53% de senadores sin estatus. continue-on-error
+      #        para no tumbar el chain si el fuzzy falla.
+      - name: Match estatus a sil_documentos (fuzzy por título)
+        run: python scripts/match_estatus_por_titulo.py
+        continue-on-error: true
 
       # 3. Re-correr radar (sin SIL scrape, ya hicimos lo nuestro)
       - name: Recalcular conteos y sync D1
