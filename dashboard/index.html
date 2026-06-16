@@ -2384,6 +2384,30 @@
             return leg.nombre;
         }
 
+        /* ───────── EFECTIVIDAD — FUENTE ÚNICA DE VERDAD ─────────
+           UNA sola definición usada en TODA la plataforma (tabla Legisladores,
+           Consola y detalle/Métricas). Definición oficial (decisión jun 16):
+           % de éxito INDIVIDUAL = aprobados / (aprobados + desechados) contando
+           SOLO instrumentos firmados en solitario, con Wilson 95% lower bound
+           para penalizar muestras chicas (1/1 → ~5%, no 100%).
+           Fuente: cuentas elo_aprobados/elo_desechados de calcular_elo_legisladores
+           (individual-only, protegidas por el tripwire). NO se recalcula con
+           campos n_*_col porque eso mezclaba trabajo de bancada.
+           Devuelve 0-100, o null si no hay NI UN instrumento individual resuelto
+           (esos se muestran como "en revisión", nunca con número inventado). */
+        function efectividadIndividual(leg) {
+            if (!leg) return null;
+            const aprob = leg.elo_aprobados ?? 0;
+            const desech = leg.elo_desechados ?? 0;
+            const resueltos = aprob + desech;
+            if (resueltos < 1) return null;
+            const p = aprob / resueltos, n = resueltos, z = 1.96;
+            const denom = 1 + (z * z) / n;
+            const center = p + (z * z) / (2 * n);
+            const margin = z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n));
+            return Math.round(Math.max(0, (center - margin) / denom) * 100);
+        }
+
         function PageRadarLegisladores({ data }) {
             const [legisladores, setLegisladores] = useState([]);
             const [meta, setMeta] = useState({ camaras: [], partidos: [], categorias: [] });
@@ -2679,7 +2703,7 @@
                                         <SortableHeader sortKey="proposiciones" label="Prop 15d" tip="Proposiciones proyectadas en los próximos 15 días." />
                                         <SortableHeader sortKey="iniciativas_indiv" label="Iniciativas" tip="Iniciativas LXVI como promovente único. Sin firmas con bancada." />
                                         <SortableHeader sortKey="matchup" label="Matchup" tip="Grado vs. comisión dictaminadora (A rápida, F lenta). Ordenar A→F." />
-                                        <SortableHeader sortKey="efectividad" label="Efectividad" tip="Tasa de éxito: aprobados / (aprobados + desechados). Universal, refleja resultados reales." />
+                                        <SortableHeader sortKey="efectividad" label="Efectividad" tip="% de éxito individual: aprobados / (aprobados + desechados), solo instrumentos firmados en solitario, ajustado por confianza (Wilson). Quien no tiene ningún instrumento resuelto aparece como 'en revisión'." />
                                     </div>
                                 );
                             })()}
@@ -2794,23 +2818,13 @@
             const l3pTotal = (leg.l3p_iniciativas ?? 0) + (leg.l3p_proposiciones ?? 0);
             const grade = leg.matchup_grade;
             const gradeStyle = grade === 'A' ? 'text-emerald-600' : grade === 'B' ? 'text-lime-600' : grade === 'C' ? 'text-amber-600' : grade === 'D' ? 'text-orange-600' : grade === 'F' ? 'text-red-600' : 'text-gray-400';
-            /* Efectividad — Wilson 95% LB (mayo 15). Antes era tasa cruda
-               (aprob/resueltos) que daba 100% a 1/1 (Imelda) y mentía sobre
-               productividad. Wilson penaliza automáticamente muestras chicas:
-               1/1 → 5%, 5/29 → 7%, 20/30 → 49%. */
-            const aprob = (leg.n_ini_aprob_ind ?? 0) + (leg.n_ini_aprob_col ?? 0)
-                          + (leg.n_prop_aprob_ind ?? 0) + (leg.n_prop_aprob_col ?? 0);
-            const desech = (leg.n_ini_desech_ind ?? 0) + (leg.n_ini_desech_col ?? 0)
-                           + (leg.n_prop_desech_ind ?? 0) + (leg.n_prop_desech_col ?? 0);
+            /* Efectividad — FUENTE ÚNICA: efectividadIndividual() (% éxito
+               individual, Wilson LB, cuentas del ELO). Una sola verdad en toda
+               la plataforma; ya no se recalcula aquí con campos colectivos. */
+            const aprob = leg.elo_aprobados ?? 0;
+            const desech = leg.elo_desechados ?? 0;
             const resueltos = aprob + desech;
-            let efInd = null;
-            if (resueltos >= 1) {
-                const p = aprob / resueltos, n = resueltos, z = 1.96;
-                const denom = 1 + (z * z) / n;
-                const center = p + (z * z) / (2 * n);
-                const margin = z * Math.sqrt((p * (1 - p)) / n + (z * z) / (4 * n * n));
-                efInd = Math.round(Math.max(0, (center - margin) / denom) * 100);
-            }
+            const efInd = efectividadIndividual(leg);
             const efColor = efInd == null ? 'text-gray-400' : efInd >= 40 ? 'text-emerald-600' : efInd >= 20 ? 'text-lime-600' : efInd >= 10 ? 'text-amber-600' : 'text-red-600';
 
             return (
@@ -3417,12 +3431,11 @@
                sample variable. Cobertura universal preservada. */
             const isDip = (leg.n_ini_iniciante ?? 0) > 0 || (leg.n_prop_proponente ?? 0) > 0
                           || (leg.n_ini_de_grupo ?? 0) > 0 || (leg.n_prop_de_grupo ?? 0) > 0;
-            const aprob = (leg.n_ini_aprob_ind ?? 0) + (leg.n_ini_aprob_col ?? 0)
-                          + (leg.n_prop_aprob_ind ?? 0) + (leg.n_prop_aprob_col ?? 0);
-            const desech = (leg.n_ini_desech_ind ?? 0) + (leg.n_ini_desech_col ?? 0)
-                           + (leg.n_prop_desech_ind ?? 0) + (leg.n_prop_desech_col ?? 0);
-            const pend = (leg.n_ini_pend_ind ?? 0) + (leg.n_ini_pend_col ?? 0)
-                         + (leg.n_prop_pend_ind ?? 0) + (leg.n_prop_pend_col ?? 0);
+            // FUENTE ÚNICA: cuentas individuales del ELO (igual que efectividadIndividual()).
+            // Antes mezclaba colectivo (n_*_col) → divergía del resto de la plataforma.
+            const aprob = leg.elo_aprobados ?? 0;
+            const desech = leg.elo_desechados ?? 0;
+            const pend = (leg.n_ini_pend_ind ?? 0) + (leg.n_prop_pend_ind ?? 0);
             const resueltos = aprob + desech;
             const tasaCruda = resueltos >= 1 ? (aprob / resueltos) : null;
             // Wilson 95% lower bound — manejo correcto de samples chicos.
@@ -3668,7 +3681,7 @@
                                         Sistema tipo ELO (K=24, base 1500). Cada instrumento es una "partida" contra la
                                         tasa histórica de dictamen de su comisión turnada. Resultado: 1.0 aprobado, 0.0
                                         desechado o congelado &gt;180d, 0.3 en ventana 90-180d. El rating final se remapea
-                                        a percentil dentro de legisladores con ≥3 instrumentos resueltos. Esto premia a
+                                        a percentil dentro de legisladores con ≥1 instrumento resuelto. Esto premia a
                                         quienes logran avances en comisiones difíciles y penaliza alto volumen sin progresión.
                                     </div>
                                 </details>
@@ -7669,8 +7682,8 @@
             const l3pTotal = (leg.l3p_iniciativas ?? 0) + (leg.l3p_proposiciones ?? 0);
             const grade = leg.matchup_grade;
             const gradeStyle = grade === 'A' ? 'text-emerald-600' : grade === 'B' ? 'text-lime-600' : grade === 'C' ? 'text-amber-600' : grade === 'D' ? 'text-orange-600' : grade === 'F' ? 'text-red-600' : 'text-gray-400';
-            const efInd = leg.elo_indice != null ? Math.round(leg.elo_indice) : null;
-            const efColor = efInd == null ? 'text-gray-400' : efInd >= 80 ? 'text-emerald-600' : efInd >= 60 ? 'text-lime-600' : efInd >= 40 ? 'text-gray-700' : efInd >= 20 ? 'text-amber-600' : 'text-red-600';
+            const efInd = efectividadIndividual(leg);
+            const efColor = efInd == null ? 'text-gray-400' : efInd >= 40 ? 'text-emerald-600' : efInd >= 20 ? 'text-lime-600' : efInd >= 10 ? 'text-amber-600' : 'text-red-600';
 
             return (
               <div>
@@ -7731,20 +7744,17 @@
                     </div>
                     <div className="hidden md:flex flex-col items-center justify-center gap-0.5">
                         {(() => {
-                            // Tasa absoluta de aprobación
+                            // Efectividad = % éxito individual (Wilson). Fuente única.
                             const aprob = leg.elo_aprobados ?? 0;
-                            const totalP = leg.elo_partidas ?? 0;
-                            const tasaAbs = totalP > 0 ? Math.round(aprob / totalP * 100) : null;
+                            const desech = leg.elo_desechados ?? 0;
+                            const resueltos = aprob + desech;
                             const pctCam = leg.elo_percentil_camara != null ? Math.round(leg.elo_percentil_camara) : null;
-                            // Promedio por cámara (hardcoded para tooltip — recalcular si cambia)
-                            const camCorta = (leg.camara || '').toLowerCase();
-                            const promCam = camCorta.includes('senad') ? 8.4 : 5.6;
                             const rolInst = _rolInstitucional(leg);
                             const tooltip = efInd == null
-                                ? 'Sin índice (menos de 3 instrumentos dictaminables)'
-                                : `Índice ${efInd}/100 — más efectivo que el ${pctCam}% de su cámara`
-                                  + `\n• ${aprob} aprobados de ${totalP} dictaminables (${tasaAbs}% absoluto)`
-                                  + `\n• Promedio cámara ≈ ${promCam}%`
+                                ? 'Sin resultados aún — ningún instrumento individual resuelto (todo pendiente)'
+                                : `Efectividad ${efInd}/100 — % de aprobación individual (Wilson 95%)`
+                                  + `\n• ${aprob} aprobado(s) de ${resueltos} resuelto(s)`
+                                  + (pctCam != null ? `\n• Mejor que el ${pctCam}% de su cámara` : '')
                                   + (rolInst ? `\n⚠ ${rolInst.tooltip}` : '');
                             return (
                                 <>
@@ -7753,10 +7763,10 @@
                                         {efInd != null ? efInd : '—'}
                                         {rolInst && <span className="text-[8px] text-amber-600" title="Rol institucional sesga métricas">⚑</span>}
                                     </div>
-                                    {tasaAbs != null && (
+                                    {efInd != null && (
                                       <div className="text-[8px] text-gray-400 font-mono mt-0.5"
-                                           title={`Tasa absoluta de aprobación · promedio ${camCorta.includes('senad') ? 'Senado' : 'Diputados'} ≈ ${promCam}%`}>
-                                        {tasaAbs}%·{aprob}/{totalP}
+                                           title="Aprobados sobre resueltos individuales">
+                                        {aprob}/{resueltos}
                                       </div>
                                     )}
                                 </>
@@ -7766,7 +7776,7 @@
                             <div className="flex items-center gap-0.5 mt-0.5" aria-hidden>
                                 {[0,1,2,3,4,5,6,7,8,9].map(i => (
                                     <div key={i}
-                                        className={`w-1 h-1.5 rounded-sm ${i < Math.round(efInd/10) ? (efInd >= 80 ? 'bg-emerald-500' : efInd >= 60 ? 'bg-lime-500' : efInd >= 40 ? 'bg-gray-500' : efInd >= 20 ? 'bg-amber-500' : 'bg-red-500') : 'bg-gray-200'}`} />
+                                        className={`w-1 h-1.5 rounded-sm ${i < Math.round(efInd/10) ? (efInd >= 40 ? 'bg-emerald-500' : efInd >= 20 ? 'bg-lime-500' : efInd >= 10 ? 'bg-amber-500' : 'bg-red-500') : 'bg-gray-200'}`} />
                                 ))}
                             </div>
                         )}
@@ -8323,7 +8333,7 @@
                   prop: l => (l.proposiciones_proy_15d ?? -1),
                   l3p: l => ((l.l3p_iniciativas ?? 0) + (l.l3p_proposiciones ?? 0)),
                   match: l => ({A:5, B:4, C:3, D:2, F:1}[l.matchup_grade] || 0),
-                  efectividad: l => (l.elo_indice ?? -1),
+                  efectividad: l => (efectividadIndividual(l) ?? -1),
                 };
                 const ordenado = [...legisladoresEnConfig].sort((a, b) => {
                   const av = accessors[ordenLeg.col](a);
@@ -8347,7 +8357,7 @@
                 );
 
                 const exportCSV = () => {
-                  const headers = ['Nombre', 'Cámara', 'Partido', 'Estado', 'Tema dominante', 'Hit rate', 'Iniciativas 15d', 'Proposiciones 15d', 'L3P total', 'Matchup grade', 'Efectividad ELO', 'Marcador continuidad'];
+                  const headers = ['Nombre', 'Cámara', 'Partido', 'Estado', 'Tema dominante', 'Hit rate', 'Iniciativas 15d', 'Proposiciones 15d', 'L3P total', 'Matchup grade', 'Efectividad', 'Marcador continuidad'];
                   const rows = ordenado.map(l => [
                     formatNombreLegislador(l),
                     (l.camara || '').replace('Cámara de ', ''),
@@ -8359,7 +8369,7 @@
                     l.proposiciones_proy_15d != null ? Number(l.proposiciones_proy_15d).toFixed(1) : '',
                     (l.l3p_iniciativas ?? 0) + (l.l3p_proposiciones ?? 0),
                     l.matchup_grade || '',
-                    l.elo_indice != null ? Math.round(l.elo_indice) : '',
+                    efectividadIndividual(l) ?? '',
                     l.marcador_continuidad || '',
                   ]);
                   const escape = v => {
