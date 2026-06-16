@@ -52,6 +52,9 @@ jobs:
           pip install -r requirements.txt
           npm install -g wrangler@3
 
+      - name: Re-atribuir actividad huérfana (matcher.py)
+        run: python scripts/reatribuir_actividad.py
+
       - name: Recalcular ELO local
         run: python scripts/calcular_elo_legisladores.py --guardar
 

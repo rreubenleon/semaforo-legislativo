@@ -649,12 +649,13 @@ def poblar_actividad_desde_sil():
     conn = get_connection()
     conn.row_factory = sqlite3.Row
 
-    # Cargar legisladores indexados por nombre normalizado
-    legisladores = {}
-    for row in conn.execute("SELECT id, nombre, nombre_normalizado FROM legisladores"):
-        legisladores[row["nombre_normalizado"]] = row["id"]
+    # Matcher de nombres — fuente única de verdad (utils/matcher.py). Resuelve
+    # casos como "Lilly Téllez" ↔ "María Lilly del Carmen Téllez García" que el
+    # matcher local antiguo dejaba sin atribuir (legislador_id NULL).
+    from utils.matcher import build_bd_index, encontrar_legislador_id, normalizar_nombre as _norm_matcher
+    bd_idx = build_bd_index(conn)
 
-    if not legisladores:
+    if not bd_idx:
         logger.warning("No hay legisladores en la BD. Ejecuta scrape_diputados/senadores primero.")
         return {"vinculados": 0, "sin_match": 0}
 
@@ -663,7 +664,7 @@ def poblar_actividad_desde_sil():
     docs = conn.execute("""
         SELECT s.id, s.seguimiento_id, s.asunto_id, s.tipo, s.titulo,
                s.categoria, s.fecha_presentacion, s.comision, s.estatus,
-               s.partido, s.presentador, s.tipo_presentador
+               s.partido, s.presentador, s.tipo_presentador, s.camara
         FROM sil_documentos s
         LEFT JOIN actividad_legislador a ON a.sil_documento_id = s.id
         WHERE a.id IS NULL
@@ -683,9 +684,9 @@ def poblar_actividad_desde_sil():
         # Parsear múltiples autores del campo presentador
         autores = _parsear_presentadores(presentador)
 
+        camara_norm = "Senado" if (doc["camara"] or "").startswith(("Cámara de Sen", "Senado")) else "Diputados"
         for autor_nombre in autores:
-            nombre_norm = _normalizar_nombre(autor_nombre)
-            legislador_id = _buscar_legislador(nombre_norm, legisladores)
+            legislador_id = encontrar_legislador_id(_norm_matcher(autor_nombre), camara_norm, bd_idx)
 
             try:
                 conn.execute("""

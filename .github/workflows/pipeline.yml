@@ -125,6 +125,13 @@ jobs:
       #   · migrar_d1_conteos_roles.py (one-shot, ya corrió)
       # ─────────────────────────────────────────────────────────────────
 
+      # 4b. Auto-sanado: re-atribuir actividad huérfana (legislador_id NULL)
+      #     con matcher.py antes de calcular ELO. Idempotente y barato (solo
+      #     toca NULLs). Cubre el caso de reseed con NULLs viejos; las docs
+      #     nuevas ya se atribuyen bien en poblar_actividad_desde_sil.
+      - name: Re-atribuir actividad huérfana (matcher.py)
+        run: python scripts/reatribuir_actividad.py || true
+
       # 5. Ejecutar el pipeline completo
       #    Modo local: SQLite puro, sin dependencia de Turso
       - name: Ejecutar pipeline
