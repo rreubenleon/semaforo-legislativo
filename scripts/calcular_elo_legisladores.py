@@ -43,6 +43,9 @@ from config import SQL_SUSTANTIVO_T
 # Parámetros del sistema
 K = 24                  # factor de ajuste ELO (reducido para estabilidad)
 ELO_INICIAL = 1500.0
+MIN_PARTIDAS_INDICE = 1     # mínimo de instrumentos RESUELTOS para recibir índice
+                            # de efectividad. Basta 1 desenlace; con 0 no hay
+                            # tasa de éxito posible (fuente única de verdad del corte)
 DIAS_MIN_PENDIENTE = 90      # < 90 días: muy reciente, excluir
 DIAS_MAX_PENDIENTE = 180     # 90-180 días: S=0.3, >180 días: S=0
 HOY = datetime.now().date()
@@ -236,10 +239,10 @@ def calcular_elos(conn):
 
 def imprimir_ranking(elos, top_n=20):
     legisladores = sorted(
-        ((n, v) for n, v in elos.items() if v["partidas"] >= 3),
+        ((n, v) for n, v in elos.items() if v["partidas"] >= MIN_PARTIDAS_INDICE),
         key=lambda kv: -kv[1]["rating"]
     )
-    print(f"\n  Legisladores con ≥ 3 partidas: {len(legisladores)}")
+    print(f"\n  Legisladores con índice (≥{MIN_PARTIDAS_INDICE} resuelto): {len(legisladores)}")
     if not legisladores:
         print("  (sin legisladores que cumplan filtro — posible exceso de filtro individual)")
         return
@@ -351,10 +354,13 @@ def _calcular_indices(elos):
     Ambas son percentiles de rango (no lineales sobre el rating), así que
     son robustas a la cola larga del ELO (Lilia Aguilar con 2767 no distorsiona
     el resto)."""
-    # Filtro para el ranking: solo legisladores con ≥3 partidas cuentan para
-    # el percentil. Los que tienen <3 quedan marcados como None y no reciben
-    # índice (muy poco evidencia).
-    elegibles = [(n, v) for n, v in elos.items() if v["partidas"] >= 3]
+    # Filtro para el ranking: basta UN instrumento resuelto (aprobado/desechado)
+    # para recibir índice. La efectividad mide tasa de éxito y eso requiere al
+    # menos un desenlace; con 0 resueltos no hay nada que medir (esos quedan
+    # fuera y se muestran como "sin resultados aún", no con un número inventado).
+    # La poca-evidencia de 1-2 resueltos se comunica con el campo de confianza
+    # (n = partidas), no escondiéndolos.
+    elegibles = [(n, v) for n, v in elos.items() if v["partidas"] >= MIN_PARTIDAS_INDICE]
 
     # Ranking global
     global_sorted = sorted(elegibles, key=lambda kv: kv[1]["rating"])
