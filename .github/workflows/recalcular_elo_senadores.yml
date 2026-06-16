@@ -1,10 +1,10 @@
-name: Recalcular ELO + Sync D1 (one-off)
+name: Recalcular ELO + H2H + Sync D1 (one-off)
 
-# Workflow para recalcular ELO de legisladores con el nuevo filtro
-# por co_firmantes (solo individuales) sobre actividad_legislador.
-# Después del fix de senadores (rebuild + scrape estatus comisiones),
-# los conteos en sil_documentos.presentador podían inflar ELO con
-# firmas colectivas. Esta corrida limpia ELO con la lógica correcta.
+# Workflow para recalcular ELO y H2H de legisladores con los filtros
+# correctos sobre la base de producción, y subir ambos a D1. NO dispara
+# Haiku (no corre main.py / clasificador). Útil tras cambios en
+# calcular_elo_legisladores.py o calcular_h2h_legisladores.py sin esperar
+# al pipeline de 4h.
 
 on:
   workflow_dispatch:
@@ -55,10 +55,18 @@ jobs:
       - name: Recalcular ELO local
         run: python scripts/calcular_elo_legisladores.py --guardar
 
+      - name: Recalcular H2H local
+        run: python scripts/calcular_h2h_legisladores.py
+
       - name: Sync ELO a D1
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
         run: python scripts/sync_elo_d1.py
+
+      - name: Sync H2H a D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python scripts/sync_h2h_d1.py
 
       - name: Verificación
         run: |

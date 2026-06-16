@@ -41,6 +41,10 @@ from calcular_elo_legisladores import (
     DIAS_MAX_PENDIENTE,
     HOY,
 )
+# Filtro canónico de universo sustantivo (por tipo, NO por clasificacion).
+# Misma fuente de verdad que el ELO. clasificacion='legislativo_sustantivo'
+# seleccionaba los docs de gaceta SIN estatus y excluía los del SIL CON estatus.
+from config import SQL_SUSTANTIVO
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
 logger = logging.getLogger(__name__)
@@ -80,12 +84,12 @@ def calcular_baseline_comisiones(conn):
     # Excluir Comisión Permanente: sus comisiones de trabajo son
     # efímeras y no deben mezclarse con las tasas históricas de las
     # comisiones ordinarias.
-    rows = conn.execute("""
+    rows = conn.execute(f"""
         SELECT comision, estatus, fecha_presentacion
         FROM sil_documentos
         WHERE fecha_presentacion >= '2024-09-01'
           AND comision IS NOT NULL AND comision != ''
-          AND (clasificacion = 'legislativo_sustantivo' OR clasificacion IS NULL)
+          AND {SQL_SUSTANTIVO}
           AND (camara IS NULL OR camara != 'Comisión Permanente')
     """).fetchall()
 
@@ -125,35 +129,21 @@ def construir_h2h(conn):
 
     logger.info("Cargando instrumentos LXVI…")
     # Excluir Comisión Permanente del H2H overall (mismo criterio que ELO).
-    rows = conn.execute("""
+    rows = conn.execute(f"""
         SELECT id, presentador, partido, camara, tipo, comision, estatus,
                fecha_presentacion, titulo
         FROM sil_documentos
         WHERE fecha_presentacion >= '2024-09-01'
           AND presentador != ''
           AND comision IS NOT NULL AND comision != ''
-          AND (clasificacion = 'legislativo_sustantivo' OR clasificacion IS NULL)
+          AND {SQL_SUSTANTIVO}
           AND (camara IS NULL OR camara != 'Comisión Permanente')
         ORDER BY fecha_presentacion DESC
     """).fetchall()
     logger.info(f"  {len(rows)} instrumentos con comisión")
 
-    # Agrupar por (nombre_legislador, comision)
-    por_leg_com = defaultdict(list)  # (nombre, comision) → list of {id, titulo, fecha_pres, status_raw, fecha_pres_str}
-    for sid, presentador, partido_raw, camara, tipo, comision, estatus, fp, titulo in rows:
-        info = extraer_legislador(presentador)
-        if not info:
-            continue
-        nombre_leg, _ = info
-        por_leg_com[(nombre_leg, comision)].append({
-            "sil_id": sid,
-            "titulo": titulo or "",
-            "fecha_pres_str": fp or "",
-            "estatus_raw": estatus or "",
-            "tipo": tipo or "",
-        })
-
-    # Match nombres de legisladores
+    # Matcher de nombres → legislador_id (construido ANTES de agrupar, para
+    # poder agrupar por ID y no por el texto del nombre).
     inverted, tokens_by_id = _construir_indice_legisladores(conn)
     legislador_id_cache = {}
 
@@ -162,17 +152,43 @@ def construir_h2h(conn):
             legislador_id_cache[nombre] = _matchear_legislador(nombre, inverted, tokens_by_id)
         return legislador_id_cache[nombre]
 
+    # Nombre canónico por id (para mostrar uno solo aunque el SIL traiga
+    # variantes del mismo nombre — acentos, orden, espacios).
+    id_to_nombre = {row[0]: row[1] for row in
+                    conn.execute("SELECT id, nombre FROM legisladores WHERE nombre != ''")}
+
+    # Agrupar por (legislador_id, comision) — NO por nombre. Dos variantes del
+    # mismo nombre resuelven al mismo id y se fusionan en UNA fila, evitando el
+    # choque de UNIQUE(legislador_id, comision) en el INSERT (el bug que
+    # crasheaba el script) y sin partir el conteo de un legislador por debajo
+    # del mínimo solo por diferencias de escritura.
+    por_leg_com = defaultdict(list)  # (leg_id, comision) → list of instrumentos
+    sin_match = 0
+    for sid, presentador, partido_raw, camara, tipo, comision, estatus, fp, titulo in rows:
+        info = extraer_legislador(presentador)
+        if not info:
+            continue
+        nombre_leg, _ = info
+        leg_id = get_leg_id(nombre_leg)
+        if not leg_id:
+            sin_match += 1
+            continue
+        por_leg_com[(leg_id, comision)].append({
+            "sil_id": sid,
+            "titulo": titulo or "",
+            "fecha_pres_str": fp or "",
+            "estatus_raw": estatus or "",
+            "tipo": tipo or "",
+        })
+
     # Construir filas h2h
     h2h_rows = []
     skipped = 0
-    for (nombre_leg, comision), instrumentos in por_leg_com.items():
+    for (leg_id, comision), instrumentos in por_leg_com.items():
         if len(instrumentos) < MIN_INSTRUMENTOS_LEG_COMISION:
             skipped += 1
             continue
-        leg_id = get_leg_id(nombre_leg)
-        if not leg_id:
-            skipped += 1
-            continue
+        nombre_leg = id_to_nombre.get(leg_id, "")
 
         # Stats
         n = len(instrumentos)
@@ -270,7 +286,8 @@ def construir_h2h(conn):
             "fecha_calculo": datetime.now().isoformat(),
         })
 
-    logger.info(f"  H2H rows generadas: {len(h2h_rows)} (skipped: {skipped})")
+    logger.info(f"  H2H rows generadas: {len(h2h_rows)} "
+                f"(bajo mínimo: {skipped} · sin match de nombre: {sin_match})")
     return h2h_rows
 
 
