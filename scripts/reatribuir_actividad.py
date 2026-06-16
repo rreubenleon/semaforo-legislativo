@@ -35,6 +35,21 @@ def _camara_norm(camara_sil: str) -> str:
     return "Senado" if (camara_sil or "").startswith(("Cámara de Sen", "Senado")) else "Diputados"
 
 
+def _match_ambas_camaras(nn: str, camara_sil: str, idx) -> int | None:
+    """Intenta la cámara inferida primero; si no matchea, prueba la otra.
+    Necesario porque muchos docs vienen tagueados 'Comisión Permanente' o
+    'H. Congreso General' (cámara ambigua) o mal tagueados — ahí un senador
+    quedaba sin match al filtrar solo por Diputados (caso Lilly Téllez: 15
+    instrumentos en Comisión Permanente). El matcher exige match fuerte de
+    tokens, así que el riesgo de colisión entre cámaras es bajo."""
+    primero = _camara_norm(camara_sil)
+    lid = encontrar_legislador_id(nn, primero, idx)
+    if lid:
+        return lid
+    otra = "Diputados" if primero == "Senado" else "Senado"
+    return encontrar_legislador_id(nn, otra, idx)
+
+
 def reatribuir(conn, dry_run=False):
     idx = build_bd_index(conn)
     rows = conn.execute(
@@ -53,7 +68,7 @@ def reatribuir(conn, dry_run=False):
     updates = []
     for aid, nombre, camara in rows:
         nn = normalizar_nombre(nombre or "")
-        lid = encontrar_legislador_id(nn, _camara_norm(camara), idx)
+        lid = _match_ambas_camaras(nn, camara, idx)
         if lid:
             updates.append((lid, aid))
             por_legislador[lid] += 1

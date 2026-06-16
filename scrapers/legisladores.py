@@ -685,8 +685,14 @@ def poblar_actividad_desde_sil():
         autores = _parsear_presentadores(presentador)
 
         camara_norm = "Senado" if (doc["camara"] or "").startswith(("Cámara de Sen", "Senado")) else "Diputados"
+        camara_otra = "Diputados" if camara_norm == "Senado" else "Senado"
         for autor_nombre in autores:
-            legislador_id = encontrar_legislador_id(_norm_matcher(autor_nombre), camara_norm, bd_idx)
+            nn = _norm_matcher(autor_nombre)
+            # Cámara inferida primero; si falla, probar la otra. Cubre docs
+            # tagueados 'Comisión Permanente'/'H. Congreso General' (cámara
+            # ambigua) o mal tagueados (caso Lilly Téllez en Permanente).
+            legislador_id = (encontrar_legislador_id(nn, camara_norm, bd_idx)
+                             or encontrar_legislador_id(nn, camara_otra, bd_idx))
 
             try:
                 conn.execute("""
