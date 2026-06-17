@@ -5253,7 +5253,114 @@
           );
         }
 
+        /* ── Vista nueva: Mapa de representación (legisladores por estado) ──
+           Lee el radar en vivo (mismo WORKER_URL que Legisladores), agrupa por
+           estado y permite ver quién representa a cada entidad. Los senadores
+           plurinominales (electos por lista nacional, sin estado) van en su
+           propia sección. ── */
+        function MapaRepresentacion() {
+            const [legs, setLegs] = useState(null);
+            const [estadoSel, setEstadoSel] = useState(null);
+            const [err, setErr] = useState(null);
+            useEffect(() => {
+                let cancel = false;
+                fetch(`${WORKER_URL}/radar?limite=3000`)
+                    .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+                    .then(j => { if (!cancel) setLegs(j.legisladores || []); })
+                    .catch(e => { if (!cancel) setErr(String(e)); });
+                return () => { cancel = true; };
+            }, []);
+
+            if (err) return <div className="text-sm text-red-500 py-10 text-center">No se pudo cargar la representación: {err}</div>;
+            if (!legs) return <div className="text-sm text-gray-400 py-10 text-center">Cargando representación…</div>;
+
+            const esDip = l => (l.camara || '').includes('Diputados');
+            const esSen = l => (l.camara || '').toLowerCase().includes('sen');
+            const esRP = l => /proporcional/i.test(l.principio_eleccion || '');
+            const porEstado = {};
+            legs.forEach(l => {
+                const e = (l.estado || '').trim();
+                if (!e) return;
+                if (!porEstado[e]) porEstado[e] = { dips: [], sens: [] };
+                if (esDip(l)) porEstado[e].dips.push(l);
+                else if (esSen(l)) porEstado[e].sens.push(l);
+            });
+            const estados = Object.keys(porEstado).sort((a, b) => a.localeCompare(b));
+            const maxReps = Math.max(1, ...estados.map(e => porEstado[e].dips.length + porEstado[e].sens.length));
+            const rpNacional = legs.filter(l => esSen(l) && !(l.estado || '').trim());
+
+            const heat = n => {
+                const i = n / maxReps;
+                if (i > 0.66) return 'bg-acento text-white border-acento';
+                if (i > 0.33) return 'bg-acento/30 border-acento/40';
+                if (i > 0) return 'bg-acento/10 border-borde';
+                return 'bg-white border-borde';
+            };
+
+            const sel = estadoSel ? porEstado[estadoSel] : null;
+            const PartChip = ({ p }) => <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-mono flex-shrink-0">{p || '—'}</span>;
+            const repRow = (l) => (
+                <div key={l.id} className="flex items-center justify-between gap-2 py-1.5 border-b border-borde/40 last:border-0">
+                    <div className="min-w-0">
+                        <div className="text-xs font-medium text-gray-800 truncate" title={l.nombre}>{l.nombre}</div>
+                        <div className="text-[10px] text-gray-500">{l.distrito || (esSen(l) && !(l.estado || '').trim() ? 'Senador plurinominal' : '')}</div>
+                    </div>
+                    <PartChip p={l.partido} />
+                </div>
+            );
+
+            return (
+                <div className="space-y-6">
+                    <div>
+                        <h2 className="text-lg font-bold text-gray-800 mb-1">Mapa de representación</h2>
+                        <p className="text-sm text-gray-500">Quién representa a cada estado en la LXVI: {legs.filter(esDip).length} diputados y {legs.filter(esSen).length} senadores. Da clic en un estado para ver a sus representantes.</p>
+                    </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+                        <div className="lg:col-span-3">
+                            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                                {estados.map(e => {
+                                    const nD = porEstado[e].dips.length, nS = porEstado[e].sens.length;
+                                    return (
+                                        <button key={e} onClick={() => setEstadoSel(estadoSel === e ? null : e)}
+                                            className={`text-left p-2 rounded-lg border transition-all hover:ring-1 hover:ring-acento/40 ${estadoSel === e ? 'ring-2 ring-acento ' : ''}${heat(nD + nS)}`}>
+                                            <div className="text-[11px] font-semibold leading-tight truncate" title={e}>{e}</div>
+                                            <div className="text-[9px] opacity-80 font-mono">{nD}D · {nS}S</div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                        <div className="lg:col-span-2 space-y-4">
+                            {sel ? (
+                                <div className="glass border border-borde rounded-xl p-4 space-y-3">
+                                    <div className="text-sm font-bold text-gray-800">{estadoSel}</div>
+                                    <div>
+                                        <div className="text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-1">Senadores ({sel.sens.length})</div>
+                                        {sel.sens.length ? sel.sens.map(repRow) : <div className="text-[11px] text-gray-400">Sin senadores con estado asignado.</div>}
+                                    </div>
+                                    <div>
+                                        <div className="text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-1">Diputados ({sel.dips.length})</div>
+                                        {sel.dips.length ? sel.dips.map(repRow) : <div className="text-[11px] text-gray-400">—</div>}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="glass border border-borde rounded-xl p-6 text-sm text-gray-400 text-center">Selecciona un estado para ver a sus representantes.</div>
+                            )}
+                            {rpNacional.length > 0 && (
+                                <div className="glass border border-borde rounded-xl p-4">
+                                    <div className="text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-1">Representación nacional ({rpNacional.length})</div>
+                                    <div className="text-[10px] text-gray-500 mb-2">Senadores plurinominales, electos por lista nacional — no representan a un estado.</div>
+                                    <div className="max-h-72 overflow-y-auto">{rpNacional.map(repRow)}</div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         function PageMapa({ data }) {
+            const [vistaMapa, setVistaMapa] = useState('cobertura');
             const [estadoSeleccionado, setEstadoSeleccionado] = useState(null);
             const [filtroCategoria, setFiltroCategoria] = useState(null);
             const mapa = data.mapa || {};
@@ -5288,8 +5395,18 @@
             const top5 = estados.slice(0, 5);
             const concentracion = totalArticulos > 0 ? ((top5.reduce((s, [,v]) => s + v.total_articulos, 0) / totalArticulos) * 100).toFixed(0) : 0;
 
+            const vistaToggle = (
+                <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 w-fit">
+                    <button onClick={() => setVistaMapa('cobertura')} className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${vistaMapa === 'cobertura' ? 'bg-white shadow text-gray-800' : 'text-gray-500 hover:text-gray-700'}`}>Cobertura mediática</button>
+                    <button onClick={() => setVistaMapa('representacion')} className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${vistaMapa === 'representacion' ? 'bg-white shadow text-gray-800' : 'text-gray-500 hover:text-gray-700'}`}>Representación</button>
+                </div>
+            );
+            if (vistaMapa === 'representacion') {
+                return (<div className="space-y-6">{vistaToggle}<MapaRepresentacion /></div>);
+            }
             return (
                 <div className="space-y-6">
+                    {vistaToggle}
                     <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
                         <div>
                             <h2 className="text-lg font-bold text-gray-800 mb-1">Mapa de cobertura mediatica</h2>
@@ -9637,7 +9754,7 @@
                             {/* Nav tabs */}
                             <div className="nav-tabs-scroll flex items-center gap-0.5 flex-shrink-0 order-3 md:order-none w-full md:w-auto justify-center md:justify-start">
                                 {[
-                                    ['actividad', 'Actividad'], ['radar', 'Legisladores'], ['mapa', 'Mapa'], ['comisiones', 'Comisiones'], ['resoluciones', 'Métricas']
+                                    ['actividad', 'Actividad'], ['radar', 'Legisladores'], ['mapa', 'Mapas'], ['comisiones', 'Comisiones'], ['resoluciones', 'Métricas']
                                 ].map(([key, label]) => (
                                     <button key={key} onClick={() => setPagina(key)}
                                         className={`nav-pill-tab ${pagina === key ? 'nav-pill-tab-active' : ''}`}>{label}</button>
