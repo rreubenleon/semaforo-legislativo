@@ -5266,6 +5266,8 @@
         function MapaRepresentacion() {
             const [legs, setLegs] = useState(null);
             const [estadoSel, setEstadoSel] = useState(null);
+            const [openSen, setOpenSen] = useState(true);
+            const [openDip, setOpenDip] = useState(true);
             const [err, setErr] = useState(null);
             useEffect(() => {
                 let cancel = false;
@@ -5315,7 +5317,34 @@
             };
 
             const sel = estadoSel ? porEstado[estadoSel] : null;
+
+            /* Posición: distritos (MR) ascendente, luego circunscripciones (RP) */
+            const parsePos = (l) => {
+                const d = l.distrito || '';
+                const mD = d.match(/dtto\.?\s*(\d+)/i);
+                if (mD) return { rp: 0, num: parseInt(mD[1], 10) };
+                const mC = d.match(/circ\.?\s*(\d+)/i);
+                if (mC) return { rp: 1, num: parseInt(mC[1], 10) };
+                return { rp: 2, num: 9999 };
+            };
+            /* Orden: por partido, luego por posición ascendente (Distrito 1,2…; después circ.) */
+            const ordenarDip = arr => [...arr].sort((a, b) => {
+                const pa = (a.partido || '').toUpperCase(), pb = (b.partido || '').toUpperCase();
+                if (pa !== pb) return pa.localeCompare(pb);
+                const za = parsePos(a), zb = parsePos(b);
+                if (za.rp !== zb.rp) return za.rp - zb.rp;
+                if (za.num !== zb.num) return za.num - zb.num;
+                return (a.nombre || '').localeCompare(b.nombre || '');
+            });
+            /* Senadores: por partido, luego por nombre (no tienen distrito) */
+            const ordenarSen = arr => [...arr].sort((a, b) => {
+                const pa = (a.partido || '').toUpperCase(), pb = (b.partido || '').toUpperCase();
+                if (pa !== pb) return pa.localeCompare(pb);
+                return (a.nombre || '').localeCompare(b.nombre || '');
+            });
+
             const PartChip = ({ p }) => <span className="text-[9px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-mono flex-shrink-0">{p || '—'}</span>;
+            const Chevron = ({ open }) => <svg className={`w-3.5 h-3.5 text-gray-400 transition-transform ${open ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>;
             const repRow = (l) => (
                 <div key={l.id} className="flex items-center justify-between gap-2 py-1.5 border-b border-borde/40 last:border-0">
                     <div className="min-w-0">
@@ -5358,12 +5387,18 @@
                                 <div className="glass border border-borde rounded-xl p-4 space-y-3">
                                     <div className="text-sm font-bold text-gray-800">{estadoSel}</div>
                                     <div>
-                                        <div className="text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-1">Senadores ({sel.sens.length})</div>
-                                        {sel.sens.length ? sel.sens.map(repRow) : <div className="text-[11px] text-gray-400">Sin senadores con estado asignado.</div>}
+                                        <button onClick={() => setOpenSen(v => !v)} className="flex items-center justify-between w-full text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-1 hover:text-gray-700">
+                                            <span>Senadores ({sel.sens.length})</span>
+                                            <Chevron open={openSen} />
+                                        </button>
+                                        {openSen && (sel.sens.length ? ordenarSen(sel.sens).map(repRow) : <div className="text-[11px] text-gray-400">Sin senadores con estado asignado.</div>)}
                                     </div>
                                     <div>
-                                        <div className="text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-1">Diputados ({sel.dips.length})</div>
-                                        {sel.dips.length ? sel.dips.map(repRow) : <div className="text-[11px] text-gray-400">—</div>}
+                                        <button onClick={() => setOpenDip(v => !v)} className="flex items-center justify-between w-full text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-1 hover:text-gray-700">
+                                            <span>Diputados ({sel.dips.length})</span>
+                                            <Chevron open={openDip} />
+                                        </button>
+                                        {openDip && (sel.dips.length ? ordenarDip(sel.dips).map(repRow) : <div className="text-[11px] text-gray-400">—</div>)}
                                     </div>
                                     <FichaPoliticaInline slug={slug(estadoSel)} />
                                 </div>
