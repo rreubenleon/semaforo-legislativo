@@ -5046,12 +5046,14 @@
         }
 
         /* ── Componente MapaMexico con Leaflet ── */
-        function MapaMexico({ estados, maxArts, onSelectEstado, estadoSeleccionado, unidad = 'noticias', titulo = 'Cobertura por estado' }) {
+        function MapaMexico({ estados, maxArts, onSelectEstado, estadoSeleccionado, unidad = 'noticias', titulo = 'Cobertura por estado', neutral = false }) {
             const mapRef = React.useRef(null);
             const mapInstanceRef = React.useRef(null);
             const markersRef = React.useRef([]);
 
             const getMarkerColor = (count) => {
+                // neutral: mismo color para todos (no medimos intensidad, p.ej. representación)
+                if (neutral) return { fill: '#1a365d', border: '#13284a', label: '' };
                 const intensity = count / Math.max(maxArts, 1);
                 if (intensity > 0.5) return { fill: '#ef4444', border: '#dc2626', label: 'Alto' };
                 if (intensity > 0.2) return { fill: '#f59e0b', border: '#d97706', label: 'Elevado' };
@@ -5113,10 +5115,11 @@
                     if (!coords) return;
                     const { fill, border } = getMarkerColor(info.total_articulos);
                     const isSelected = estadoSeleccionado === key;
-                    const intensity = info.total_articulos / Math.max(maxArts, 1);
-                    const coreSize = Math.max(7, Math.min(16, 7 + intensity * 11));
-                    /* Anillos expansivos (ping-style CIA): más anillos = más intensidad */
-                    const numRings = intensity > 0.5 ? 4 : intensity > 0.2 ? 3 : 2;
+                    const intensity = neutral ? 0 : info.total_articulos / Math.max(maxArts, 1);
+                    const coreSize = neutral ? 10 : Math.max(7, Math.min(16, 7 + intensity * 11));
+                    /* Anillos expansivos (ping-style): más anillos = más intensidad.
+                       En modo neutral no hay anillos (no medimos intensidad). */
+                    const numRings = neutral ? 0 : (intensity > 0.5 ? 4 : intensity > 0.2 ? 3 : 2);
                     /* Tamaño máximo que alcanza el ring al expandirse (scale=1) */
                     const ringMax = coreSize + 24 + intensity * 18;
                     const boxSize = ringMax + 6;
@@ -5163,11 +5166,13 @@
                 <div>
                     <div className="flex items-center justify-between mb-3 px-1">
                         <h3 className="font-semibold text-gray-800 text-sm">{titulo}</h3>
+                        {!neutral && (
                         <div className="flex items-center gap-3 text-[11px] text-gray-500">
                             <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Alto</span>
                             <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Elevado</span>
                             <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-green-500 inline-block"></span> Bajo</span>
                         </div>
+                        )}
                     </div>
                     <div ref={mapRef} className="rounded-2xl overflow-hidden"
                         style={{height: '440px', width: '100%', boxShadow: 'inset 0 2px 14px rgba(15,23,42,0.16)', border: '1px solid #e5e7eb'}}></div>
@@ -5331,7 +5336,7 @@
                     <MapaMexico estados={estadosMapa} maxArts={maxReps}
                         onSelectEstado={(k) => { const nom = estados.find(e => slug(e) === k) || null; setEstadoSel(estadoSel === nom ? null : nom); }}
                         estadoSeleccionado={estadoSel ? slug(estadoSel) : null}
-                        unidad="representantes" titulo="Representantes por estado" />
+                        unidad="representantes" titulo="Representantes por estado" neutral />
 
                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                         <div className="lg:col-span-3">
