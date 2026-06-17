@@ -12,7 +12,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <!-- Babel FIJADO a 7.x: la v8 (servida por el tag sin versión) cambió el
+         default del runtime JSX a "automático", que inyecta
+         `import {jsx} from "react/jsx-runtime"` en el código compilado. En un
+         script type="text/babel" (no-módulo) eso lanza "Cannot use import
+         statement outside a module" y deja la página en blanco. 7.x usa el
+         runtime clásico (React.createElement, sin imports). NO quitar el @7. -->
+    <script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
