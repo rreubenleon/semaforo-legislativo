@@ -212,6 +212,11 @@ def calcular_elos(conn):
             "rating": ELO_INICIAL, "partidas": 0, "wins": 0, "losses": 0,
             "draws": 0, "aprobados": 0, "desechados": 0, "pendientes_largo": 0,
             "partido": leg_partido or "", "camara": leg_camara or "",
+            # legislador_id que YA trae la query (JOIN por al.legislador_id).
+            # Antes se descartaba y guardar_en_db lo re-resolvía por nombre
+            # (lossy): "Sen. Lilly Téllez" no matcheaba → legislador_id NULL →
+            # el radar la mostraba sin Efectividad pese a tener 40 partidas.
+            "legislador_id": leg_id,
         })
 
         delta = K * (S - E)
@@ -421,13 +426,16 @@ def guardar_en_db(conn, elos):
     # dos veces en /radar.
     conn.execute("DELETE FROM legisladores_elo")
 
-    inverted, tokens_by_id = _construir_indice_legisladores(conn)
     indices, percentiles_cam = _calcular_indices(elos)
     ahora = datetime.now().isoformat()
     matches = 0
     sin_match = []
     for nombre, v in elos.items():
-        leg_id = _matchear_legislador(nombre, inverted, tokens_by_id)
+        # Usar el legislador_id que ya viene de actividad_legislador (vía JOIN
+        # en la query, que filtra legislador_id IS NOT NULL). NO re-resolver por
+        # nombre — eso perdía a quien tuviera prefijo/variante (Lilly Téllez:
+        # "Sen. Lilly Téllez" no matcheaba → id NULL → sin Efectividad).
+        leg_id = v.get("legislador_id")
         if leg_id:
             matches += 1
         else:
