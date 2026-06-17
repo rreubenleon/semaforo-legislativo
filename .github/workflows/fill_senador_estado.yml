@@ -1,0 +1,82 @@
+name: Llenar Estado de Senadores + Sync D1 (one-off)
+
+# Puebla legisladores.estado de los senadores desde el roster oficial LXVI
+# (eval/reelectos/roster_LXVI_Senado.json) y re-sincroniza el radar a D1 para
+# que el mapa de representación por estado tenga el dato en vivo. No dispara
+# Haiku (no corre main.py / clasificador).
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "fill-senador-estado"
+  cancel-in-progress: false
+
+jobs:
+  fill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Restaurar SQLite DB
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-fillsen-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - name: Fallback a release si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+          npm install -g wrangler@3
+
+      - name: Poblar estado de senadores
+        run: python scripts/fill_senador_estado.py
+
+      - name: Recalcular radar y sync D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python scripts/radar_pipeline.py --skip-scraper
+
+      - name: Verificación (senadores con estado en D1)
+        run: |
+          sleep 5
+          curl -s "https://fiat-busqueda.rreubenleon.workers.dev/radar?camara=Senado&limite=2000" \
+            | python3 -c "
+          import sys, json
+          d = json.load(sys.stdin)
+          rows = d.get('legisladores') or []
+          con = [r for r in rows if (r.get('estado') or '').strip()]
+          print(f'senadores en radar: {len(rows)} · con estado: {len(con)}')
+          for q in ['Salgado Macedonio','Waldo Fern','Beatriz Mojica']:
+              for r in [x for x in rows if q.lower() in (x.get('nombre','') or '').lower()][:1]:
+                  print(f\"  {r['nombre'][:30]}: {r.get('estado')}\")
+          "
+
+      - name: Guardar BD en cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-fillsen-${{ github.run_id }}
