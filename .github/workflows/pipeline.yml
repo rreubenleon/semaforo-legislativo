@@ -232,6 +232,11 @@ jobs:
           path: semaforo.db
           key: semaforo-db-${{ github.run_id }}
 
+      # 5d. Generar catálogo de leyes (pestaña "Búsqueda por ley") → leyes.json
+      - name: Generar catálogo de leyes
+        run: python scripts/generar_leyes_json.py
+        continue-on-error: true
+
       # 6. Commit y push de datos actualizados (solo JSON — DB persiste en cache)
       #
       # IMPORTANTE: stash de cambios NO-data.json antes de pull --rebase.
@@ -243,7 +248,7 @@ jobs:
         run: |
           git config user.name "FIAT Bot"
           git config user.email "fiat-bot@users.noreply.github.com"
-          git add dashboard/data.json
+          git add dashboard/data.json dashboard/leyes.json
           # Construir mensaje con status de Haiku al final (visible en git log)
           HAIKU_STATUS=""
           if [ -f haiku_status.txt ]; then
@@ -257,7 +262,7 @@ jobs:
           git pull --rebase origin main || {
             git rebase --abort 2>/dev/null
             git pull --no-rebase -X theirs origin main
-            git add dashboard/data.json 2>/dev/null
+            git add dashboard/data.json dashboard/leyes.json 2>/dev/null
             git diff --staged --quiet || git commit -m "🔄 Merge automático con cambios remotos"
           }
           # Descartar stash (no lo necesitamos — los JSONs scrapeados se
