@@ -47,6 +47,17 @@ def norm_key(s):
     return re.sub(r"\s+", " ", s).strip()
 
 
+def camara_bucket(camara):
+    c = (camara or "")
+    if c.startswith(("Cámara de Sen", "Senado")):
+        return "Senado"
+    if c.startswith("Cámara de Dip") or c == "Diputados":
+        return "Diputados"
+    if "Permanente" in c:
+        return "Permanente"
+    return "Otros"
+
+
 def estatus_bucket(estatus_canon):
     e = (estatus_canon or "").lower()
     if "aprob" in e or "public" in e:
@@ -79,7 +90,7 @@ def generar(conn):
         return {
             "display": None, "variantes": Counter(), "n": 0,
             "por_estatus": Counter(), "por_partido": Counter(),
-            "por_mes": Counter(), "instrumentos": [],
+            "por_mes": Counter(), "por_camara": Counter(), "instrumentos": [],
         }
 
     con_ley = 0
@@ -94,7 +105,9 @@ def generar(conn):
         d = leyes.setdefault(k, _nueva())
         d["variantes"][ley.strip()] += 1
         d["n"] += 1
+        cam = camara_bucket(camara)
         d["por_estatus"][estatus_bucket(est_canon)] += 1
+        d["por_camara"][cam] += 1
         if partido:
             d["por_partido"][partido] += 1
         if fp and len(fp) >= 7:
@@ -108,7 +121,7 @@ def generar(conn):
                 "estatus": estatus_bucket(est_canon),
                 "presentador": (presentador or "")[:120],
                 "url": url or "",
-                "camara": camara or "",
+                "camara": cam,
             })
 
     catalogo = []
@@ -120,6 +133,7 @@ def generar(conn):
             "display": d["variantes"].most_common(1)[0][0],
             "n": d["n"],
             "por_estatus": dict(d["por_estatus"]),
+            "por_camara": dict(d["por_camara"]),
             "por_partido": dict(d["por_partido"].most_common(12)),
             "por_mes": dict(sorted(d["por_mes"].items())),
             "instrumentos": d["instrumentos"],
