@@ -5046,7 +5046,7 @@
         }
 
         /* ── Componente MapaMexico con Leaflet ── */
-        function MapaMexico({ estados, maxArts, onSelectEstado, estadoSeleccionado }) {
+        function MapaMexico({ estados, maxArts, onSelectEstado, estadoSeleccionado, unidad = 'noticias', titulo = 'Cobertura por estado' }) {
             const mapRef = React.useRef(null);
             const mapInstanceRef = React.useRef(null);
             const markersRef = React.useRef([]);
@@ -5150,7 +5150,7 @@
 
                     const marker = L.marker(coords, { icon });
                     marker.bindTooltip(
-                        `<div style="font-family:Inter,sans-serif;font-size:12px;font-weight:600">${info.abreviatura}</div><div style="font-family:Inter,sans-serif;font-size:11px;color:#666">${info.total_articulos} noticias</div>`,
+                        `<div style="font-family:Inter,sans-serif;font-size:12px;font-weight:600">${info.abreviatura}</div><div style="font-family:Inter,sans-serif;font-size:11px;color:#666">${info.total_articulos} ${unidad}</div>`,
                         { direction: 'top', offset: [0, -boxSize / 2], className: 'leaflet-tooltip-fiat' }
                     );
                     marker.on('click', () => onSelectEstado(key));
@@ -5162,7 +5162,7 @@
             return (
                 <div>
                     <div className="flex items-center justify-between mb-3 px-1">
-                        <h3 className="font-semibold text-gray-800 text-sm">Cobertura por estado</h3>
+                        <h3 className="font-semibold text-gray-800 text-sm">{titulo}</h3>
                         <div className="flex items-center gap-3 text-[11px] text-gray-500">
                             <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> Alto</span>
                             <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> Elevado</span>
@@ -5289,6 +5289,18 @@
             const maxReps = Math.max(1, ...estados.map(e => porEstado[e].dips.length + porEstado[e].sens.length));
             const rpNacional = legs.filter(l => esSen(l) && !(l.estado || '').trim());
 
+            /* Nombre completo del estado → slug snake_case de ESTADO_COORDS/MAPA_POLITICO */
+            const slug = nombre => {
+                let k = (nombre || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().replace(/\s+/g, '_');
+                if (k === 'mexico') k = 'estado_de_mexico';
+                return k;
+            };
+            /* Datos en el shape que espera MapaMexico (reusa el Leaflet existente) */
+            const estadosMapa = estados.map(e => [slug(e), {
+                total_articulos: porEstado[e].dips.length + porEstado[e].sens.length,
+                abreviatura: e,
+            }]);
+
             const heat = n => {
                 const i = n / maxReps;
                 if (i > 0.66) return 'bg-acento text-white border-acento';
@@ -5313,8 +5325,14 @@
                 <div className="space-y-6">
                     <div>
                         <h2 className="text-lg font-bold text-gray-800 mb-1">Mapa de representación</h2>
-                        <p className="text-sm text-gray-500">Quién representa a cada estado en la LXVI: {legs.filter(esDip).length} diputados y {legs.filter(esSen).length} senadores. Da clic en un estado para ver a sus representantes.</p>
+                        <p className="text-sm text-gray-500">Quién representa a cada estado en la LXVI: {legs.filter(esDip).length} diputados y {legs.filter(esSen).length} senadores. Da clic en un estado en el mapa.</p>
                     </div>
+
+                    <MapaMexico estados={estadosMapa} maxArts={maxReps}
+                        onSelectEstado={(k) => { const nom = estados.find(e => slug(e) === k) || null; setEstadoSel(estadoSel === nom ? null : nom); }}
+                        estadoSeleccionado={estadoSel ? slug(estadoSel) : null}
+                        unidad="representantes" titulo="Representantes por estado" />
+
                     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
                         <div className="lg:col-span-3">
                             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -5342,6 +5360,7 @@
                                         <div className="text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-1">Diputados ({sel.dips.length})</div>
                                         {sel.dips.length ? sel.dips.map(repRow) : <div className="text-[11px] text-gray-400">—</div>}
                                     </div>
+                                    <FichaPoliticaInline slug={slug(estadoSel)} />
                                 </div>
                             ) : (
                                 <div className="glass border border-borde rounded-xl p-6 text-sm text-gray-400 text-center">Selecciona un estado para ver a sus representantes.</div>
