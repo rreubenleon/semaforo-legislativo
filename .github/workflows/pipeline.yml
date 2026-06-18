@@ -248,7 +248,7 @@ jobs:
         run: |
           git config user.name "FIAT Bot"
           git config user.email "fiat-bot@users.noreply.github.com"
-          git add dashboard/data.json dashboard/leyes.json
+          git add dashboard/data.json dashboard/leyes.json dashboard/ultimas_instrumentos.json
           # Construir mensaje con status de Haiku al final (visible en git log)
           HAIKU_STATUS=""
           if [ -f haiku_status.txt ]; then
@@ -262,7 +262,7 @@ jobs:
           git pull --rebase origin main || {
             git rebase --abort 2>/dev/null
             git pull --no-rebase -X theirs origin main
-            git add dashboard/data.json dashboard/leyes.json 2>/dev/null
+            git add dashboard/data.json dashboard/leyes.json dashboard/ultimas_instrumentos.json 2>/dev/null
             git diff --staged --quiet || git commit -m "🔄 Merge automático con cambios remotos"
           }
           # Descartar stash (no lo necesitamos — los JSONs scrapeados se

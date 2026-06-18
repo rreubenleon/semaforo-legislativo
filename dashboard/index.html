@@ -8385,6 +8385,16 @@
         }
 
         function PageConsolePro({ data, setSelected, onConfigClick, onLegSelect, allLegisladores, allComisiones, config, setConfig, userNombre }) {
+          // ultimas_instrumentos: carga diferida (movido fuera de data.json para
+          // aligerar las páginas públicas). Fallback a data.json si aún lo trae.
+          const [ultimasInst, setUltimasInst] = useState(null);
+          useEffect(() => {
+            let cancel = false;
+            fetch('ultimas_instrumentos.json').then(r => r.ok ? r.json() : {})
+              .then(d => { if (!cancel) setUltimasInst(d); }).catch(() => { if (!cancel) setUltimasInst({}); });
+            return () => { cancel = true; };
+          }, []);
+          const ultimasMap = ultimasInst || data.ultimas_instrumentos_legislador || {};
           const [estadoSeleccionado, setEstadoSeleccionado] = useState(null);
           const [filtroCSP, setFiltroCSP] = useState(null);
           const [actividadTab, setActividadTab] = useState('legisladores');
@@ -8901,7 +8911,7 @@
                         <HeaderBtn col="efectividad" label="Efectividad"
                           tip="Índice de Efectividad (0–100) — capacidad del legislador para convertir instrumentos en avances dentro del proceso parlamentario, ajustada por la dificultad estructural de sus comisiones. 50 = mediana LXVI · 80+ = desempeño alto · 20- = bajo. Requiere ≥3 instrumentos dictaminables." />
                       </div>
-                      {ordenado.map(l => <RadarRowCP key={l.id} leg={l} instrumentos={(data.ultimas_instrumentos_legislador || {})[String(l.id)]} onClick={() => onLegSelect(l)} />)}
+                      {ordenado.map(l => <RadarRowCP key={l.id} leg={l} instrumentos={ultimasMap[String(l.id)]} onClick={() => onLegSelect(l)} />)}
                     </div>
                   </div>
                 );

@@ -2308,10 +2308,16 @@ def paso_7_exportar_dashboard():
 
     # Escribir JSON
     DASHBOARD_DATA.parent.mkdir(parents=True, exist_ok=True)
+    # ultimas_instrumentos_legislador (~1 MB) → archivo aparte. Solo lo usa la
+    # Consola; sacarlo de data.json (que carga en CADA visita pública) aligera
+    # el sitio. La Consola lo carga diferido (ultimas_instrumentos.json).
+    ultimas = data.pop("ultimas_instrumentos_legislador", {})
+    with open(DASHBOARD_DATA.parent / "ultimas_instrumentos.json", "w", encoding="utf-8") as f:
+        json.dump(ultimas, f, ensure_ascii=False)
     with open(DASHBOARD_DATA, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-    logger.info(f"Dashboard JSON exportado: {DASHBOARD_DATA}")
+    logger.info(f"Dashboard JSON exportado: {DASHBOARD_DATA} (ultimas_instrumentos.json aparte)")
     return data
 
 
