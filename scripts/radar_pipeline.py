@@ -846,152 +846,111 @@ def _norm_turno_matchup(s: str) -> str:
 
 def paso_matchup_grade(db_ro: sqlite3.Connection) -> dict:
     """
-    Matchup grade A–F: qué tan favorable es la comisión dictaminadora
-    principal del legislador. Mide TASA DE DICTAMEN de la comisión,
-    no tasa de aprobación — porque en la LXVI la mayoría de documentos
-    están en "Pendiente". Lo relevante es si la comisión resuelve.
+    TRACCIÓN del LEGISLADOR (propia, NO la de su comisión).
 
-    tasa_dictamen = (aprobados + desechados + retiradas) / total
-      → % de documentos que la comisión ha resuelto (en cualquier sentido)
+    Mide qué % de SUS instrumentos individuales sustantivos han avanzado
+    (dictaminados = aprobados + desechados + retiradas) frente a los que siguen
+    en pendiente. Es una nota PROPIA de cada legislador; la calificación de la
+    comisión es algo aparte (vive en la pestaña Comisiones).
 
-    Grading por percentiles entre las 63 comisiones activas:
-      A: top 20%     — comisión que dictamina rápido
-      B: 20–40%      — ritmo bueno
-      C: 40–60%      — ritmo promedio
-      D: 60–80%      — lenta
-      F: bottom 20%  — no dictamina
+    Asignación (entre legisladores con ≥3 instrumentos propios):
+      - Los que SÍ mueven cosas (tasa>0) se rankean en 4 bandas parejas:
+        A=Alta tracción (top 25%) · B=Buena · C=Media · D=Baja.
+      - Los que NO han movido nada (tasa=0) → F = Sin tracción suficiente.
+      - <3 instrumentos propios → sin nota (NULL): muestra muy chica.
+
+    matchup_comision_target guarda su comisión dominante solo como contexto.
     """
-    logger.info("Cálculo de matchup grade por legislador…")
+    logger.info("Cálculo de tracción por legislador (propia)…")
+    MIN_INSTR = 3
 
-    # ─── 1. Tasa de dictamen a nivel comisión ───
-    com_rows = db_ro.execute(
+    # 1) Tasa de dictamen de los instrumentos PROPIOS (individuales, sustantivos)
+    rows = db_ro.execute(
         """
-        SELECT al.comision_turno,
-               SUM(CASE WHEN sd.estatus LIKE '%Aprobado%' THEN 1 ELSE 0 END) AS aprobados,
-               SUM(CASE WHEN sd.estatus LIKE 'Desechado%' OR sd.estatus LIKE 'Retirada%' THEN 1 ELSE 0 END) AS rechazados,
+        SELECT al.legislador_id,
+               SUM(CASE WHEN sd.estatus LIKE '%Aprobado%' OR sd.estatus LIKE 'Desechado%'
+                         OR sd.estatus LIKE 'Rechazado%' OR sd.estatus LIKE 'Retirada%'
+                        THEN 1 ELSE 0 END) AS decididos,
                COUNT(*) AS total
         FROM actividad_legislador al
         JOIN sil_documentos sd ON al.sil_documento_id = sd.id
-        WHERE al.comision_turno IS NOT NULL AND al.comision_turno <> ''
+        WHERE al.legislador_id IS NOT NULL
           AND al.fecha_presentacion >= ?
-        GROUP BY al.comision_turno
+          AND (al.co_firmantes IS NULL OR al.co_firmantes = '')
+          AND (LOWER(al.tipo_instrumento) LIKE '%iniciativ%' OR LOWER(al.tipo_instrumento) LIKE '%proposici%')
+        GROUP BY al.legislador_id
         """,
         (FECHA_INICIO_LXVI,),
     ).fetchall()
 
-    # Normalizar "comisiones unidas" del Senado: quitar el boilerplate de
-    # co-comisión ("y de Estudios Legislativos, Primera/Segunda") y el sufijo
-    # de cámara, y AGREGAR por nombre normalizado. Sin esto cada combinación
-    # compuesta es rara (<MIN_DOCS) y los senadores se quedaban sin tracción.
-    # Conservador: NO adivina comisión primaria; los comma-compound que no
-    # colapsan a una comisión conocida simplemente no califican (seguro).
-    _agg: dict[str, list] = {}
-    for r in com_rows:
-        k = _norm_turno_matchup(r["comision_turno"])
-        a = _agg.setdefault(k, [0, 0, 0])
-        a[0] += r["aprobados"] or 0
-        a[1] += r["rechazados"] or 0
-        a[2] += r["total"]
-    com_tasas: dict[str, float] = {}
-    for k, (ap, rech, tot) in _agg.items():
-        if tot >= MATCHUP_MIN_DOCS_COM:
-            com_tasas[k] = (ap + rech) / tot if tot > 0 else 0
+    tasa_leg: dict[int, float] = {}
+    movers, zeros = [], []
+    for r in rows:
+        if (r["total"] or 0) < MIN_INSTR:
+            continue
+        tasa = (r["decididos"] or 0) / r["total"]
+        tasa_leg[r["legislador_id"]] = tasa
+        (movers if tasa > 0 else zeros).append((r["legislador_id"], tasa))
 
-    logger.info(f"  Comisiones con ≥{MATCHUP_MIN_DOCS_COM} docs (normalizadas): {len(com_tasas)}")
+    # 2) Ranking ENTRE LEGISLADORES (no comisiones): movers en 4 bandas parejas;
+    #    los que no mueven nada → F. Distribución pareja, nota propia.
+    movers.sort(key=lambda x: -x[1])
+    m = len(movers)
+    grade_leg: dict[int, str] = {}
+    for idx, (lid, _) in enumerate(movers):
+        pct = idx / m if m else 0
+        grade_leg[lid] = "A" if pct < 0.25 else "B" if pct < 0.50 else "C" if pct < 0.75 else "D"
+    for lid, _ in zeros:
+        grade_leg[lid] = "F"
 
-    # ─── 2. Grading por RANK (no por valores de percentil) ───
-    # Bug anterior: usaba percentiles de valor (p20, p40, p60, p80) que
-    # colapsaban cuando muchas comisiones tenían tasa=0. Resultado: todos
-    # los grados en A o B, sin C/D/F.
-    #
-    # Fix: ranking explícito. Las comisiones se ordenan por tasa DESC.
-    # Top 20% → A, siguiente 20% → B, ..., bottom 20% → F. Esto fuerza
-    # distribución pareja A-F sin importar la dispersión de valores.
-    sorted_coms = sorted(com_tasas.items(), key=lambda kv: -kv[1])
-    n_coms = len(sorted_coms)
-    com_grades: dict[str, str] = {}
-    for idx, (com_name, _) in enumerate(sorted_coms):
-        pct = idx / n_coms if n_coms else 0
-        if pct < 0.20:
-            com_grades[com_name] = "A"
-        elif pct < 0.40:
-            com_grades[com_name] = "B"
-        elif pct < 0.60:
-            com_grades[com_name] = "C"
-        elif pct < 0.80:
-            com_grades[com_name] = "D"
-        else:
-            com_grades[com_name] = "F"
-
-    def _grade(_tasa: float, com_name: str = "") -> str:
-        return com_grades.get(com_name, "F")
-
-    # ─── 3. Comisión dominante por legislador ───
-    # Filtro `co_firmantes IS NULL OR co_firmantes = ''`: solo cuentan
-    # las comisiones donde turnaron actos donde el legislador es
-    # promovente único. Sin este filtro, todos los senadores del PRI
-    # acaban con la misma "Segunda Comisión" porque firman las mismas
-    # iniciativas colectivas turnadas ahí.
+    # 3) Comisión dominante (solo contexto de display)
     leg_rows = db_ro.execute(
         """
         SELECT al.legislador_id, al.comision_turno, COUNT(*) AS total
         FROM actividad_legislador al
-        JOIN sil_documentos sd ON al.sil_documento_id = sd.id
         WHERE al.legislador_id IS NOT NULL
           AND al.comision_turno IS NOT NULL AND al.comision_turno <> ''
           AND al.fecha_presentacion >= ?
           AND (al.co_firmantes IS NULL OR al.co_firmantes = '')
         GROUP BY al.legislador_id, al.comision_turno
-        HAVING total >= ?
         """,
-        (FECHA_INICIO_LXVI, MATCHUP_MIN_DOCS_LEG),
+        (FECHA_INICIO_LXVI,),
     ).fetchall()
-
-    por_leg: dict[int, dict] = {}
+    com_dom: dict[int, tuple] = {}
     for r in leg_rows:
         lid = r["legislador_id"]
-        prev = por_leg.get(lid)
-        if prev is None or r["total"] > prev["total"]:
-            por_leg[lid] = dict(r)
+        if lid not in com_dom or r["total"] > com_dom[lid][1]:
+            com_dom[lid] = (_norm_turno_matchup(r["comision_turno"]), r["total"])
 
-    # ─── 4. Asignar grades ───
+    # 4) Escribir a D1
     ahora = datetime.utcnow().isoformat()
     stats_sqls: list[str] = []
     distro = {"A": 0, "B": 0, "C": 0, "D": 0, "F": 0, "NULL": 0}
-    calculados = 0
-
-    for leg_id, r in por_leg.items():
-        comision = _norm_turno_matchup(r["comision_turno"])
-        if comision not in com_tasas:
-            distro["NULL"] += 1
-            grade = None
-            tasa_val = "NULL"
-        else:
-            tasa = com_tasas[comision]
-            grade = _grade(tasa, comision)
-            tasa_val = f"{tasa:.4f}"
-            distro[grade] += 1
-
+    todos = set(grade_leg) | set(com_dom)
+    for lid in todos:
+        grade = grade_leg.get(lid)
+        distro[grade if grade else "NULL"] += 1
+        comision = com_dom.get(lid, (None, 0))[0]
+        tasa_val = f"{tasa_leg[lid]:.4f}" if lid in tasa_leg else "NULL"
         stats_sqls.append(
             "INSERT INTO legisladores_stats "
             "(legislador_id, fecha_calculo, matchup_grade, "
             "matchup_comision_target, matchup_tasa_dictamen) VALUES ("
-            f"{leg_id}, {_sql_escape(ahora)}, "
+            f"{lid}, {_sql_escape(ahora)}, "
             f"{_sql_escape(grade) if grade else 'NULL'}, "
-            f"{_sql_escape(comision)}, {tasa_val}) "
+            f"{_sql_escape(comision) if comision else 'NULL'}, {tasa_val}) "
             "ON CONFLICT(legislador_id) DO UPDATE SET "
             "fecha_calculo=excluded.fecha_calculo, "
             "matchup_grade=excluded.matchup_grade, "
             "matchup_comision_target=excluded.matchup_comision_target, "
             "matchup_tasa_dictamen=excluded.matchup_tasa_dictamen;"
         )
-        calculados += 1
 
     for i in range(0, len(stats_sqls), 200):
         ejecutar_sql_d1("\n".join(stats_sqls[i:i + 200]))
 
-    logger.info(f"Matchup grade: {calculados} legisladores → D1. Distribución: {distro}")
-    return {"calculados": calculados, "distribucion": distro}
+    logger.info(f"Tracción por legislador: {len(grade_leg)} con nota de {len(todos)}. Distribución: {distro}")
+    return {"calculados": len(todos), "distribucion": distro}
 
 
 # ────────────────────────────────────────────

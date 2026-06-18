@@ -2583,7 +2583,7 @@
                             <div><span className="font-semibold">PROP 15D</span> — Proposiciones con punto de acuerdo proyectadas en los próximos 15 días, misma metodología que INI 15D.</div>
                             <div><span className="font-semibold">Ind / Grupo</span> — Instrumentos legislativos presentados durante la LXVI. <strong>Individuales</strong>: firmados como único promovente. <strong>De grupo</strong>: firmados con bancada o como co-firmante (acción colectiva del partido). Las de grupo no cuentan para Hit Rate ni Efectividad personal porque mezclan trabajo individual con presión de grupo. Hover sobre cada celda para ver desglose por estado (aprobadas, pendientes, desechadas).</div>
                             <div><span className="font-semibold">Por qué la distinción</span> — Una iniciativa firmada por 13 senadores es acción colectiva, no del legislador en lo personal. Robles de la Rosa (Excélsior, 4-may-2026) usa el mismo criterio. La distinción se infiere del texto del Senado y puede tener error ±15-25% por legislador; para casos críticos validar contra senado.gob.mx/66/senador/&#123;id&#125;.</div>
-                            <div><span className="font-semibold">Tracción</span> — Qué tanto avanza (dictamina) la comisión principal del legislador, en escala de 5 a 1: <b>Alta tracción</b> (5) = resuelve rápido; <b>Sin tracción suficiente</b> (1) = la mayoría de asuntos se quedan en pendiente. Basada en la tasa de dictamen relativa entre comisiones.</div>
+                            <div><span className="font-semibold">Tracción</span> — Qué tanto avanzan los <b>instrumentos propios</b> del legislador, en escala de 5 a 1: <b>Alta tracción</b> (5) = la mayoría se dictaminan; <b>Sin tracción suficiente</b> (1) = casi todos quedan en pendiente. Es el % de SUS instrumentos que avanzan, rankeado entre legisladores. La calificación de la comisión es aparte (pestaña Comisiones).</div>
                         </div>
                     )}
 
@@ -2721,7 +2721,7 @@
                                         <SortableHeader sortKey="iniciativas" label="Ini 15d" tip="Iniciativas proyectadas en los próximos 15 días según ritmo LXVI." />
                                         <SortableHeader sortKey="proposiciones" label="Prop 15d" tip="Proposiciones proyectadas en los próximos 15 días." />
                                         <SortableHeader sortKey="iniciativas_indiv" label="Iniciativas" tip="Iniciativas LXVI como promovente único. Sin firmas con bancada." />
-                                        <SortableHeader sortKey="matchup" label="Tracción" tip="Tracción de la comisión dictaminadora (5 = alta, 1 = insuficiente). Ordenar 5→1." />
+                                        <SortableHeader sortKey="matchup" label="Tracción" tip="Tracción del legislador: % de SUS instrumentos que avanzan (se dictaminan) vs los que quedan pendientes (5 = alta, 1 = sin tracción suficiente). Ordenar 5→1." />
                                         <SortableHeader sortKey="efectividad" label="Efectividad" tip="% de éxito individual: aprobados / (aprobados + desechados), solo instrumentos firmados en solitario, ajustado por confianza (Wilson). Quien no tiene ningún instrumento resuelto aparece como 'en revisión'." />
                                     </div>
                                 );
@@ -3885,12 +3885,12 @@
                         </div>
                         {leg.matchup_comision && leg.matchup_grade && (
                             <div className="bg-white border border-gray-200 rounded-lg p-3 text-[12px]">
-                                <div className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1.5 font-mono">Tracción global vs comisión más turnada</div>
+                                <div className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1.5 font-mono">Tracción del legislador (sus instrumentos)</div>
                                 <div className="flex items-baseline gap-3">
                                     <span className={`text-xl font-black ${traccion(leg.matchup_grade).color}`}>{traccion(leg.matchup_grade).label}</span>
                                     <div className="flex-1">
-                                        <div className="font-semibold text-gray-800">{leg.matchup_comision}</div>
-                                        <div className="text-[11px] text-gray-500">{leg.matchup_tasa != null ? `Tasa de dictamen ${Math.round(leg.matchup_tasa * 100)}%` : 'tasa sin datos'}</div>
+                                        <div className="font-semibold text-gray-800">{leg.matchup_tasa != null ? `${Math.round(leg.matchup_tasa * 100)}% de sus instrumentos avanzan` : 'Sin datos suficientes'}</div>
+                                        {leg.matchup_comision && <div className="text-[11px] text-gray-500">Comisión dominante: {leg.matchup_comision}</div>}
                                     </div>
                                 </div>
                             </div>
@@ -8907,7 +8907,7 @@
                         <HeaderBtn col="l3p" label="L3P total"
                           tip="Total de instrumentos (iniciativas + proposiciones) presentados durante la LXVI Legislatura (sep 2024 – hoy)." />
                         <HeaderBtn col="match" label="Tracción"
-                          tip="Tracción de la comisión a la que más turnan sus instrumentos, en escala 5–1. Alta tracción (5) = dictamina rápido; Sin tracción suficiente (1) = los asuntos se quedan en pendiente. Relativa entre comisiones." />
+                          tip="Tracción del legislador: % de SUS instrumentos que avanzan (se dictaminan) vs los que quedan pendientes, en escala 5–1. Alta tracción (5) … Sin tracción suficiente (1). Rankeada entre legisladores." />
                         <HeaderBtn col="efectividad" label="Efectividad"
                           tip="Índice de Efectividad (0–100) — capacidad del legislador para convertir instrumentos en avances dentro del proceso parlamentario, ajustada por la dificultad estructural de sus comisiones. 50 = mediana LXVI · 80+ = desempeño alto · 20- = bajo. Requiere ≥3 instrumentos dictaminables." />
                       </div>

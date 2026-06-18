@@ -66,7 +66,7 @@ def construir_prompt_usuario(leg: dict) -> str:
     hit_rate = leg.get("hit_rate")
     hit_str = f"{round(hit_rate * 100)}%" if hit_rate is not None else "sin datos"
 
-    # Tracción de la comisión dictaminadora (reemplaza el grado A–F en toda la app)
+    # Tracción PROPIA del legislador: qué % de SUS instrumentos avanzan (se dictaminan)
     _TRACCION = {"A": "alta tracción", "B": "buena tracción", "C": "tracción media",
                  "D": "baja tracción", "F": "sin tracción suficiente"}
     matchup = _TRACCION.get(leg.get("matchup_grade"), "sin datos")
@@ -102,7 +102,7 @@ Cámara: {leg.get('camara', '?')}
 Estado: {leg.get('estado', '?')}
 Categoría dominante: {cat}
 Hit rate (reacción a picos mediáticos): {hit_str}
-Tracción de su comisión dictaminadora ({matchup_com}): {matchup_str}
+Tracción propia (% de sus instrumentos que avanzan/se dictaminan): {matchup_str}
 Iniciativas LXVI: {ini_solo} como promovente único + {ini_banc} firmadas con bancada
 Proposiciones LXVI: {prop_solo} como promovente único + {prop_banc} firmadas con bancada
 Comisiones: {comisiones}
