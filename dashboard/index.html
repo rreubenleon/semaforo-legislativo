@@ -4604,6 +4604,23 @@
                                     <div className="text-[11px] text-gray-500 mt-0.5">
                                         {sitl.aprobadas} aprobadas de {sitl.turnadas} turnadas — {sitl.pendientes} pendientes
                                     </div>
+                                    {/* Ritmo de dictamen: qué tan rápido resuelve la comisión
+                                        (decididos / turnados, en cualquier sentido). Esto es
+                                        propio de la COMISIÓN (distinto de la Tracción del legislador). */}
+                                    {sitl.tasa_resolucion != null && (
+                                        <div className="mt-2">
+                                            <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-1">Ritmo de dictamen</div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="flex-1">
+                                                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                                                        <div className="h-full rounded-full bg-blue-500" style={{width: `${Math.min(sitl.tasa_resolucion, 100)}%`}}></div>
+                                                    </div>
+                                                </div>
+                                                <span className="text-sm font-bold text-gray-800 w-12 text-right">{sitl.tasa_resolucion}%</span>
+                                            </div>
+                                            <div className="text-[11px] text-gray-500 mt-0.5">% de asuntos turnados que la comisión ya dictaminó (resolvió, en cualquier sentido)</div>
+                                        </div>
+                                    )}
                                     {/* Desglose única / unidas / opinión */}
                                     {hasDesglose && (
                                         <div className="mt-2 space-y-1">
