@@ -40,11 +40,89 @@ TOP_INSTRUMENTOS = 25   # instrumentos recientes por ley en el JSON (controla ta
 MIN_INSTRUMENTOS = 2    # no listar leyes con 1 solo instrumento (ruido)
 
 
+CATALOGO_PATH = ROOT / "data" / "leyes_vigentes.txt"
+
+_STOP = {"de", "del", "la", "las", "los", "el", "y", "en", "a", "para", "por", "con", "que", "su", "al"}
+
+
 def norm_key(s):
     s = (s or "").lower()
     s = "".join(ch for ch in unicodedata.normalize("NFD", s) if unicodedata.category(ch) != "Mn")
     s = re.sub(r"[^a-z0-9 ]", " ", s)
     return re.sub(r"\s+", " ", s).strip()
+
+
+def _toks(s):
+    return set(t for t in norm_key(s).split() if t not in _STOP)
+
+
+def cargar_catalogo():
+    """Lee data/leyes_vigentes.txt (una ley por línea, 'Canónico | alias | …').
+    Devuelve lista de (display, [(key_norm, key_toks), …])."""
+    cat = []
+    for line in CATALOGO_PATH.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        partes = [p.strip() for p in line.split("|") if p.strip()]
+        display = partes[0]
+        claves = [(norm_key(p), _toks(p)) for p in partes]
+        cat.append((display, claves))
+    return cat
+
+
+def construir_matcher(cat):
+    """Mapea el nombre de ley extraído de un título → ley vigente canónica.
+    None si no corresponde a ninguna ley vigente (extensión/mal codificada)."""
+    exacto = {}
+    for disp, claves in cat:
+        for kn, _ in claves:
+            exacto.setdefault(kn, disp)
+
+    def match(ley_extraida):
+        kn = norm_key(ley_extraida)
+        if not kn:
+            return None
+        if kn in exacto:
+            return exacto[kn]
+        et = set(t for t in kn.split() if t not in _STOP)
+        if len(et) < 2:
+            return None
+        # Prioridad: el nombre oficial EMPIEZA con lo extraído (truncación real).
+        # Desambigua casos como "Constitución Política", que aparece DENTRO del
+        # nombre de muchas leyes reglamentarias pero solo ENCABEZA la suya.
+        pref = {disp for disp, claves in cat for kc, _ in claves if kc == kn or kc.startswith(kn + " ")}
+        if len(pref) == 1:
+            return next(iter(pref))
+        # Truncación: el extractor corta en comas/"y" → el extraído suele ser un
+        # PREFIJO del nombre oficial. Buscar canónicos que CONTENGAN todos los
+        # tokens del extraído. Si solo uno → match limpio (caso "Ley de Caminos").
+        hits = []  # (display, n_tokens_canonico)
+        for disp, claves in cat:
+            best = None
+            for _, kt in claves:
+                if kt and et <= kt:
+                    if best is None or len(kt) < best:
+                        best = len(kt)
+            if best is not None:
+                hits.append((disp, best))
+        displays = {d for d, _ in hits}
+        if len(displays) == 1:
+            return hits[0][0]
+        if len(displays) > 1:
+            # ambiguo: aceptar el más específico solo si el extraído lo cubre
+            # bien y es estrictamente más específico que el siguiente.
+            hits.sort(key=lambda x: x[1])
+            if hits[0][1] < hits[1][1] and len(et) / hits[0][1] >= 0.5:
+                return hits[0][0]
+            return None
+        # Caso inverso: extraído con cola extra (canónico ⊆ extraído), único.
+        inv = {disp for disp, claves in cat for _, kt in claves if kt and kt <= et and len(kt) >= 3}
+        if len(inv) == 1:
+            return next(iter(inv))
+        return None
+
+    return match
 
 
 def camara_bucket(camara):
@@ -85,6 +163,10 @@ def generar(conn):
     """).fetchall()
     logger.info(f"Instrumentos sustantivos: {len(rows):,}")
 
+    cat = cargar_catalogo()
+    match = construir_matcher(cat)
+    logger.info(f"Catálogo de leyes vigentes: {len(cat)}")
+
     leyes = {}
     def _nueva():
         return {
@@ -93,17 +175,21 @@ def generar(conn):
             "por_mes": Counter(), "por_camara": Counter(), "instrumentos": [],
         }
 
-    con_ley = 0
+    con_ley = 0       # instrumentos cuyo título nombra una ley
+    con_vigente = 0   # … que mapea a una ley VIGENTE del catálogo
     for titulo, fp, partido, tipo, est_canon, presentador, url, camara in rows:
         ley = extraer_ley_de_titulo(titulo)
         if not ley:
             continue
-        k = norm_key(ley)
-        if len(k) < 6:
-            continue
         con_ley += 1
+        canon = match(ley)
+        if not canon:
+            continue  # extensión / no vigente / mal codificada → fuera
+        con_vigente += 1
+        k = norm_key(canon)
         d = leyes.setdefault(k, _nueva())
-        d["variantes"][ley.strip()] += 1
+        d["display"] = canon
+        d["variantes"][canon] += 1
         d["n"] += 1
         cam = camara_bucket(camara)
         d["por_estatus"][estatus_bucket(est_canon)] += 1
@@ -130,7 +216,7 @@ def generar(conn):
             continue
         catalogo.append({
             "key": k,
-            "display": d["variantes"].most_common(1)[0][0],
+            "display": d["display"],
             "n": d["n"],
             "por_estatus": dict(d["por_estatus"]),
             "por_camara": dict(d["por_camara"]),
@@ -144,12 +230,14 @@ def generar(conn):
         "generado": None,  # lo estampa el pipeline; aquí sin Date.now
         "fecha_inicio": FECHA_INICIO,
         "total_instrumentos_con_ley": con_ley,
+        "total_instrumentos_vigente": con_vigente,
         "total_leyes": len(catalogo),
         "leyes": catalogo,
     }
     OUT.write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
     kb = OUT.stat().st_size / 1024
-    logger.info(f"✓ {len(catalogo)} leyes (≥{MIN_INSTRUMENTOS} instrumentos) → {OUT} ({kb:.0f} KB)")
+    logger.info(f"Con ley en título: {con_ley:,} · mapean a ley vigente: {con_vigente:,} ({round(100*con_vigente/max(1,con_ley))}%)")
+    logger.info(f"✓ {len(catalogo)} leyes vigentes (≥{MIN_INSTRUMENTOS} instrumentos) → {OUT} ({kb:.0f} KB)")
     logger.info(f"  Top: " + " · ".join(f"{c['display'][:28]} ({c['n']})" for c in catalogo[:5]))
 
 
