@@ -23,6 +23,7 @@ Cadencia sugerida:
 import argparse
 import json
 import logging
+import re
 import os
 import sqlite3
 import subprocess
@@ -831,6 +832,18 @@ MATCHUP_MIN_DOCS_COM = 10   # mínimo de docs en comisión para calcular tasa
 MATCHUP_MIN_DOCS_LEG = 2    # mínimo de docs del legislador en su comisión dominante
 
 
+def _norm_turno_matchup(s: str) -> str:
+    """Normaliza un comision_turno: quita el sufijo de cámara y el boilerplate
+    de co-comisión de las 'comisiones unidas' del Senado, para que variantes de
+    la misma comisión se agreguen juntas y puedan calificarse. NO adivina la
+    comisión primaria (no parte en comas ambiguas)."""
+    if not s:
+        return s
+    t = re.sub(r"\s+de la C[aá]mara de (Senadores|Diputados).*$", "", s.strip(), flags=re.I)
+    t = re.sub(r"[,;]?\s*y?\s*de (Estudios Legislativos|Reglamentos y Pr[aá]cticas Parlamentarias)[,;]?\s*(Primera|Segunda)?\s*$", "", t, flags=re.I)
+    return t.strip().rstrip(",;").strip()
+
+
 def paso_matchup_grade(db_ro: sqlite3.Connection) -> dict:
     """
     Matchup grade A–F: qué tan favorable es la comisión dictaminadora
@@ -862,19 +875,29 @@ def paso_matchup_grade(db_ro: sqlite3.Connection) -> dict:
         WHERE al.comision_turno IS NOT NULL AND al.comision_turno <> ''
           AND al.fecha_presentacion >= ?
         GROUP BY al.comision_turno
-        HAVING total >= ?
         """,
-        (FECHA_INICIO_LXVI, MATCHUP_MIN_DOCS_COM),
+        (FECHA_INICIO_LXVI,),
     ).fetchall()
 
-    com_tasas: dict[str, float] = {}
+    # Normalizar "comisiones unidas" del Senado: quitar el boilerplate de
+    # co-comisión ("y de Estudios Legislativos, Primera/Segunda") y el sufijo
+    # de cámara, y AGREGAR por nombre normalizado. Sin esto cada combinación
+    # compuesta es rara (<MIN_DOCS) y los senadores se quedaban sin tracción.
+    # Conservador: NO adivina comisión primaria; los comma-compound que no
+    # colapsan a una comisión conocida simplemente no califican (seguro).
+    _agg: dict[str, list] = {}
     for r in com_rows:
-        decididos = (r["aprobados"] or 0) + (r["rechazados"] or 0)
-        total = r["total"]
-        tasa = decididos / total if total > 0 else 0
-        com_tasas[r["comision_turno"]] = tasa
+        k = _norm_turno_matchup(r["comision_turno"])
+        a = _agg.setdefault(k, [0, 0, 0])
+        a[0] += r["aprobados"] or 0
+        a[1] += r["rechazados"] or 0
+        a[2] += r["total"]
+    com_tasas: dict[str, float] = {}
+    for k, (ap, rech, tot) in _agg.items():
+        if tot >= MATCHUP_MIN_DOCS_COM:
+            com_tasas[k] = (ap + rech) / tot if tot > 0 else 0
 
-    logger.info(f"  Comisiones con ≥{MATCHUP_MIN_DOCS_COM} docs: {len(com_tasas)}")
+    logger.info(f"  Comisiones con ≥{MATCHUP_MIN_DOCS_COM} docs (normalizadas): {len(com_tasas)}")
 
     # ─── 2. Grading por RANK (no por valores de percentil) ───
     # Bug anterior: usaba percentiles de valor (p20, p40, p60, p80) que
@@ -938,7 +961,7 @@ def paso_matchup_grade(db_ro: sqlite3.Connection) -> dict:
     calculados = 0
 
     for leg_id, r in por_leg.items():
-        comision = r["comision_turno"]
+        comision = _norm_turno_matchup(r["comision_turno"])
         if comision not in com_tasas:
             distro["NULL"] += 1
             grade = None
