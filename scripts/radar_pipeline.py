@@ -111,7 +111,8 @@ def paso_snapshot_legisladores(db_ro: sqlite3.Connection) -> dict:
                COALESCE(distrito, '') AS distrito,
                COALESCE(foto_url, '') AS foto_url,
                COALESCE(legislatura, 'LXVI') AS legislatura,
-               COALESCE(comisiones_cargo, '') AS comisiones_cargo
+               COALESCE(comisiones_cargo, '') AS comisiones_cargo,
+               COALESCE(origen, '')   AS origen
         FROM legisladores
         """
     ).fetchall()
@@ -140,8 +141,17 @@ def paso_snapshot_legisladores(db_ro: sqlite3.Connection) -> dict:
         resultado = '|'.join(buenas)
         return resultado[:800]
 
+    # No asignar estado a senadores INFERIDOS (origen='sil_inferido'): no son
+    # ocupantes oficiales de banca y inflaban el mapa de representación (p.ej.
+    # Nuevo León salía con 6 senadores en vez de 3). Conservan el resto de su
+    # data; solo no cuentan como titulares de un estado en el mapa.
+    def _estado_oficial(r):
+        if r['camara'] == 'Senado' and r['origen'] == 'sil_inferido':
+            return ''
+        return r['estado']
     rows = [
-        {**dict(r), 'comisiones_cargo': _limpia_comisiones(r['comisiones_cargo'])}
+        {**dict(r), 'comisiones_cargo': _limpia_comisiones(r['comisiones_cargo']),
+         'estado': _estado_oficial(r)}
         for r in rows
     ]
 
