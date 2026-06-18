@@ -175,6 +175,8 @@ def generar(conn):
             "por_mes": Counter(), "por_camara": Counter(), "instrumentos": [],
         }
 
+    nuevas = {}  # propuestas para CREAR leyes nuevas ("expide" + no vigente)
+
     con_ley = 0       # instrumentos cuyo título nombra una ley
     con_vigente = 0   # … que mapea a una ley VIGENTE del catálogo
     for titulo, fp, partido, tipo, est_canon, presentador, url, camara in rows:
@@ -184,7 +186,27 @@ def generar(conn):
         con_ley += 1
         canon = match(ley)
         if not canon:
-            continue  # extensión / no vigente / mal codificada → fuera
+            # No es vigente. Si el título "expide" una ley → es propuesta de
+            # NUEVA ley (idea para crear una ley que aún no existe). Si no,
+            # es reforma a algo no vigente / ruido → fuera.
+            if "expid" in (titulo or "").lower():
+                nk = norm_key(ley)
+                if len(nk) >= 6:
+                    nd = nuevas.setdefault(nk, {"display": None, "variantes": Counter(), "n": 0,
+                                                "por_estatus": Counter(), "por_partido": Counter(),
+                                                "instrumentos": []})
+                    nd["variantes"][ley.strip()] += 1
+                    nd["n"] += 1
+                    nd["por_estatus"][estatus_bucket(est_canon)] += 1
+                    if partido:
+                        nd["por_partido"][partido] += 1
+                    if len(nd["instrumentos"]) < 12:
+                        nd["instrumentos"].append({
+                            "titulo": titulo[:180], "fecha": fp or "", "partido": partido or "",
+                            "estatus": estatus_bucket(est_canon), "presentador": (presentador or "")[:120],
+                            "url": url or "", "camara": camara_bucket(camara),
+                        })
+            continue
         con_vigente += 1
         k = norm_key(canon)
         d = leyes.setdefault(k, _nueva())
@@ -226,6 +248,21 @@ def generar(conn):
         })
     catalogo.sort(key=lambda x: -x["n"])
 
+    nuevas_cat = []
+    for k, d in nuevas.items():
+        if d["n"] < MIN_INSTRUMENTOS:
+            continue
+        nuevas_cat.append({
+            "key": k,
+            "display": d["variantes"].most_common(1)[0][0],
+            "n": d["n"],
+            "por_estatus": dict(d["por_estatus"]),
+            "por_partido": dict(d["por_partido"].most_common(12)),
+            "instrumentos": d["instrumentos"],
+        })
+    nuevas_cat.sort(key=lambda x: -x["n"])
+    nuevas_total = sum(d["n"] for d in nuevas.values())
+
     out = {
         "generado": None,  # lo estampa el pipeline; aquí sin Date.now
         "fecha_inicio": FECHA_INICIO,
@@ -233,6 +270,8 @@ def generar(conn):
         "total_instrumentos_vigente": con_vigente,
         "total_leyes": len(catalogo),
         "leyes": catalogo,
+        "nuevas_leyes": nuevas_cat,
+        "nuevas_leyes_total": nuevas_total,
     }
     OUT.write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
     kb = OUT.stat().st_size / 1024
