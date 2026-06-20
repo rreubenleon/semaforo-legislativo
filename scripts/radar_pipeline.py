@@ -1071,6 +1071,23 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
     batch_sql: list[str] = []
     calculados = 0
 
+    # ── FUENTE DE VERDAD del conteo: reconteo del SIL ──
+    # Los conteos desde actividad_legislador estaban inflados (efemérides contadas
+    # como proposiciones + duplicados de scrape: Waldo daba 187/122 vs 62/48 real).
+    # recontar_instrumentos_sil.py trae el conteo limpio "como promovente",
+    # verificable contra senado.gob.mx/SIL. Si existe, MANDA sobre el cálculo local.
+    import json as _json, os as _os
+    _reconteo = {}
+    _rc_path = _os.path.join(
+        _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))),
+        "eval", "reconteo_sil.json")
+    try:
+        if _os.path.exists(_rc_path):
+            _reconteo = _json.loads(open(_rc_path, encoding="utf-8").read())
+            logger.info(f"  Reconteo SIL cargado: {len(_reconteo)} legisladores (fuente de verdad del conteo)")
+    except Exception as e:
+        logger.warning(f"  No se pudo cargar reconteo SIL: {e}")
+
     for leg_id in leg_activos:
         # Tasas individuales (default) — ranking de eficiencia personal
         base_ini = _tasa_lxvi(leg_id, TIPOS_INICIATIVA)
@@ -1103,6 +1120,16 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
         # Colectivas = total - individuales
         prom_l3p_ini_col = max(0.0, prom_l3p_ini_total - prom_l3p_ini)
         prom_l3p_prop_col = max(0.0, prom_l3p_prop_total - prom_l3p_prop)
+
+        # Override con el conteo VERIFICADO del SIL (como promovente). El grupo
+        # limpio aún no se jala del SIL → 0 por ahora (fast-follow). Esto evita
+        # la re-inflación: el pipeline ya no usa el conteo contaminado.
+        _rc = _reconteo.get(str(leg_id))
+        if _rc and _rc.get("ini") is not None and _rc.get("prop") is not None:
+            prom_l3p_ini = float(_rc["ini"])
+            prom_l3p_prop = float(_rc["prop"])
+            prom_l3p_ini_col = 0.0
+            prom_l3p_prop_col = 0.0
 
         batch_sql.append(
             "INSERT INTO legisladores_stats "
