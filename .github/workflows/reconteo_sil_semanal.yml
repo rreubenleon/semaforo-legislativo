@@ -1,0 +1,96 @@
+name: Reconteo SIL (semanal)
+
+# Mantiene FRESCOS los conteos/estatus/ELO/efectividad, que ahora salen del SIL
+# (fuente de verdad) y no de actividad_legislador (contaminado). Sin esto, la
+# "foto" del SIL (eval/reconteo_sil.json + eval/instrumentos_sil.json) se queda
+# congelada y los números envejecen. $0, sin Haiku.
+#
+# Flujo: scrape SIL en vivo → regenera la foto → commit → recalcula ELO +
+# conteos/pendientes → sincroniza D1. La página queda al día sola.
+
+on:
+  schedule:
+    - cron: '0 9 * * 0'    # Domingos 09:00 UTC (tras refresh_estatus 06:00,
+                           # antes del scrape radar 12:00)
+  workflow_dispatch:
+
+permissions:
+  contents: write           # para commitear la foto fresca del SIL
+
+concurrency:
+  group: "reconteo-sil"
+  cancel-in-progress: false
+
+jobs:
+  reconteo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60     # el scrape de ~650 legisladores tarda ~20 min
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Restaurar SQLite DB
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-reconteo-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - name: Fallback a release si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+          npm install -g wrangler@3
+
+      # Scrape fresco del SIL. Sin cache persistente → re-cuenta TODO cada semana.
+      - name: Reconteo SIL (scrape en vivo)
+        run: python scripts/recontar_instrumentos_sil.py
+
+      - name: Commit foto fresca del SIL
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add eval/reconteo_sil.json eval/instrumentos_sil.json
+          if git diff --cached --quiet; then
+            echo "Sin cambios en la foto del SIL."
+          else
+            git commit -m "chore(reconteo): foto semanal del SIL [skip ci]"
+            git pull --rebase --autostash || true
+            git push
+          fi
+
+      # Recalcular con la foto fresca y subir a D1.
+      - name: Recalcular ELO (desde SIL)
+        run: python scripts/calcular_elo_legisladores.py --guardar
+
+      - name: Sync ELO a D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python scripts/sync_elo_d1.py
+
+      - name: Recalcular conteos + pendientes (radar) → D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python scripts/radar_pipeline.py --skip-scraper
+
+      - name: Guardar BD en cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-reconteo-${{ github.run_id }}
