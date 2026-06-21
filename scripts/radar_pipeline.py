@@ -1088,6 +1088,19 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
     except Exception as e:
         logger.warning(f"  No se pudo cargar reconteo SIL: {e}")
 
+    # Bancada (suscritas/en grupo) de senadores, desde el perfil del Senado.
+    # total_perfil − promovente_SIL. Ver scrape_bancada_senado.py.
+    _bancada = {}
+    _bc_path = _os.path.join(
+        _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))),
+        "eval", "bancada_senado.json")
+    try:
+        if _os.path.exists(_bc_path):
+            _bancada = _json.loads(open(_bc_path, encoding="utf-8").read())
+            logger.info(f"  Bancada Senado cargada: {len(_bancada)} senadores")
+    except Exception as e:
+        logger.warning(f"  No se pudo cargar bancada Senado: {e}")
+
     for leg_id in leg_activos:
         # Tasas individuales (default) — ranking de eficiencia personal
         base_ini = _tasa_lxvi(leg_id, TIPOS_INICIATIVA)
@@ -1128,8 +1141,15 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
         if _rc and _rc.get("ini") is not None and _rc.get("prop") is not None:
             prom_l3p_ini = float(_rc["ini"])
             prom_l3p_prop = float(_rc["prop"])
-            prom_l3p_ini_col = 0.0
-            prom_l3p_prop_col = 0.0
+            # Bancada real (senadores) desde el perfil del Senado; si no hay
+            # (diputados, pendiente), queda 0 — no inventamos.
+            _bc = _bancada.get(str(leg_id))
+            if _bc and _bc.get("ini_col") is not None:
+                prom_l3p_ini_col = float(_bc["ini_col"])
+                prom_l3p_prop_col = float(_bc.get("prop_col") or 0)
+            else:
+                prom_l3p_ini_col = 0.0
+                prom_l3p_prop_col = 0.0
 
         batch_sql.append(
             "INSERT INTO legisladores_stats "
