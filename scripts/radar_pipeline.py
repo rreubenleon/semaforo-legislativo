@@ -1265,8 +1265,29 @@ def paso_conteos_estado(db_ro: sqlite3.Connection) -> dict:
     ahora = datetime.utcnow().isoformat()
     batch_sql: list[str] = []
     calculados = 0
+    # Override n_*_pend_ind desde el reconteo del SIL (fuente de verdad).
+    # actividad_legislador infla pendientes (efemérides + duplicados); el SIL
+    # da el pendiente real "como promovente". Alimenta el bloque Historial LXVI.
+    import json as _json2, os as _os2
+    _rc2 = {}
+    _rcp2 = _os2.path.join(_os2.path.dirname(_os2.path.dirname(_os2.path.abspath(__file__))), "eval", "reconteo_sil.json")
+    if _os2.path.exists(_rcp2):
+        try:
+            _rc2 = _json2.loads(open(_rcp2, encoding="utf-8").read())
+        except Exception:
+            _rc2 = {}
+
+    def _valpend(r, c):
+        rc = _rc2.get(str(r["legislador_id"]))
+        if rc:
+            if c == "n_ini_pend_ind" and rc.get("ini_pen") is not None:
+                return rc["ini_pen"]
+            if c == "n_prop_pend_ind" and rc.get("prop_pen") is not None:
+                return rc["prop_pen"]
+        return r[c] or 0
+
     for r in rows:
-        valores = ", ".join(str(r[c] or 0) for c in cols_nuevas)
+        valores = ", ".join(str(_valpend(r, c)) for c in cols_nuevas)
         cols_str = ", ".join(cols_nuevas)
         sets = ", ".join(f"{c}=excluded.{c}" for c in cols_nuevas)
         batch_sql.append(

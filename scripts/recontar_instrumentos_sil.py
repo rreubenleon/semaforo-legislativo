@@ -28,13 +28,23 @@ H.PAGINAS = 400          # una sola página para casi todos
 H.DELAY = 0.4
 
 OUT = ROOT / "eval" / "reconteo_sil.json"
-CACHE = ROOT / "eval" / "reconteo_sil_cache.json"
+OUT_REC = ROOT / "eval" / "instrumentos_sil.json"       # registro por instrumento (para ELO)
+CACHE = ROOT / "eval" / "reconteo_sil_cache_v3.json"   # v3: incluye registro por comisión
 
 
 def _norm(s: str) -> str:
     import unicodedata
     s = (s or "").lower()
     return "".join(c for c in unicodedata.normalize("NFD", s) if unicodedata.category(c) != "Mn")
+
+
+def _bucket(estatus: str) -> str:
+    el = _norm(estatus)
+    if "aprobad" in el and "no aprob" not in el:
+        return "apr"
+    if any(k in el for k in ["desech", "rechaz", "preclui", "retir", "no aprob", "negativ", "desestim"]):
+        return "des"
+    return "pen"
 
 
 def resolver(sess, sid, nombre, cam):
@@ -56,10 +66,26 @@ def resolver(sess, sid, nombre, cam):
 
 
 def contar(sess, ref):
-    ini = len(H.scrape_legislador_legis(sess, ref, 66, H.TASUNTO_INICIATIVA))
+    from collections import Counter
+    li = H.scrape_legislador_legis(sess, ref, 66, H.TASUNTO_INICIATIVA)
     time.sleep(0.3)
-    prop = len(H.scrape_legislador_legis(sess, ref, 66, H.TASUNTO_PROPOSICION))
-    return ini, prop
+    lp = H.scrape_legislador_legis(sess, ref, 66, H.TASUNTO_PROPOSICION)
+    bi = Counter(_bucket(x.get("estatus", "")) for x in li)
+    bp = Counter(_bucket(x.get("estatus", "")) for x in lp)
+    # Registro por instrumento (para recomputar ELO desde datos limpios del SIL):
+    # tipo, comisión a la que se turnó, estatus, fecha.
+    recs = ([{"t": "ini", "com": x.get("turnado_a", ""), "est": x.get("estatus", ""), "f": x.get("fecha_presentacion", "")} for x in li]
+            + [{"t": "prop", "com": x.get("turnado_a", ""), "est": x.get("estatus", ""), "f": x.get("fecha_presentacion", "")} for x in lp])
+    return {
+        "ini": len(li), "prop": len(lp),
+        "ini_apr": bi["apr"], "ini_pen": bi["pen"], "ini_des": bi["des"],
+        "prop_apr": bp["apr"], "prop_pen": bp["pen"], "prop_des": bp["des"],
+        # agregados útiles para los widgets (Historial + Efectividad)
+        "aprobados": bi["apr"] + bp["apr"],
+        "pendientes": bi["pen"] + bp["pen"],
+        "desechados": bi["des"] + bp["des"],
+        "_recs": recs,
+    }
 
 
 def main():
@@ -91,8 +117,9 @@ def main():
         if not ref:
             out[key] = {"ini": None, "prop": None, "nombre": r["nombre"], "error": "no_resuelto"}
         else:
-            ini, prop = contar(sess, ref)
-            out[key] = {"ini": ini, "prop": prop, "nombre": r["nombre"], "sil_id": ref}
+            res = contar(sess, ref)
+            res.update({"nombre": r["nombre"], "sil_id": ref})
+            out[key] = res
         cache[key] = out[key]
         if i % 10 == 0:
             CACHE.write_text(json.dumps(cache, ensure_ascii=False))
@@ -100,8 +127,14 @@ def main():
         time.sleep(0.3)
 
     CACHE.write_text(json.dumps(cache, ensure_ascii=False))
+    # Separar: conteos/estatus (lean) → OUT ; registro por instrumento → OUT_REC
+    recs_out = {}
+    for k, v in out.items():
+        if isinstance(v, dict) and "_recs" in v:
+            recs_out[k] = v.pop("_recs")
     OUT.write_text(json.dumps(out, ensure_ascii=False, indent=2))
-    print(f"Listo: {len(out)} legisladores → {OUT}")
+    OUT_REC.write_text(json.dumps(recs_out, ensure_ascii=False))
+    print(f"Listo: {len(out)} legisladores → {OUT} ; registros → {OUT_REC}")
     for k, v in out.items():
         print(f"  {v.get('nombre','?')}: ini={v.get('ini')} prop={v.get('prop')}")
 

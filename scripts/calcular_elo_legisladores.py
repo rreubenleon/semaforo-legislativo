@@ -157,10 +157,68 @@ def calcular_tasas_comision(conn):
     return tasas, tasa_global
 
 
+def _clean_com_sil(s):
+    """'1.-Senado -Medio Ambiente, ... 2.-...' → 'Medio Ambiente, ...' (primera comisión)."""
+    if not s:
+        return None
+    parts = [p for p in re.split(r"\s*\d+\.-", s) if p.strip()]
+    c = parts[0] if parts else s
+    c = re.sub(r"^(Senado|Diputados)\s*-\s*", "", c.strip())
+    c = re.sub(r"\.-Para.*$", "", c).strip()
+    return c or None
+
+
+def _rows_y_tasas_desde_sil(conn, recs_por_leg):
+    """Construye rows + tasas por comisión desde el reconteo del SIL (limpio,
+    'como promovente') en vez de actividad_legislador (contaminado con efemérides
+    + duplicados). Mismo shape que la query original; el resto no cambia."""
+    info = {row[0]: (row[1], row[2], row[3])
+            for row in conn.execute("SELECT id, nombre, camara, partido FROM legisladores").fetchall()}
+    rows, com_apr, com_des = [], {}, {}
+    glob_apr = glob_res = 0
+    for lid_s, recs in recs_por_leg.items():
+        lid = int(lid_s)
+        nm, cam, par = info.get(lid, (None, None, None))
+        if not nm:
+            continue
+        for rec in recs:
+            com = _clean_com_sil(rec.get("com"))
+            est = rec.get("est") or ""
+            fp = rec.get("f") or ""
+            tipo = "Iniciativa" if rec.get("t") == "ini" else "Proposición con punto de acuerdo"
+            rows.append((lid, nm, cam, par, tipo, com, est, fp, ""))
+            el = est.lower()
+            if "aprobad" in el and "no aprob" not in el:
+                if com:
+                    com_apr[com] = com_apr.get(com, 0) + 1
+                glob_apr += 1; glob_res += 1
+            elif any(k in el for k in ("desech", "rechaz", "retir")):
+                if com:
+                    com_des[com] = com_des.get(com, 0) + 1
+                glob_res += 1
+    tasas = {}
+    for com in set(list(com_apr) + list(com_des)):
+        a, d = com_apr.get(com, 0), com_des.get(com, 0)
+        if a + d >= 5:
+            tasas[com] = a / (a + d)
+    tasa_global = (glob_apr / glob_res) if glob_res else 0.3
+    return rows, tasas, tasa_global
+
+
 def calcular_elos(conn):
-    print("  Calculando tasas históricas por comisión…")
-    tasas_com, tasa_global = calcular_tasas_comision(conn)
-    print(f"  Tasa global LXVI: {100*tasa_global:.1f}% · {len(tasas_com)} comisiones con data suficiente")
+    import json as _json, os as _os
+    _sil_path = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))),
+                              "eval", "instrumentos_sil.json")
+    rows_sil = None
+    if _os.path.exists(_sil_path):
+        print("  ELO desde el SIL (instrumentos_sil.json) — fuente de verdad…")
+        rows_sil, tasas_com, tasa_global = _rows_y_tasas_desde_sil(
+            conn, _json.loads(open(_sil_path, encoding="utf-8").read()))
+        print(f"  Tasa global (SIL): {100*tasa_global:.1f}% · {len(tasas_com)} comisiones")
+    else:
+        print("  Calculando tasas históricas por comisión…")
+        tasas_com, tasa_global = calcular_tasas_comision(conn)
+        print(f"  Tasa global LXVI: {100*tasa_global:.1f}% · {len(tasas_com)} comisiones con data suficiente")
 
     # DECISIÓN PRODUCTO 12-may-2026: ELO mide SOLO esfuerzo individual.
     # No queremos calificar a las bancadas — un legislador que solo firma
@@ -171,7 +229,7 @@ def calcular_elos(conn):
     # legislador en la Permanente NO debe sumar/restar a su rating
     # general. Es un mecanismo distinto (sesiona solo en receso, otras
     # reglas). Si se quiere medir, va aparte (no en este script).
-    rows = conn.execute("""
+    rows = rows_sil if rows_sil is not None else conn.execute("""
         SELECT
             al.legislador_id,
             l.nombre AS leg_nombre,
