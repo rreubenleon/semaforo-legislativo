@@ -1101,6 +1101,19 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
     except Exception as e:
         logger.warning(f"  No se pudo cargar bancada Senado: {e}")
 
+    # Bancada de diputados desde el SITL (sitl.diputados.gob.mx, su sistema
+    # oficial). Iniciativas: Adherente + De Grupo. Ver scrape_bancada_diputados.py.
+    _bancada_dip = {}
+    _bcd_path = _os.path.join(
+        _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))),
+        "eval", "bancada_diputados.json")
+    try:
+        if _os.path.exists(_bcd_path):
+            _bancada_dip = _json.loads(open(_bcd_path, encoding="utf-8").read())
+            logger.info(f"  Bancada Diputados cargada: {len(_bancada_dip)} diputados")
+    except Exception as e:
+        logger.warning(f"  No se pudo cargar bancada Diputados: {e}")
+
     for leg_id in leg_activos:
         # Tasas individuales (default) — ranking de eficiencia personal
         base_ini = _tasa_lxvi(leg_id, TIPOS_INICIATIVA)
@@ -1141,9 +1154,9 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
         if _rc and _rc.get("ini") is not None and _rc.get("prop") is not None:
             prom_l3p_ini = float(_rc["ini"])
             prom_l3p_prop = float(_rc["prop"])
-            # Bancada real (senadores) desde el perfil del Senado; si no hay
-            # (diputados, pendiente), queda 0 — no inventamos.
-            _bc = _bancada.get(str(leg_id))
+            # Bancada real: senadores ← perfil del Senado; diputados ← SITL.
+            # Si no hay dato, queda 0 — no inventamos.
+            _bc = _bancada.get(str(leg_id)) or _bancada_dip.get(str(leg_id))
             if _bc and _bc.get("ini_col") is not None:
                 prom_l3p_ini_col = float(_bc["ini_col"])
                 prom_l3p_prop_col = float(_bc.get("prop_col") or 0)
