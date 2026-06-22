@@ -65,6 +65,17 @@ export default {
       return handleHistoricos(request, env);
     }
 
+    // ── Stripe: pagos / suscripciones (freemium) ──
+    if (url.pathname === '/stripe/checkout') {
+      return handleStripeCheckout(request, env);
+    }
+    if (url.pathname === '/stripe/portal') {
+      return handleStripePortal(request, env);
+    }
+    if (url.pathname === '/stripe/webhook') {
+      return handleStripeWebhook(request, env);
+    }
+
     if (url.pathname !== '/buscar') {
       return corsResponse({ error: 'Not found' }, 404, request);
     }
@@ -782,6 +793,250 @@ async function handleRegistro(request, env) {
   } catch (err) {
     return corsResponse({ error: 'Error al registrar', detalle: err.message }, 500, request);
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STRIPE — pagos / suscripciones (freemium)
+// ───────────────────────────────────────────────────────────────────────────
+// Diseño:
+//  • Fuente de verdad del estado de pago = tabla `subscriptions` en SUPABASE
+//    (donde ya viven los usuarios). El frontend la lee con RLS; el Worker la
+//    escribe con la service_role key (solo vía webhook firmado de Stripe).
+//  • Sin dependencias npm: llamamos la API REST de Stripe con fetch y
+//    verificamos la firma del webhook con Web Crypto (HMAC-SHA256).
+//
+// Secretos requeridos (Cloudflare → Worker → Settings → Variables and Secrets):
+//   STRIPE_SECRET_KEY            sk_live_… (o sk_test_… en pruebas)
+//   STRIPE_WEBHOOK_SECRET        whsec_…  (del endpoint del webhook)
+//   STRIPE_PRICE_MENSUAL         price_…  (precio recurrente mensual)
+//   STRIPE_PRICE_ANUAL           price_…  (precio recurrente anual)
+//   SUPABASE_SERVICE_ROLE_KEY    service_role JWT del proyecto Supabase
+// ═══════════════════════════════════════════════════════════════════════════
+
+const SUPABASE_URL = 'https://cvkmqjybsqowxivczmwx.supabase.co';
+
+/** Base de redirección segura: usa el Origin si está permitido, si no fiatmx.com */
+function redirectBase(request) {
+  const origin = request.headers.get('Origin') || '';
+  return ALLOWED_ORIGINS.includes(origin) ? origin : 'https://fiatmx.com';
+}
+
+/** POST form-urlencoded a la API de Stripe. Lanza si !ok. */
+async function stripePost(env, path, params) {
+  const body = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined && v !== null) body.append(k, String(v));
+  }
+  const r = await fetch(`https://api.stripe.com/v1${path}`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${env.STRIPE_SECRET_KEY}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: body.toString(),
+  });
+  const data = await r.json();
+  if (!r.ok) throw new Error(data.error?.message || `Stripe ${r.status}`);
+  return data;
+}
+
+/** Verifica el token de sesión Supabase del llamante → devuelve {id,email} o null. */
+async function getSupabaseUser(env, request) {
+  const auth = request.headers.get('Authorization') || '';
+  const token = auth.replace(/^Bearer\s+/i, '').trim();
+  if (!token) return null;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: { 'Authorization': `Bearer ${token}`, 'apikey': env.SUPABASE_SERVICE_ROLE_KEY },
+    });
+    if (!r.ok) return null;
+    const u = await r.json();
+    return u && u.id ? u : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Lee suscripciones desde Supabase REST (service role, ignora RLS). */
+async function supabaseSelectSub(env, filter) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/subscriptions?${filter}&select=*&limit=1`, {
+    headers: {
+      'apikey': env.SUPABASE_SERVICE_ROLE_KEY,
+      'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+    },
+  });
+  if (!r.ok) return null;
+  const arr = await r.json();
+  return Array.isArray(arr) && arr.length ? arr[0] : null;
+}
+
+/** Upsert (on_conflict user_id) a la tabla subscriptions. */
+async function supabaseUpsertSub(env, row) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/subscriptions?on_conflict=user_id`, {
+    method: 'POST',
+    headers: {
+      'apikey': env.SUPABASE_SERVICE_ROLE_KEY,
+      'Authorization': `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'resolution=merge-duplicates,return=minimal',
+    },
+    body: JSON.stringify(row),
+  });
+  if (!r.ok) throw new Error('Supabase upsert: ' + (await r.text()));
+}
+
+/** POST /stripe/checkout — crea sesión de Stripe Checkout para el usuario. */
+async function handleStripeCheckout(request, env) {
+  if (request.method !== 'POST') return corsResponse({ error: 'Solo POST' }, 405, request);
+  const user = await getSupabaseUser(env, request);
+  if (!user) return corsResponse({ error: 'No autenticado' }, 401, request);
+
+  let body = {};
+  try { body = await request.json(); } catch {}
+  const plan = body.plan === 'anual' ? 'anual' : 'mensual';
+  const priceId = plan === 'anual' ? env.STRIPE_PRICE_ANUAL : env.STRIPE_PRICE_MENSUAL;
+  if (!priceId) return corsResponse({ error: 'Precio no configurado' }, 500, request);
+
+  const base = redirectBase(request);
+
+  try {
+    // Reusar customer existente o crear uno nuevo ligado al user de Supabase.
+    let sub = await supabaseSelectSub(env, `user_id=eq.${user.id}`);
+    let customerId = sub?.stripe_customer_id;
+    if (!customerId) {
+      const c = await stripePost(env, '/customers', {
+        email: user.email,
+        'metadata[supabase_user_id]': user.id,
+      });
+      customerId = c.id;
+      await supabaseUpsertSub(env, {
+        user_id: user.id,
+        stripe_customer_id: customerId,
+        status: sub?.status || 'none',
+        updated_at: new Date().toISOString(),
+      });
+    }
+
+    const session = await stripePost(env, '/checkout/sessions', {
+      mode: 'subscription',
+      customer: customerId,
+      'line_items[0][price]': priceId,
+      'line_items[0][quantity]': '1',
+      client_reference_id: user.id,
+      'subscription_data[metadata][supabase_user_id]': user.id,
+      'metadata[supabase_user_id]': user.id,
+      allow_promotion_codes: 'true',
+      success_url: `${base}/?suscripcion=ok`,
+      cancel_url: `${base}/?suscripcion=cancel`,
+    });
+
+    return corsResponse({ url: session.url }, 200, request);
+  } catch (err) {
+    return corsResponse({ error: 'Stripe checkout falló', detalle: err.message }, 500, request);
+  }
+}
+
+/** POST /stripe/portal — abre el Billing Portal de Stripe para gestionar/cancelar. */
+async function handleStripePortal(request, env) {
+  if (request.method !== 'POST') return corsResponse({ error: 'Solo POST' }, 405, request);
+  const user = await getSupabaseUser(env, request);
+  if (!user) return corsResponse({ error: 'No autenticado' }, 401, request);
+
+  try {
+    const sub = await supabaseSelectSub(env, `user_id=eq.${user.id}`);
+    if (!sub?.stripe_customer_id) {
+      return corsResponse({ error: 'Sin suscripción' }, 400, request);
+    }
+    const ps = await stripePost(env, '/billing_portal/sessions', {
+      customer: sub.stripe_customer_id,
+      return_url: `${redirectBase(request)}/`,
+    });
+    return corsResponse({ url: ps.url }, 200, request);
+  } catch (err) {
+    return corsResponse({ error: 'Portal falló', detalle: err.message }, 500, request);
+  }
+}
+
+/** Comparación hex en tiempo (casi) constante. */
+function hexEqual(a, b) {
+  if (!a || !b || a.length !== b.length) return false;
+  let out = 0;
+  for (let i = 0; i < a.length; i++) out |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return out === 0;
+}
+
+/** Verifica la firma Stripe-Signature (HMAC-SHA256) con Web Crypto. */
+async function verifyStripeSig(payload, header, secret) {
+  if (!secret || !header) return false;
+  const items = header.split(',').map((s) => s.split('='));
+  const t = items.find((i) => i[0] === 't')?.[1];
+  const sigs = items.filter((i) => i[0] === 'v1').map((i) => i[1]);
+  if (!t || !sigs.length) return false;
+  // Tolerancia de 5 min contra replay.
+  const age = Math.abs(Date.now() / 1000 - parseInt(t, 10));
+  if (Number.isFinite(age) && age > 300) return false;
+
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const mac = await crypto.subtle.sign('HMAC', key, enc.encode(`${t}.${payload}`));
+  const expected = [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  return sigs.some((s) => hexEqual(s, expected));
+}
+
+/** POST /stripe/webhook — Stripe → actualiza estado de suscripción en Supabase. */
+async function handleStripeWebhook(request, env) {
+  if (request.method !== 'POST') return new Response('Solo POST', { status: 405 });
+
+  const payload = await request.text();
+  const sig = request.headers.get('Stripe-Signature') || '';
+  const ok = await verifyStripeSig(payload, sig, env.STRIPE_WEBHOOK_SECRET);
+  if (!ok) return new Response('Firma inválida', { status: 400 });
+
+  let event;
+  try { event = JSON.parse(payload); } catch { return new Response('JSON inválido', { status: 400 }); }
+
+  const tipo = event.type || '';
+  try {
+    if (tipo.startsWith('customer.subscription.')) {
+      const s = event.data.object;
+      const priceId = s.items?.data?.[0]?.price?.id || null;
+      let plan = null;
+      if (priceId === env.STRIPE_PRICE_ANUAL) plan = 'anual';
+      else if (priceId === env.STRIPE_PRICE_MENSUAL) plan = 'mensual';
+
+      // Resolver user_id: metadata primero, si no por customer.
+      let uid = s.metadata?.supabase_user_id || null;
+      if (!uid) {
+        const ex = await supabaseSelectSub(env, `stripe_customer_id=eq.${s.customer}`);
+        uid = ex?.user_id || null;
+      }
+
+      if (uid) {
+        await supabaseUpsertSub(env, {
+          user_id: uid,
+          stripe_customer_id: s.customer,
+          stripe_subscription_id: s.id,
+          status: tipo === 'customer.subscription.deleted' ? 'canceled' : s.status,
+          price_id: priceId,
+          plan,
+          current_period_end: s.current_period_end
+            ? new Date(s.current_period_end * 1000).toISOString() : null,
+          cancel_at_period_end: !!s.cancel_at_period_end,
+          updated_at: new Date().toISOString(),
+        });
+      }
+    }
+  } catch (err) {
+    // 500 → Stripe reintenta. Log para depurar en wrangler tail.
+    console.error('webhook error:', err.message);
+    return new Response('error', { status: 500 });
+  }
+
+  return new Response(JSON.stringify({ received: true }), {
+    status: 200, headers: { 'content-type': 'application/json' },
+  });
 }
 
 /** Limpia la query para FTS5 (elimina caracteres especiales) */
