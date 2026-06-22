@@ -74,8 +74,8 @@ def contar(sess, ref):
     bp = Counter(_bucket(x.get("estatus", "")) for x in lp)
     # Registro por instrumento (para recomputar ELO desde datos limpios del SIL):
     # tipo, comisión a la que se turnó, estatus, fecha.
-    recs = ([{"t": "ini", "com": x.get("turnado_a", ""), "est": x.get("estatus", ""), "f": x.get("fecha_presentacion", "")} for x in li]
-            + [{"t": "prop", "com": x.get("turnado_a", ""), "est": x.get("estatus", ""), "f": x.get("fecha_presentacion", "")} for x in lp])
+    recs = ([{"t": "ini", "tit": x.get("denominacion", ""), "com": x.get("turnado_a", ""), "est": x.get("estatus", ""), "f": x.get("fecha_presentacion", "")} for x in li]
+            + [{"t": "prop", "tit": x.get("denominacion", ""), "com": x.get("turnado_a", ""), "est": x.get("estatus", ""), "f": x.get("fecha_presentacion", "")} for x in lp])
     return {
         "ini": len(li), "prop": len(lp),
         "ini_apr": bi["apr"], "ini_pen": bi["pen"], "ini_des": bi["des"],
