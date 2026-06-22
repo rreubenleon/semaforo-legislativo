@@ -165,6 +165,7 @@ def main() -> int:
     ap.add_argument("--dry-run", action="store_true", help="No escribe a D1")
     ap.add_argument("--limit", type=int, default=0, help="Limitar a N legisladores (0=todos)")
     ap.add_argument("--delay", type=float, default=0.3, help="Delay entre requests API (seg)")
+    ap.add_argument("--ids", default="", help="CSV de legislador_id a generar (default: todos)")
     args = ap.parse_args()
 
     api_key = os.environ.get("ANTHROPIC_API_KEY")
@@ -177,6 +178,11 @@ def main() -> int:
     logger.info("Obteniendo legisladores desde Worker /radar…")
     legisladores = obtener_legisladores_d1()
     logger.info(f"Total legisladores: {len(legisladores)}")
+
+    if args.ids:
+        keep = {int(x) for x in args.ids.split(",") if x.strip()}
+        legisladores = [l for l in legisladores if l.get("id") in keep]
+        logger.info(f"Filtrado a {len(legisladores)} por --ids ({len(keep)} pedidos)")
 
     if args.limit > 0:
         legisladores = legisladores[:args.limit]

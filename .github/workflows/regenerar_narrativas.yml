@@ -33,6 +33,11 @@ on:
         required: false
         default: '0.3'
         type: string
+      ids:
+        description: 'CSV de legislador_id (vacío = todos)'
+        required: false
+        default: ''
+        type: string
 
 permissions:
   contents: read
@@ -63,6 +68,9 @@ jobs:
           ARGS="--delay ${{ inputs.delay }}"
           if [ "${{ inputs.limit }}" != "0" ] && [ -n "${{ inputs.limit }}" ]; then
             ARGS="$ARGS --limit ${{ inputs.limit }}"
+          fi
+          if [ -n "${{ inputs.ids }}" ]; then
+            ARGS="$ARGS --ids ${{ inputs.ids }}"
           fi
           echo "Ejecutando: python scripts/generar_narrativas.py $ARGS"
           python scripts/generar_narrativas.py $ARGS
