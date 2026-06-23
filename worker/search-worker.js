@@ -357,6 +357,7 @@ async function handleRadar(request, env) {
           s.n_prop_pend_ind, s.n_prop_pend_col,
           s.n_prop_desech_ind, s.n_prop_desech_col,
           s.matchup_grade, s.matchup_comision_target, s.matchup_tasa_dictamen,
+          s.reactividad, s.ppa_reactivas, s.ppa_total,
           s.narrativa,
           hr.respondio, hr.total_oportunidades,
           e.rating as elo_rating, e.partidas as elo_partidas,
@@ -426,6 +427,9 @@ async function handleRadar(request, env) {
       l3p_proposiciones: r.promedio_l3p_proposiciones,         // solo individuales
       l3p_iniciativas_col: r.promedio_l3p_iniciativas_col,    // colectivas (firmadas con bancada)
       l3p_proposiciones_col: r.promedio_l3p_proposiciones_col,
+      reactividad: r.reactividad,            // % de sus PPA que responden a coyuntura
+      ppa_reactivas: r.ppa_reactivas,
+      ppa_total: r.ppa_total,
       matchup_grade: r.matchup_grade,
       matchup_comision: r.matchup_comision_target,
       matchup_tasa: r.matchup_tasa_dictamen,
