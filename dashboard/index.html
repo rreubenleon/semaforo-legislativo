@@ -3110,10 +3110,10 @@
                                         </div>
                                     );
                                 })()}
-                                <div className="bg-white/10 rounded-lg p-2.5 text-center">
-                                    <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Hit rate</div>
-                                    <div className="text-xl font-bold mt-0.5 font-mono">{hitPct != null ? `${hitPct}%` : '—'}</div>
-                                    <div className="text-[10px] text-white/60 font-mono">{leg.hit_respondio ?? 0}/{leg.hit_total ?? 0} picos</div>
+                                <div className="bg-white/10 rounded-lg p-2.5 text-center" title="% de sus proposiciones con punto de acuerdo que responden a la coyuntura: condición crónica (movilidad, agua, seguridad…), pico mediático del tema, o un tema de su propio estado.">
+                                    <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Reactividad</div>
+                                    <div className="text-xl font-bold mt-0.5 font-mono">{leg.reactividad != null ? `${leg.reactividad}%` : '—'}</div>
+                                    <div className="text-[10px] text-white/60 font-mono">{leg.reactividad != null ? `${leg.ppa_reactivas ?? 0}/${leg.ppa_total ?? 0} PPA` : 'en revisión'}</div>
                                 </div>
                                 {/* Para diputados usa diputado_instrumento (fuente
                                     oficial SITL). Para senadores usa l3p_* del scrape
