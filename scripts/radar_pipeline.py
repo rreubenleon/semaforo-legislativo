@@ -55,31 +55,38 @@ D1_DB = "fiat-busqueda"
 
 
 def ejecutar_sql_d1(sql: str, remote: bool = True) -> dict:
-    """Ejecuta SQL contra D1 vía wrangler. Devuelve metadata."""
+    """Ejecuta SQL contra D1 vía wrangler. Reintenta si D1 está ocupado con otra
+    importación (colisión entre workflows concurrentes — p.ej. radar.yml vs el
+    reconteo semanal escribiendo a D1 a la vez)."""
+    import time as _time
     with tempfile.NamedTemporaryFile(
         mode="w", suffix=".sql", delete=False, encoding="utf-8"
     ) as f:
         f.write(sql)
         sql_path = f.name
 
+    cmd = [
+        "npx", "wrangler", "d1", "execute", D1_DB,
+        "--remote" if remote else "--local", "--file", sql_path, "--json",
+    ]
     try:
-        cmd = [
-            "npx",
-            "wrangler",
-            "d1",
-            "execute",
-            D1_DB,
-            "--remote" if remote else "--local",
-            "--file",
-            sql_path,
-            "--json",
-        ]
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-        if result.returncode != 0:
+        for intento in range(5):
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+            if result.returncode == 0:
+                return {"ok": True, "stdout_size": len(result.stdout)}
+            salida = (result.stderr or "") + (result.stdout or "")
+            ocupado = ("long-running import" in salida
+                       or "Cannot start another import" in salida)
+            if ocupado and intento < 4:
+                espera = 30 * (intento + 1)
+                logger.warning(
+                    f"D1 ocupado con otra importación; reintento "
+                    f"{intento + 1}/4 en {espera}s")
+                _time.sleep(espera)
+                continue
             logger.error(f"wrangler stderr: {result.stderr[:800]}")
             logger.error(f"wrangler stdout: {result.stdout[:800]}")
             raise RuntimeError("wrangler d1 execute failed")
-        return {"ok": True, "stdout_size": len(result.stdout)}
     finally:
         os.unlink(sql_path)
 
