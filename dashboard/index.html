@@ -2922,7 +2922,7 @@
                     </div>
                     <div className="hidden md:flex flex-col items-center justify-center gap-0.5">
                         <div className={`text-xs font-bold ${gradeStyle} leading-tight`}
-                            title={grade ? `Tracción ${tr.nivel}/5 (${tr.label}) vs ${leg.matchup_comision || 'comisión'}${leg.matchup_tasa != null ? ` · tasa de dictamen ${Math.round(leg.matchup_tasa*100)}%` : ''}` : 'Sin suficientes asuntos turnados'}>
+                            title={grade ? `Tracción ${tr.nivel}/5 (${tr.label})${leg.matchup_tasa != null ? ` · ${Math.round(leg.matchup_tasa*100)}% de sus instrumentos dictaminados` : ''}` : 'Sin suficientes instrumentos propios'}>
                             {tr.short}
                         </div>
                     </div>
@@ -3208,9 +3208,9 @@
                 insights.push(`Proyección agresiva de iniciativas: ${Number(iniProy).toFixed(1)} en los próximos 15 días (acelerando vs baseline LXVI).`);
             }
             if (leg.matchup_grade === 'A' || leg.matchup_grade === 'B') {
-                insights.push(`Su comisión ${leg.matchup_comision || 'dominante'} dictamina activamente: ${Math.round((leg.matchup_tasa || 0) * 100)}% de los asuntos salen con decisión formal.`);
+                insights.push(`Buena tracción propia: ${Math.round((leg.matchup_tasa || 0) * 100)}% de sus instrumentos individuales ya se dictaminaron (aprobados o desechados), por encima de la mayoría.`);
             } else if (leg.matchup_grade === 'F') {
-                insights.push(`Sin tracción suficiente: en ${leg.matchup_comision || 'su comisión dominante'} solo ${Math.round((leg.matchup_tasa || 0) * 100)}% de los asuntos se dictaminan — la mayoría se queda en pendiente.`);
+                insights.push(`Sin tracción: ninguno de sus instrumentos individuales se ha dictaminado todavía — todos siguen pendientes.`);
             }
             if (l3pTotal === 0) {
                 insights.push('Sin actividad legislativa registrada en la LXVI. Posible legislador suplente, reciente, o nombre no enlazado todavía.');
@@ -3883,14 +3883,13 @@
                             y ≥10 en la comisión para baseline). El Matchup global se calcula con un umbral
                             menor y se muestra abajo cuando aplica.
                         </div>
-                        {leg.matchup_comision && leg.matchup_grade && (
+                        {leg.matchup_grade && (
                             <div className="bg-white border border-gray-200 rounded-lg p-3 text-[12px]">
                                 <div className="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-1.5 font-mono">Tracción del legislador (sus instrumentos)</div>
                                 <div className="flex items-baseline gap-3">
                                     <span className={`text-xl font-black ${traccion(leg.matchup_grade).color}`}>{traccion(leg.matchup_grade).label}</span>
                                     <div className="flex-1">
-                                        <div className="font-semibold text-gray-800">{leg.matchup_tasa != null ? `${Math.round(leg.matchup_tasa * 100)}% de sus instrumentos avanzan` : 'Sin datos suficientes'}</div>
-                                        {leg.matchup_comision && <div className="text-[11px] text-gray-500">Comisión dominante: {leg.matchup_comision}</div>}
+                                        <div className="font-semibold text-gray-800">{leg.matchup_tasa != null ? `${Math.round(leg.matchup_tasa * 100)}% de sus instrumentos individuales avanzan` : 'Sin datos suficientes'}</div>
                                     </div>
                                 </div>
                             </div>
@@ -8229,7 +8228,7 @@
                     </div>
                     <div className="hidden md:flex flex-col items-center justify-center gap-0.5">
                         <div className={`text-xs font-bold ${gradeStyle} leading-tight`}
-                            title={grade ? `Tracción ${tr.nivel}/5 (${tr.label}) vs ${leg.matchup_comision || 'comisión'}${leg.matchup_tasa != null ? ` · tasa de dictamen ${Math.round(leg.matchup_tasa*100)}%` : ''}` : 'Sin suficientes asuntos turnados'}>
+                            title={grade ? `Tracción ${tr.nivel}/5 (${tr.label})${leg.matchup_tasa != null ? ` · ${Math.round(leg.matchup_tasa*100)}% de sus instrumentos dictaminados` : ''}` : 'Sin suficientes instrumentos propios'}>
                             {tr.short}
                         </div>
                     </div>
