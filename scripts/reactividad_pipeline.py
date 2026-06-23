@@ -43,6 +43,18 @@ def dd(s):
     y, m, d = map(int, s[:10].split("-")); return dt.date(y, m, d)
 
 
+def wilson(success, n, z=1.96):
+    """Wilson 95% lower bound — idéntica a efectividadIndividual() del dashboard."""
+    import math
+    if n <= 0:
+        return None
+    p = success / n
+    den = 1 + z * z / n
+    center = p + z * z / (2 * n)
+    margin = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n))
+    return max(0.0, (center - margin) / den)
+
+
 def main():
     if not INSTR.exists():
         print(f"Falta {INSTR} (corre recontar_instrumentos_sil.py con títulos)."); return 1
@@ -93,9 +105,14 @@ def main():
             else:
                 ca += 1
         reac = cr + pi + lo; tot = reac + ca + tr
+        # Wilson 95% lower bound (MISMA fórmula que efectividad — fuente única).
+        # Estandariza: 1/1 NO es 100% (muestra de uno no prueba sistematicidad).
+        # Ej: 1/1 → 21% · 41/48 → 73%. Quien reacciona poco-y-mucho-volumen sube.
+        wlb = wilson(reac, tot)
         out[lid] = {"ppa": tot, "reacciono": reac, "cronica": cr, "pico": pi,
                     "local": lo, "candidato": ca, "tramite": tr,
-                    "reactividad": round(100 * reac / tot) if tot else None}
+                    "reactividad_cruda": round(100 * reac / tot) if tot else None,
+                    "reactividad": round(100 * wlb) if wlb is not None else None}
 
     OUT.write_text(json.dumps(out, ensure_ascii=False, indent=2))
     conpct = [v for v in out.values() if v["reactividad"] is not None]
