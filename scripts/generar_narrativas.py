@@ -69,9 +69,11 @@ def construir_prompt_usuario(leg: dict) -> str:
     ppa_total = leg.get("ppa_total") or 0
     ppa_reac = leg.get("ppa_reactivas") or 0
     if reactividad is not None:
-        react_str = (f"{reactividad}% ({ppa_reac} de {ppa_total} proposiciones con "
-                     f"punto de acuerdo responden a la coyuntura: condición crónica, "
-                     f"pico mediático del tema, o un tema de su estado)")
+        react_str = (f"índice {reactividad}/100 (ajustado por confianza con Wilson; "
+                     f"en crudo {ppa_reac} de {ppa_total} proposiciones con punto de "
+                     f"acuerdo responden a la coyuntura: condición crónica, pico "
+                     f"mediático del tema, o un tema de su estado). NO equipares el "
+                     f"índice al cociente crudo, son escalas distintas")
     elif ppa_total == 0:
         react_str = ("no presentó proposiciones con punto de acuerdo; su perfil es "
                      "estructural (solo iniciativas), así que la reactividad a picos "
