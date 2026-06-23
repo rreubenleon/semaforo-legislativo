@@ -21,8 +21,10 @@ def main() -> int:
         print(f"Falta {DATA} (corre reactividad_pipeline.py primero)."); return 1
     data = json.loads(DATA.read_text())
 
-    # Crear columnas si no existen (idempotente).
-    for col in ("reactividad INTEGER", "ppa_reactivas INTEGER", "ppa_total INTEGER"):
+    # Crear columnas si no existen (idempotente). cobertura_* son el modelo nuevo
+    # (cobertura de agenda); ppa_total se conserva como contexto.
+    for col in ("reactividad INTEGER", "cobertura_eventos INTEGER",
+                "cobertura_temas INTEGER", "ppa_total INTEGER"):
         try:
             ejecutar_sql_d1(f"ALTER TABLE legisladores_stats ADD COLUMN {col} DEFAULT NULL;")
         except Exception:
@@ -35,8 +37,9 @@ def main() -> int:
         sqls.append(
             "UPDATE legisladores_stats SET "
             f"reactividad = {int(v['reactividad'])}, "
-            f"ppa_reactivas = {int(v['reacciono'])}, "
-            f"ppa_total = {int(v['ppa'])} "
+            f"cobertura_eventos = {int(v['cobertura_eventos'])}, "
+            f"cobertura_temas = {int(v['cobertura_temas'])}, "
+            f"ppa_total = {int(v['ppa_total'])} "
             f"WHERE legislador_id = {int(lid)};"
         )
     print(f"Updates: {len(sqls)}")
