@@ -24,7 +24,8 @@ concurrency:
 jobs:
   reconteo:
     runs-on: ubuntu-latest
-    timeout-minutes: 60     # el scrape de ~650 legisladores tarda ~20 min
+    timeout-minutes: 120    # 3 scrapes en serie (SIL ~30 + bancada Sen ~5 +
+                            # bancada Dip ~30). 60 reventaba en bancada Dip.
 
     steps:
       - uses: actions/checkout@v4
@@ -61,23 +62,58 @@ jobs:
       - name: Reconteo SIL (scrape en vivo)
         run: python scripts/recontar_instrumentos_sil.py
 
+      # CRÍTICO: comitear los títulos AQUÍ, antes de los scrapes lentos de
+      # bancada. Si bancada Dip se topa con el tiempo, los títulos ya aterrizaron.
+      - name: Commit foto SIL (títulos) — temprano
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add eval/reconteo_sil.json eval/instrumentos_sil.json
+          if git diff --cached --quiet; then
+            echo "Sin cambios en la foto del SIL."
+          else
+            git commit -m "chore(reconteo): foto semanal del SIL (títulos) [skip ci]"
+            git pull --rebase --autostash || true
+            git push
+          fi
+
+      # Reactividad = cobertura de agenda NACIONAL, padrón completo. Necesita los
+      # títulos (paso anterior). El score se escala al líder del PADRÓN (no cohorte).
+      - name: Reactividad (cobertura nacional, padrón)
+        run: python scripts/reactividad_pipeline.py
+
+      - name: Commit reactividad
+        run: |
+          git add eval/reactividad.json
+          if git diff --cached --quiet; then
+            echo "Sin cambios en reactividad."
+          else
+            git commit -m "chore(reactividad): foto semanal padrón [skip ci]"
+            git pull --rebase --autostash || true
+            git push
+          fi
+
+      - name: Sync reactividad → D1
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: python scripts/sync_reactividad_d1.py
+
       # Bancada (suscritas) de senadores, desde el perfil del Senado.
       - name: Scrape bancada Senado
         run: python scripts/scrape_bancada_senado.py
 
-      # Bancada (Adherente + De Grupo) de diputados, desde el SITL.
+      # Bancada (Adherente + De Grupo) de diputados, desde el SITL. Es el paso
+      # lento; si revienta, títulos + reactividad ya están commiteados arriba.
       - name: Scrape bancada Diputados
         run: python scripts/scrape_bancada_diputados.py
 
-      - name: Commit foto fresca del SIL
+      - name: Commit bancada
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add eval/reconteo_sil.json eval/instrumentos_sil.json eval/bancada_senado.json eval/bancada_diputados.json
+          git add eval/bancada_senado.json eval/bancada_diputados.json
           if git diff --cached --quiet; then
-            echo "Sin cambios en la foto del SIL."
+            echo "Sin cambios en bancada."
           else
-            git commit -m "chore(reconteo): foto semanal del SIL [skip ci]"
+            git commit -m "chore(reconteo): bancada semanal [skip ci]"
             git pull --rebase --autostash || true
             git push
           fi
