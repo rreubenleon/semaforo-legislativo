@@ -3110,10 +3110,10 @@
                                         </div>
                                     );
                                 })()}
-                                <div className="bg-white/10 rounded-lg p-2.5 text-center" title="% de sus proposiciones con punto de acuerdo que responden a la coyuntura (condición crónica, pico mediático del tema, o un tema de su estado), ajustado por confianza con Wilson 95%: una sola reacción no cuenta como 100%. El N/M de abajo es el conteo crudo.">
-                                    <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Reactividad</div>
-                                    <div className="text-xl font-bold mt-0.5 font-mono">{leg.reactividad != null ? `${leg.reactividad}%` : '—'}</div>
-                                    <div className="text-[10px] text-white/60 font-mono">{leg.reactividad != null ? `${leg.ppa_reactivas ?? 0}/${leg.ppa_total ?? 0} PPA` : 'en revisión'}</div>
+                                <div className="bg-white/10 rounded-lg p-2.5 text-center" title="Reacción a pico mediático NACIONAL: de los picos del feed federal (z≥1.5), a cuántos respondió con una proposición del mismo tema dentro de 21 días. Score 0-100 escalado al más activo. SOLO mide respuesta al tema federal — un número bajo NO significa inactividad: puede estar reaccionando a temas locales o de su comisión, que aquí no medimos.">
+                                    <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Reacción nac.</div>
+                                    <div className="text-xl font-bold mt-0.5 font-mono">{leg.reactividad != null ? leg.reactividad : '—'}{leg.reactividad != null && <span className="text-xs text-white/50">/100</span>}</div>
+                                    <div className="text-[10px] text-white/60 font-mono">{leg.reactividad != null ? `${leg.cobertura_temas ?? 0} temas · ${leg.cobertura_eventos ?? 0} picos nac.` : 'en revisión'}</div>
                                 </div>
                                 {/* Para diputados usa diputado_instrumento (fuente
                                     oficial SITL). Para senadores usa l3p_* del scrape

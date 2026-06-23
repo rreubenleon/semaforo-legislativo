@@ -63,21 +63,23 @@ Reglas estrictas:
 
 def construir_prompt_usuario(leg: dict) -> str:
     """Construye el prompt con los datos del legislador."""
-    # Reactividad mediática (métrica oficial FIAT): % de sus proposiciones con
-    # punto de acuerdo que responden a la coyuntura. Reemplaza el viejo hit_rate.
+    # Reacción a pico mediático NACIONAL (cobertura de la agenda federal). SOLO
+    # mide respuesta al tema federal — NO toda su reactividad. Un índice bajo NO
+    # implica inactivo: puede reaccionar a lo local/comisión que aquí no medimos.
     reactividad = leg.get("reactividad")
+    cob_ev = leg.get("cobertura_eventos") or 0
+    cob_tem = leg.get("cobertura_temas") or 0
     ppa_total = leg.get("ppa_total") or 0
-    ppa_reac = leg.get("ppa_reactivas") or 0
     if reactividad is not None:
-        react_str = (f"índice {reactividad}/100 (ajustado por confianza con Wilson; "
-                     f"en crudo {ppa_reac} de {ppa_total} proposiciones con punto de "
-                     f"acuerdo responden a la coyuntura: condición crónica, pico "
-                     f"mediático del tema, o un tema de su estado). NO equipares el "
-                     f"índice al cociente crudo, son escalas distintas")
+        react_str = (f"índice {reactividad}/100 — respondió a {cob_ev} picos del feed "
+                     f"NACIONAL en {cob_tem} temas distintos, dentro de 21 días del pico. "
+                     f"CRÍTICO: esto mide SOLO respuesta a la coyuntura federal. Si el "
+                     f"índice es bajo, NO afirmes que es inactivo ni que 'no reacciona' — "
+                     f"puede estar reaccionando a temas locales o de su comisión que NO "
+                     f"medimos. Encuádralo como 'baja/alta respuesta a la agenda nacional'")
     elif ppa_total == 0:
-        react_str = ("no presentó proposiciones con punto de acuerdo; su perfil es "
-                     "estructural (solo iniciativas), así que la reactividad a picos "
-                     "mediáticos NO aplica — no afirmes que 'no reacciona'")
+        react_str = ("no presentó proposiciones con punto de acuerdo; perfil estructural "
+                     "(solo iniciativas). No apliques reacción mediática")
     else:
         react_str = "sin dato"
 
@@ -116,7 +118,7 @@ Partido: {leg.get('partido', '?')}
 Cámara: {leg.get('camara', '?')}
 Estado: {leg.get('estado', '?')}
 Categoría dominante: {cat}
-Reactividad mediática: {react_str}
+Reacción a pico mediático nacional: {react_str}
 Tracción propia (% de sus instrumentos que avanzan/se dictaminan): {matchup_str}
 Iniciativas LXVI: {ini_solo} como promovente único + {ini_banc} firmadas con bancada
 Proposiciones LXVI: {prop_solo} como promovente único + {prop_banc} firmadas con bancada
