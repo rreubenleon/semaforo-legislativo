@@ -3199,10 +3199,10 @@
 
             // Narrativa rule-based
             const insights = [];
-            if (hitPct != null && hitPct >= 50 && leg.categoria_dominante) {
-                insights.push(`Reacciona rápido a picos mediáticos en ${_catLabel(leg.categoria_dominante)}: ${hitPct}% de los últimos ${leg.hit_total} picos relevantes.`);
-            } else if (hitPct != null && hitPct === 0 && leg.hit_total > 0) {
-                insights.push(`No ha presentado instrumentos dentro de los 7 días de los picos en ${_catLabel(leg.categoria_dominante)}. Bajo oportunismo informativo.`);
+            if (leg.cobertura_eventos != null && leg.cobertura_eventos > 0) {
+                insights.push(`Respondió a ${leg.cobertura_eventos} pico(s) de la agenda mediática nacional en ${leg.cobertura_temas} tema(s) distinto(s), dentro de 21 días del pico.`);
+            } else if (leg.reactividad === 0 && (leg.ppa_total ?? 0) > 0) {
+                insights.push(`No respondió a picos de la agenda nacional en el periodo. Esto NO implica inactividad: puede enfocarse en temas locales o de su comisión, que aquí no medimos.`);
             }
             if (iniProy != null && iniProy > 1.5) {
                 insights.push(`Proyección agresiva de iniciativas: ${Number(iniProy).toFixed(1)} en los próximos 15 días (acelerando vs baseline LXVI).`);
