@@ -63,8 +63,21 @@ Reglas estrictas:
 
 def construir_prompt_usuario(leg: dict) -> str:
     """Construye el prompt con los datos del legislador."""
-    hit_rate = leg.get("hit_rate")
-    hit_str = f"{round(hit_rate * 100)}%" if hit_rate is not None else "sin datos"
+    # Reactividad mediática (métrica oficial FIAT): % de sus proposiciones con
+    # punto de acuerdo que responden a la coyuntura. Reemplaza el viejo hit_rate.
+    reactividad = leg.get("reactividad")
+    ppa_total = leg.get("ppa_total") or 0
+    ppa_reac = leg.get("ppa_reactivas") or 0
+    if reactividad is not None:
+        react_str = (f"{reactividad}% ({ppa_reac} de {ppa_total} proposiciones con "
+                     f"punto de acuerdo responden a la coyuntura: condición crónica, "
+                     f"pico mediático del tema, o un tema de su estado)")
+    elif ppa_total == 0:
+        react_str = ("no presentó proposiciones con punto de acuerdo; su perfil es "
+                     "estructural (solo iniciativas), así que la reactividad a picos "
+                     "mediáticos NO aplica — no afirmes que 'no reacciona'")
+    else:
+        react_str = "sin dato"
 
     # Tracción PROPIA del legislador: qué % de SUS instrumentos avanzan (se dictaminan)
     _TRACCION = {"A": "alta tracción", "B": "buena tracción", "C": "tracción media",
@@ -101,7 +114,7 @@ Partido: {leg.get('partido', '?')}
 Cámara: {leg.get('camara', '?')}
 Estado: {leg.get('estado', '?')}
 Categoría dominante: {cat}
-Hit rate (reacción a picos mediáticos): {hit_str}
+Reactividad mediática: {react_str}
 Tracción propia (% de sus instrumentos que avanzan/se dictaminan): {matchup_str}
 Iniciativas LXVI: {ini_solo} como promovente único + {ini_banc} firmadas con bancada
 Proposiciones LXVI: {prop_solo} como promovente único + {prop_banc} firmadas con bancada
