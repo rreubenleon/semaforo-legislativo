@@ -3202,7 +3202,7 @@
             if (leg.cobertura_eventos != null && leg.cobertura_eventos > 0) {
                 insights.push(`Respondió a ${leg.cobertura_eventos} pico(s) de la agenda mediática nacional en ${leg.cobertura_temas} tema(s) distinto(s), dentro de 21 días del pico.`);
             } else if (leg.reactividad === 0 && (leg.ppa_total ?? 0) > 0) {
-                insights.push(`No respondió a picos de la agenda nacional en el periodo. Esto NO implica inactividad: puede enfocarse en temas locales o de su comisión, que aquí no medimos.`);
+                insights.push(`No respondió a los picos de la agenda nacional en el periodo.`);
             }
             if (iniProy != null && iniProy > 1.5) {
                 insights.push(`Proyección agresiva de iniciativas: ${Number(iniProy).toFixed(1)} en los próximos 15 días (acelerando vs baseline LXVI).`);
