@@ -3095,13 +3095,12 @@
                             {/* Headline stats */}
                             <div className="grid grid-cols-4 gap-2 mt-4">
                                 {(() => {
-                                    /* Efectividad con nueva fórmula: tasa éxito = aprob / (aprob+desech) × 100 */
-                                    const aprob = (leg.n_ini_aprob_ind ?? 0) + (leg.n_ini_aprob_col ?? 0)
-                                                  + (leg.n_prop_aprob_ind ?? 0) + (leg.n_prop_aprob_col ?? 0);
-                                    const desech = (leg.n_ini_desech_ind ?? 0) + (leg.n_ini_desech_col ?? 0)
-                                                   + (leg.n_prop_desech_ind ?? 0) + (leg.n_prop_desech_col ?? 0);
+                                    /* Efectividad: Wilson 95% LB (efectividadIndividual) — MISMA fórmula que
+                                       la tabla y el resto del sitio. Una sola verdad, sin raw inconsistente. */
+                                    const aprob = leg.elo_aprobados ?? 0;
+                                    const desech = leg.elo_desechados ?? 0;
                                     const resueltos = aprob + desech;
-                                    const ef = resueltos >= 1 ? Math.round((aprob / resueltos) * 100) : null;
+                                    const ef = efectividadIndividual(leg);
                                     return (
                                         <div className="bg-white/10 rounded-lg p-2.5 text-center" title={ef != null ? `${aprob} aprobado(s) de ${resueltos} resueltos` : 'Sin resoluciones aún en LXVI'}>
                                             <div className="text-[9px] uppercase tracking-wider text-white/60 font-bold">Efectividad</div>
