@@ -162,6 +162,22 @@ def paso_snapshot_legisladores(db_ro: sqlite3.Connection) -> dict:
         for r in rows
     ]
 
+    # Overrides manuales: comisiones que el scraper no puede obtener (p.ej.
+    # senadores de licencia cuya adscripción real no está en los rosters
+    # vigentes de senado.gob.mx). Se re-aplican en cada run, así el
+    # INSERT OR REPLACE de abajo nunca los pierde.
+    overrides_path = ROOT / "eval" / "comisiones_overrides.json"
+    if overrides_path.exists():
+        ov = json.loads(overrides_path.read_text())
+        ov = {int(k): v for k, v in ov.items() if not k.startswith("_")}
+        n_ov = 0
+        for r in rows:
+            if r['id'] in ov:
+                r['comisiones_cargo'] = ov[r['id']]
+                n_ov += 1
+        if n_ov:
+            logger.info(f"Overrides de comisiones aplicados: {n_ov}")
+
     logger.info(f"Snapshot de {len(rows)} legisladores → D1")
 
     # INSERT OR REPLACE para no romper FK de legisladores_perfil.
