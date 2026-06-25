@@ -124,29 +124,72 @@ def paso_snapshot_legisladores(db_ro: sqlite3.Connection) -> dict:
         """
     ).fetchall()
 
-    # Limpieza de comisiones_cargo: el scraper de Diputados todavía mete
-    # entries espurias ("A LAS QUE PERTENECE", centros, institutos, etc.).
-    # Senado ya está limpio (backfill_comisiones_senado.py). Este filtro
-    # actúa como safety net para ambas cámaras.
-    def _limpia_comisiones(raw: str) -> str:
-        if not raw:
-            return ''
-        partes = raw.split('|')
-        ruido = (
-            'centro de', 'instituto', 'contralor', 'unidad t',
-            'informaci', 'consultor', 'asistencias', 'calendario',
-            'memoria de labores', 'histórico de la lxiv', 'historico de la lxiv',
-            'órganos t', 'organos t', 'capacitaci', 'ordinarias:',
-            'especiales:', 'a las que pertenece',
-        )
-        buenas = []
-        for p in partes:
-            p_low = p.lower().strip()
-            if not p_low or any(ruido_k in p_low for ruido_k in ruido):
+    # Limpieza de comisiones_cargo: el scraper de Diputados concatena el CV
+    # completo (formación, trayectoria, legislaturas pasadas, cargos públicos)
+    # dentro de comisiones_cargo. Como el frontend pinta CUALQUIER "X:Y" como
+    # chip de comisión, hay que filtrar la basura aquí. Senado ya está limpio.
+    import unicodedata as _ud
+    _INVIS = {0x00AD, 0x200B, 0x200C, 0x200D, 0xFEFF}
+    _CARGOS_OK = {'presidente', 'presidenta', 'secretario', 'secretaria',
+                  'integrante', 'vocal'}
+    # Substrings de CV/trayectoria (NO comisiones). Nada de 'municipal' suelto:
+    # "Desarrollo Municipal" es comisión real. Los cargos de carrera traen
+    # cargo roto (':a', ':o') y caen por el filtro de cargo.
+    _JUNK_SUB = (
+        'maestria', 'licenciatura', 'doctorado', 'bachillerato', 'preparatoria',
+        'posgrado', 'diplomado', 'especialidad en', 'no proporcion', 'legislatura',
+        'presidencia de la republica', 'gobierno del', 'oficialia mayor',
+        'oficial mayor', 'director', 'coordinador', 'subsecretari', 'jefe de',
+        'jefa de', 'secretario tecnico', 'secretario nacional', 'secretaria del',
+        'titular de', 'delegad', 'regidor', 'presidente municipal',
+        'presidencia municipal', 'ayuntamiento', 'gobernador', 'centro de',
+        'instituto', 'contralor', 'unidad t', 'informaci', 'consultor',
+        'asistencias', 'calendario', 'memoria de labores', 'organos t',
+        'capacitaci', 'ordinarias:', 'especiales:', 'a las que pertenece',
+        'iniciativa', 'proposicion', 'municipio de', 'comite directivo',
+        'comision nacional', 'comisario',
+    )
+    _JUNK_EXACT = {'derecho', 'de derecho', 'medicina', 'ingenieria',
+                   'arquitectura', 'contaduria', 'psicologia', 'enfermeria',
+                   'no proporciono', 'independiente', 'presidenta', 'consejera'}
+
+    def _na(s: str) -> str:
+        s = s.translate({c: None for c in _INVIS})
+        return ''.join(c for c in _ud.normalize('NFD', s.lower())
+                       if _ud.category(c) not in ('Mn', 'Cf')).strip()
+
+    def _partes_validas(raw: str):
+        """Itera (parte_limpia, nombre_normalizado) con cargo válido."""
+        for p in (raw or '').split('|'):
+            p = ''.join(ch for ch in p if ord(ch) not in _INVIS).strip()
+            if not p or ':' not in p:
                 continue
-            buenas.append(p.strip())
-        resultado = '|'.join(buenas)
-        return resultado[:800]
+            nom, cargo = p.rsplit(':', 1)
+            if _na(cargo) in _CARGOS_OK:
+                yield p, _na(nom)
+
+    # Frecuencia global de nombres de comisión (cargo válido): una comisión
+    # real aparece en muchos legisladores; la basura rara del CV (años,
+    # municipios, escuelas, cargos partidistas) aparece 1-2 veces. Piso = 3.
+    from collections import Counter as _Counter
+    _freq = _Counter()
+    for _r in rows:
+        for _p, _nn in _partes_validas(_r['comisiones_cargo']):
+            _freq[_nn] += 1
+
+    def _limpia_comisiones(raw: str) -> str:
+        buenas, seen = [], set()
+        for p, nn in _partes_validas(raw):
+            if not any(c.isalpha() for c in nn):       # años / numéricos
+                continue
+            if nn in _JUNK_EXACT or any(j in nn for j in _JUNK_SUB):
+                continue                                # CV / trayectoria / formación
+            if _freq[nn] < 3:                           # ruido raro no-comisión
+                continue
+            if p not in seen:                           # dedup
+                seen.add(p)
+                buenas.append(p)
+        return '|'.join(buenas)[:800]
 
     # No asignar estado a senadores INFERIDOS (origen='sil_inferido'): no son
     # ocupantes oficiales de banca y inflaban el mapa de representación (p.ej.
