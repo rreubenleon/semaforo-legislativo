@@ -1,0 +1,73 @@
+name: Publicar DB al día (db-latest)
+
+# Resuelve el problema recurrente de "la base de datos local está vieja".
+# La BD viva solo existe en el cache de GitHub Actions del pipeline; nadie la
+# publica, así que cualquier copia local/seed se desactualiza.
+#
+# Este workflow toma la BD MÁS RECIENTE del cache (la que deja el pipeline tras
+# su última corrida) y la publica en un release RODANTE `db-latest` que se
+# sobrescribe cada vez. Así siempre hay una BD descargable al día:
+#
+#   gh release download db-latest --pattern semaforo.db --clobber
+#
+# Corre en schedule (diario) y on-demand. NO toca el cache ni el pipeline.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 9 * * *'   # diario 09:00 UTC (tras varias corridas del pipeline)
+
+permissions:
+  contents: write   # crear/editar releases
+
+concurrency:
+  group: "publicar-db"
+  cancel-in-progress: false
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restaurar BD más reciente del cache
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-publicar-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - name: Fallback a seed si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            echo "No había BD en cache; bajando seed (puede estar vieja)."
+            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Reportar frescura de la BD
+        run: |
+          python3 - <<'PY'
+          import sqlite3
+          c = sqlite3.connect("semaforo.db")
+          for t in ("scores","articulos","gaceta","trends","tweets","mananera"):
+              try:
+                  m = c.execute(f"SELECT MAX(fecha) FROM {t}").fetchone()[0]
+                  n = c.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
+                  print(f"  {t:12} max={m}  filas={n}")
+              except Exception as e:
+                  print(f"  {t:12} (n/a: {str(e)[:40]})")
+          PY
+          ls -lh semaforo.db
+
+      - name: Publicar a release rodante db-latest
+        run: |
+          gh release view db-latest >/dev/null 2>&1 || \
+            gh release create db-latest --title "DB al día (auto)" \
+              --notes "Snapshot rodante de semaforo.db. Se sobrescribe en cada corrida. Bajar con: gh release download db-latest --pattern semaforo.db --clobber"
+          gh release upload db-latest semaforo.db --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
