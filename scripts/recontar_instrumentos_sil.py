@@ -88,6 +88,19 @@ def contar(sess, ref):
     }
 
 
+def _reintentar(fn, *args, intentos=3, base=2):
+    """Reintenta una llamada al SIL ante fallas transitorias (WAF/timeout)."""
+    ult = None
+    for k in range(intentos):
+        try:
+            return fn(*args)
+        except Exception as e:
+            ult = e
+            if k < intentos - 1:
+                time.sleep(base * (k + 1))
+    raise ult
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--ids", help="csv de legislador_id (default: todos activos LXVI)")
@@ -113,20 +126,37 @@ def main():
         if key in cache:
             out[key] = cache[key]; continue
         cam = "Dip" if (r["camara"] or "").startswith("C") and "Diput" in r["camara"] else "Sen"
-        ref = resolver(sess, sid, r["nombre"], cam)
-        if not ref:
-            out[key] = {"ini": None, "prop": None, "nombre": r["nombre"], "error": "no_resuelto"}
-        else:
-            res = contar(sess, ref)
-            res.update({"nombre": r["nombre"], "sil_id": ref})
-            out[key] = res
-        cache[key] = out[key]
+        try:
+            ref = _reintentar(resolver, sess, sid, r["nombre"], cam)
+            if not ref:
+                out[key] = {"ini": None, "prop": None, "nombre": r["nombre"], "error": "no_resuelto"}
+            else:
+                res = _reintentar(contar, sess, ref)
+                res.update({"nombre": r["nombre"], "sil_id": ref})
+                out[key] = res
+            cache[key] = out[key]
+        except Exception as e:
+            # Falla transitoria del SIL en ESTE legislador: NO abortar la corrida
+            # (antes 1 timeout mataba los ~30 min y se perdía la semana). No se
+            # cachea → la próxima corrida lo reintenta.
+            out[key] = {"ini": None, "prop": None, "nombre": r["nombre"],
+                        "error": f"scrape_fail:{type(e).__name__}"}
+            print(f"  ⚠ {r['nombre']}: falló tras reintentos ({type(e).__name__}); se salta", flush=True)
         if i % 10 == 0:
             CACHE.write_text(json.dumps(cache, ensure_ascii=False))
             print(f"  {i}/{len(rows)}…", flush=True)
         time.sleep(0.3)
 
     CACHE.write_text(json.dumps(cache, ensure_ascii=False))
+    # Guard anti-clobber: si el SIL estaba caído y falló la MAYORÍA, no
+    # sobreescribir la foto buena con basura. Falla ruidosa para reintentar.
+    n_err = sum(1 for v in out.values()
+                if isinstance(v, dict) and str(v.get("error", "")).startswith("scrape_fail"))
+    if out and n_err > len(out) * 0.30:
+        pct = 100 * n_err // len(out)
+        print(f"❌ {n_err}/{len(out)} ({pct}%) fallaron por SIL inestable. NO sobreescribo "
+              f"la foto para no perder datos buenos. Reintentar cuando el SIL esté estable.")
+        sys.exit(1)
     # Separar: conteos/estatus (lean) → OUT ; registro por instrumento → OUT_REC
     recs_out = {}
     for k, v in out.items():
