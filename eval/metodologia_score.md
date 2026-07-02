@@ -93,3 +93,34 @@ la literatura:
   móvil por categoría) en lugar de techos absolutos → recupera variación.
 - **Ponderación sensible a varianza** (que una señal saturada pese menos).
 - Revivir `score_legisladores` o redistribuir su 0.10.
+
+---
+
+## Vinculación evento↔legislación (CORRECCIÓN CLAVE, jul-2026)
+
+El análisis por categoría (arriba) concluía erróneamente que media "no
+predice/atribuye" (~azar). **Era artefacto** de (1) clasificar en 19 categorías
+amplias que fragmentan un mismo evento en 6 buckets, (2) misclasificación
+(un exhorto sobre un rector detenido caía en "trabajo"), (3) usar pocas fuentes.
+
+Medido **a nivel evento/entidad** (matcher `scripts/matcher_evento.py`: términos
+distintivos compartidos + stem + IDF, cruzando categorías) y con **las 22 fuentes**
+de `articulos`:
+
+- **86% de los instrumentos 2026** (iniciativas + proposiciones con PA) tienen
+  cobertura mediática del MISMO evento en las 3 semanas previas.
+- **21% en ventana placebo** (azar) → lift real ~65 pts. Señal FUERTE.
+- Lead time: **mediana 13 días**; la media antecede en ~69% de los casos.
+- Validado en casos reales: Abud Flores (exhorto 14-ene ↔ detención rector 12-ene),
+  derrame del Golfo (instrumentos abr ↔ cobertura del derrame).
+
+**Qué es FIAT, corregido:** no un pronosticador, sino un **vinculador de eventos /
+motor de atribución** — la mayoría de la acción legislativa reciente SIGUE a un
+evento mediático, y se puede ligar cada instrumento con la nota que lo precedió.
+
+Pipeline: `scripts/vincular_eventos.py` → tabla `evento_vinculos` (por instrumento:
+tiene_precedente, score, nota principal, lead_dias). CAPA ADITIVA: no toca scores,
+comisiones, efectividad ni descripciones.
+
+Pendiente: sumar La Jornada edición web (`/noticia/`) y el histórico multi-fuente
+2024-2025 (hoy solo 2 fuentes ahí → señal más débil en el pasado).
