@@ -1,41 +1,487 @@
 {
- "_doc": "Eval set CONGELADO del matcher evento↔instrumento. Cada caso: título COMPLETO de la PPA, fecha, y verdad ('si'=la PPA responde a un evento mediático real de los 21d previos; 'no'=no hay evento, el match sería falso positivo). Etiquetas: casos del usuario (abud, derrame) + auditoría jul-2026 (muestra de desacuerdos viejo-vs-v2, corrección B14 tras verificar 36 notas de Tepeaca). REGLA: ningún cambio al matcher se adopta si baja la precisión/recall en este set. Ampliar el set con nuevos casos etiquetados, nunca borrar. Correr: python scripts/test_matcher_eval.py",
+ "_doc": "Eval set GOLD del matcher evento↔instrumento — etiquetado por el USUARIO (2026-07-02, 60 casos a ciegas, estratificados). La pregunta juzgada: ¿la PPA responde al MISMO evento que las notas candidatas mostradas (21d previos)? Verdad=etiqueta del usuario. REGLA: ningún matcher se adopta sin precisión>=90% Y recall>=90% contra ESTE set. Solo crece. Resultados al crearse: v2 precisión 30% (11/37), viejo 12% (3/24); ambos pierden eventos reales (Abud, GM Ramos Arizpe, Saguaro GNL). Nota: en casos tipo Tepeaca (c09/c34) el evento real existía pero el matcher mostró notas equivocadas → el NO evalúa el matcher end-to-end, correcto.",
+ "etiquetador": "usuario",
+ "fecha": "2026-07-02",
  "casos": [
-  {"id": "abud", "verdad": "si", "fecha": "2026-01-14", "nota_esperada": "detención del rector Uacam 12-ene / Layda Sansores",
-   "titulo": "Por el que se exhorta a la Fiscalía General del estado de Campeche a aclarar, a la brevedad y en estricto apego al debido proceso, la situación jurídica de José Alberto Abud Flores, rector de la Universidad Autónoma de Campeche y a la Gobernadora Layda Sansores, a respetar la autonomía universitaria y evitar intromisiones políticas en la vida interna de la universidad."},
-  {"id": "derrame_mc", "verdad": "si", "fecha": "2026-04-29", "nota_esperada": "derrame de hidrocarburos Golfo/Poza Rica (abril)",
-   "titulo": "Que reforma y adiciona diversas disposiciones de la Ley de la Agencia Nacional de Seguridad Industrial y de Protección al Medio Ambiente del Sector Hidrocarburos, en materia de prevención, control y respuesta inmediata ante derrames de hidrocarburos."},
-  {"id": "b2_francia", "verdad": "si", "fecha": "2026-04-28", "nota_esperada": "200 años relaciones México-Francia (23-abr)",
-   "titulo": "Por el que exhorta a la Mesa Directiva del Senado de la República para que, en el marco de la celebración de los 200 años de relaciones diplomáticas entre México y Francia, se coloque en la Cuña la placa conmemorativa y se realice una sesión solemne."},
-  {"id": "b8_pacic", "verdad": "si", "fecha": "2026-06-17", "nota_esperada": "renovación del PACIC (30-may) / contención de precios",
-   "titulo": "Por el que exhorta a la Secretaría de Economía, a la Procuraduría Federal del Consumidor y a la Secretaría de Hacienda y Crédito Público a fortalecer las acciones de monitoreo, vigilancia y contención de precios de bienes de consumo básico, a fin de proteger el poder adquisitivo de las familias mexicanas."},
-  {"id": "b9_perfectday", "verdad": "si", "fecha": "2026-05-25", "nota_esperada": "Perfect Day Mahahual / Semarnat retiro de permisos",
-   "titulo": "Por el que exhorta a la Secretaría de Medio Ambiente y Recursos Naturales informe con precisión el estado del procedimiento de evaluación ambiental, la existencia o no de resoluciones definitivas, los estudios técnicos considerados, las opiniones ciudadanas recibidas, las observaciones formuladas al promovente y las medidas adoptadas para proteger ecosistemas costeros, arrecifales, manglares, selvas y cuerpos de agua."},
-  {"id": "b10_agrario", "verdad": "si", "fecha": "2026-06-01", "nota_esperada": "protesta abogados Jalisco por cierre Tribunal Unitario Agrario dist. 16 (21-may)",
-   "titulo": "Por el que  exhorta al Tribunal Superior Agrario, a revocar su decisión de terminar las funciones del Tribunal Unitario Agrario del Distrito 16, localizado en la Ciudad de Guadalajara, Estado de Jalisco."},
-  {"id": "b12_aicm", "verdad": "si", "fecha": "2026-06-10", "nota_esperada": "remodelación AICM para el Mundial (Sheinbaum 30-may)",
-   "titulo": "Por el que  exhorta a la Secretaría de Marina, al Grupo Aeroportuario de la Ciudad de México y a la administración del Aeropuerto Internacional de la Ciudad de México a hacer públicos y transparentes, bajo los principios de rendición de cuentas, todo lo relativo a montos presupuestales, tipo de obra, supervisión y control de remodelación y operación del AICM vinculadas con la Copa Mundial de la FIFA 2026, así como a garantizar su conclusión oportuna, la seguridad de las personas usuarias y la protección del derecho a la movilidad."},
-  {"id": "b15_calendario", "verdad": "si", "fecha": "2026-06-01", "nota_esperada": "controversia modificaciones calendario escolar 2025-2026 (12-13 may)",
-   "titulo": "Por el que la Comisión Permanente manifiesta su preocupación por los anuncios relacionados con modificaciones al calendario escolar 2025-2026; y exhorta a la Secretaría de Educación Pública a garantizar que cualquier ajuste futuro se sustente en criterios técnicos y pedagógicos."},
-  {"id": "b14_tepeaca", "verdad": "si", "fecha": "2026-06-10", "nota_esperada": "explosión pipas huachicol Tepeaca (04-jun, 36 notas) — etiqueta corregida tras verificación",
-   "titulo": "Por el que exhorta a la Fiscalía General de la República, a la Secretaría de Seguridad y Protección Ciudadana, a la Secretaría de la Defensa Nacional, a la Guardia Nacional, a Petróleos Mexicanos, a la Coordinación Nacional de Protección Civil y al gobierno del estado de Puebla, a reforzar las acciones de combate al robo de hidrocarburos y de gestión integral de riesgos en el municipio de Tepeaca, Puebla."},
-  {"id": "b1_organo", "verdad": "no", "nota_esperada": "FP conocido: comparte 'órgano administración judicial' (institución) con notas de plagas/laboral que NO son el evento",
-   "fecha": "2026-06-01",
-   "titulo": "Por el que exhorta respetuosamente al Órgano de Administración Judicial a juzgar con perspectiva de infancia y adolescencia y otorgar la prueba anticipada en los testimonios de niñas, niños y adolescentes."},
-  {"id": "b4_chinampas", "verdad": "no", "nota_esperada": "FP conocido: comparte institución/concepto (Sader, soberanía alimentaria) con notas de plátano/fertilizantes que NO son el evento",
-   "fecha": "2026-06-17",
-   "titulo": "Por el que solicita a la Secretaría de Agricultura y Desarrollo Rural, realizar acciones de extensionismo rural, asistencia técnica agropecuaria y vinculación comercial dirigidas a los productores chinamperos y agrícolas de la Alcaldía Tláhuac, con el objeto de garantizar a las y los productores sus derechos al trabajo digno, al desarrollo rural sustentable, a la comercialización justa y a la soberanía alimentaria."},
-  {"id": "b7_arcosaltos", "verdad": "no", "nota_esperada": "FP conocido: 'presuntas irregularidades' (frase burocrática) matcheaba notas de Coahuila/penal que NO son el evento Arcos Altos",
+  {
+   "id": "c01",
+   "stratum": "ambos_si",
+   "lid": "552",
+   "fecha": "2026-05-06",
+   "titulo": "Por el que exhorta al Ejecutivo Federal, a la Secretaría de Salud, al Consejo Nacional de Humanidades, Ciencias y Tecnologías y a la Secretaría de la Función Pública a que informen sobre los recursos utilizados para la inversión y desarrollo de la Vacuna Patria.",
+   "verdad": "no"
+  },
+  {
+   "id": "c02",
+   "stratum": "ambos_no",
+   "lid": "287",
+   "fecha": "2026-01-07",
+   "titulo": "Por la que exhorta a la SICT, a llevar a cabo las acciones necesarias, para la construcción de un retorno seguro en la Carretera Federal México 45, tramo León Lagos de Moreno, a la altura del km 24+800, en la Av. Lagunillas, municipio de León, Guanajuato.",
+   "verdad": "no"
+  },
+  {
+   "id": "c03",
+   "stratum": "ambos_no",
+   "lid": "489",
+   "fecha": "2026-01-14",
+   "titulo": "Por  el que se exhorta a la Fiscalía General del estado de Campeche a aclarar, a la brevedad y en estricto apego al debido proceso, la situación jurídica de José Alberto Abud Flores, rector de la Universidad Autónoma de Campeche y a la Gobernadora Layda Sansores, a respetar la autonomía universitaria y evitar intromisiones políticas en la vida interna de la universidad.",
+   "verdad": "si"
+  },
+  {
+   "id": "c04",
+   "stratum": "solo_v2",
+   "lid": "617",
+   "fecha": "2026-05-25",
+   "titulo": "Por el que exhorta a la Coordinación Nacional de Protección Civil, a la Secretaría de Marina, a los gobiernos de las entidades federativas y a los municipios Costeros del Pacífico Mexicano a fortalecer las acciones de prevención, protección civil, infraestructura y atención a la población ante el inicio de la temporada de huracanes 2026 y la posible intensificación del fenómeno climático -El Niño-.",
+   "verdad": "si"
+  },
+  {
+   "id": "c05",
+   "stratum": "ambos_no",
+   "lid": "282",
+   "fecha": "2026-02-02",
+   "titulo": "Por el que se exhorta a la Secretaría de Economía, a STPS y a la SHCP, a implementar un fondo extraordinario de apoyo económico temporal dirigido a las y los trabajadores despedidos del complejo de manufactura de General Motors en Ramos Arizpe, Coahuila, y garantizar el acceso a servicios de salud y acompañamiento institucional para su reincorporación al mercado laboral.",
+   "verdad": "si"
+  },
+  {
+   "id": "c06",
+   "stratum": "solo_v2",
+   "lid": "617",
    "fecha": "2026-06-10",
-   "titulo": "Por el que exhorta al INFONAVIT, a la Fiscalía General de la República, a la CONDUSEF y a las autoridades competentes del estado de Tlaxcala a investigar presuntas irregularidades en el desarrollo habitacional -Arcos Altos-."},
-  {"id": "a1_herpes", "verdad": "no", "nota_esperada": "sin evento; el modelo VIEJO lo acreditaba vía subcat justicia_penal (absurdo)",
-   "fecha": "2026-03-04",
-   "titulo": "Por el que exhorta a la Secretaría de Salud a incluir la vacuna recombinante contra el Herpes Zóster en el Programa Nacional de Vacunación para su administración gratuita a adultos mayores."},
-  {"id": "a3_conade", "verdad": "no", "nota_esperada": "sin evento; viejo acreditaba por keyword 'deporte'",
-   "fecha": "2026-02-17",
-   "titulo": "Por el que solicita a la Conade a publicar la estadística nacional sobre la violencia en el deporte, contemplada en el artículo 140, fracción X, de la Ley General de Cultura Física y Deporte."},
-  {"id": "a10_fgr", "verdad": "no", "nota_esperada": "PPA hiper-genérica, sin evento",
+   "titulo": "Por el que exhorta a la Secretaría de Relaciones Exteriores y al Servicio Nacional de Sanidad, Inocuidad y Calidad Agroalimentaria, a establecer diálogos con el gobierno de los Estados Unidos Americanos para reactivar y fortalecer los mecanismos de cooperación binacional que históricamente operaron a través de la Comisión México - Americana para la erradicación del gusano barrenador del ganado.",
+   "verdad": "si"
+  },
+  {
+   "id": "c07",
+   "stratum": "solo_viejo",
+   "lid": "503",
    "fecha": "2026-02-18",
-   "titulo": "Por la que exhorta a la titular de la FGR a investigar y perseguir delitos del orden federal."}
+   "titulo": "Por el que exhorta a la Secretaría de Infraestructura, Comunicaciones y Transportes a reforzar el programa de mantenimiento y recuperación de carreteras de baja California y a Petróleos Mexicanos a ampliar el programa de caminos a cabecera municipales para su implementación a nivel nacional.",
+   "verdad": "no"
+  },
+  {
+   "id": "c08",
+   "stratum": "ambos_si",
+   "lid": "312",
+   "fecha": "2026-04-22",
+   "titulo": "Por el que exhorta al Poder Ejecutivo Federal, a través de la Secretaría de las Mujeres, a reactivar e integre el grupo interinstitucional y multidisciplinario encargado de dictaminar el cumplimiento de la alerta de violencia de género contra las mujeres declarada en 17 municipios del estado de Guanajuato, dé respuesta a las solicitudes formales presentadas por el Gobierno de dicho estado y, en los mismos términos, concluya los procedimientos de evaluación pendientes en las entidades federativas con declaratoria vigente, entre ellas Veracruz, Morelos y la Ciudad de México.",
+   "verdad": "no"
+  },
+  {
+   "id": "c09",
+   "stratum": "solo_v2",
+   "lid": "618",
+   "fecha": "2026-06-10",
+   "titulo": "Por el que exhorta a la Fiscalía General de la República, a la Secretaría de Seguridad y Protección Ciudadana, a la Secretaría de la Defensa Nacional, a la Guardia Nacional, a Petróleos Mexicanos, a la Coordinación Nacional de Protección Civil y al gobierno del estado de Puebla, a reforzar las acciones de combate al robo de hidrocarburos y de gestión integral de riesgos en el municipio de Tepeaca, Puebla.",
+   "verdad": "no"
+  },
+  {
+   "id": "c10",
+   "stratum": "solo_viejo",
+   "lid": "11",
+   "fecha": "2026-02-17",
+   "titulo": "Por el que solicita a la Conade a publicar la estadística nacional sobre la violencia en el deporte, contemplada en el artículo 140, fracción X, de la Ley General de Cultura Física y Deporte.",
+   "verdad": "no"
+  },
+  {
+   "id": "c11",
+   "stratum": "ambos_si",
+   "lid": "591",
+   "fecha": "2026-03-25",
+   "titulo": "Por el que exhorta a la Secretaría de Gobernación y al Instituto Nacional de Migración para que aseguren la emisión pronta y expedita de la tarjeta de visitante por razones humanitarias (TVRH), a favor de las personas solicitantes de refugio, asilo y protección complementaria, a fin de garantizar su derecho a la identidad, a la movilidad y a la protección internacional.",
+   "verdad": "no"
+  },
+  {
+   "id": "c12",
+   "stratum": "ambos_si",
+   "lid": "382",
+   "fecha": "2026-05-13",
+   "titulo": "Por el que exhorta a la Agencia Nacional de Aduanas de México, a la Secretaría de Hacienda y Crédito Público y a la Secretaría de Infraestructura, Comunicaciones y Transportes a evaluar la viabilidad de habilitar un recinto fiscalizado estratégico en Ciudad Valles, San Luis Potosí, como nodo logístico complementario al puerto de Altamira.",
+   "verdad": "no"
+  },
+  {
+   "id": "c13",
+   "stratum": "ambos_no",
+   "lid": "65",
+   "fecha": "2026-01-21",
+   "titulo": "Por la que solicita de manera respetuosa a la Semarnat para que, en el ámbito de sus atribuciones, evalúen, supervisen y, en su caso, adopten medidas para prevenir los impactos ambientales derivados del proyecto de gas natural licuado -Saguaro-, en la región del Golfo de California, a fin de proteger el patrimonio natural de la humanidad.",
+   "verdad": "si"
+  },
+  {
+   "id": "c14",
+   "stratum": "ambos_si",
+   "lid": "620",
+   "fecha": "2026-05-13",
+   "titulo": "Por el que exhorta a diversas autoridades a informar resultados verificables y fortalecer las acciones anticorrupción, de recuperación del daño y de no repetición relacionadas con el caso SEGALMEX, DICONSA y LICONSA.",
+   "verdad": "si"
+  },
+  {
+   "id": "c15",
+   "stratum": "solo_viejo",
+   "lid": "285",
+   "fecha": "2026-02-17",
+   "titulo": "Por el que exhorta a la FGR y a la SSPC a garantizar una investigación seria, transparente y exhaustiva, así como atención y justicia para las familias de las víctimas en el caso de los diez mineros privados de su libertad.",
+   "verdad": "no"
+  },
+  {
+   "id": "c16",
+   "stratum": "solo_v2",
+   "lid": "607",
+   "fecha": "2026-06-17",
+   "titulo": "Por el que expresa su firme rechazo a la narcopolítica y exhorta a la Secretaría de Relaciones Exteriores y a la Fiscalía General de la República a atender, sin dilaciones ni maniobras obstaculizadoras, la solicitud de los Estados Unidos de América en el caso de los funcionarios de Sinaloa acusados por el Tribunal del Distrito Sur de Nueva York, en pleno apego al Tratado de Extradición vigente, a la Ley de Extradición Internacional, a la Constitución Política de los Estados Unidos Mexicanos y a los principios del derecho internacional en materia de cooperación penal.",
+   "verdad": "no"
+  },
+  {
+   "id": "c17",
+   "stratum": "solo_viejo",
+   "lid": "538",
+   "fecha": "2026-02-17",
+   "titulo": "Por el que exhorta respetuosamente al Instituto Mexicano del Seguro Social para que se haga una revisión profunda y urgente de los trámites y procedimientos relacionados con la Continuación Voluntaria al Régimen Obligatorio (Modalidad 40) a fin de que se agilicen y se garantice a las personas una resolución en breve tiempo, que les permita contar con los recursos de sus pensiones de manera eficaz y sin retrasos.",
+   "verdad": "no"
+  },
+  {
+   "id": "c18",
+   "stratum": "solo_viejo",
+   "lid": "363",
+   "fecha": "2026-02-18",
+   "titulo": "Por la que exhorta a la CFE, a la Sener, a la CNE y a la SHCP a implementar un subsidio o ajuste extraordinario en la tarifa eléctrica doméstica en Sinaloa, derivado de las temperaturas atípicamente altas registradas durante el mes de diciembre.",
+   "verdad": "no"
+  },
+  {
+   "id": "c19",
+   "stratum": "solo_v2",
+   "lid": "621",
+   "fecha": "2026-06-10",
+   "titulo": "Por el que exhorta a la Secretaría de Gobernación, al Sistema Nacional de Protección Integral de Niñas, Niños y Adolescentes (SIPINNA), al Sistema Nacional DIF, a la Secretaría de Seguridad y Protección Ciudadana y a los gobiernos de las entidades federativas sede de la Copa Mundial de la FIFA 2026, a implementar acciones especiales de protección de niñas, niños y adolescentes durante la celebración del evento.",
+   "verdad": "si"
+  },
+  {
+   "id": "c20",
+   "stratum": "ambos_no",
+   "lid": "116",
+   "fecha": "2026-02-10",
+   "titulo": "Por el que solicita a las personas titulares de las presidencias municipales del interior de la República Mexicana y de las alcaldías de la Ciudad de México a cumplir, en el ámbito de su competencia, el acuerdo mediante el cual se establecen los lineamientos generales a los que deberán sujetarse la preparación, distribución y el expendio de los alimentos y bebidas preparados, procesados y a granel, así como el fomento de los estilos de vida saludables en alimentación, dentro de toda escuela y en las inmediaciones del sistema educativo nacional.",
+   "verdad": "no"
+  },
+  {
+   "id": "c21",
+   "stratum": "solo_v2",
+   "lid": "397",
+   "fecha": "2026-02-18",
+   "titulo": "Por la que exhorta a diversas autoridades federales a suspender los trámites del proyecto minero -El arco- y revisar la legalidad de la fragmentación del acuífero de vizcaíno, ante la inminente vulneración de derechos humanos y tratados internacionales.",
+   "verdad": "no"
+  },
+  {
+   "id": "c22",
+   "stratum": "solo_v2",
+   "lid": "555",
+   "fecha": "2026-05-25",
+   "titulo": "Por el que exhorta a la Coordinación Nacional de Protección Civil, a la Secretaría de Marina, a los gobiernos de las entidades federativas y a los municipios Costeros del Pacífico Mexicano a fortalecer las acciones de prevención, protección civil, infraestructura y atención a la población ante el inicio de la temporada de huracanes 2026 y la posible intensificación del fenómeno climático -El Niño-.",
+   "verdad": "si"
+  },
+  {
+   "id": "c23",
+   "stratum": "solo_v2",
+   "lid": "279",
+   "fecha": "2026-06-10",
+   "titulo": "Por el que exhorta al gobierno federal para que, a través de la Secretaría de Salud y a sus homólogas en las entidades federativas a que fortalezcan de manera urgente las acciones de vacunación, prevención y vigilancia epidemiológica ante el incremento de casos de sarampión registrados en diversas entidades del país, con especial atención en los estados de Jalisco, Ciudad de México y Nuevo León, a fin de proteger la salud de la población, particularmente de niñas y niños.",
+   "verdad": "no"
+  },
+  {
+   "id": "c24",
+   "stratum": "ambos_no",
+   "lid": "34",
+   "fecha": "2026-04-08",
+   "titulo": "Por el que solicita a las 32 entidades federativas para realizar acciones y actividades en conmemoración del 17 de mayo en el marco del Día Nacional de la Lucha Contra la Homofobia, Lesbofobia, Transfobia y Bifobia y el 28 de junio Día del Orgullo de la Población de la Diversidad Sexual y de Género.",
+   "verdad": "no"
+  },
+  {
+   "id": "c25",
+   "stratum": "solo_v2",
+   "lid": "620",
+   "fecha": "2026-05-25",
+   "titulo": "Por el que exhorta a las autoridades competentes a presentar informes sobre los casos de hundimiento y fallas estructurales en el tramo 5, así como sobre los posibles daños ambientales ocasionados a los cenotes y al Sistema Kárstico de la Región, y las medidas de mitigación implementada.",
+   "verdad": "si"
+  },
+  {
+   "id": "c26",
+   "stratum": "solo_viejo",
+   "lid": "304",
+   "fecha": "2026-02-17",
+   "titulo": "Por el que exhorta a la Cofepris a actualizar la alerta sanitaria relativa a cigarrillos y productos similares derivados del tabaco que se comercializan ilegalmente en México.",
+   "verdad": "no"
+  },
+  {
+   "id": "c27",
+   "stratum": "solo_v2",
+   "lid": "556",
+   "fecha": "2026-05-25",
+   "titulo": "Por el que exhorta a la Coordinación Nacional de Protección Civil, a la Secretaría de Marina, a los gobiernos de las entidades federativas y a los municipios Costeros del Pacífico Mexicano a fortalecer las acciones de prevención, protección civil, infraestructura y atención a la población ante el inicio de la temporada de huracanes 2026 y la posible intensificación del fenómeno climático -El Niño-.",
+   "verdad": "si"
+  },
+  {
+   "id": "c28",
+   "stratum": "solo_viejo",
+   "lid": "594",
+   "fecha": "2026-02-25",
+   "titulo": "Por el que exhorta a la secretaría de Educación Pública a fortalecer los mecanismos de inscripción, revalidación y equivalencia de estudios, así como los programas dirigidos a la población migrante.",
+   "verdad": "no"
+  },
+  {
+   "id": "c29",
+   "stratum": "ambos_si",
+   "lid": "622",
+   "fecha": "2026-05-13",
+   "titulo": "Por el que exhorta a los gobiernos de los estados de Veracruz y Puebla a fortalecer las estrategias de coordinación con la Secretaría de Seguridad y Protección Ciudadana, la Fiscalía General de la República y la Guardia Nacional, para garantizar seguridad en carreteras, rutas de transporte y zonas agropecuarias.",
+   "verdad": "no"
+  },
+  {
+   "id": "c30",
+   "stratum": "ambos_no",
+   "lid": "447",
+   "fecha": "2026-02-10",
+   "titulo": "Por el que exhorta a la CNPDyPC a publicar el programa nacional para la prevención social de la violencia y la delincuencia vigente.",
+   "verdad": "no"
+  },
+  {
+   "id": "c31",
+   "stratum": "solo_v2",
+   "lid": "489",
+   "fecha": "2026-06-01",
+   "titulo": "Por el que exhorta a las fiscalías de las entidades federativas y a la Fiscalía General de la República a garantizar el inicio inmediato de la búsqueda de personas desaparecidas, sin dilaciones ni requisitos indebidos.",
+   "verdad": "no"
+  },
+  {
+   "id": "c32",
+   "stratum": "ambos_si",
+   "lid": "618",
+   "fecha": "2026-05-06",
+   "titulo": "Por el que exhorta a diversas autoridades federales y a las administraciones aeroportuarias a informar y coordinar acciones para ordenar la movilidad terrestre en aeropuertos, con motivo de la Copa Mundial de la FIFA 2026.",
+   "verdad": "no"
+  },
+  {
+   "id": "c33",
+   "stratum": "ambos_no",
+   "lid": "538",
+   "fecha": "2026-02-03",
+   "titulo": "Por el que exhorta respetuosamente a la Comisión Federal de Electricidad y a Petróleos Mexicanos, para que analicen la viabilidad de establecer una posible alianza estratégica para desarrollar centrales de cogeneración de energía eléctrica en las refinerías que conforman el Sistema Nacional de Refinación (SNR), así como en Complejos Procesadores de Gas (CPG), e informen a esta Soberanía sus resultados.",
+   "verdad": "no"
+  },
+  {
+   "id": "c34",
+   "stratum": "solo_v2",
+   "lid": "622",
+   "fecha": "2026-06-10",
+   "titulo": "Por el que exhorta a la Fiscalía General de la República, a la Secretaría de Seguridad y Protección Ciudadana, a la Secretaría de la Defensa Nacional, a la Guardia Nacional, a Petróleos Mexicanos, a la Coordinación Nacional de Protección Civil y al gobierno del estado de Puebla, a reforzar las acciones de combate al robo de hidrocarburos y de gestión integral de riesgos en el municipio de Tepeaca, Puebla.",
+   "verdad": "no"
+  },
+  {
+   "id": "c35",
+   "stratum": "solo_v2",
+   "lid": "467",
+   "fecha": "2026-03-11",
+   "titulo": "Por el que exhorta a la SE y a las autoridades competentes a fortalecer el seguimiento y correcta aplicación de las medidas comerciales vigentes en el sector cerámico, con el fin de garantizar condiciones de competencia justa para los productores y artesanos mexicanos.",
+   "verdad": "no"
+  },
+  {
+   "id": "c36",
+   "stratum": "solo_v2",
+   "lid": "555",
+   "fecha": "2026-03-19",
+   "titulo": "Por el que exhorta a las autoridades de la Ciudad de México a informar sobre las condiciones de salud, manejo y fallecimiento de pingüinos de Humboldt en el Zoológico de Chapultepec.",
+   "verdad": "no"
+  },
+  {
+   "id": "c37",
+   "stratum": "solo_v2",
+   "lid": "561",
+   "fecha": "2026-06-23",
+   "titulo": "Por el que exhorta a la Fiscalía General de Justicia del Estado de México, así como a la Comisión Ejecutiva de Atención a Víctimas del Estado de México, a realizar las acciones necesarias para garantizar los derechos a la búsqueda, verdad, justicia, atención integral y reparación en el caso de Fabiola Nallely Luquin Reyes.",
+   "verdad": "no"
+  },
+  {
+   "id": "c38",
+   "stratum": "solo_v2",
+   "lid": "275",
+   "fecha": "2026-06-01",
+   "titulo": "Por el que exhorta a la Secretaría de Educación Pública y a la Secretaría de Hacienda y Crédito Público, a garantizar y resolver de manera prioritaria el rezago en el pago oportuno y transparente de la Gratificación por Jubilación (concepto 63) a las y los trabajadores jubilados del Subsistema de Educación Media Superior.",
+   "verdad": "no"
+  },
+  {
+   "id": "c39",
+   "stratum": "solo_viejo",
+   "lid": "215",
+   "fecha": "2026-04-07",
+   "titulo": "Por el que la Cámara de Diputados solicita al IMPI a incorporar criterios de sostenibilidad, economía circular, uso eficiente del agua y transición energética en los estudios técnicos para el otorgamiento de denominaciones de origen e indicaciones geográficas.",
+   "verdad": "no"
+  },
+  {
+   "id": "c40",
+   "stratum": "ambos_si",
+   "lid": "618",
+   "fecha": "2026-02-18",
+   "titulo": "Por el que cita a comparecer al titular la Secretaría de Educación Pública del gobierno federal para que de cuenta sobre el manejo de recursos financieros y materiales en la Dirección General de materiales educativos durante la gestión de Marx Arriaga, así como que se lleve a cabo una investigación sobre las denuncias de irregularidades y solicitud de dádivas por parte del exfuncionario a personas trabajadoras de la dependencia.",
+   "verdad": "no"
+  },
+  {
+   "id": "c41",
+   "stratum": "solo_v2",
+   "lid": "477",
+   "fecha": "2026-06-01",
+   "titulo": "Por el que exhorta a los Servicios de Salud del estado de Oaxaca a realizar y fomentar las ferias de medicina tradicional indígena en distintas regiones de la entidad.",
+   "verdad": "no"
+  },
+  {
+   "id": "c42",
+   "stratum": "ambos_si",
+   "lid": "628",
+   "fecha": "2026-04-29",
+   "titulo": "Por el que exhorta a la Secretaría de Economía, en coordinación con la Secretaría de Salud a priorizar la protección del acceso a medicamentos genéricos en el marco de la revisión del Tratado entre México, Estados Unidos y Canadá, garantizando en todo momento el derecho a la salud de la población evitando disposiciones que encarezcan los medicamentos o limiten su disponibilidad.",
+   "verdad": "si"
+  },
+  {
+   "id": "c43",
+   "stratum": "ambos_si",
+   "lid": "529",
+   "fecha": "2026-03-24",
+   "titulo": "Por el que exhorta a la Secretaría de Educación y a la Secretaría de Salud para que, en coordinación con el Instituto Mexicano del Seguro Social, el Instituto de Seguridad y Servicios Sociales de los Trabajadores del Estado, el IMSS Bienestar, así como las Secretarías de Salud estatales, se fortalezca la promoción de la salud bucal a través de las estrategias nacionales de salud.",
+   "verdad": "no"
+  },
+  {
+   "id": "c44",
+   "stratum": "ambos_no",
+   "lid": "465",
+   "fecha": "2026-01-21",
+   "titulo": "Por la que exhorta a Pemex, a realizar el pago inmediato del incremento salarial 2025 y transparentar el ejercicio de los recursos del capítulo 1000 Servicios Personales.",
+   "verdad": "no"
+  },
+  {
+   "id": "c45",
+   "stratum": "solo_v2",
+   "lid": "555",
+   "fecha": "2026-03-11",
+   "titulo": "Por el que exhorta a diversas autoridades a garantizar la transmisión abierta de todos los partidos de la Copa Mundial de la FIFA 2026.",
+   "verdad": "no"
+  },
+  {
+   "id": "c46",
+   "stratum": "solo_v2",
+   "lid": "311",
+   "fecha": "2026-06-10",
+   "titulo": "Por el que exhorta a diferentes autoridades a informar sobre las medidas especiales que se estén implementando para la contención, prevención y atención por posibles casos de ébola en México, con motivo de la visita de turistas a la copa mundial de fútbol 2026, ante la declaratoria de emergencia de salud pública internacional de la Organización Mundial de la Salud.",
+   "verdad": "si"
+  },
+  {
+   "id": "c47",
+   "stratum": "solo_v2",
+   "lid": "455",
+   "fecha": "2026-03-03",
+   "titulo": "Por el que exhorta a diversas autoridades a implementar supervisión permanente, prevención de abusos y condiciones dignas en albergues, casas hogar y centros de acogida para la protección reforzada de niñas, niños y adolescentes.",
+   "verdad": "no"
+  },
+  {
+   "id": "c48",
+   "stratum": "ambos_no",
+   "lid": "491",
+   "fecha": "2026-02-02",
+   "titulo": "Por el que exhorta al IEEPCO a realizar un informe público, detallado y desagregado sobre el proceso de revocación de mandato de la persona titular de la gubernatura del estado de Oaxaca.",
+   "verdad": "no"
+  },
+  {
+   "id": "c49",
+   "stratum": "solo_viejo",
+   "lid": "561",
+   "fecha": "2026-03-04",
+   "titulo": "Por el que exhorta a la Secretaría de Salud a incluir la vacuna recombinante contra el Herpes Zóster en el Programa Nacional de Vacunación para su administración gratuita a adultos mayores.",
+   "verdad": "no"
+  },
+  {
+   "id": "c50",
+   "stratum": "ambos_si",
+   "lid": "600",
+   "fecha": "2026-04-15",
+   "titulo": "Por el que exhorta a los Congresos de las Entidades Federativas para armonizar sus Códigos Penales con el artículo 209 Quáter del Código Penal Federal, en materia de cohabitación forzada de menores de edad.",
+   "verdad": "no"
+  },
+  {
+   "id": "c51",
+   "stratum": "solo_v2",
+   "lid": "622",
+   "fecha": "2026-06-17",
+   "titulo": "Por el que exhorta a la Secretaría de Salud, a la Secretaría de Educación Pública, a los servicios estatales de salud y a las instituciones públicas de educación media superior y superior a fortalecer las acciones de prevención, detección oportuna y atención de las infecciones de transmisión sexual mediante la implementación de jornadas voluntarias de pruebas diagnósticas y orientación médica.",
+   "verdad": "no"
+  },
+  {
+   "id": "c52",
+   "stratum": "solo_viejo",
+   "lid": "554",
+   "fecha": "2026-02-18",
+   "titulo": "Por el que exhorta respetuosamente a la Fiscalía General del Estado de Morelos, en colaboración con el Instituto de la Mujer para el Estado de Morelos, para que fortalezcan las acciones de acompañamiento, orientación y apoyo integral a las víctimas, así como la correcta aplicación de los protocolos correspondientes en materia de delitos sexuales y la prestación de atención especializada.",
+   "verdad": "no"
+  },
+  {
+   "id": "c53",
+   "stratum": "ambos_si",
+   "lid": "514",
+   "fecha": "2026-03-10",
+   "titulo": "Por el que exhorta a Pemex y a la ASEA a informar sobre el estado que guarda la explosión del pozo exploratorio en el municipio de las Choapas, Veracruz.",
+   "verdad": "si"
+  },
+  {
+   "id": "c54",
+   "stratum": "ambos_no",
+   "lid": "459",
+   "fecha": "2026-02-02",
+   "titulo": "Por el que se exhorta a la Sader a dar conocer el estado real de la problemática y/o crisis sanitaria provocada por el gusano barrenador, y a instrumentar de forma inmediata una estrategia para atender los nuevos brotes que se registran en el país, generando cierres intermitentes para la importación de ganado hacia Estados Unidos de América en perjuicio del sector ganadero del país.",
+   "verdad": "no"
+  },
+  {
+   "id": "c55",
+   "stratum": "solo_viejo",
+   "lid": "272",
+   "fecha": "2026-02-17",
+   "titulo": "Por el que exhorta a la SHCP, a la ASF y al Congreso de la CDMX, a fin de investigar, transparentar y rendir cuentas sobre los esquemas de financiamiento utilizados por el gobierno de la CDMX, en el marco de los preparativos para la Copa Mundial de la FIFA 2026.",
+   "verdad": "no"
+  },
+  {
+   "id": "c56",
+   "stratum": "solo_v2",
+   "lid": "489",
+   "fecha": "2026-06-17",
+   "titulo": "Por el que exhorta a Petróleos Mexicanos, a la Secretaría de Medio Ambiente y Recursos Naturales y a la Secretaría de Salud a implementar acciones integrales de atención, monitoreo ambiental, protección a la salud y reparación del daño en favor de las comunidades afectadas por el incendio del pozo exploratorio krem-1 en las Choapas, Veracruz.",
+   "verdad": "si"
+  },
+  {
+   "id": "c57",
+   "stratum": "solo_viejo",
+   "lid": "404",
+   "fecha": "2026-02-24",
+   "titulo": "Por el que exhorta a la Secretaría de Salud a respetar las horas establecidas en la NOM-001-SSA-2023 en el ISSSTE, Instituciones Nacionales e Instituciones de IMSS-Bienestar.",
+   "verdad": "no"
+  },
+  {
+   "id": "c58",
+   "stratum": "solo_v2",
+   "lid": "599",
+   "fecha": "2026-06-17",
+   "titulo": "Por el que exhorta a las personas titulares del Poder Ejecutivo en los estados de Guerrero y Nayarit, así como a diversas autoridades federales, a comparecer e informar sobre el desplazamiento forzado de más de 1,300 personas indígenas derivado de la violencia generada por el crimen organizado en la región de la Montaña Baja de Guerrero, así como del desplazamiento forzado que también se ha dado en el municipio de Huajicori, en el estado de Nayarit, mismo que ha afectado a cientos de familias indígenas de cuando menos 6 comunidades.",
+   "verdad": "no"
+  },
+  {
+   "id": "c59",
+   "stratum": "solo_v2",
+   "lid": "625",
+   "fecha": "2026-06-23",
+   "titulo": "Por el que exhorta a la Secretaría de Gobernación, a través del Consejo Nacional para Prevenir la Discriminación, a fortalecer las campañas nacionales de sensibilización, prevención y combate al discurso de odio, particularmente aquel dirigido contra personas pertenecientes a grupos en situación de vulnerabilidad, con el fin de promover una cultura de respeto, inclusión y convivencia pacífica.",
+   "verdad": "no"
+  },
+  {
+   "id": "c60",
+   "stratum": "solo_v2",
+   "lid": "617",
+   "fecha": "2026-06-10",
+   "titulo": "Por el que exhorta al gobierno de la Ciudad de México, a la Secretaría de Obras y Servicios y a la Secretaría de la Contraloría General de la Ciudad de México a informar y transparentar los recursos públicos destinados al Programa de Intervención Urbana de la Ciudad de México.",
+   "verdad": "no"
+  }
  ]
 }

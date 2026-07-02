@@ -105,22 +105,31 @@ amplias que fragmentan un mismo evento en 6 buckets, (2) misclasificación
 
 Medido **a nivel evento/entidad** (matcher `scripts/matcher_evento.py`: términos
 distintivos compartidos + stem + IDF, cruzando categorías) y con **las 22 fuentes**
-de `articulos`:
+de `articulos`, el matcher léxico reportó 86% de instrumentos con precedente
+(vs 21% placebo) y lead mediana 13d.
 
-- **86% de los instrumentos 2026** (iniciativas + proposiciones con PA) tienen
-  cobertura mediática del MISMO evento en las 3 semanas previas.
-- **21% en ventana placebo** (azar) → lift real ~65 pts. Señal FUERTE.
-- Lead time: **mediana 13 días**; la media antecede en ~69% de los casos.
-- Validado en casos reales: Abud Flores (exhorto 14-ene ↔ detención rector 12-ene),
-  derrame del Golfo (instrumentos abr ↔ cobertura del derrame).
+### ⚠️ RETRACTACIÓN (2026-07-02): el 86% estaba INFLADO
+El usuario etiquetó a ciegas 60 casos estratificados (eval set GOLD,
+`eval/matcher_eval_set.json`). Resultado contra su criterio:
 
-**Qué es FIAT, corregido:** no un pronosticador, sino un **vinculador de eventos /
-motor de atribución** — la mayoría de la acción legislativa reciente SIGUE a un
-evento mediático, y se puede ligar cada instrumento con la nota que lo precedió.
+- **Matcher v2 (evento/entidad): precisión 30%** (11/37), recall 79%.
+- **Modelo viejo (subcat-keyword, el de reactividad en producción): precisión 12%** (3/24).
+- Ambos **pierden eventos reales** (Abud, despidos GM Ramos Arizpe, GNL Saguaro):
+  27% de falsos negativos en el estrato "ambos_no".
+- **Tasa real estimada de PPAs que responden a un evento: ~28%** (ponderada por
+  estrato), NO 86%. El matching léxico laxo contaba solapamientos temáticos/
+  institucionales como "mismo evento".
 
-Pipeline: `scripts/vincular_eventos.py` → tabla `evento_vinculos` (por instrumento:
-tiene_precedente, score, nota principal, lead_dias). CAPA ADITIVA: no toca scores,
-comisiones, efectividad ni descripciones.
+Lo que sí sobrevive: (a) el vínculo evento→legislación EXISTE y es demostrable en
+casos fuertes (derrame del Golfo, Abud, Choapas, PACIC, tribunal agrario dist. 16);
+(b) v2 > viejo (30% vs 12%); (c) el criterio correcto es "MISMO evento específico",
+no solapamiento temático — estándar fijado por el etiquetado del usuario.
 
-Pendiente: sumar La Jornada edición web (`/noticia/`) y el histórico multi-fuente
-2024-2025 (hoy solo 2 fuentes ahí → señal más débil en el pasado).
+**REGLA DE ADOPCIÓN:** ningún matcher entra a reactividad/producción sin
+precisión≥90% Y recall≥90% contra el eval set GOLD del usuario
+(`scripts/test_matcher_eval.py`; el set solo crece). Estado: ❌ 30%/79%.
+
+Pipeline `scripts/vincular_eventos.py` → tabla `evento_vinculos`: sus conteos
+heredan la inflación del matcher léxico — NO usar/publicar hasta pasar el umbral.
+Siguiente iteración: capa de verificación semántica sobre los candidatos léxicos
+(validar juez-Haiku contra las 60 etiquetas del usuario antes de escalar).
