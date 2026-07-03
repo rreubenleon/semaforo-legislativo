@@ -30,6 +30,15 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      # Podar JSON grandes que solo usan los scrapers, no el frontend (ver
+      # pipeline.yml). Evita subir ~100MB de peso muerto a Pages.
+      - name: Podar archivos no usados por el frontend
+        run: |
+          rm -f dashboard/diputados_lxvi_oficial.json \
+                dashboard/senadores_lxvi_oficial.json \
+                dashboard/diputados_urls_oficial.json
+          echo "Tamaño del dashboard a desplegar:"; du -sh dashboard
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:

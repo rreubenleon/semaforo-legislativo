@@ -291,6 +291,18 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
+      # Podar del artefacto de Pages los JSON grandes que SOLO usan los scripts
+      # scrapers como datos intermedios (el frontend NO los usa: 0 referencias en
+      # index.html). Antes se subían ~100MB de peso muerto que inflaban el sitio
+      # a ~112MB y hacían fallar intermitente el deploy ("Deployment failed, try
+      # again later"). NO borra nada del repo; solo aligera lo que se sube.
+      - name: Podar archivos no usados por el frontend
+        run: |
+          rm -f dashboard/diputados_lxvi_oficial.json \
+                dashboard/senadores_lxvi_oficial.json \
+                dashboard/diputados_urls_oficial.json
+          echo "Tamaño del dashboard a desplegar:"; du -sh dashboard
+
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
