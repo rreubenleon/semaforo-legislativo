@@ -810,6 +810,40 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
         )
     logger.info(f"  Actos de actividad indexados: {len(actividad_set)}")
 
+    # 3b) Vínculos CONFIRMADOS evento→instrumento (juez; eval/vinculos_
+    #     produccion.json). Test adicional de "respondió": el legislador tiene
+    #     un vínculo cuya NOTA cae en la ventana del pico Y es del TEMA del
+    #     pico (keywords de la categoría — sin esto, coincidencias de pura
+    #     fecha inflaban 0%→95%, validado 3-jul). Solo SUMA hits verificados;
+    #     corrige subconteo por misclasificación (ej. exhorto Abud → "trabajo").
+    notas_vinc: dict[int, list[tuple[str, str]]] = {}
+    _cat_matchers: dict[str, list] = {}
+    _ruta_vinc = ROOT / "eval" / "vinculos_produccion.json"
+    if _ruta_vinc.exists():
+        from scripts.reactividad_pipeline import norm as _rnorm, mk as _rmk, mt as _rmt
+        from config import CATEGORIAS as _CATS
+        for _cat, _cfg in _CATS.items():
+            _kws = list(_cfg.get("keywords", [])) if isinstance(_cfg, dict) else []
+            _subs = _cfg.get("subcategorias", {}) if isinstance(_cfg, dict) else {}
+            if isinstance(_subs, dict):
+                for _sc in _subs.values():
+                    if isinstance(_sc, dict):
+                        _kws += _sc.get("keywords", [])
+            if _kws:
+                _cat_matchers[_cat] = _rmk(_kws)
+        for _x in json.loads(_ruta_vinc.read_text()).get("vinculos", []):
+            for _row in db_ro.execute(
+                "SELECT al.legislador_id AS lid FROM actividad_legislador al "
+                "JOIN sil_documentos sd ON sd.id = al.sil_documento_id "
+                "WHERE sd.seguimiento_id = ? AND al.legislador_id IS NOT NULL",
+                (_x["sil_id"],),
+            ):
+                notas_vinc.setdefault(int(_row["lid"]), []).append(
+                    (_x["nota_fecha"], _rnorm(_x["nota_titulo"])))
+        logger.info(
+            f"  Vínculos confirmados: {sum(len(v) for v in notas_vinc.values())} "
+            f"notas · {len(notas_vinc)} legisladores")
+
     # 4) Calcular hit rate por legislador
     batch_sql: list[str] = []
     ahora = datetime.utcnow().isoformat()
@@ -824,6 +858,8 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
             continue
         total = len(picos)
         respondio = 0
+        _ms_cat = _cat_matchers.get(categoria)
+        _notas_leg = notas_vinc.get(leg_id, [])
         for pico_str in picos:
             try:
                 d0 = datetime.strptime(pico_str, "%Y-%m-%d").date()
@@ -833,11 +869,19 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
             # El legislador a veces actúa ANTES del pico (puede causarlo).
             reacciono = False
             mitad = HITRATE_VENTANA_DIAS // 2
+            ventana_fechas = set()
             for delta in range(-mitad, HITRATE_VENTANA_DIAS - mitad + 1):
                 d = (d0 + timedelta(days=delta)).isoformat()
+                ventana_fechas.add(d)
                 if (leg_id, categoria, d) in actividad_set:
                     reacciono = True
                     break
+            # Test por vínculo confirmado: nota en ventana Y del tema del pico
+            if not reacciono and _ms_cat and _notas_leg:
+                for _nf, _nt in _notas_leg:
+                    if _nf in ventana_fechas and _rmt(_nt, _ms_cat):
+                        reacciono = True
+                        break
             if reacciono:
                 respondio += 1
 

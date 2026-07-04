@@ -104,6 +104,53 @@ def construir_agenda(con):
     return agenda, fidx, submatch
 
 
+VINCULOS = ROOT / "eval" / "vinculos_produccion.json"
+
+
+def cobertura_vinculos(con, agenda, fidx, submatch):
+    """Eventos cubiertos según vínculos CONFIRMADOS evento→instrumento (juez,
+    eval/vinculos_produccion.json). La NOTA identifica el evento: subcat cuyo
+    keyword matchea la nota + ventana del pico que contiene su fecha.
+
+    Filtro anti-ruido (caso Cervantes, validado 3-jul): el subcat también debe
+    ser coherente con el INSTRUMENTO — misma categoría padre que la categoría
+    del instrumento en actividad_legislador, o keywords del subcat presentes en
+    el título del instrumento. Sin esto, una palabra suelta en la nota mete
+    subtemas ajenos (Sedena/'El Mencho' sumaba agua_saneamiento).
+
+    Devuelve {lid_str: set[(subcat, ev_i)]} para unir con la cobertura keyword.
+    """
+    if not VINCULOS.exists():
+        return {}
+    extra = defaultdict(set)
+    for x in json.loads(VINCULOS.read_text()).get("vinculos", []):
+        rows = con.execute(
+            "SELECT al.legislador_id, al.categoria FROM actividad_legislador al "
+            "JOIN sil_documentos sd ON sd.id = al.sil_documento_id "
+            "WHERE sd.seguimiento_id = ? AND al.legislador_id IS NOT NULL",
+            (x["sil_id"],)).fetchall()
+        if not rows:
+            continue
+        ni = fidx.get(x["nota_fecha"])
+        if ni is None:
+            continue
+        tn = norm(x["nota_titulo"]); ti = norm(x.get("titulo", ""))
+        for subcat, (catl, ms) in submatch.items():
+            if not mt(tn, ms):
+                continue
+            padre = subcat.split("/")[0]
+            eventos = [ev_i for ev_i, (s0, s1) in enumerate(agenda.get(subcat, []))
+                       if s0 - 2 <= ni <= s1 + 3]
+            if not eventos:
+                continue
+            for lid, cat_instr in rows:
+                if (cat_instr or "") != padre and not mt(ti, ms):
+                    continue  # anti-ruido: subcat ajeno al instrumento
+                for ev_i in eventos:
+                    extra[str(lid)].add((subcat, ev_i))
+    return extra
+
+
 def main():
     if not INSTR.exists():
         print(f"Falta {INSTR} (corre recontar_instrumentos_sil.py con títulos)."); return 1
@@ -115,6 +162,7 @@ def main():
     con = sqlite3.connect(str(ROOT / "semaforo.db"))
     agenda, fidx, submatch = construir_agenda(con)
     total_eventos = sum(len(v) for v in agenda.values())
+    extra_vinc = cobertura_vinculos(con, agenda, fidx, submatch)
 
     crudo = {}
     for lid, recs in instr.items():
@@ -128,6 +176,9 @@ def main():
                 for ev_i, (s0, s1) in enumerate(agenda.get(subcat, [])):
                     if s0 <= pi <= s1 + VENT:
                         cubiertos.add((subcat, ev_i)); temas.add(subcat)
+        # unir eventos confirmados por vínculo (juez) — solo SUMA lo verificado
+        cubiertos |= extra_vinc.get(lid, set())
+        temas |= {sc for sc, _ in extra_vinc.get(lid, set())}
         crudo[lid] = {"ppa_total": len(props), "cobertura_eventos": len(cubiertos),
                       "cobertura_temas": len(temas)}
 
@@ -135,7 +186,11 @@ def main():
     lider = max((v["cobertura_eventos"] for v in crudo.values()), default=0) or 1
     out = {}
     for lid, v in crudo.items():
-        score = round(100 * v["cobertura_eventos"] / lider) if v["ppa_total"] else None
+        # score si hay proposiciones O cobertura confirmada por vínculos
+        # (un legislador sin PPAs pero con iniciativas vinculadas a eventos
+        # confirmados SÍ tiene reactividad medible)
+        medible = v["ppa_total"] or v["cobertura_eventos"]
+        score = round(100 * v["cobertura_eventos"] / lider) if medible else None
         out[lid] = {**v, "reactividad": score}
 
     OUT.write_text(json.dumps(out, ensure_ascii=False, indent=2))
