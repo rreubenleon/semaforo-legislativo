@@ -308,6 +308,28 @@ jobs:
         with:
           path: 'dashboard'
 
+      # Pages a veces responde "Deployment failed, try again later" (transitorio
+      # de la plataforma, sin incidente publicado). Antes fallábamos al primer
+      # intento → correo rojo cada vez. Ahora: hasta 3 intentos con espera.
       - name: Deploy to GitHub Pages
         id: deployment
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      - name: Espera antes del reintento
+        if: steps.deployment.outcome == 'failure'
+        run: sleep 120
+
+      - name: Deploy (reintento 2)
+        id: deployment2
+        if: steps.deployment.outcome == 'failure'
+        uses: actions/deploy-pages@v4
+        continue-on-error: true
+
+      - name: Espera antes del reintento final
+        if: steps.deployment.outcome == 'failure' && steps.deployment2.outcome == 'failure'
+        run: sleep 300
+
+      - name: Deploy (reintento 3, definitivo)
+        if: steps.deployment.outcome == 'failure' && steps.deployment2.outcome == 'failure'
         uses: actions/deploy-pages@v4
