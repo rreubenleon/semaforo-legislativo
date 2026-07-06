@@ -1133,36 +1133,66 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
     DIAS_LXVI = max(int(fila["d"] or 0), 1)
     logger.info(f"  Baseline LXVI: {DIAS_LXVI} días desde {FECHA_INICIO_LXVI}")
 
-    def _tasa_lxvi(leg_id: int, tipos: tuple, solo_individual: bool = True) -> float:
+    # Instrumentos REACTIVOS confirmados (vínculo evento→instrumento, juez):
+    # se proyectan con su promedio de largo plazo, NO con el ritmo reciente —
+    # una ráfaga de 6 exhortos por una explosión no es un ritmo nuevo y antes
+    # inflaba el factor_reciente. Set de sil_documento_id para exclusión.
+    _react_ids: set[int] = set()
+    _vinc_path = ROOT / "eval" / "vinculos_produccion.json"
+    if _vinc_path.exists():
+        _sids = [v["sil_id"] for v in json.loads(_vinc_path.read_text()).get("vinculos", [])]
+        for _i in range(0, len(_sids), 500):
+            _chunk = _sids[_i:_i + 500]
+            _q = ",".join("?" * len(_chunk))
+            for _r in db_ro.execute(
+                    f"SELECT id FROM sil_documentos WHERE seguimiento_id IN ({_q})", _chunk):
+                _react_ids.add(int(_r["id"]))
+        logger.info(f"  Instrumentos reactivos confirmados (proyección suavizada): {len(_react_ids)}")
+    _react_csv = ",".join(str(i) for i in sorted(_react_ids)) or "0"
+
+    def _tasa_lxvi(leg_id: int, tipos: tuple, solo_individual: bool = True,
+                   reactivos: str = "ambos") -> float:
         """Actividad del tipo desde inicio LXVI / días_lxvi.
 
         Por defecto (solo_individual=True): solo cuenta actos donde el
         legislador es promovente único. Las firmas con bancada se excluyen
         del ranking de eficiencia personal porque son acción colectiva
         del partido. Si solo_individual=False, cuenta todas las actividades.
+        reactivos: 'ambos' (todo) | 'sin' (excluye reactivos) | 'solo' (solo reactivos).
         """
         like_clause = " OR ".join(["LOWER(tipo_instrumento) LIKE ?"] * len(tipos))
         filtro_ind = " AND (co_firmantes IS NULL OR co_firmantes = '')" if solo_individual else ""
+        filtro_react = ""
+        if reactivos == "sin":
+            filtro_react = f" AND (sil_documento_id IS NULL OR sil_documento_id NOT IN ({_react_csv}))"
+        elif reactivos == "solo":
+            filtro_react = f" AND sil_documento_id IN ({_react_csv})"
         row = db_ro.execute(
             f"""
             SELECT COUNT(*) as n FROM actividad_legislador
             WHERE legislador_id = ?
               AND ({like_clause})
-              AND fecha_presentacion >= ?{filtro_ind}
+              AND fecha_presentacion >= ?{filtro_ind}{filtro_react}
             """,
             (leg_id, *tipos, FECHA_INICIO_LXVI),
         ).fetchone()
         return (row["n"] or 0) / DIAS_LXVI
 
-    def _tasa_reciente(leg_id: int, tipos: tuple, dias: int, solo_individual: bool = True) -> float:
+    def _tasa_reciente(leg_id: int, tipos: tuple, dias: int, solo_individual: bool = True,
+                       reactivos: str = "ambos") -> float:
         like_clause = " OR ".join(["LOWER(tipo_instrumento) LIKE ?"] * len(tipos))
         filtro_ind = " AND (co_firmantes IS NULL OR co_firmantes = '')" if solo_individual else ""
+        filtro_react = ""
+        if reactivos == "sin":
+            filtro_react = f" AND (sil_documento_id IS NULL OR sil_documento_id NOT IN ({_react_csv}))"
+        elif reactivos == "solo":
+            filtro_react = f" AND sil_documento_id IN ({_react_csv})"
         row = db_ro.execute(
             f"""
             SELECT COUNT(*) as n FROM actividad_legislador
             WHERE legislador_id = ?
               AND ({like_clause})
-              AND fecha_presentacion >= date('now', '-{dias} days'){filtro_ind}
+              AND fecha_presentacion >= date('now', '-{dias} days'){filtro_ind}{filtro_react}
             """,
             (leg_id, *tipos),
         ).fetchone()
@@ -1245,8 +1275,19 @@ def paso_proyecciones(db_ro: sqlite3.Connection) -> dict:
             f = rec / base
             return max(0.3, min(3.0, f))
 
-        proy_ini = base_ini * _factor(rec_ini, base_ini) * VENTANA_PROYECCION_DIAS
-        proy_prop = base_prop * _factor(rec_prop, base_prop) * VENTANA_PROYECCION_DIAS
+        # Proyección anti-ráfaga: lo ESTRUCTURAL se proyecta con su ritmo
+        # reciente (factor como siempre); lo REACTIVO confirmado se proyecta
+        # con su promedio de largo plazo (una ráfaga por un evento no es un
+        # ritmo nuevo). Sin reactivos, es idéntica a la fórmula anterior.
+        def _proy(leg: int, tipos: tuple) -> float:
+            base_estr = _tasa_lxvi(leg, tipos, reactivos="sin")
+            rec_estr = _tasa_reciente(leg, tipos, 30, reactivos="sin")
+            base_react = _tasa_lxvi(leg, tipos, reactivos="solo")
+            return (base_estr * _factor(rec_estr, base_estr) + base_react) \
+                * VENTANA_PROYECCION_DIAS
+
+        proy_ini = _proy(leg_id, TIPOS_INICIATIVA)
+        proy_prop = _proy(leg_id, TIPOS_PROPOSICION)
 
         if proy_ini == 0 and proy_prop == 0 and base_ini == 0 and base_prop == 0 \
                 and base_ini_total == 0 and base_prop_total == 0:
