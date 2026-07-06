@@ -205,11 +205,19 @@ def main():
                 es_vinculo = "SI" in r.content[0].text.upper()
                 time.sleep(0.2)
             if es_vinculo:
+                # tipo_nota: la nota ¿cubre un evento EXTERNO o el propio proceso
+                # legislativo? (112/439 eran cobertura de congreso — distinguirlo
+                # permite a las métricas filtrar autoreferencia)
+                import re as _re
+                _PROC = _re.compile(
+                    r"\b(iniciativa|reforma[sn]?|congreso|senado|diputad|"
+                    r"comisi[oó]n permanente|c[aá]mara|dictamen|pleno|legislador)\b", _re.I)
                 vinculos.append({"sil_id": sid, "fecha": fecha[:10], "presentador": present,
                                  "tipo_grupo": tg, "titulo": titulo, "nota_fecha": media[i][0],
                                  "nota_fuente": mfte[i], "nota_titulo": mtxt[i],
                                  "lead_dias": int(d0 - mdate[i]),
-                                 "juez": "local" if modelo is not None else "haiku"})
+                                 "juez": "local" if modelo is not None else "haiku",
+                                 "tipo_nota": "proceso" if _PROC.search(mtxt[i]) else "externo"})
                 break
         if (k + 1) % 20 == 0:
             extra = f" · ${tin/1e6+tout/1e6*5:.3f}" if cli else ""
