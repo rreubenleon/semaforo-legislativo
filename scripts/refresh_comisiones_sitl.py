@@ -89,13 +89,27 @@ def ejecutar_sql_d1(sql, remote=True):
             "--remote" if remote else "--local",
             "--file", sql_path,
         ]
-        result = subprocess.run(
-            cmd, capture_output=True, text=True, cwd=WORKER_DIR, timeout=120
-        )
-        if result.returncode != 0:
+        # Reintentos ante transitorios (D1 ocupado, "internal error" 7500 de la
+        # API de Cloudflare); fallo inmediato solo si es error real de SQL.
+        import time as _time
+        for intento in range(5):
+            result = subprocess.run(
+                cmd, capture_output=True, text=True, cwd=WORKER_DIR, timeout=120
+            )
+            if result.returncode == 0:
+                return result.stdout
+            salida = (result.stderr or "") + (result.stdout or "")
+            permanente = ("SQLITE_" in salida or "syntax" in salida.lower()
+                          or "no such table" in salida.lower()
+                          or "no such column" in salida.lower())
+            if not permanente and intento < 4:
+                espera = 30 * (intento + 1)
+                logger.warning(f"D1 falló (transitorio); reintento {intento+1}/4 "
+                               f"en {espera}s: {salida[:200]}")
+                _time.sleep(espera)
+                continue
             logger.error(f"wrangler error: {result.stderr[:500]}")
             raise RuntimeError(result.stderr[:500])
-        return result.stdout
     finally:
         os.unlink(sql_path)
 

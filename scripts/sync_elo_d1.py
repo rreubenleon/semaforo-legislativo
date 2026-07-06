@@ -103,15 +103,29 @@ def generar_sql(dry_run=False):
         "npx", "wrangler", "d1", "execute", "fiat-busqueda",
         "--remote", "--file", tmp_path,
     ]
-    result = subprocess.run(cmd, cwd=worker_dir, capture_output=True, text=True, timeout=120)
-    Path(tmp_path).unlink()
-
-    if result.returncode != 0:
-        logger.error(f"wrangler stderr:\n{result.stderr[:1500]}")
-        raise RuntimeError("wrangler falló")
-
-    logger.info(f"✓ {len(rows)} legisladores_elo sincronizados a D1")
-    return len(rows)
+    # Reintentos ante transitorios (D1 ocupado, "internal error" 7500 de la
+    # API de Cloudflare); fallo inmediato solo si es error real de SQL.
+    import time as _time
+    try:
+        for intento in range(5):
+            result = subprocess.run(cmd, cwd=worker_dir, capture_output=True, text=True, timeout=120)
+            if result.returncode == 0:
+                logger.info(f"✓ {len(rows)} legisladores_elo sincronizados a D1")
+                return len(rows)
+            salida = (result.stderr or "") + (result.stdout or "")
+            permanente = ("SQLITE_" in salida or "syntax" in salida.lower()
+                          or "no such table" in salida.lower()
+                          or "no such column" in salida.lower())
+            if not permanente and intento < 4:
+                espera = 30 * (intento + 1)
+                logger.warning(f"D1 falló (transitorio); reintento {intento+1}/4 "
+                               f"en {espera}s: {salida[:200]}")
+                _time.sleep(espera)
+                continue
+            logger.error(f"wrangler stderr:\n{result.stderr[:1500]}")
+            raise RuntimeError("wrangler falló")
+    finally:
+        Path(tmp_path).unlink()
 
 
 def main():

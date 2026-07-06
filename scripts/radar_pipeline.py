@@ -75,13 +75,18 @@ def ejecutar_sql_d1(sql: str, remote: bool = True) -> dict:
             if result.returncode == 0:
                 return {"ok": True, "stdout_size": len(result.stdout)}
             salida = (result.stderr or "") + (result.stdout or "")
-            ocupado = ("long-running import" in salida
-                       or "Cannot start another import" in salida)
-            if ocupado and intento < 4:
+            # Error REAL de SQL → fallar de inmediato (reintentar enmascararía
+            # un bug nuestro). Todo lo demás (D1 ocupado, "internal error"
+            # code 7500 de la API de Cloudflare, timeouts de red) es
+            # transitorio → reintentar con espera creciente.
+            permanente = ("SQLITE_" in salida or "syntax" in salida.lower()
+                          or "no such table" in salida.lower()
+                          or "no such column" in salida.lower())
+            if not permanente and intento < 4:
                 espera = 30 * (intento + 1)
                 logger.warning(
-                    f"D1 ocupado con otra importación; reintento "
-                    f"{intento + 1}/4 en {espera}s")
+                    f"D1 falló (transitorio); reintento "
+                    f"{intento + 1}/4 en {espera}s: {salida[:200]}")
                 _time.sleep(espera)
                 continue
             logger.error(f"wrangler stderr: {result.stderr[:800]}")
