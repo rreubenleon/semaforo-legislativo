@@ -229,11 +229,15 @@ def paso_snapshot_legisladores(db_ro: sqlite3.Connection) -> dict:
     logger.info(f"Snapshot de {len(rows)} legisladores → D1")
 
     # INSERT OR REPLACE para no romper FK de legisladores_perfil.
-    # Si un row ya existe, lo actualiza; si no, lo crea. Nunca borra.
+    # UPSERT que SOLO toca sus propias columnas. OJO: antes era INSERT OR
+    # REPLACE, que en SQLite BORRA la fila y la re-inserta → todas las columnas
+    # no listadas (n_ini_adherente/n_ini_de_grupo/n_prop_* de los conteos por
+    # rol) se reseteaban a 0 EN CADA CORRIDA. Así murió en silencio el desglose
+    # Ind/Grupo de Diputados (detectado en auditoría 7-jul).
     sqls = []
     for r in rows:
         sqls.append(
-            "INSERT OR REPLACE INTO legisladores "
+            "INSERT INTO legisladores "
             "(id, nombre, nombre_normalizado, camara, partido, estado, "
             "distrito, foto_url, legislatura, comisiones_cargo) VALUES ("
             f"{r['id']}, "
@@ -246,7 +250,16 @@ def paso_snapshot_legisladores(db_ro: sqlite3.Connection) -> dict:
             f"{_sql_escape(r['foto_url'])}, "
             f"{_sql_escape(r['legislatura'])}, "
             f"{_sql_escape(r['comisiones_cargo'])}"
-            ");"
+            ") ON CONFLICT(id) DO UPDATE SET "
+            "nombre=excluded.nombre, "
+            "nombre_normalizado=excluded.nombre_normalizado, "
+            "camara=excluded.camara, "
+            "partido=excluded.partido, "
+            "estado=excluded.estado, "
+            "distrito=excluded.distrito, "
+            "foto_url=excluded.foto_url, "
+            "legislatura=excluded.legislatura, "
+            "comisiones_cargo=excluded.comisiones_cargo;"
         )
 
     # Batching: con comisiones_cargo incluido (puede ser 1-2KB por fila),
