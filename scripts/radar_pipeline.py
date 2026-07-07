@@ -785,24 +785,68 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
         f"{len(cats_por_leg)}"
     )
 
-    # 2) Picos por categoría desde `scores` (fuente de verdad, sin sesgo).
-    #    Ventana amplia para tener historia suficiente, luego cada legislador
-    #    usa sus últimos N picos.
-    picos_por_cat: dict[str, list[str]] = {}  # {cat: [fecha_pico, ...] desc}
-    for row in db_ro.execute(
-        """
-        SELECT categoria, fecha
-        FROM scores
-        WHERE score_media >= ?
-          AND fecha >= ?
-        ORDER BY categoria, fecha DESC
-        """,
-        (PICO_SCORE_MEDIA_MIN, FECHA_INICIO_LXVI),
+    # 2) Picos REALES por categoría: z>=1.5 del conteo diario de notas de la
+    #    categoría vs su ritmo ordinario (mismo detector estadístico que
+    #    reactividad), días consecutivos (gap<=7) colapsados a UN evento cuya
+    #    fecha es el día de inicio. ANTES: score_media>=55 sobre el score
+    #    SATURADO → 50-52% de TODOS los días eran "pico" (auditoría 6-jul) y
+    #    el hit rate medía "actividad reciente en la categoría", no respuesta
+    #    a picos mediáticos como promete el tooltip.
+    from datetime import date as _date, timedelta as _td
+    _d0 = datetime.strptime(FECHA_INICIO_LXVI, "%Y-%m-%d").date()
+    _hoy = datetime.utcnow().date()
+    _NDIAS = (_hoy - _d0).days + 1
+    _fidx = {(_d0 + _td(days=_i)).isoformat(): _i for _i in range(_NDIAS)}
+    _series: dict[str, list[float]] = {}
+    for _row in db_ro.execute(
+        "SELECT substr(fecha,1,10) AS f, categorias FROM articulos "
+        "WHERE fecha >= ? AND categorias IS NOT NULL AND categorias != ''",
+        (FECHA_INICIO_LXVI,),
     ):
-        picos_por_cat.setdefault(row["categoria"], []).append(row["fecha"])
+        _i = _fidx.get(_row["f"])
+        if _i is None:
+            continue
+        for _tok in (_row["categorias"] or "").split(","):
+            _c = _tok.split(":")[0].strip()
+            if _c:
+                _series.setdefault(_c, [0.0] * _NDIAS)[_i] += 1
+    # z-score sobre el SHARE del día (proporción de la cobertura total), NO
+    # sobre conteos crudos: el scraper tiene huecos y ráfagas de recuperación
+    # (ej. 5-8 abr ~10-50 notas/día y el 9-abr 1,470) que disparaban "evento"
+    # en TODAS las categorías a la vez. El share es inmune al volumen.
+    _tot = [0.0] * _NDIAS
+    for _arr in _series.values():
+        for _i in range(_NDIAS):
+            _tot[_i] += _arr[_i]
+    _MIN_TOTAL_DIA = 100  # share inestable en días de captura rala
+    # ritmo ordinario = días no-receso (mismos meses que excluye reactividad)
+    _ord_idx = [_i for _i in range(_NDIAS)
+                if (_d0 + _td(days=_i)).month not in (1, 5, 6, 7, 8)
+                and _tot[_i] >= _MIN_TOTAL_DIA]
+    picos_por_cat: dict[str, list[str]] = {}  # {cat: [fecha_inicio_evento] desc}
+    for _c, _arr in _series.items():
+        _shares = {_i: _arr[_i] / _tot[_i] for _i in range(_NDIAS)
+                   if _tot[_i] >= _MIN_TOTAL_DIA}
+        _vals = [_shares[_i] for _i in _ord_idx if _i in _shares]
+        if len(_vals) < 20:
+            continue
+        _mu = sum(_vals) / len(_vals)
+        _sd = (sum((_v - _mu) ** 2 for _v in _vals) / len(_vals)) ** 0.5
+        if _sd == 0:
+            continue
+        _dias = [_i for _i in sorted(_shares)
+                 if _arr[_i] > 0 and (_shares[_i] - _mu) / _sd >= 1.5]
+        _evs: list[list[int]] = []
+        for _i in _dias:
+            if _evs and _i - _evs[-1][1] <= 7:
+                _evs[-1][1] = _i
+            else:
+                _evs.append([_i, _i])
+        picos_por_cat[_c] = [(_d0 + _td(days=_s)).isoformat()
+                             for _s, _ in reversed(_evs)]
 
     logger.info(
-        f"  Picos (score_media≥{PICO_SCORE_MEDIA_MIN}) en "
+        f"  Picos REALES (z≥1.5, eventos colapsados) en "
         f"{len(picos_por_cat)} categorías · total={sum(len(v) for v in picos_por_cat.values())}"
     )
 

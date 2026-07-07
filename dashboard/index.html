@@ -2578,7 +2578,7 @@
                     {glosarioAbierto && (
                         <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-4 text-xs text-gray-700 space-y-2">
                             <div className="font-semibold text-indigo-800 mb-1">Glosario de stats</div>
-                            <div><span className="font-semibold">Hit Rate</span> — % de los 20 picos mediáticos más recientes en la categoría dominante del legislador donde presentó un instrumento dentro de 7 días. Verde ≥70%, ámbar ≥40%, rojo &lt;40%.</div>
+                            <div><span className="font-semibold">Hit Rate</span> — % de los picos mediáticos REALES más recientes en la categoría dominante (eventos con cobertura ≥1.5σ sobre el ritmo ordinario; días consecutivos = un evento) donde presentó un instrumento en ±7 días. Verde ≥70%, ámbar ≥40%, rojo &lt;40%.</div>
                             <div><span className="font-semibold">INI 15D</span> — Iniciativas de ley proyectadas en los próximos 15 días, calculadas sobre el ritmo legislativo del periodo LXVI.</div>
                             <div><span className="font-semibold">PROP 15D</span> — Proposiciones con punto de acuerdo proyectadas en los próximos 15 días, misma metodología que INI 15D.</div>
                             <div><span className="font-semibold">Ind / Grupo</span> — Instrumentos legislativos presentados durante la LXVI. <strong>Individuales</strong>: firmados como único promovente. <strong>De grupo</strong>: firmados con bancada o como co-firmante (acción colectiva del partido). Las de grupo no cuentan para Hit Rate ni Efectividad personal porque mezclan trabajo individual con presión de grupo. Hover sobre cada celda para ver desglose por estado (aprobadas, pendientes, desechadas).</div>
@@ -2717,7 +2717,7 @@
                                             Legislador {fSort === 'nombre' && <span className="text-[8px]">▼</span>}
                                         </div>
                                         <SortableHeader sortKey="categoria" label="Categoría" tip="Categoría dominante (sustantivo). Ordenar A-Z." mono={false} />
-                                        <SortableHeader sortKey="hit_rate" label="Hit rate" tip="% de los últimos picos mediáticos en su categoría donde respondió presentando un instrumento dentro de 7 días." />
+                                        <SortableHeader sortKey="hit_rate" label="Hit rate" tip="% de los picos mediáticos REALES de su categoría (cobertura ≥1.5σ sobre el ritmo; días consecutivos = un evento) donde respondió con un instrumento en ±7 días." />
                                         <SortableHeader sortKey="iniciativas" label="Ini 15d" tip="Iniciativas proyectadas en los próximos 15 días según ritmo LXVI." />
                                         <SortableHeader sortKey="proposiciones" label="Prop 15d" tip="Proposiciones proyectadas en los próximos 15 días." />
                                         <SortableHeader sortKey="iniciativas_indiv" label="Iniciativas" tip="Iniciativas LXVI como promovente único. Sin firmas con bancada." />
@@ -3456,6 +3456,7 @@
             const aprob = leg.elo_aprobados ?? 0;
             const desech = leg.elo_desechados ?? 0;
             const pend = (leg.n_ini_pend_ind ?? 0) + (leg.n_prop_pend_ind ?? 0);
+            const ret = leg.elo_retiradas ?? 0;
             const resueltos = aprob + desech;
             const tasaCruda = resueltos >= 1 ? (aprob / resueltos) : null;
             // Wilson 95% lower bound — manejo correcto de samples chicos.
@@ -3512,10 +3513,11 @@
                 : { label: 'MÍNIMO', desc: 'Casi nada aprobado, o muy poca muestra resuelta a la fecha.', color: 'text-red-700', bg: 'bg-red-50 border-red-200', barBg: 'bg-red-500' };
 
             // Distribuciones para barra apilada (sobre total presentado LXVI)
-            const total = aprob + desech + pend;
+            const total = aprob + desech + pend + ret;
             const wPct = total ? 100 * aprob / total : 0;
             const lPctDes = total ? 100 * desech / total : 0;
             const lPctPen = total ? 100 * pend / total : 0;
+            const lPctRet = total ? 100 * ret / total : 0;
 
             return (
                 <div className="space-y-4">
@@ -3571,9 +3573,9 @@
                     <div>
                         <div className="flex items-baseline justify-between mb-2">
                             <div className="text-[10px] uppercase tracking-wider font-bold text-gray-500 font-mono">Historial LXVI</div>
-                            <div className="text-xs font-mono text-gray-600">{aprob + desech + pend} instrumentos con turno</div>
+                            <div className="text-xs font-mono text-gray-600">{aprob + desech + pend + ret} instrumentos con turno</div>
                         </div>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className={`grid ${ret > 0 ? 'grid-cols-4' : 'grid-cols-3'} gap-2`}>
                             <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-2 text-center">
                                 <div className="text-[9px] uppercase text-emerald-700 font-bold">Aprobados</div>
                                 <div className="text-lg font-black text-emerald-700 font-mono leading-none mt-0.5">{aprob}</div>
@@ -3589,6 +3591,13 @@
                                 <div className="text-lg font-black text-red-700 font-mono leading-none mt-0.5">{desech}</div>
                                 <div className="text-[9px] text-red-600 mt-0.5">no avanzaron</div>
                             </div>
+                            {ret > 0 && (
+                                <div className="bg-slate-50 border border-slate-200 rounded-lg p-2 text-center" title="Instrumentos que el propio legislador retiró: hubo intención y después se quitó. No cuentan como derrota ni entran a la Efectividad.">
+                                    <div className="text-[9px] uppercase text-slate-600 font-bold">Retiradas</div>
+                                    <div className="text-lg font-black text-slate-600 font-mono leading-none mt-0.5">{ret}</div>
+                                    <div className="text-[9px] text-slate-500 mt-0.5">los quitó</div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Barra apilada */}
@@ -3597,6 +3606,7 @@
                                 {wPct > 0 && <div className="bg-emerald-500" style={{ width: `${wPct}%` }} title={`Aprobados: ${aprob}`} />}
                                 {lPctPen > 0 && <div className="bg-amber-400" style={{ width: `${lPctPen}%` }} title={`En revisión: ${pend}`} />}
                                 {lPctDes > 0 && <div className="bg-red-500" style={{ width: `${lPctDes}%` }} title={`Desechados: ${desech}`} />}
+                                {lPctRet > 0 && <div className="bg-slate-400" style={{ width: `${lPctRet}%` }} title={`Retiradas: ${ret}`} />}
                             </div>
                             <div className="flex justify-between text-[9px] text-gray-500 font-mono mt-1">
                                 <span>0%</span><span>50%</span><span>100%</span>
@@ -4113,7 +4123,7 @@
                     </div>
 
                     <div className="text-xs text-gray-500 leading-relaxed">
-                        Un <strong>pico mediático</strong> es un día con score_media ≥ 55 en la categoría dominante del legislador.
+                        Un <strong>pico mediático</strong> es un evento real de cobertura: día(s) en que la categoría dominante concentra ≥1.5σ más participación de la prensa que su ritmo ordinario (días consecutivos cuentan como UN evento). Son pocos por categoría — por eso responder a ellos distingue.
                         Contamos como "respondió" si presentó algún instrumento (iniciativa, proposición, etc.) de la misma categoría
                         dentro de una ventana de ±7 días alrededor del pico.
                     </div>
@@ -8914,7 +8924,7 @@
                         <HeaderBtn col="tema" label="Categoría"
                           tip="Categoría dominante del legislador (medio_ambiente, educación, etc.). Se calcula con ≥3 actos legislativos desde inicio LXVI, ponderando iniciativas 2x sobre proposiciones." />
                         <HeaderBtn col="hit_rate" label="Hit rate"
-                          tip="Hit rate — % de los últimos 20 picos mediáticos en su categoría dominante donde el legislador presentó un instrumento dentro de los 7 días posteriores. Verde ≥70%, ámbar ≥40%, rojo <40%." />
+                          tip="Hit rate — % de los picos mediáticos REALES de su categoría dominante (eventos ≥1.5σ de cobertura) donde presentó un instrumento en ±7 días. Verde ≥70%, ámbar ≥40%, rojo <40%." />
                         <HeaderBtn col="ini" label="Ini 15d"
                           tip="Iniciativas proyectadas en los próximos 15 días, basadas en la tasa LXVI ajustada por actividad reciente (30d)." />
                         <HeaderBtn col="prop" label="Prop 15d"

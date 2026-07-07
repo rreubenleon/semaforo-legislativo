@@ -54,22 +54,30 @@ ESTATUS_APROBADO = ["Resuelto / Aprobado", "Aprobado", "Publicado"]
 ESTATUS_DESECHADO = ["Desechado", "Rechazado", "Retirado"]
 
 
-def clasificar_estatus(estatus_raw: str, fecha_presentacion: str) -> float | None:
+def clasificar_estatus(estatus_raw: str, fecha_presentacion: str):
     """
     Devuelve S (score real) para el ELO:
       1.0 si aprobado / resuelto
       0.0 si desechado
       0.3 si pendiente 90-180 días
       0.0 si pendiente > 180 días
+      "RETIRO" si retirada/retirado (categoría propia: NO es partida ni pérdida)
       None si pendiente < 90 días (excluir)
     """
     if not estatus_raw:
         return None
     est_lower = estatus_raw.lower()
 
+    # Retiro (ambos géneros): decisión de producto 7-jul — se MUESTRA como
+    # categoría propia ("hubo intención y se retiró"), no castiga el rating.
+    # Antes "retirado" (masc.) contaba como derrota y "retirada" (fem.) se
+    # ignoraba: 318 instrumentos tratados inconsistentemente (auditoría 6-jul).
+    if "retirad" in est_lower:
+        return "RETIRO"
+
     if "aprobado" in est_lower or "resuelto" in est_lower:
         return 1.0
-    if "desechado" in est_lower or "rechazado" in est_lower or "retirado" in est_lower:
+    if "desechado" in est_lower or "rechazado" in est_lower:
         return 0.0
     if "pendiente" in est_lower:
         try:
@@ -136,7 +144,7 @@ def calcular_tasas_comision(conn):
     por_comision = {}  # nombre → [aprobados, desechados, pendiente_largo]
     for comision, estatus, fp in rows:
         s = clasificar_estatus(estatus or "", fp or "")
-        if s is None:
+        if s is None or s == "RETIRO":  # retiros no cuentan en tasas de comisión
             continue
         por_comision.setdefault(comision, {"apr": 0, "des": 0, "tot": 0})
         por_comision[comision]["tot"] += 1
@@ -192,7 +200,8 @@ def _rows_y_tasas_desde_sil(conn, recs_por_leg):
                 if com:
                     com_apr[com] = com_apr.get(com, 0) + 1
                 glob_apr += 1; glob_res += 1
-            elif any(k in el for k in ("desech", "rechaz", "retir")):
+            # retiros NO cuentan como fracaso de la comisión (decisión 7-jul)
+            elif any(k in el for k in ("desech", "rechaz")):
                 if com:
                     com_des[com] = com_des.get(com, 0) + 1
                 glob_res += 1
@@ -264,11 +273,10 @@ def calcular_elos(conn):
         if S is None:
             continue
 
-        E = tasas_com.get(comision, tasa_global) if comision else tasa_global
-
         info = elos.setdefault(nombre_clave, {
             "rating": ELO_INICIAL, "partidas": 0, "wins": 0, "losses": 0,
             "draws": 0, "aprobados": 0, "desechados": 0, "pendientes_largo": 0,
+            "retiradas": 0,
             "partido": leg_partido or "", "camara": leg_camara or "",
             # legislador_id que YA trae la query (JOIN por al.legislador_id).
             # Antes se descartaba y guardar_en_db lo re-resolvía por nombre
@@ -276,6 +284,13 @@ def calcular_elos(conn):
             # el radar la mostraba sin Efectividad pese a tener 40 partidas.
             "legislador_id": leg_id,
         })
+
+        # Retiro: se cuenta y se muestra, pero NO es partida ni afecta rating.
+        if S == "RETIRO":
+            info["retiradas"] += 1
+            continue
+
+        E = tasas_com.get(comision, tasa_global) if comision else tasa_global
 
         delta = K * (S - E)
         info["rating"] += delta
@@ -461,6 +476,7 @@ def guardar_en_db(conn, elos):
             aprobados INTEGER,
             desechados INTEGER,
             pendientes_largo INTEGER,
+            retiradas INTEGER,
             draws INTEGER,
             fecha_calculo TEXT,
             legislador_id INTEGER,
@@ -469,7 +485,7 @@ def guardar_en_db(conn, elos):
         )
     """)
     # Migraciones idempotentes
-    for col, tipo in [("legislador_id", "INTEGER"), ("indice", "REAL"), ("percentil_camara", "REAL")]:
+    for col, tipo in [("legislador_id", "INTEGER"), ("indice", "REAL"), ("percentil_camara", "REAL"), ("retiradas", "INTEGER")]:
         try:
             conn.execute(f"ALTER TABLE legisladores_elo ADD COLUMN {col} {tipo}")
         except sqlite3.OperationalError:
@@ -503,15 +519,16 @@ def guardar_en_db(conn, elos):
         conn.execute("""
             INSERT INTO legisladores_elo (
                 nombre, partido, camara, rating, partidas,
-                aprobados, desechados, pendientes_largo, draws, fecha_calculo,
-                legislador_id, indice, percentil_camara
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                aprobados, desechados, pendientes_largo, retiradas, draws,
+                fecha_calculo, legislador_id, indice, percentil_camara
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(nombre) DO UPDATE SET
                 rating=excluded.rating,
                 partidas=excluded.partidas,
                 aprobados=excluded.aprobados,
                 desechados=excluded.desechados,
                 pendientes_largo=excluded.pendientes_largo,
+                retiradas=excluded.retiradas,
                 draws=excluded.draws,
                 fecha_calculo=excluded.fecha_calculo,
                 legislador_id=excluded.legislador_id,
@@ -519,7 +536,8 @@ def guardar_en_db(conn, elos):
                 percentil_camara=excluded.percentil_camara
         """, (nombre, v["partido"], v["camara"], round(v["rating"], 1),
               v["partidas"], v["aprobados"], v["desechados"],
-              v["pendientes_largo"], v["draws"], ahora, leg_id, indice, pct_cam))
+              v["pendientes_largo"], v.get("retiradas", 0), v["draws"],
+              ahora, leg_id, indice, pct_cam))
     conn.commit()
     n = conn.execute("SELECT COUNT(*) FROM legisladores_elo").fetchone()[0]
     con_indice = conn.execute("SELECT COUNT(*) FROM legisladores_elo WHERE indice IS NOT NULL").fetchone()[0]
