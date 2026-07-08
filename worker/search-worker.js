@@ -363,6 +363,7 @@ async function handleRadar(request, env) {
           e.rating as elo_rating, e.partidas as elo_partidas,
           e.aprobados as elo_aprobados, e.desechados as elo_desechados,
           e.pendientes_largo as elo_pendientes, e.draws as elo_draws,
+          COALESCE(e.retiradas, 0) as elo_retiradas,
           e.indice as elo_indice, e.percentil_camara as elo_percentil_camara,
           /* Cargo institucional: subquery que arma "mesa_directiva:Presidencia,jucopo:Coordinador"
              para que el frontend pueda parsearlo como badge. Solo Diputados por ahora. */
@@ -443,6 +444,7 @@ async function handleRadar(request, env) {
       elo_desechados: r.elo_desechados,
       elo_pendientes: r.elo_pendientes,
       elo_draws: r.elo_draws,
+      elo_retiradas: r.elo_retiradas,
       elo_indice: r.elo_indice,
       elo_percentil_camara: r.elo_percentil_camara,
       /* Cargo institucional parseado: array de {organo, rol}
