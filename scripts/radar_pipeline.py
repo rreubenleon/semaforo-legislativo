@@ -894,6 +894,10 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
             if _kws:
                 _cat_matchers[_cat] = _rmk(_kws)
         for _x in json.loads(_ruta_vinc.read_text()).get("vinculos", []):
+            # Hit Rate mide picos de la agenda FEDERAL: vínculos con nota
+            # REGIONAL (nota_entidad) van a la futura métrica local, no aquí.
+            if _x.get("nota_entidad"):
+                continue
             for _row in db_ro.execute(
                 "SELECT al.legislador_id AS lid FROM actividad_legislador al "
                 "JOIN sil_documentos sd ON sd.id = al.sil_documento_id "

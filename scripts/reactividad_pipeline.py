@@ -124,6 +124,11 @@ def cobertura_vinculos(con, agenda, fidx, submatch):
         return {}
     extra = defaultdict(set)
     for x in json.loads(VINCULOS.read_text()).get("vinculos", []):
+        # REACCIÓN NAC. mide agenda FEDERAL: vínculos con nota REGIONAL
+        # (nota_entidad) quedan reservados para la futura Reacción LOCAL —
+        # meterlos aquí cambiaría la semántica validada sin decidirlo.
+        if x.get("nota_entidad"):
+            continue
         rows = con.execute(
             "SELECT al.legislador_id, al.categoria FROM actividad_legislador al "
             "JOIN sil_documentos sd ON sd.id = al.sil_documento_id "
