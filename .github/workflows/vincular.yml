@@ -76,6 +76,22 @@ jobs:
           # sklearn fijado a la versión con la que se entrenó el modelo destilado
           pip install sentence-transformers "scikit-learn==1.9.0" joblib
 
+      # Corpus regional (fiat-corpus): shards del mes actual y anterior —
+      # suficiente para las ventanas (-21d..+3d) de instrumentos nuevos.
+      # Si falla la descarga, el vinculador corre solo con corpus nacional.
+      - name: Bajar corpus regional (fiat-corpus)
+        run: |
+          mkdir -p eval/_corpus_regional
+          MES=$(date -u +%Y-%m)
+          PREV=$(date -u -d "$(date -u +%Y-%m-01) -1 day" +%Y-%m)
+          for M in $MES $PREV; do
+            gh release download corpus -R rreubenleon/fiat-corpus \
+              --pattern "corpus-$M.jsonl.gz" -D eval/_corpus_regional --clobber || true
+          done
+          ls -la eval/_corpus_regional/
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Vincular instrumentos nuevos (juez local)
         run: python scripts/vincular_produccion.py --relevantes --local --solo-nuevos
 

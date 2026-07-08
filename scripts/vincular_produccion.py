@@ -40,6 +40,24 @@ import math
 import sqlite3
 
 CACHE = ROOT / "eval" / "_emb_cache"
+CORPUS_REGIONAL = ROOT / "eval" / "_corpus_regional"  # shards de fiat-corpus (gh release download)
+
+
+def cargar_corpus_regional():
+    """Notas regionales desde los shards descargados de fiat-corpus.
+    Devuelve lista de (fecha, titulo, fuente, entidad). Vacía si no hay shards
+    (el vinculador funciona igual, solo con corpus nacional)."""
+    import gzip, glob
+    out = []
+    for f in sorted(glob.glob(str(CORPUS_REGIONAL / "corpus-*.jsonl.gz"))):
+        with gzip.open(f, "rt", encoding="utf-8") as fh:
+            for line in fh:
+                try:
+                    n = json.loads(line)
+                    out.append((n["fecha"], n["titulo"], n["medio"], n["entidad"]))
+                except Exception:
+                    continue
+    return out
 VINCULOS = ROOT / "eval" / "vinculos_produccion.json"
 LEDGER = ROOT / "eval" / "vinculados_procesados.json"
 MODELO = ROOT / "eval" / "modelo_vinculador.joblib"
@@ -72,12 +90,22 @@ def main():
                     help="juez = modelo destilado local ($0) en vez de Haiku")
     ap.add_argument("--solo-nuevos", action="store_true",
                     help="solo instrumentos fuera del ledger; append + actualiza ledger")
+    ap.add_argument("--sin-vinculo", action="store_true",
+                    help="re-pase: solo instrumentos YA procesados que quedaron sin vínculo "
+                         "(útil tras ampliar el corpus); append dedupeado")
     args = ap.parse_args()
 
     from sentence_transformers import SentenceTransformer, CrossEncoder
 
     media = cargar_corpus()
-    mdate = np.array([date.fromisoformat(d).toordinal() for d, _, _ in media])
+    ment = [None] * len(media)  # entidad de la nota (solo regionales)
+    reg = cargar_corpus_regional()
+    if reg:
+        print(f"corpus regional: +{len(reg)} notas (fiat-corpus)")
+        for fch, tit, med, ent in reg:
+            media.append((fch, tit, med))
+            ment.append(ent)
+    mdate = np.array([date.fromisoformat(d[:10]).toordinal() for d, _, _ in media])
     mtxt = [t for _, t, _ in media]
     mfte = [f for _, _, f in media]
     # df/idf SIEMPRE sobre el corpus COMPLETO (las features del modelo destilado
@@ -100,6 +128,12 @@ def main():
     rows = con.execute(q, (args.desde,)).fetchall()
 
     ledger = set()
+    if args.sin_vinculo:
+        ya_vinc = set()
+        if VINCULOS.exists():
+            ya_vinc = {v["sil_id"] for v in json.loads(VINCULOS.read_text())["vinculos"]}
+        rows = [r for r in rows if r[0] not in ya_vinc]
+        print(f"re-pase sin-vínculo: {len(rows)} instrumentos")
     if args.solo_nuevos:
         if LEDGER.exists():
             ledger = set(json.loads(LEDGER.read_text()).get("procesados", []))
@@ -216,6 +250,7 @@ def main():
                                  "tipo_grupo": tg, "titulo": titulo, "nota_fecha": media[i][0],
                                  "nota_fuente": mfte[i], "nota_titulo": mtxt[i],
                                  "lead_dias": int(d0 - mdate[i]),
+                                 "nota_entidad": ment[i],
                                  "juez": "local" if modelo is not None else "haiku",
                                  "tipo_nota": "proceso" if _PROC.search(mtxt[i]) else "externo"})
                 break
@@ -223,14 +258,15 @@ def main():
             extra = f" · ${tin/1e6+tout/1e6*5:.3f}" if cli else ""
             print(f"  {k+1}/{len(rows)} · vínculos: {len(vinculos)}{extra}")
 
-    if args.solo_nuevos:
+    if args.solo_nuevos or args.sin_vinculo:
         prev = json.loads(VINCULOS.read_text()) if VINCULOS.exists() else {"vinculos": []}
         ya_vinculados = {v["sil_id"] for v in prev["vinculos"]}
         prev["vinculos"].extend(v for v in vinculos if v["sil_id"] not in ya_vinculados)
         prev["n_vinculos"] = len(prev["vinculos"])
         VINCULOS.write_text(json.dumps(prev, ensure_ascii=False, indent=1))
-        ledger |= {r[0] for r in rows}
-        LEDGER.write_text(json.dumps({"procesados": sorted(ledger)}))
+        if args.solo_nuevos:
+            ledger |= {r[0] for r in rows}
+            LEDGER.write_text(json.dumps({"procesados": sorted(ledger)}))
         print(f"\n✅ append: +{len(vinculos)} vínculos (total {prev['n_vinculos']}) · "
               f"ledger: {len(ledger)}")
     else:
