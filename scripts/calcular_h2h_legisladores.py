@@ -96,13 +96,15 @@ def calcular_baseline_comisiones(conn):
     por_com = defaultdict(lambda: {"apr": 0, "des": 0, "pen_largo": 0, "total": 0})
     for comision, estatus, fp in rows:
         s = clasificar_estatus(estatus or "", fp or "")
-        if s is None:
-            continue  # excluir pendientes <90d
+        # None = pendiente <90d; "RETIRO" = retirada/retirado, categoría propia
+        # que NO cuenta en tasas (decisión 7-jul, igual que en el ELO)
+        if s is None or s == "RETIRO":
+            continue
         por_com[comision]["total"] += 1
         if s >= 0.7:
             por_com[comision]["apr"] += 1
         elif s == 0.0:
-            if "desechado" in (estatus or "").lower() or "rechazado" in (estatus or "").lower() or "retirada" in (estatus or "").lower():
+            if "desechado" in (estatus or "").lower() or "rechazado" in (estatus or "").lower():
                 por_com[comision]["des"] += 1
             else:
                 por_com[comision]["pen_largo"] += 1
