@@ -248,21 +248,10 @@ def generar(conn):
         })
     catalogo.sort(key=lambda x: -x["n"])
 
-    nuevas_cat = []
-    for k, d in nuevas.items():
-        if d["n"] < MIN_INSTRUMENTOS:
-            continue
-        nuevas_cat.append({
-            "key": k,
-            "display": d["variantes"].most_common(1)[0][0],
-            "n": d["n"],
-            "por_estatus": dict(d["por_estatus"]),
-            "por_partido": dict(d["por_partido"].most_common(12)),
-            "instrumentos": d["instrumentos"],
-        })
-    nuevas_cat.sort(key=lambda x: -x["n"])
-    nuevas_total = sum(d["n"] for d in nuevas.values())
-
+    # "Nuevas leyes" (títulos que EXPIDEN una ley no vigente) ya NO se emite:
+    # decisión de producto 10-jul-2026 — la pestaña Leyes cubre solo reformas
+    # al catálogo VIGENTE; las propuestas de leyes nuevas son ruido sin fin.
+    # (El dict `nuevas` se sigue calculando arriba para el conteo interno.)
     out = {
         "generado": None,  # lo estampa el pipeline; aquí sin Date.now
         "fecha_inicio": FECHA_INICIO,
@@ -270,8 +259,6 @@ def generar(conn):
         "total_instrumentos_vigente": con_vigente,
         "total_leyes": len(catalogo),
         "leyes": catalogo,
-        "nuevas_leyes": nuevas_cat,
-        "nuevas_leyes_total": nuevas_total,
     }
     OUT.write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
     kb = OUT.stat().st_size / 1024
