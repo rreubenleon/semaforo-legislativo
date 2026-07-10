@@ -234,8 +234,6 @@ def generar(conn):
 
     catalogo = []
     for k, d in leyes.items():
-        if d["n"] < MIN_INSTRUMENTOS:
-            continue
         catalogo.append({
             "key": k,
             "display": d["display"],
@@ -246,7 +244,18 @@ def generar(conn):
             "por_mes": dict(sorted(d["por_mes"].items())),
             "instrumentos": d["instrumentos"],
         })
-    catalogo.sort(key=lambda x: -x["n"])
+    # Universo COMPLETO (decisión 10-jul): el catálogo oficial entero es la
+    # base — las leyes SIN iniciativas también aparecen (n=0). "Tomar este
+    # listado y ver cuántas iniciativas atacan cada una."
+    presentes = {c["key"] for c in catalogo}
+    for disp, _claves in cat:
+        kk = norm_key(disp)
+        if kk not in presentes:
+            presentes.add(kk)
+            catalogo.append({"key": kk, "display": disp, "n": 0,
+                             "por_estatus": {}, "por_camara": {},
+                             "por_partido": {}, "por_mes": {}, "instrumentos": []})
+    catalogo.sort(key=lambda x: (-x["n"], x["display"]))
 
     # "Nuevas leyes" (títulos que EXPIDEN una ley no vigente) ya NO se emite:
     # decisión de producto 10-jul-2026 — la pestaña Leyes cubre solo reformas
