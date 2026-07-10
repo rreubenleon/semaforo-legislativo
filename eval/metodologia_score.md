@@ -133,3 +133,31 @@ Pipeline `scripts/vincular_eventos.py` → tabla `evento_vinculos`: sus conteos
 heredan la inflación del matcher léxico — NO usar/publicar hasta pasar el umbral.
 Siguiente iteración: capa de verificación semántica sobre los candidatos léxicos
 (validar juez-Haiku contra las 60 etiquetas del usuario antes de escalar).
+
+---
+
+## Tendencia por tema: veredicto sobre "probabilidad de presentación" (10-jul-2026)
+
+Se backtestearon DOS formulaciones probabilísticas para reemplazar la gráfica
+de Tendencia, con 22 meses de historia y el corpus completo (22 nacionales +
+96 regionales clasificados por tema):
+
+1. **P(≥1 instrumento del tema en 7 días)** — tasa base 82% (casi siempre sí
+   en temas con volumen): Brier 0.159 vs 0.147 sin-modelo. PEOR que nada, no
+   calibra (bin 50-60% → 88% observado). La curva viviría pegada arriba.
+2. **P(semana ATÍPICA del tema)** (próx. 7d > 1.3× su semana típica) — base
+   29%: Brier 0.206 vs 0.205. Sin poder discriminante; z mediático nac=0.0,
+   reg=0.11.
+
+**Conclusión metodológica:** a nivel tema-semana el Congreso NO es
+pronosticable con ritmo+calendario+medios — los arranques son decisiones
+internas de actores (ej. paquete IA: 22 iniciativas de un senador en un día).
+La atribución retrospectiva (vínculos evento→instrumento) es real; la
+PREDICCIÓN agregada por tema, no. Coincide con el hallazgo de jun-2026
+(predictor_probabilidad ~44% test). NO publicar probabilidades por tema.
+
+**Propuesta en pie (aritmética, sin modelo, no falseable):** "observado vs
+esperado" — instrumentos/semana del tema vs rango típico P25-P75 móvil de 8
+semanas, con semanas de pique marcadas. Prototipo con datos reales entregado
+al usuario para decisión. Alternativa/complemento: normalización percentil del
+score_congreso (simulada 8-jul: 11/12 categorías recuperan varianza).
