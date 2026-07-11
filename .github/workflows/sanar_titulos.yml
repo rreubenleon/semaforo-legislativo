@@ -1,0 +1,79 @@
+name: Sanar títulos truncados (one-off)
+
+# Repara los instrumentos con titulo truncado ([:200]/[:500] de la ingesta
+# vieja) y SIN sinopsis — 347 filas, todas PERM_ (Comisión Permanente):
+# descarga el documento de gaceta del Senado (cliente anti-Incapsula) y llena
+# sinopsis (objeto íntegro) + re-une el titulo cuando el stitch es limpio.
+# La BD reparada se guarda al cache con prefijo semaforo-db- para que el
+# pipeline la adopte en su siguiente corrida.
+
+on:
+  workflow_dispatch:
+    inputs:
+      limite:
+        description: 'máx documentos de gaceta a scrapear'
+        default: '400'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "pipeline"        # mismo grupo que el pipeline: nunca en paralelo con él
+  cancel-in-progress: false
+
+jobs:
+  sanar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Restaurar semaforo.db (ESCRITURA)
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-sanar-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - name: Verificar DB presente
+        run: |
+          [ -f semaforo.db ] || { echo "sin DB en cache"; exit 1; }
+          du -h semaforo.db
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Paso reconteo (cruce con instrumentos_sil.json)
+        run: python scripts/sanar_titulos_truncados.py --paso reconteo
+
+      - name: Paso gaceta (scrape documentos, anti-Incapsula 2.5s)
+        run: python scripts/sanar_titulos_truncados.py --paso gaceta --limite "${{ github.event.inputs.limite }}"
+
+      - name: Reporte post-reparación
+        run: |
+          python - <<'PY'
+          import sqlite3
+          con = sqlite3.connect("semaforo.db")
+          n = con.execute("""SELECT COUNT(*) FROM sil_documentos
+              WHERE fecha_presentacion>='2024-09-01'
+              AND LENGTH(titulo) IN (199,200,499,500)
+              AND LENGTH(COALESCE(sinopsis,''))<40""").fetchone()[0]
+          print(f"truncadas SIN sinopsis restantes: {n}")
+          PY
+
+      - name: Guardar DB reparada al cache
+        uses: actions/cache/save@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-sanar-${{ github.run_id }}

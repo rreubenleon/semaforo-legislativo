@@ -63,6 +63,23 @@ LEDGER = ROOT / "eval" / "vinculados_procesados.json"
 MODELO = ROOT / "eval" / "modelo_vinculador.joblib"
 UMBRAL_LOCAL = 0.7  # punto de alta precisión validado (89% acuerdo con el juez)
 
+import re as _re
+_PREFIJO_AUTORES = _re.compile(
+    r"^.{0,600}?(con\s+(?:punto de acuerdo|proyecto de decreto|proposici[oó]n)|por el que|que\s+(?:reforma|adiciona|expide|deroga))",
+    _re.I | _re.S)
+
+
+def texto_instrumento(titulo, sinopsis):
+    """Texto COMPLETO del instrumento para matching y juicio: quita el prefijo
+    de autores (que hacía anclar por NOMBRES de legisladores — causa de la
+    cuarentena jul-2026) y agrega la sinopsis, que trae el objeto íntegro."""
+    t = titulo or ""
+    m = _PREFIJO_AUTORES.search(t)
+    if m and m.start(1) > 40:
+        t = t[m.start(1):]
+    sin = (sinopsis or "").strip()
+    return (t + (" " + sin if sin else "")).strip()
+
 SYS_JUEZ = (
     "Eres analista legislativo mexicano. Te doy una propuesta con punto de acuerdo "
     "y una nota de prensa previa. Decide si la propuesta RESPONDE a lo que trata la "
@@ -122,7 +139,8 @@ def main():
     if args.relevantes:
         filtro = ("AND (tipo_grupo LIKE '%PA%' OR lower(tipo_grupo) LIKE '%iniciativa%' "
                   "OR lower(tipo_grupo) LIKE '%punto de acuerdo%') ")
-    q = ("SELECT seguimiento_id, titulo, fecha_presentacion, presentador, tipo_grupo "
+    q = ("SELECT seguimiento_id, titulo, fecha_presentacion, presentador, tipo_grupo, "
+         "COALESCE(sinopsis,'') "
          "FROM sil_documentos WHERE fecha_presentacion >= ? AND titulo IS NOT NULL "
          "AND es_duplicado_cross_camara IS NOT 1 " + filtro + "ORDER BY fecha_presentacion DESC")
     rows = con.execute(q, (args.desde,)).fetchall()
@@ -185,12 +203,15 @@ def main():
         cargar_api_key()
         cli = Anthropic()
 
-    Qi = emb.encode([r[1] for r in rows], batch_size=128, normalize_embeddings=True,
+    textos = [texto_instrumento(r[1], r[5] if len(r) > 5 else "") for r in rows]
+    Qi = emb.encode(textos, batch_size=128, normalize_embeddings=True,
                     show_progress_bar=False)
 
     vinculos = []
     tin = tout = ncalls = 0
-    for k, (sid, titulo, fecha, present, tg) in enumerate(rows):
+    for k, fila in enumerate(rows):
+        sid, titulo, fecha, present, tg = fila[0], fila[1], fila[2], fila[3], fila[4]
+        titulo = textos[k]  # texto COMPLETO (sin prefijo de autores, con sinopsis)
         d0 = date.fromisoformat(fecha[:10]).toordinal()
         win = np.where((mdate >= d0 - 21) & (mdate <= d0 + 3))[0]
         if not len(win):
