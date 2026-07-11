@@ -881,6 +881,10 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
     notas_vinc: dict[int, list[tuple[str, str]]] = {}
     _cat_matchers: dict[str, list] = {}
     _ruta_vinc = ROOT / "eval" / "vinculos_produccion.json"
+    # ⛔ CUARENTENA 10-jul: vínculos refutados por el Escéptico (títulos
+    # truncados) — no alimentan hit rate hasta re-validación.
+    if (ROOT / "eval" / "VINCULOS_EN_CUARENTENA").exists():
+        _ruta_vinc = ROOT / "eval" / "__no_existe__"
     if _ruta_vinc.exists():
         from scripts.reactividad_pipeline import norm as _rnorm, mk as _rmk, mt as _rmt
         from config import CATEGORIAS as _CATS

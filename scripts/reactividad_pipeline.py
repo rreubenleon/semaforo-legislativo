@@ -120,6 +120,12 @@ def cobertura_vinculos(con, agenda, fidx, submatch):
 
     Devuelve {lid_str: set[(subcat, ev_i)]} para unir con la cobertura keyword.
     """
+    # ⛔ CUARENTENA (10-jul-2026): el Escéptico refutó 7/12 de una muestra del
+    # lote — títulos truncados cegaron al juez (empataba nombres, no asuntos).
+    # Los vínculos NO alimentan métricas hasta re-juzgar con texto completo y
+    # pasar re-validación. Quitar este return cuando el gate pase.
+    if (ROOT / "eval" / "VINCULOS_EN_CUARENTENA").exists():
+        return {}
     if not VINCULOS.exists():
         return {}
     extra = defaultdict(set)
