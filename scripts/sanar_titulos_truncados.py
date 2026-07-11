@@ -149,7 +149,19 @@ def extraer_objeto_gaceta(html_text):
 
 def paso_gaceta(conn, limite, dry):
     from scrapers.gaceta_senado import fetch_page
-    rows = [r for r in filas_truncadas(conn) if "senado.gob.mx" in r[6]][:limite]
+
+    def url_de(sid, url):
+        if "senado.gob.mx" in url:
+            return url
+        # PERM_<n> sin url: el número ES el id del documento de gaceta
+        m = re.match(r"PERM_(\d+)$", sid or "")
+        if m:
+            return f"https://www.senado.gob.mx/66/gaceta_del_senado/documento/{m.group(1)}"
+        return None
+
+    rows = [(rid, sid, t, f, tg, sin_, url_de(sid, u))
+            for rid, sid, t, f, tg, sin_, u in filas_truncadas(conn)]
+    rows = [r for r in rows if r[6]][:limite]
     print(f"a scrapear (lote): {len(rows)}")
     rep = fall = 0
     for rid, sid, titulo, f, tg, sin_, url in rows:
