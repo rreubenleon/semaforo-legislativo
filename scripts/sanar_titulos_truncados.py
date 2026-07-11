@@ -79,7 +79,11 @@ def filas_truncadas(conn, solo_sin_sinopsis=True):
             WHERE sd.fecha_presentacion >= '2024-09-01'
               AND LENGTH(sd.titulo) IN ({",".join(str(x) for x in LONGS_TRUNCADAS)})"""
     if solo_sin_sinopsis:
-        q += " AND LENGTH(COALESCE(sd.sinopsis,'')) < 40"
+        # sin sinopsis O sinopsis CONTAMINADA (el scraper viejo guardaba los
+        # autores + el propio título truncado — firma detectada por el
+        # Escéptico 11-jul: 60% de las "sanas" eran esto)
+        q += (" AND (LENGTH(COALESCE(sd.sinopsis,'')) < 40"
+              " OR instr(lower(sd.sinopsis), lower(substr(sd.titulo,1,120))) > 0)")
     return conn.execute(q).fetchall()
 
 
@@ -153,8 +157,8 @@ def paso_gaceta(conn, limite, dry):
     def url_de(sid, url):
         if "senado.gob.mx" in url:
             return url
-        # PERM_<n> sin url: el número ES el id del documento de gaceta
-        m = re.match(r"PERM_(\d+)$", sid or "")
+        # PERM_<n>/SEN_<n>: el número ES el id del documento de gaceta
+        m = re.match(r"(?:PERM|SEN)_(\d+)$", sid or "")
         if m:
             return f"https://www.senado.gob.mx/66/gaceta_del_senado/documento/{m.group(1)}"
         return None

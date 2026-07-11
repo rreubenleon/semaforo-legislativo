@@ -159,6 +159,23 @@ def main():
         print(f"instrumentos NUEVOS (fuera del ledger): {len(rows)}")
         if not rows:
             print("nada nuevo que vincular."); return
+    # EFEMÉRIDES fuera (Día Mundial/Internacional/Nacional): empatan con
+    # cualquier nota del día — no son respuesta a evento (gate Escéptico 11-jul)
+    _EFE = _re.compile(r"d[ií]a (mundial|internacional|nacional)\s", _re.I)
+    antes = len(rows)
+    rows = [r for r in rows if not _EFE.search(r[1] or "")]
+    if antes - len(rows):
+        print(f"efemérides excluidas: {antes - len(rows)}")
+    # DEDUPE de gemelos (mismo instrumento con dos sil_id): 464 en el lote viejo
+    _vistos = set(); _unicos = []
+    for r in rows:
+        k = ((r[2] or "")[:10], (r[1] or "")[:150])
+        if k in _vistos:
+            continue
+        _vistos.add(k); _unicos.append(r)
+    if len(rows) - len(_unicos):
+        print(f"gemelos dedupeados: {len(rows) - len(_unicos)}")
+    rows = _unicos
     if args.limite:
         paso = max(1, len(rows) // args.limite)
         rows = rows[::paso][:args.limite]
