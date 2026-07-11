@@ -246,15 +246,15 @@ def _buscar_ids(query, max_resultados=None):
             sinopsis = sinopsis.split(titulo, 1)[-1]
         # Limpiar
         sinopsis = re.sub(r'^\s*\|\s*(Asunto|Seguimiento)\s*', '', sinopsis)
-        sinopsis = sinopsis[:500].strip()
+        sinopsis = sinopsis.strip()  # sin cap: truncar el texto cegó al juez de vínculos (jul-2026)
         if sinopsis.startswith("..."):
             sinopsis = sinopsis[3:].strip()
 
         resultados.append({
             "seguimiento_id": seg_id,
             "asunto_id": asu_id,
-            "titulo": titulo[:500],
-            "sinopsis": sinopsis[:500],
+            "titulo": titulo,  # COMPLETO — el cap [:500] cortaba el objeto del exhorto tras la lista de autores
+            "sinopsis": sinopsis,
             "tipo_badge": tipo_badge,
         })
 

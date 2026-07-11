@@ -422,7 +422,7 @@ def _extraer_autor_de_titulo(titulo):
         titulo, re.IGNORECASE,
     )
     if match:
-        return match.group(1).strip()[:200]
+        return match.group(1).strip()  # sin cap [:200] (jul-2026)
 
     # Patrón: "De las senadoras y de los senadores del Grupo Parlamentario de MORENA"
     match = re.search(

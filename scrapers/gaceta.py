@@ -409,7 +409,7 @@ def extraer_docs_de_subpagina(html, url_subpagina, tipo_doc, partido_default, fe
 
         documentos.append({
             "tipo": tipo_detectado,
-            "titulo": titulo[:500],
+            "titulo": titulo,  # sin cap (jul-2026)
             "autor": autor,
             "partido": partido,
             "comision": comision,
@@ -441,7 +441,7 @@ def extraer_docs_de_subpagina(html, url_subpagina, tipo_doc, partido_default, fe
 
             documentos.append({
                 "tipo": tipo_detectado,
-                "titulo": titulo[:500],
+                "titulo": titulo,  # sin cap (jul-2026)
                 "autor": autor,
                 "partido": partido,
                 "comision": comision,
@@ -486,7 +486,7 @@ def extraer_docs_de_comunicaciones(html, url_pagina, fecha_str):
 
         documentos.append({
             "tipo": tipo,
-            "titulo": titulo[:500],
+            "titulo": titulo,  # sin cap (jul-2026)
             "autor": _extraer_autor(titulo),
             "partido": _extraer_partido_de_titulo(titulo),
             "comision": _extraer_comision(titulo),
