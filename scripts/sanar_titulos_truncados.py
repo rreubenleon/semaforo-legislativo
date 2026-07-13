@@ -46,6 +46,61 @@ def toks(s):
     return re.findall(r"[a-z0-9]+", na(s))
 
 
+# Palabras FUNCIONALES básicas (artículos/preposiciones/conjunciones). NO usar
+# stoplist agresiva con jerga legislativa: rechaza reformas legítimas cuyo
+# objeto ES "artículo N de la Ley X" (medido por el metodólogo: 17-27% falsos
+# rechazos). Guard adoptado: stitch contiguo ≥5 O ≥3 tokens NO-funcionales.
+FUNCIONALES = {
+    "de", "la", "el", "los", "las", "les", "y", "o", "u", "e", "a", "al",
+    "del", "en", "que", "se", "su", "sus", "por", "para", "con", "sin", "un",
+    "una", "unos", "unas", "lo", "como", "mas", "ante", "sobre", "entre",
+    "hacia", "desde", "es", "son", "ser", "dicha", "dicho", "dichas",
+    "dichos", "asi", "cual", "cuales", "esta", "este", "estos", "estas",
+    "c", "h", "no", "ni", "le"}
+
+
+def contaminada(titulo, sinopsis, presentador=""):
+    """Firma de sinopsis contaminada (scraper viejo), detección por PREFIJO —
+    el filtro substring-120 dejaba pasar 1,836/2,479 (gate Escéptico 12-jul):
+    la sinopsis vieja se cortaba a ~300 chars antes de repetir el título.
+    Firmas: arranca con el presentador (≥40 chars comunes), basura
+    'Resultados encontrados', o prefijo común con el título ≥60."""
+    s = (sinopsis or "").strip()
+    if len(s) < 40:
+        return True
+    ns = na(s)
+    if "resultados encontrados" in ns:
+        return True
+
+    def _pref(a, b):
+        n = 0
+        for x, y in zip(a, b):
+            if x != y:
+                break
+            n += 1
+        return n
+
+    if presentador and _pref(ns, na(presentador)) >= 40:
+        return True
+    if _pref(ns, na(titulo or "")) >= 60:
+        return True
+    return False
+
+
+def objeto_valido(titulo, objeto):
+    """¿El objeto recuperado corresponde a ESTE título truncado? El join por
+    legislador+fecha+tipo pegaba instrumentos AJENOS cuando el candidato era
+    único (caso Colima: sinopsis de Recursos Hidráulicos en un exhorto de
+    feminicidio). Acepta si hay traslape contiguo (stitch) o ≥3 tokens de
+    contenido compartidos. Rechaza 60/3,502 reparaciones (1.7%), todas ajenas
+    genuinas."""
+    if stitch(titulo, objeto):
+        return True
+    tt = set(toks(titulo)) - FUNCIONALES
+    to = set(toks(objeto)) - FUNCIONALES
+    return len(tt & to) >= 3
+
+
 def stitch(trunco, objeto):
     """Une título truncado + objeto completo si hay traslape limpio (≥5 tokens).
     Devuelve el título completo reconstruido o None si no se puede con limpieza."""
@@ -74,17 +129,17 @@ def stitch(trunco, objeto):
 def filas_truncadas(conn, solo_sin_sinopsis=True):
     q = f"""SELECT sd.id, sd.seguimiento_id, sd.titulo,
                    substr(sd.fecha_presentacion,1,10) f, LOWER(COALESCE(sd.tipo_grupo,'')) tg,
-                   COALESCE(sd.sinopsis,'') sin, COALESCE(sd.url,'') url
+                   COALESCE(sd.sinopsis,'') sin, COALESCE(sd.url,'') url,
+                   COALESCE(sd.presentador,'') pres
             FROM sil_documentos sd
             WHERE sd.fecha_presentacion >= '2024-09-01'
               AND LENGTH(sd.titulo) IN ({",".join(str(x) for x in LONGS_TRUNCADAS)})"""
+    rows = conn.execute(q).fetchall()
     if solo_sin_sinopsis:
-        # sin sinopsis O sinopsis CONTAMINADA (el scraper viejo guardaba los
-        # autores + el propio título truncado — firma detectada por el
-        # Escéptico 11-jul: 60% de las "sanas" eran esto)
-        q += (" AND (LENGTH(COALESCE(sd.sinopsis,'')) < 40"
-              " OR instr(lower(sd.sinopsis), lower(substr(sd.titulo,1,120))) > 0)")
-    return conn.execute(q).fetchall()
+        # sin sinopsis O sinopsis CONTAMINADA — detección por PREFIJO (la
+        # substring-120 dejaba pasar 1,836 contaminadas; gate Escéptico 12-jul)
+        rows = [r for r in rows if contaminada(r[2], r[5], r[7])]
+    return [r[:7] for r in rows]
 
 
 def paso_reconteo(conn, dry):
@@ -120,7 +175,7 @@ def paso_reconteo(conn, dry):
             scored = sorted(((len(cola & set(toks(c))), c) for c in cands), reverse=True)
             if scored[0][0] >= 5 and (len(scored) == 1 or scored[0][0] > scored[1][0]):
                 objeto = scored[0][1]
-        if not objeto or len(objeto) < 40:
+        if not objeto or len(objeto) < 40 or not objeto_valido(titulo, objeto):
             continue
         nuevo = stitch(titulo, objeto)
         rep_sin += 1
@@ -175,7 +230,7 @@ def paso_gaceta(conn, limite, dry):
             fall += 1
             continue
         objeto = extraer_objeto_gaceta(html_text)
-        if not objeto or len(objeto) < 60:
+        if not objeto or len(objeto) < 60 or not objeto_valido(titulo, objeto):
             fall += 1
             continue
         nuevo = stitch(titulo, objeto)

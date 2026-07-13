@@ -35,6 +35,7 @@ sys.path.insert(0, str(ROOT))
 from scripts.matcher_entidades import entidades
 from scripts.matcher_evento import terms
 from scripts.generar_auditoria_matcher import cargar_corpus
+from scripts.sanar_titulos_truncados import contaminada
 from collections import Counter
 import math
 import sqlite3
@@ -45,8 +46,8 @@ CORPUS_REGIONAL = ROOT / "eval" / "_corpus_regional"  # shards de fiat-corpus (g
 
 def cargar_corpus_regional():
     """Notas regionales desde los shards descargados de fiat-corpus.
-    Devuelve lista de (fecha, titulo, fuente, entidad). Vacía si no hay shards
-    (el vinculador funciona igual, solo con corpus nacional)."""
+    Devuelve lista de (fecha, titulo, fuente, entidad, resumen, url). Vacía si
+    no hay shards (el vinculador funciona igual, solo con corpus nacional)."""
     import gzip, glob
     out = []
     for f in sorted(glob.glob(str(CORPUS_REGIONAL / "corpus-*.jsonl.gz"))):
@@ -54,7 +55,8 @@ def cargar_corpus_regional():
             for line in fh:
                 try:
                     n = json.loads(line)
-                    out.append((n["fecha"], n["titulo"], n["medio"], n["entidad"]))
+                    out.append((n["fecha"], n["titulo"], n["medio"], n["entidad"],
+                                (n.get("resumen") or "").strip(), n.get("url") or ""))
                 except Exception:
                     continue
     return out
@@ -114,14 +116,21 @@ def main():
 
     from sentence_transformers import SentenceTransformer, CrossEncoder
 
-    media = cargar_corpus()
+    media6 = cargar_corpus(con_resumen=True)
+    media = [m[:3] for m in media6]
+    mres = [m[3] for m in media6]   # cuerpo/resumen (para el juez; "" en hemeroteca)
+    morig = [m[4] for m in media6]  # trazabilidad al corpus canónico
+    murl = [m[5] for m in media6]
     ment = [None] * len(media)  # entidad de la nota (solo regionales)
     reg = cargar_corpus_regional()
     if reg:
         print(f"corpus regional: +{len(reg)} notas (fiat-corpus)")
-        for fch, tit, med, ent in reg:
+        for fch, tit, med, ent, res, u in reg:
             media.append((fch, tit, med))
             ment.append(ent)
+            mres.append(res)
+            morig.append("regional")
+            murl.append(u)
     mdate = np.array([date.fromisoformat(d[:10]).toordinal() for d, _, _ in media])
     mtxt = [t for _, t, _ in media]
     mfte = [f for _, _, f in media]
@@ -191,7 +200,7 @@ def main():
         need = set()
         for r in rows:
             d0 = date.fromisoformat(r[2][:10]).toordinal()
-            need.update(np.where((mdate >= d0 - 21) & (mdate <= d0 + 3))[0].tolist())
+            need.update(np.where((mdate >= d0 - 21) & (mdate <= d0))[0].tolist())
         need = sorted(need)
         print(f"embeddings acotados a ventana: {len(need)} notas (de {N})")
         vecs = emb.encode([mtxt[i] for i in need], batch_size=256,
@@ -212,6 +221,13 @@ def main():
     modelo = None
     cli = None
     if args.local:
+        # VETO durante la cuarentena: el destilado se entrenó con veredictos
+        # emitidos sobre texto contaminado (gate v2) — re-destilar con
+        # veredictos v3 y re-validar antes de volver a usarlo como juez.
+        if (ROOT / "eval" / "VINCULOS_EN_CUARENTENA").exists():
+            print("juez local VETADO durante la cuarentena de vínculos "
+                  "(re-destilar tras el gate v3). No se corre; salida limpia.")
+            return
         import joblib
         modelo = joblib.load(MODELO)
         print(f"juez LOCAL (destilado), umbral {UMBRAL_LOCAL}")
@@ -228,16 +244,20 @@ def main():
     tin = tout = ncalls = 0
     for k, fila in enumerate(rows):
         sid, titulo, fecha, present, tg = fila[0], fila[1], fila[2], fila[3], fila[4]
-        # RECHAZO DE OFICIO (gate Escéptico 11-jul): si el título sigue mocho y
-        # la sinopsis solo repite el título (firma de contaminación), el
-        # instrumento NO se juzga — abstención honesta hasta sanarlo.
+        # RECHAZO DE OFICIO (gates Escéptico 11/12-jul): si el título sigue
+        # mocho y la sinopsis trae firma de contaminación (detección por
+        # PREFIJO — la substring dejaba pasar 1,836), el instrumento NO se
+        # juzga — abstención honesta hasta sanarlo.
         _sin = fila[5] if len(fila) > 5 else ""
-        if len(fila[1] or "") in (199, 200, 499, 500) and (
-                len(_sin) < 40 or (fila[1] or "")[:120].lower() in _sin.lower()):
+        if len(fila[1] or "") in (199, 200, 499, 500) and contaminada(
+                fila[1], _sin, present):
             continue
         titulo = textos[k]  # texto COMPLETO (sin prefijo de autores, con sinopsis)
+        # Ventana [-21d, 0d]: una nota POSTERIOR al instrumento no puede ser su
+        # detonante (12.1% del lote viejo tenía lead<0 — gate Escéptico 12-jul).
+        # lead=0 se queda etiquetado mismo_dia (mañanera matutina → PA es real).
         d0 = date.fromisoformat(fecha[:10]).toordinal()
-        win = np.where((mdate >= d0 - 21) & (mdate <= d0 + 3))[0]
+        win = np.where((mdate >= d0 - 21) & (mdate <= d0))[0]
         if not len(win):
             continue
         sims = vecs_de(win) @ Qi[k]
@@ -268,8 +288,16 @@ def main():
                           sum(idf(x) for x in sh), float(d0 - mdate[i]), len(sh)]]
                 es_vinculo = float(modelo.predict_proba(np.array(feats))[0][1]) >= UMBRAL_LOCAL
             else:
+                # CUERPO de la nota al juez: los titulares genéricos tumbaron
+                # el gate v2 (Caracas≠Aleppo, derrame≠desapariciones). Si no
+                # hay cuerpo (hemeroteca), el juez lo sabe y es estricto.
+                _cuerpo = (mres[i] or "")[:700]
+                _bloq = (f"\nCUERPO: {_cuerpo}" if _cuerpo else
+                         "\n(SIN CUERPO: solo tienes el titular. Sé estricto: "
+                         "si el titular es genérico o ambiguo, responde NO.)")
                 msg = (f"PROPUESTA [{fecha[:10]}]: {titulo}\n\n"
-                       f"NOTA [{media[i][0]} {mfte[i]}]: {mtxt[i]}\n\n¿Responde? SI o NO:")
+                       f"NOTA [{media[i][0]} {mfte[i]}]: {mtxt[i]}{_bloq}\n\n"
+                       "¿Responde? SI o NO:")
                 for intento in range(4):
                     try:
                         r = cli.messages.create(model="claude-haiku-4-5-20251001", max_tokens=6,
@@ -294,7 +322,10 @@ def main():
                                  "tipo_grupo": tg, "titulo": titulo, "nota_fecha": media[i][0],
                                  "nota_fuente": mfte[i], "nota_titulo": mtxt[i],
                                  "lead_dias": int(d0 - mdate[i]),
+                                 "mismo_dia": int(d0 - mdate[i]) == 0,
                                  "nota_entidad": ment[i],
+                                 "nota_origen": morig[i], "nota_url": murl[i],
+                                 "sin_cuerpo": not (mres[i] or "").strip(),
                                  "juez": "local" if modelo is not None else "haiku",
                                  "tipo_nota": "proceso" if _PROC.search(mtxt[i]) else "externo"})
                 break

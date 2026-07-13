@@ -40,23 +40,33 @@ def _fix(s):
     return re.sub(r"\s*\d{5,}\s*$", "", s).strip()  # quita ids de slug al final
 
 
-def cargar_corpus():
+def cargar_corpus(con_resumen=False):
+    """Corpus nacional. Por defecto 3-tuplas (fecha, titulo, fuente).
+    Con con_resumen=True: 6-tuplas (fecha, titulo, fuente, resumen, origen, url)
+    — el juez de vínculos necesita el CUERPO de la nota (los titulares
+    genéricos tumbaron el gate v2: Caracas≠Aleppo) y la trazabilidad al
+    corpus canónico. Hemerotecas solo tienen titular → resumen/url vacíos."""
     media = []
     LJ = json.loads((ROOT / "data" / "jornada_hemeroteca.json").read_text())
     PR = json.loads((ROOT / "data" / "proceso_hemeroteca.json").read_text())
     for d, secs in LJ.items():
         for sec in secs.values():
             for t in sec:
-                media.append((d[:10], _fix(t), "La Jornada"))
+                media.append((d[:10], _fix(t), "La Jornada", "", "hemeroteca_lj", ""))
     for d, slugs in PR.items():
         for s in slugs:
-            media.append((d[:10], _fix(s.replace("-", " ")), "Proceso"))
+            media.append((d[:10], _fix(s.replace("-", " ")), "Proceso",
+                          "", "hemeroteca_proceso", ""))
     con = sqlite3.connect(str(ROOT / "semaforo.db"))
-    for f, t, r in con.execute(
-        "SELECT substr(fecha,1,10), titulo, fuente FROM articulos "
+    for f, t, r, res, u in con.execute(
+        "SELECT substr(fecha,1,10), titulo, fuente, COALESCE(resumen,''), "
+        "COALESCE(url,'') FROM articulos "
         "WHERE fecha>='2025-08-01' AND titulo IS NOT NULL"):
-        media.append((f, _fix((t or "").strip()), (r or "medio").replace("_", " ")))
-    return media
+        media.append((f, _fix((t or "").strip()), (r or "medio").replace("_", " "),
+                      (res or "").strip(), "articulos", u))
+    if con_resumen:
+        return media
+    return [m[:3] for m in media]
 
 
 def main():

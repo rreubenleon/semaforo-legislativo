@@ -64,12 +64,11 @@ jobs:
         run: |
           python - <<'PY'
           import sqlite3
+          from scripts.sanar_titulos_truncados import filas_truncadas
           con = sqlite3.connect("semaforo.db")
-          n = con.execute("""SELECT COUNT(*) FROM sil_documentos
-              WHERE fecha_presentacion>='2024-09-01'
-              AND LENGTH(titulo) IN (199,200,499,500)
-              AND LENGTH(COALESCE(sinopsis,''))<40""").fetchone()[0]
-          print(f"truncadas SIN sinopsis restantes: {n}")
+          # mismo criterio que la reparación (contaminación por PREFIJO),
+          # no el viejo <40 que reportaba "0 restantes" engañoso
+          print(f"truncadas contaminadas/sin objeto restantes: {len(filas_truncadas(con))}")
           PY
 
       - name: Guardar DB reparada al cache
