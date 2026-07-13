@@ -228,6 +228,13 @@ def main():
     tin = tout = ncalls = 0
     for k, fila in enumerate(rows):
         sid, titulo, fecha, present, tg = fila[0], fila[1], fila[2], fila[3], fila[4]
+        # RECHAZO DE OFICIO (gate Escéptico 11-jul): si el título sigue mocho y
+        # la sinopsis solo repite el título (firma de contaminación), el
+        # instrumento NO se juzga — abstención honesta hasta sanarlo.
+        _sin = fila[5] if len(fila) > 5 else ""
+        if len(fila[1] or "") in (199, 200, 499, 500) and (
+                len(_sin) < 40 or (fila[1] or "")[:120].lower() in _sin.lower()):
+            continue
         titulo = textos[k]  # texto COMPLETO (sin prefijo de autores, con sinopsis)
         d0 = date.fromisoformat(fecha[:10]).toordinal()
         win = np.where((mdate >= d0 - 21) & (mdate <= d0 + 3))[0]
@@ -280,7 +287,6 @@ def main():
                 # tipo_nota: la nota ¿cubre un evento EXTERNO o el propio proceso
                 # legislativo? (112/439 eran cobertura de congreso — distinguirlo
                 # permite a las métricas filtrar autoreferencia)
-                import re as _re
                 _PROC = _re.compile(
                     r"\b(iniciativa|reforma[sn]?|congreso|senado|diputad|"
                     r"comisi[oó]n permanente|c[aá]mara|dictamen|pleno|legislador)\b", _re.I)
