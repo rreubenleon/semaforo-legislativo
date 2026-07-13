@@ -1899,6 +1899,23 @@ KEYWORDS_NEGATIVOS = [
     "gol de", "anotó gol", "marcador final", "medio tiempo",
     "entrenador del", "fichaje", "transferencia de jugador",
     "torneo de tenis", "Grand Prix", "maratón deportivo",
+    # Geografía extranjera (nota internacional sin ancla mexicana; la lógica
+    # de calcular_relevancia_mexico solo penaliza si NO hay señal México, así
+    # que "México y España firman acuerdo" queda intacta). Deliberadamente
+    # fuera: "Chile" (el chile), "Roma" (colonia), "Lima" (sin acento),
+    # "Irán" (verbo ir), "español" (idioma), "Estados Unidos" (E.U. Mexicanos)
+    "España", "Madrid", "Barcelona", "Cataluña", "Sevilla", "Andalucía",
+    "Portugal", "Lisboa", "Francia", "París", "Italia", "Grecia", "Atenas",
+    "Alemania", "Berlín", "Londres", "Reino Unido", "Bruselas",
+    "Unión Europea", "eurozona", "países europeos", "Europa",
+    "en China", "de China", "gobierno chino", "Pekín", "Beijing", "Japón",
+    "Rusia", "Kremlin", "Putin", "Ucrania", "Kiev",
+    "Israel", "Netanyahu", "Gaza", "Teherán", "Medio Oriente",
+    "Turquía", "Estambul", "India", "Nueva Delhi",
+    "Casa Blanca", "Washington", "California", "Texas", "Florida",
+    "Nueva York", "Donald Trump",
+    "Argentina", "Buenos Aires", "Venezuela", "Caracas", "Bogotá",
+    "La Habana", "Brasil", "Brasilia",
     # Países como sujeto (no como tema de política exterior mexicana)
     "Congreso de Perú", "parlamento europeo", "parlamento británico",
     "Congreso de Colombia", "Congreso de Argentina", "Congreso de Chile",
@@ -1950,7 +1967,9 @@ KEYWORDS_MEXICO = [
     "Chihuahua", "Tamaulipas", "Michoacán", "Guanajuato",
     "Estado de México", "Tabasco", "Quintana Roo", "Yucatán",
     "Baja California", "Coahuila", "Durango", "Hidalgo",
-    "Aguascalientes", "Zacatecas", "San Luis Potosí",
+    "Aguascalientes", "Zacatecas", "San Luis Potosí", "Vallarta",
+    # Instituciones/organismos mexicanos que aparecen como ancla legítima
+    "UNAM", "UAM", "Coparmex",
     # Partidos políticos mexicanos
     "Morena", "PAN", "PRI", "PRD", "Movimiento Ciudadano",
     "Partido Verde", "PT", "Grupo Parlamentario",

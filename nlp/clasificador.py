@@ -270,7 +270,11 @@ def calcular_relevancia_mexico(titulo, resumen=""):
       0.3 — señales negativas sin señales México (penalización fuerte)
       0.0 — múltiples señales negativas sin México (rechazo total)
     """
-    texto_completo = f"{titulo} {resumen}".lower()
+    # cortar el boilerplate de cross-promo ("Lee también …") ANTES de buscar
+    # anclas: El Universal arrastra ahí "México/Sheinbaum" y rescataba notas
+    # 100% extranjeras (incendio en Cataluña con relevancia 1.0, jul-2026)
+    texto_completo = re.split(r"lee tambi[eé]n", f"{titulo} {resumen}",
+                              flags=re.IGNORECASE)[0].lower()
 
     def _buscar_keyword(kw, texto):
         """Busca keyword en texto. Usa word boundary para keywords cortas (≤4 chars)."""
