@@ -205,6 +205,10 @@ def main():
                               or ((not ap or not apm) and ntok >= 8)):
                 best = fm
         if ap:  # T2: re-presentación con redacción distinta (Jaccard + especificidad)
+            # T3 (gate v5): serial-PARÁFRASIS — el mismo bloque cambia el
+            # envoltorio (comparecencia→exhorto→pronunciamiento) sobre el
+            # mismo ASUNTO; el Jaccard no lo ve, la intersección de tokens
+            # específicos sí (sarampión/INSABI del bloque PRI).
             ct = frozenset(ctoks(titulo))
             espec = ct - _MARCO
             cand = set()
@@ -214,8 +218,9 @@ def main():
                 fm, km, ctm, apm = _serial_todos[i]
                 if fm >= best or km == k:
                     continue
-                if (len(ap & apm) >= 2 and jaccard(ct, ctm) >= 0.7
-                        and len(espec & ctm) >= 4):
+                if len(ap & apm) >= 2 and (
+                        (jaccard(ct, ctm) >= 0.7 and len(espec & ctm) >= 4)
+                        or len(espec & ctm) >= 3):
                     best = fm
         return best
 
@@ -236,14 +241,36 @@ def main():
     # EFEMÉRIDES fuera (Día Mundial/Internacional/Nacional): empatan con
     # cualquier nota del día — no son respuesta a evento (gate Escéptico 11-jul)
     _EFE = _re.compile(r"d[ií]a (mundial|internacional|nacional)\s", _re.I)
+    _ACTO_LEG = _re.compile(
+        r"\b(aprueban?|aprob[oó]|avalan?|aval[oó]|dictamen|dictaminan?|"
+        r"ratifican?|ratific[oó]|comparecencias?|comparecen?|"
+        r"turnan?|votos a favor|por unanimidad)\b.{0,80}?"
+        r"\b(senado|diputad[oa]s|c[aá]mara|comisi[oó]n|pleno|congreso|reforma|"
+        r"iniciativa|ley|dictamen|minuta|punto de acuerdo)\b"
+        r"|\b(senado|diputados|el pleno|la comisi[oó]n)\b.{0,40}?"
+        r"\b(aprueba|aprob[oó]|avala|aval[oó]|ratifica|ratific[oó]|"
+        r"dictamina|dictamin[oó]|vota|vot[oó])\b", _re.I)
     antes = len(rows)
     rows = [r for r in rows if not _EFE.search(r[1] or "")]
     if antes - len(rows):
         print(f"efemérides excluidas: {antes - len(rows)}")
-    # DEDUPE de gemelos (mismo instrumento con dos sil_id): 464 en el lote viejo
+    # BLACKLIST de refutados por el Escéptico (gates v2-v5): un instrumento
+    # refutado con fuente viva NUNCA vuelve a juzgarse (zombie SEN_157150).
+    _bl_path = ROOT / "eval" / "vinculos_refutados.json"
+    _blacklist = set()
+    if _bl_path.exists():
+        _blacklist = {p["sil_id"] for p in json.loads(_bl_path.read_text())["pares"]}
+    antes_bl = len(rows)
+    rows = [r for r in rows if r[0] not in _blacklist]
+    if antes_bl - len(rows):
+        print(f"blacklist de refutados: {antes_bl - len(rows)} fuera")
+    # DEDUPE de gemelos (mismo instrumento con dos sil_id) por clave de
+    # CONTENIDO normalizada — el corte por caracteres dejó pasar un duplicado
+    # exacto al gate v5 (SEN_2e59… vs SEN_96c3…, mismo título/fecha/bloque)
     _vistos = set(); _unicos = []
     for r in rows:
-        k = ((r[2] or "")[:10], (r[1] or "")[:150])
+        k = ((r[2] or "")[:10], key12(r[1] or ""),
+             tuple(sorted(apellidos(r[3] or "", r[1] or ""))[:2]))
         if k in _vistos:
             continue
         _vistos.add(k); _unicos.append(r)
@@ -364,6 +391,12 @@ def main():
         # excluir feeds de síntesis legislativa (talla_*): cubren la propia ley,
         # no son un evento mediático externo que la detone
         cand = [i for i in cand if "talla" not in mfte[i].lower()]
+        # excluir notas que cubren ACTOS LEGISLATIVOS (dictámenes, votaciones,
+        # ratificaciones, comparecencias — de CUALQUIER instrumento): proceso
+        # respondiendo a proceso no es evento→respuesta (gate v5: extorsión,
+        # INSABI, dictamen de Vero Díaz)
+        cand = [i for i in cand
+                if not _ACTO_LEG.search((mtxt[i] or "") + " " + (mres[i] or "")[:300])]
         if not cand:
             continue
         sc = ce.predict([[titulo, mtxt[i]] for i in cand])
