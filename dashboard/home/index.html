@@ -12,6 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="https://cdn.tailwindcss.com/3.4.16"></script>
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
@@ -156,6 +157,32 @@
 <script type="text/babel">
         /* ═══ BLOQUES COPIADOS VERBATIM DE dashboard/index.html ═══ */
         const { useState, useEffect, useMemo, useRef } = React;
+        function formatearActualizacion(isoString) {
+            if (!isoString) return '';
+            const fechaServer = new Date(isoString);
+            if (isNaN(fechaServer.getTime())) return '';
+            const ahora = new Date();
+            const diffMs = ahora - fechaServer;
+            const diffMin = Math.floor(diffMs / 60000);
+            const diffHoras = Math.floor(diffMs / 3600000);
+
+            const horaLocal = fechaServer.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: true });
+            const hoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate());
+            const ayer = new Date(hoy.getTime() - 86400000);
+            const fechaDia = new Date(fechaServer.getFullYear(), fechaServer.getMonth(), fechaServer.getDate());
+
+            if (diffMin < 1) return 'Justo ahora';
+            if (diffMin < 60) return `Hace ${diffMin} min`;
+            if (diffHoras < 6) return `Hace ${diffHoras}h (${horaLocal})`;
+            if (fechaDia.getTime() === hoy.getTime()) return `Hoy, ${horaLocal}`;
+            if (fechaDia.getTime() === ayer.getTime()) return `Ayer, ${horaLocal}`;
+            return fechaServer.toLocaleDateString('es-MX', { day: 'numeric', month: 'short', year: 'numeric' }) + ', ' + horaLocal;
+        }
+
+        /* ================================================================
+           SHARED COMPONENTS
+           ================================================================ */
+
         function ScoreRing({ score, color, size = 80 }) {
             const radius = (size - 8) / 2;
             const half = size / 2;
@@ -387,6 +414,544 @@
                 </div>
             );
         }
+
+        function FuentesMedia({ articulos }) {
+            if (!articulos || articulos.length === 0) return <div className="text-gray-400 text-sm py-3 text-center">Sin articulos de medios en esta categoria</div>;
+            return (
+                <div className="space-y-2 fuentes-panel max-h-56 overflow-y-auto pr-1">
+                    {articulos.map((a, i) => (
+                        <div key={i} className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
+                            <a href={a.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-700 hover:text-blue-900 hover:underline leading-tight block">{a.titulo}</a>
+                            <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
+                                <span className="bg-gray-100 px-1.5 py-0.5 rounded text-gray-600 font-mono">{a.fuente}</span>
+                                <span className="font-mono">{a.fecha}</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        /* Aprobaciones legislativas LXVI (últimos 30 días) por categoría.
+           Cada item: {tipo, titulo, camara, presentador, partido,
+                       fecha_aprobacion, comision, url_sil}.
+           Color por tipo · pill de cámara · link al expediente SIL. */
+        function FuentesAprobados({ items }) {
+            if (!items || items.length === 0) return <div className="text-gray-400 text-sm py-3 text-center">Sin aprobaciones recientes en este tema</div>;
+            const colorTipo = (t) => {
+                const tt = (t || '').toLowerCase();
+                if (tt.includes('iniciativa')) return { bg: 'bg-emerald-50', border: 'border-emerald-200', text: 'text-emerald-700' };
+                if (tt.includes('proposici')) return { bg: 'bg-blue-50', border: 'border-blue-200', text: 'text-blue-700' };
+                if (tt.includes('dictamen')) return { bg: 'bg-violet-50', border: 'border-violet-200', text: 'text-violet-700' };
+                if (tt.includes('minuta')) return { bg: 'bg-amber-50', border: 'border-amber-200', text: 'text-amber-700' };
+                return { bg: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-600' };
+            };
+            return (
+                <div className="space-y-2 fuentes-panel max-h-72 overflow-y-auto pr-1">
+                    {items.map((it, i) => {
+                        const c = colorTipo(it.tipo);
+                        return (
+                            <div key={i} className={`rounded-lg p-3 border ${c.border} ${c.bg}`}>
+                                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                                    <span className={`text-[10px] font-semibold uppercase tracking-wider ${c.text}`}>{it.tipo || 'Documento'}</span>
+                                    <span className="text-[10px] font-mono text-gray-500">{it.camara || ''}</span>
+                                    <span className="text-[10px] font-mono text-gray-400">· {it.fecha_aprobacion}</span>
+                                </div>
+                                <div className="text-sm text-gray-800 leading-snug">{it.titulo}</div>
+                                {(it.presentador || it.partido) && (
+                                    <div className="text-[11px] text-gray-500 mt-1.5 truncate" title={it.presentador}>
+                                        {it.presentador}{it.partido ? ` · ${it.partido}` : ''}
+                                    </div>
+                                )}
+                                {it.url_sil && (
+                                    <a href={it.url_sil} target="_blank" rel="noopener noreferrer"
+                                        className="text-xs text-acento hover:underline mt-1.5 inline-block">
+                                        Ver expediente SIL →
+                                    </a>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        function FuentesGaceta({ documentos }) {
+            if (!documentos || documentos.length === 0) return <div className="text-gray-400 text-sm py-3 text-center">Sin documentos de Gaceta</div>;
+            const tipoColor = {
+                iniciativa: 'bg-blue-50 text-blue-800 border border-blue-200',
+                dictamen: 'bg-amber-50 text-amber-800 border border-amber-200',
+                proposicion: 'bg-purple-50 text-purple-800 border border-purple-200',
+                punto_de_acuerdo: 'bg-purple-50 text-purple-800 border border-purple-200',
+                acuerdo: 'bg-rose-50 text-rose-800 border border-rose-200',
+                minuta: 'bg-green-50 text-green-800 border border-green-200',
+            };
+            // Limpia el campo autor: "Sen. Anaya (PAN)Sen. Bañuelos (PAN)Sen. ..."
+            // → primer firmante visible + tooltip con lista completa
+            const parsearFirmantes = (autor) => {
+                if (!autor) return { primero: '', resto: [], todos: [] };
+                const matches = autor.match(/(?:Sen|Dip)\.\s*[^()]+?\([^)]+\)/g);
+                if (!matches || matches.length === 0) {
+                    return { primero: autor.length > 80 ? autor.slice(0, 80) + '…' : autor, resto: [], todos: [autor] };
+                }
+                return { primero: matches[0], resto: matches.slice(1), todos: matches };
+            };
+            // Limpiar título: quitar prefijo numérico ("258. Del Sen..." → "Del Sen...")
+            // y "#NN" tipo gaceta. El numero_doc internal nunca se muestra.
+            const limpiarTitulo = (t) => {
+                if (!t) return '';
+                // Quitar números de serie al inicio: "2 ", "19. ", "258."
+                let cleaned = t.replace(/^\s*\d+\s*\.?\s+/, '');
+                // Capitalizar primera letra para frases que empiezan minúscula
+                if (cleaned && /^[a-záéíóú]/.test(cleaned)) {
+                    cleaned = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+                }
+                return cleaned.replace(/\n\t/g, ' ').slice(0, 200);
+            };
+            // Cámara: unificar "Cámara de Senadores"/"Cámara de Diputados"/"Comisión Permanente"
+            const camaraLabel = (c) => {
+                const cl = (c || '').toLowerCase();
+                if (cl.includes('permanente')) return 'Comisión Permanente';
+                if (cl.includes('senad')) return 'Senado';
+                if (cl.includes('diputad')) return 'Diputados';
+                return c || 'Diputados';
+            };
+            return (
+                <div className="space-y-2 fuentes-panel max-h-56 overflow-y-auto pr-1">
+                    {documentos.map((d, i) => {
+                        const titulo = limpiarTitulo(d.titulo);
+                        const tieneURL = d.url_pdf || d.url;
+                        const cam = camaraLabel(d.camara);
+                        return (
+                            <div key={i} className="bg-gray-50 rounded-lg p-2.5 border border-gray-100">
+                                <div className="flex items-start gap-2">
+                                    {tieneURL ? (
+                                        <a href={d.url_pdf || d.url} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-700 hover:text-blue-900 hover:underline leading-tight">{titulo}</a>
+                                    ) : (
+                                        <span className="text-sm text-gray-800 leading-tight">{titulo}</span>
+                                    )}
+                                </div>
+                                <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-400 flex-wrap">
+                                    <span className={`px-1.5 py-0.5 rounded text-xs font-mono ${tipoColor[d.tipo] || 'bg-gray-100 text-gray-600'}`}>{d.tipo}</span>
+                                    <span className={`px-1.5 py-0.5 rounded text-xs font-medium font-mono ${cam === 'Comisión Permanente' ? 'bg-amber-700 text-white' : cam === 'Senado' ? 'bg-gray-800 text-white' : 'bg-gray-200 text-gray-700'}`}>{cam}</span>
+                                    {d.autor && d.autor !== 'No identificado' && (() => {
+                                        const f = parsearFirmantes(d.autor);
+                                        return (
+                                            <span className="text-gray-500">
+                                                {f.primero}
+                                                {f.resto.length > 0 && (
+                                                    <span className="ml-1 inline-block bg-gray-100 hover:bg-gray-200 cursor-help px-1.5 py-0.5 rounded text-gray-700 font-mono text-[10px]"
+                                                          title={f.resto.join('\n')}>
+                                                        + {f.resto.length} más
+                                                    </span>
+                                                )}
+                                            </span>
+                                        );
+                                    })()}
+                                    <span className="font-mono">{d.fecha}</span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            );
+        }
+
+        function FuentesTrends({ trends }) {
+            if (!trends || trends.length === 0) return <div className="text-gray-400 text-sm py-3 text-center">Sin datos de Google Trends</div>;
+            const maxVal = Math.max(...trends.map(t => t.interes_promedio || 0), 1);
+            return (
+                <div className="space-y-2 fuentes-panel max-h-56 overflow-y-auto pr-1">
+                    {trends.map((t, i) => (
+                        <div key={i} className="flex items-center gap-3">
+                            <span className="text-sm text-gray-700 w-28 truncate" title={t.keyword}>{t.keyword}</span>
+                            <div className="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden">
+                                <div className="h-full rounded-full bg-acento/70 transition-all" style={{width: `${Math.max((t.interes_promedio / maxVal) * 100, 2)}%`}} />
+                            </div>
+                            <span className="text-xs text-gray-500 w-10 text-right font-mono">{(t.interes_promedio || 0).toFixed(0)}</span>
+                        </div>
+                    ))}
+                </div>
+            );
+        }
+
+        function PopoverInstrumentos({ leg, pos, onClose, onKeep }) {
+            if (!leg) return null;
+            const popRef = useRef(null);
+            const tipoIcon = { 'Iniciativa': '\ud83d\udccb', 'Proposici\u00f3n con punto de acuerdo': '\ud83d\udccc', 'Dictamen': '\ud83d\udcd1', 'Asunto': '\ud83d\udcc4' };
+            const instrumentos = leg.instrumentos || [];
+
+            const [adjPos, setAdjPos] = useState(pos);
+            useEffect(() => {
+                if (popRef.current) {
+                    const rect = popRef.current.getBoundingClientRect();
+                    let top = pos.top;
+                    let left = pos.left;
+                    if (top + rect.height > window.innerHeight - 16) top = Math.max(16, pos.top - rect.height - 8);
+                    if (left + rect.width > window.innerWidth - 16) left = Math.max(16, window.innerWidth - rect.width - 16);
+                    setAdjPos({ top, left });
+                }
+            }, [pos]);
+
+            const getEstatusInfo = (estatus) => {
+                if (!estatus) return null;
+                const e = estatus.toLowerCase();
+                if (e.includes('desechado') || e.includes('desechada')) return { lbl: 'Desechado', cls: 'bg-red-100 text-red-600' };
+                if (e.includes('aprobado') || e.includes('aprobada') || e.includes('publicado')) return { lbl: 'Aprobado', cls: 'bg-green-100 text-green-700' };
+                if (e.includes('pendiente')) return { lbl: 'Pendiente', cls: 'bg-amber-50 text-amber-600' };
+                if (e.includes('turnad')) return { lbl: 'Turnado', cls: 'bg-blue-50 text-blue-600' };
+                const lbl = estatus.length > 20 ? estatus.substring(0, 18) + '..' : estatus;
+                return { lbl, cls: 'bg-gray-100 text-gray-600' };
+            };
+
+            return ReactDOM.createPortal(
+                <div ref={popRef} style={{ position: 'fixed', top: adjPos.top, left: adjPos.left, zIndex: 9999 }}
+                    className="w-80 bg-white rounded-xl shadow-2xl border border-gray-200 overflow-hidden"
+                    onMouseEnter={onKeep} onMouseLeave={onClose}>
+                    <div className="px-4 py-3 border-b border-gray-100 bg-gray-50/50">
+                        <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm text-gray-800 truncate">{leg.nombre}</span>
+                            {leg.partido && <span className="text-white text-[8px] px-1.5 py-0.5 rounded font-medium flex-shrink-0" style={{ backgroundColor: PARTIDO_COLORS[leg.partido] || '#999' }}>{leg.partido}</span>}
+                        </div>
+                        <div className="text-[10px] text-gray-400 mt-0.5">Instrumentos legislativos recientes</div>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                        {instrumentos.length === 0
+                            ? <div className="px-4 py-6 text-center text-gray-400 text-sm">Sin instrumentos recientes en esta categoria</div>
+                            : instrumentos.map((inst, i) => {
+                                const ei = getEstatusInfo(inst.estatus);
+                                return (
+                                    <div key={i} className="px-4 py-2.5 border-b border-gray-50 last:border-0 hover:bg-gray-50/50">
+                                        <div className="flex items-start gap-2">
+                                            <span className="text-sm flex-shrink-0 mt-0.5">{tipoIcon[inst.tipo] || '\ud83d\udcc4'}</span>
+                                            <div className="min-w-0 flex-1">
+                                                {inst.url
+                                                    ? <a href={inst.url} target="_blank" rel="noopener noreferrer" className="text-xs text-acento hover:underline leading-snug line-clamp-2 block">{inst.titulo}</a>
+                                                    : <div className="text-xs text-gray-800 leading-snug line-clamp-2">{inst.titulo}</div>
+                                                }
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    {inst.fecha && <span className="text-[10px] text-gray-400 font-mono">{inst.fecha}</span>}
+                                                    {ei && <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium font-mono ${ei.cls}`}>{ei.lbl}</span>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        }
+                    </div>
+                </div>,
+                document.body
+            );
+        }
+
+        /* ================================================================
+           DETAIL MODAL
+           ================================================================ */
+
+        function DetalleModal({ data, prediccion, fuentes, seriesTemporales, seriesTemporalesMedios, autoria, generado, onClose }) {
+            if (!data) return null;
+            const colors = { verde: '#2e7d32', amarillo: '#c6972b', rojo: '#c62828' };
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
+            const [tabActiva, setTabActiva] = useState('media');
+            const [popoverLeg, setPopoverLeg] = useState(null);
+            const popoverTimer = useRef(null);
+            const showPopover = (leg, e) => { clearTimeout(popoverTimer.current); const rect = e.currentTarget.getBoundingClientRect(); const left = rect.right + 8 + 320 > window.innerWidth ? Math.max(16, rect.left - 328) : rect.right + 8; setPopoverLeg({ ...leg, _pos: { top: rect.top, left } }); };
+            const hidePopover = () => { popoverTimer.current = setTimeout(() => setPopoverLeg(null), 200); };
+            const catFuentes = fuentes?.[data.categoria] || {};
+            const serie = seriesTemporales?.[data.categoria] || [];
+            const serieMedios = seriesTemporalesMedios?.[data.categoria] || [];
+
+            useEffect(() => {
+                if (chartRef.current) {
+                    if (chartInstance.current) chartInstance.current.destroy();
+                    /* Ventana fija de últimos 14 días: actividad legislativa +
+                       cobertura mediática en el mismo eje de tiempo, para ver
+                       cómo los legisladores reaccionan a picos en medios. */
+                    const DIAS = 14;
+                    const serieFiltrada = serie.slice(-DIAS);
+                    const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+                    const lastIdx = serieFiltrada.length - 1;
+                    const labels = serieFiltrada.map((s, i) => {
+                        if (i === lastIdx) return 'HOY';
+                        const d = new Date(s.fecha + 'T12:00:00');
+                        return `${String(d.getDate()).padStart(2,'0')}-${MESES[d.getMonth()]}`;
+                    });
+                    const valores = serieFiltrada.map(s => s.count);
+
+                    /* Cobertura mediática por día: serie temporal completa desde
+                       tabla `articulos`, no la lista capada de articulos_medios.
+                       Fallback: si la serie aún no existe en data.json (primer
+                       deploy), contar desde la lista limitada como antes. */
+                    const serieMediosFiltrada = serieMedios.slice(-DIAS);
+                    let mediaValores;
+                    if (serieMediosFiltrada.length === DIAS) {
+                        mediaValores = serieMediosFiltrada.map(s => s.count);
+                    } else {
+                        const articulos = catFuentes.articulos_medios || [];
+                        const mediaPorFecha = {};
+                        articulos.forEach(a => { if (a.fecha) mediaPorFecha[a.fecha] = (mediaPorFecha[a.fecha] || 0) + 1; });
+                        mediaValores = serieFiltrada.map(s => mediaPorFecha[s.fecha] || 0);
+                    }
+
+                    const lineColor = '#2e7d32';
+                    const fillColor = 'rgba(46, 125, 50, 0.18)';
+                    const peakColor = '#2e7d32';
+                    const mediaColor = '#ea580c';  /* naranja para medios */
+                    const mediaFill = 'rgba(234, 88, 12, 0.08)';
+
+                    /* Picos legislativos locales */
+                    const localMaxIdx = [];
+                    valores.forEach((v, i) => {
+                        if (v <= 0) return;
+                        const left = i > 0 ? valores[i - 1] : -Infinity;
+                        const right = i < valores.length - 1 ? valores[i + 1] : -Infinity;
+                        if (v >= left && v >= right) localMaxIdx.push({ i, v });
+                    });
+                    const topPeaksIdx = new Set(localMaxIdx.sort((a, b) => b.v - a.v).slice(0, 3).map(p => p.i));
+                    const peakData = valores.map((v, i) => topPeaksIdx.has(i) ? v : null);
+
+                    const peakLinesPlugin = {
+                        id: 'peakLines',
+                        beforeDatasetsDraw(chart) {
+                            const ctx = chart.ctx;
+                            const yAxis = chart.scales.y;
+                            const xAxis = chart.scales.x;
+                            ctx.save();
+                            ctx.strokeStyle = 'rgba(46, 125, 50, 0.25)';
+                            ctx.lineWidth = 1;
+                            ctx.setLineDash([3, 4]);
+                            topPeaksIdx.forEach(idx => {
+                                const x = xAxis.getPixelForValue(idx);
+                                ctx.beginPath();
+                                ctx.moveTo(x, yAxis.top);
+                                ctx.lineTo(x, yAxis.bottom);
+                                ctx.stroke();
+                            });
+                            ctx.restore();
+                        }
+                    };
+
+                    chartInstance.current = new Chart(chartRef.current, {
+                        type: 'line', plugins: [peakLinesPlugin],
+                        data: { labels, datasets: [
+                            { label: 'Actividad legislativa', data: valores, borderColor: lineColor, backgroundColor: fillColor, borderWidth: 2, fill: true, tension: 0.3, pointRadius: 0, pointHitRadius: 10, pointHoverRadius: 5, pointBackgroundColor: lineColor, pointBorderColor: '#fff', pointBorderWidth: 2, yAxisID: 'y' },
+                            { label: 'Cobertura de medios', data: mediaValores, borderColor: mediaColor, backgroundColor: mediaFill, borderWidth: 1.8, borderDash: [5, 3], fill: true, tension: 0.3, pointRadius: 0, pointHitRadius: 10, pointHoverRadius: 4, pointBackgroundColor: mediaColor, pointBorderColor: '#fff', pointBorderWidth: 2, yAxisID: 'y1' },
+                            { label: 'Picos legislativos', data: peakData, borderColor: 'transparent', backgroundColor: '#ffffff', pointRadius: 4, pointBackgroundColor: '#ffffff', pointBorderColor: peakColor, pointBorderWidth: 2, pointHoverRadius: 6, pointStyle: 'circle', fill: false, showLine: false, spanGaps: false, yAxisID: 'y' }
+                        ]},
+                        options: { responsive: true, maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+                            plugins: { legend: { display: false }, tooltip: { backgroundColor: 'rgba(15,23,42,0.92)', titleColor: '#f1f5f9', bodyColor: '#cbd5e1', borderColor: 'rgba(255,255,255,0.08)', borderWidth: 1, cornerRadius: 10, padding: { top: 8, bottom: 8, left: 12, right: 12 }, displayColors: true, boxWidth: 8, boxHeight: 8, boxPadding: 4, titleFont: { size: 11, weight: '600' }, bodyFont: { size: 11 }, filter: (item) => item.datasetIndex !== 2, callbacks: { title: (items) => items[0]?.label || '', label: (item) => { if (item.datasetIndex === 0) return ` ${item.raw} instrumentos${topPeaksIdx.has(item.dataIndex) ? ' (pico)' : ''}`; if (item.datasetIndex === 1) return ` ${item.raw} notas en medios`; return ''; } } } },
+                            scales: {
+                                y: { position: 'left', beginAtZero: true, ticks: { color: '#2e7d32', font: { size: 9 }, padding: 8, maxTicksLimit: 4 }, grid: { color: 'rgba(0,0,0,0.04)', lineWidth: 0.5, drawBorder: false, drawTicks: false }, border: { display: false }, title: { display: true, text: 'Legislativo', color: '#2e7d32', font: { size: 9, weight: '600' } } },
+                                y1: { position: 'right', beginAtZero: true, ticks: { color: '#ea580c', font: { size: 9 }, padding: 8, maxTicksLimit: 4 }, grid: { display: false }, border: { display: false }, title: { display: true, text: 'Medios', color: '#ea580c', font: { size: 9, weight: '600' } } },
+                                x: { ticks: { color: '#b0b8c4', font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 7, padding: 6 }, grid: { display: false }, border: { display: false } }
+                            }
+                        }
+                    });
+                }
+                return () => { if (chartInstance.current) chartInstance.current.destroy(); };
+            }, [data, serie, serieMedios, catFuentes]);
+
+            const nMedia = catFuentes.articulos_medios?.length || 0;
+            const nGaceta = catFuentes.documentos_gaceta?.length || 0;
+            const nTrends = catFuentes.google_trends?.length || 0;
+            const nCSP = catFuentes.menciones_csp?.length || 0;
+
+            return (
+                <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+                    <div className="bg-white border border-gray-200 rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6 space-y-4 shadow-xl" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-bold text-gray-900">{data.nombre}</h2>
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => {
+                                    const emoji = data.color === 'rojo' ? '🔴' : data.color === 'amarillo' ? '🟡' : '🟢';
+                                    const texto = `${data.nombre}: ${data.score_total.toFixed(0)}% ${emoji}\nScore FIAT en tiempo real\nhttps://fiatmx.com`;
+                                    if (navigator.share) {
+                                        navigator.share({ title: `FIAT — ${data.nombre}`, text: texto, url: 'https://fiatmx.com' }).catch(() => {});
+                                    } else {
+                                        navigator.clipboard.writeText(texto).then(() => {
+                                            const btn = document.querySelector('[data-share-btn]');
+                                            if (btn) { btn.innerHTML = '✓'; setTimeout(() => { btn.innerHTML = '<svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8\"/><polyline points=\"16 6 12 2 8 6\"/><line x1=\"12\" y1=\"2\" x2=\"12\" y2=\"15\"/></svg>'; }, 1500); }
+                                        });
+                                    }
+                                }} data-share-btn className="text-gray-400 hover:text-gray-700 p-1.5 rounded-lg hover:bg-gray-100 transition-colors" title="Compartir">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                                </button>
+                                <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+                            </div>
+                        </div>
+                        <div className="flex items-center justify-between gap-4 flex-wrap">
+                            <div className="flex items-center gap-4">
+                                <ScoreRing score={data.score_total} color={data.color} size={90} />
+                                <div>
+                                    <div className="text-3xl font-bold" style={{color: colors[data.color]}}>{data.score_total.toFixed(1)}</div>
+                                    <div className="text-gray-500 text-sm uppercase tracking-wider">{data.color}</div>
+                                    <div className="text-xs text-gray-400 mt-1 font-mono">{formatearActualizacion(generado)}</div>
+                                </div>
+                            </div>
+                            {/* Aprobaciones LXVI últimos 14d — métrica sutil al lado derecho del header */}
+                            {(data.aprobados_14d?.count > 0) && (
+                                <div className="text-right">
+                                    <div className="text-2xl font-bold text-emerald-700">{data.aprobados_14d.count}</div>
+                                    <div className="text-[11px] text-gray-500 leading-tight max-w-[160px]">
+                                        instrumentos aprobados<br/>en los últimos 14 días
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        {/* Divergence Index oculto en modal hasta resolver calibración de las 5 capas del score */}
+                        <div className="bg-gray-50/50 border border-gray-100 rounded-lg p-3">
+                            <div className="flex items-center justify-between mb-3">
+                                <div>
+                                    <div className="text-[10px] text-gray-400 uppercase tracking-wider font-medium font-mono">Actividad legislativa vs. cobertura de medios</div>
+                                    <div className="text-[9px] text-gray-400 font-mono mt-0.5">Últimos 14 días · instrumentos SIL + Gaceta contra notas en medios</div>
+                                </div>
+                                <span className="px-2 py-0.5 text-[9px] font-semibold rounded-full bg-gray-900 text-white font-mono whitespace-nowrap">14 días</span>
+                            </div>
+                            <div style={{height: '200px'}}><canvas ref={chartRef}></canvas></div>
+                            <div className="flex items-center gap-4 mt-3 text-[10px] text-gray-500 font-mono flex-wrap">
+                                <span className="flex items-center gap-1.5"><span className="w-3 h-0.5" style={{backgroundColor: '#2e7d32'}}></span>Instrumentos legislativos</span>
+                                <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 border-dashed border-t-2" style={{borderColor: '#ea580c'}}></span>Notas en medios</span>
+                                <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full border-2 bg-white" style={{borderColor: '#2e7d32'}}></span>Pico legislativo</span>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-5 gap-3 text-xs">
+                            {[
+                                { label: 'Media', value: data.score_media, danger: false },
+                                { label: 'Trends', value: data.score_trends, danger: false },
+                                { label: 'Congreso', value: data.score_congreso, danger: false },
+                                { label: 'CSP', value: data.score_mananera || 0, danger: true },
+                                { label: 'Urgencia', value: data.score_urgencia, danger: false },
+                            ].map(m => (
+                                <div key={m.label}>
+                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                        <div className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
+                                            <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(Math.max(m.value, 0), 100)}%`, backgroundColor: m.danger ? '#c62828' : '#2e7d32' }} />
+                                        </div>
+                                        <span className={`text-[11px] font-mono font-semibold ${m.danger ? 'text-rose-600' : 'text-gray-700'}`}>{m.value.toFixed(0)}%</span>
+                                    </div>
+                                    <div className="text-[9px] uppercase tracking-wider text-gray-400">{m.label}</div>
+                                </div>
+                            ))}
+                        </div>
+                        {data.subcategorias_activas?.length > 0 && (
+                            <div className="bg-gray-50/50 border border-gray-100 rounded-lg p-3">
+                                <div className="text-[10px] text-gray-400 mb-2 uppercase tracking-wider font-medium">Subtemas activos</div>
+                                <div className="space-y-1.5">
+                                    {data.subcategorias_activas.map(sub => (
+                                        <div key={sub.clave} className="flex items-center gap-2">
+                                            <span className="text-xs text-gray-700 w-40 truncate flex-shrink-0 font-mono">{sub.nombre}</span>
+                                            <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                                <div className="h-full rounded-full transition-all" style={{width: `${Math.max(sub.peso * 100, 4)}%`, backgroundColor: colors[data.color]}} />
+                                            </div>
+                                            <span className="text-[10px] text-gray-400 w-8 text-right font-mono">{(sub.peso * 100).toFixed(0)}%</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        <div>
+                            <div className="flex gap-0 border-b border-gray-200 mb-3 flex-wrap">
+                                {[['media', `Medios (${nMedia})`], ['gaceta', `Gaceta (${nGaceta})`], ['csp', `Mención CSP (${nCSP})`], ['trends', `Trends (${nTrends})`], ['urgencia', 'Urgencia']].map(([key, label]) => (
+                                    <button key={key} onClick={() => setTabActiva(key)} className={`px-3 py-2 text-sm transition-colors ${tabActiva === key ? 'tab-active' : 'tab-inactive'}`}>{label}</button>
+                                ))}
+                                {autoria?.length > 0 && <button onClick={() => setTabActiva('autoria')} className={`px-3 py-2 text-sm transition-colors ${tabActiva === 'autoria' ? 'tab-active' : 'tab-inactive'}`}>Quien presenta?</button>}
+                            </div>
+                            {tabActiva === 'media' && <FuentesMedia articulos={catFuentes.articulos_medios} />}
+                            {tabActiva === 'gaceta' && <FuentesGaceta documentos={catFuentes.documentos_gaceta} />}
+                            {tabActiva === 'csp' && <FuentesMananera menciones={catFuentes.menciones_csp} />}
+                            {tabActiva === 'trends' && <FuentesTrends trends={catFuentes.google_trends} />}
+                            {tabActiva === 'autoria' && autoria?.length > 0 && (
+                                <div className="space-y-2">
+                                    <div className="text-xs text-gray-500 mb-2">Legisladores con mayor probabilidad de presentar instrumentos en esta categoria. <span className="text-gray-400">Pasa el cursor sobre un legislador para ver sus instrumentos.</span></div>
+                                    {autoria.map((leg, i) => (
+                                        <div key={i} className="flex items-start gap-3 p-2.5 rounded-lg border border-gray-100 bg-gray-50/50 cursor-pointer hover:border-acento/30 transition-colors"
+                                            onMouseEnter={(e) => showPopover(leg, e)} onMouseLeave={hidePopover}>
+                                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-acento/10 flex items-center justify-center text-xs font-bold text-acento">{i + 1}</div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-semibold text-sm text-gray-800 truncate">{leg.nombre}</span>
+                                                    <span className="text-white text-[10px] px-1.5 py-0.5 rounded font-medium" style={{backgroundColor: PARTIDO_COLORS[leg.partido] || '#999'}}>{leg.partido || '?'}</span>
+                                                </div>
+                                                <div className="text-xs text-gray-500 mt-0.5">{leg.camara}{leg.estado ? ` - ${leg.estado}` : ''}{leg.comisiones_afines?.length > 0 && ` - Com: ${leg.comisiones_afines.slice(0, 2).join(', ')}`}</div>
+                                                <div className="flex items-center gap-3 mt-1">
+                                                    <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden"><div className="h-full rounded-full bg-acento transition-all" style={{width: `${Math.min(leg.score, 100)}%`}} /></div>
+                                                    <span className="text-[10px] text-acento font-bold">{leg.score.toFixed(0)}%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {popoverLeg && <PopoverInstrumentos leg={popoverLeg} pos={popoverLeg._pos} onClose={hidePopover} onKeep={() => clearTimeout(popoverTimer.current)} />}
+                                </div>
+                            )}
+                            {tabActiva === 'urgencia' && (
+                                <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-700 space-y-3 border border-gray-100">
+                                    <div className="font-semibold text-gray-800">¿Cómo se calcula la urgencia?</div>
+                                    <div className="text-xs text-gray-600">Se pondera la evidencia histórica de reactividad legislativa más la actividad reciente del Congreso, incluyendo el ratio de reactividad observada vs baseline histórica.</div>
+                                    <div className="text-xs text-gray-500 space-y-2">
+                                        <div><strong className="text-gray-800">Correlación histórica (30%)</strong> — ¿La presión mediática en este tema se ha traducido antes en legislación real?</div>
+                                        <div><strong className="text-gray-800">Aceleración SIL reciente (30%)</strong> — ¿La velocidad de instrumentos legislativos aumentó en los últimos 14 días?</div>
+                                        <div><strong className="text-gray-800">Ratio de reactividad (25%)</strong> — Actividad legislativa últimos 30 días vs promedio mensual de los 6 meses previos. Diferenciador clave entre "tema con ley real" y "tema con solo ruido".</div>
+                                        <div><strong className="text-gray-800">Calendario legislativo (15%)</strong> — Solo amplifica si estamos en periodo ordinario y hay presión mediática real.</div>
+                                    </div>
+                                    <div className="mt-2 pt-2 border-t border-gray-200 text-xs text-gray-500 font-mono">
+                                        <strong>Para esta categoría:</strong> urgencia = <strong>{data.score_urgencia.toFixed(1)}%</strong>
+                                        {data.score_urgencia < 20 && <span className="ml-1 text-gray-400">— Sin evidencia suficiente.</span>}
+                                        {data.score_urgencia >= 20 && data.score_urgencia < 50 && <span className="ml-1 text-gray-400">— Evidencia moderada de actividad.</span>}
+                                        {data.score_urgencia >= 50 && <span className="ml-1 text-gray-400">— Evidencia fuerte de actividad.</span>}
+                                    </div>
+                                    {data.ratio_reactividad !== null && data.ratio_reactividad !== undefined && (
+                                        <div className="pt-2 border-t border-gray-200 text-xs text-gray-600 font-mono">
+                                            <strong className="text-gray-800">Ratio reactividad observada:</strong> <span className={data.ratio_reactividad >= 1.5 ? 'text-emerald-700 font-semibold' : data.ratio_reactividad >= 1.0 ? 'text-amber-700 font-semibold' : 'text-gray-500'}>{data.ratio_reactividad}×</span>
+                                            <div className="text-[10px] text-gray-400 mt-0.5">{data.reactividad_detalle?.docs_30d || 0} instrumentos últimos 30d · baseline mensual {data.reactividad_detalle?.baseline_mensual || 0}</div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                        {prediccion && (() => {
+                            const tieneCorrelacion = prediccion.correlacion && Math.abs(prediccion.correlacion) >= 0.15 && prediccion.confianza > 10;
+                            /* Banda oscura al pie del modal, simétrica con el hero verde del detalle y
+                               con el estilo del tab abierto en Radar de Legisladores. */
+                            /* -mx-6 -mb-6 y !mt-0 para full-bleed pegado al
+                               borde inferior del modal, sin gap blanco arriba */
+                            return tieneCorrelacion ? (
+                                <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-950 p-6 rounded-b-2xl" style={{marginTop: 0, marginLeft: '-1.5rem', marginRight: '-1.5rem', marginBottom: '-1.5rem', padding: '1rem 1.5rem'}}>
+                                    <svg className="absolute pointer-events-none" style={{right: '-50px', top: '50%', transform: 'translateY(-50%)', width: '280px', height: '280px', opacity: 0.06}} viewBox="0 0 280 280">
+                                        <circle cx="140" cy="140" r="50" stroke="white" strokeWidth="1" fill="none"/>
+                                        <circle cx="140" cy="140" r="90" stroke="white" strokeWidth="0.8" fill="none"/>
+                                        <circle cx="140" cy="140" r="130" stroke="white" strokeWidth="0.6" fill="none"/>
+                                    </svg>
+                                    <div className="relative font-mono">
+                                        <div className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1.5">Predicción temporal</div>
+                                        <div className="text-white/90 text-[11px] leading-relaxed">{prediccion.prediccion}</div>
+                                        <div className="mt-1.5 text-[10px] text-white/50 leading-relaxed">
+                                            Lag: <span className="text-white/80 font-semibold">{prediccion.lag_historico_dias} días</span>
+                                            <span className="mx-1.5 text-white/25">·</span>
+                                            r = <span className="text-white/80 font-semibold">{prediccion.correlacion?.toFixed(2)}</span>
+                                            <span className="mx-1.5 text-white/25">·</span>
+                                            Confianza: <span className="text-white/80 font-semibold">{prediccion.confianza?.toFixed(0)}%</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="relative overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900 p-6 rounded-b-2xl" style={{marginTop: 0, marginLeft: '-1.5rem', marginRight: '-1.5rem', marginBottom: '-1.5rem', padding: '1rem 1.5rem'}}>
+                                    <div className="font-mono">
+                                        <div className="text-[10px] font-bold uppercase tracking-widest text-white/60 mb-1.5">Modelo predictivo en entrenamiento</div>
+                                        <div className="text-[11px] text-white/70 leading-relaxed">Se requieren al menos 14 días de monitoreo continuo para generar una predicción estadísticamente significativa.</div>
+                                    </div>
+                                </div>
+                            );
+                        })()}
+                    </div>
+                </div>
+            );
+        }
+
+        /* ================================================================
+           PAGE: ACTIVIDAD LEGISLATIVA (HOME)
+           ================================================================ */
 
         const CATEGORIA_LABEL = {
             salud: 'Salud', educacion: 'Educación', seguridad_justicia: 'Seguridad',
@@ -1145,6 +1710,10 @@
         function HomeApp() {
             const [data, setData] = useState(null);
             const [showWizard, setShowWizard] = useState(false);
+            /* Teaser del detalle: el DetalleModal REAL de la consola, pero con
+               solo las 3 primeras notas monitoreadas; el resto queda bajo un
+               degradado blanco con CTA a planes. */
+            const [selected, setSelected] = useState(null);
             const [allLegisladores, setAllLegisladores] = useState([]);
             const [allComisiones, setAllComisiones] = useState([]);
             const [config, setConfigState] = useState(() => {
@@ -1246,7 +1815,7 @@
                                     <a href="../index.html" className="text-[12px] font-medium text-acento hover:underline">Ver los {semaforo.length || 19} temas →</a>
                                 </div>
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    {top4.map(s => <SemaforoCard key={s.categoria} data={s} onClick={() => { window.location.href = '../index.html'; }} />)}
+                                    {top4.map(s => <SemaforoCard key={s.categoria} data={s} onClick={setSelected} />)}
                                 </div>
                             </div>
                             <div className="space-y-4">
@@ -1274,6 +1843,36 @@
                             </div>
                         </div>
                     </section>
+
+                    {/* ══ Teaser de detalle: DetalleModal real + velo de plan ══ */}
+                    {selected && (() => {
+                        const catF = (data.fuentes || {})[selected.categoria] || {};
+                        const fuentesTeaser = { ...(data.fuentes || {}),
+                            [selected.categoria]: { ...catF,
+                                articulos_medios: (catF.articulos_medios || []).slice(0, 3) } };
+                        const irAPlanes = () => {
+                            setSelected(null);
+                            document.getElementById('planes')?.scrollIntoView({ behavior: 'smooth' });
+                        };
+                        return (
+                            <React.Fragment>
+                                <DetalleModal data={selected}
+                                    prediccion={data.predicciones?.[selected.categoria]}
+                                    fuentes={fuentesTeaser}
+                                    seriesTemporales={data.series_temporales}
+                                    seriesTemporalesMedios={data.series_temporales_medios}
+                                    autoria={data.autoria?.[selected.categoria]}
+                                    generado={data.metadata?.generado}
+                                    onClose={() => setSelected(null)} />
+                                <div className="fixed inset-x-0 bottom-0 h-[46%] z-[60] pointer-events-none flex flex-col items-center justify-end pb-10"
+                                     style={{ background: 'linear-gradient(to top, #ffffff 42%, rgba(255,255,255,0.92) 62%, rgba(255,255,255,0) 100%)' }}>
+                                    <button onClick={irAPlanes} className="pointer-events-auto text-white font-semibold px-7 py-3 rounded-full bg-semaforo-verde hover:bg-emerald-700 transition-colors shadow-lg text-[14px]">Elige tu plan</button>
+                                    <p className="mt-2 text-[11px] font-mono text-gray-400">Cancela cuando quieras.</p>
+                                    <button onClick={() => setSelected(null)} className="pointer-events-auto mt-1 text-[11px] text-gray-400 underline hover:text-gray-600">cerrar</button>
+                                </div>
+                            </React.Fragment>
+                        );
+                    })()}
 
                     {/* ══ Wizard de configuración — EL MISMO de la consola ══ */}
                     {showWizard && data && (
