@@ -4,13 +4,18 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Fiat | Inteligencia Legislativa</title>
-<meta name="description" content="FIAT monitorea el Congreso mexicano en tiempo real: scores por tema, legisladores más probables, y qué iniciativas responden a qué eventos." />
+<meta name="description" content="FIAT es un sistema de inteligencia legislativa que monitorea en tiempo real la actividad del Congreso de México. Analiza iniciativas, dictámenes, puntos de acuerdo y medios de comunicación para generar alertas y predicciones sobre temas legislativos clave." />
 <link rel="icon" type="image/x-icon" href="../favicon.ico" />
 <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png" />
 <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7/babel.min.js"></script>
 <script>
     tailwind.config = {
         theme: {
@@ -34,13 +39,15 @@
   body { font-family: Inter, system-ui, sans-serif; }
   .nav-pill-tab { padding: 6px 14px; font-size: 13px; font-weight: 500; color: #9ca3af; border-radius: 9999px; transition: all .2s; cursor: pointer; letter-spacing: .01em; white-space: nowrap; }
   .nav-pill-tab:hover { color: #000; font-weight: 600; }
-  /* mismas clases que la consola (index.html) — widgets portados 1:1 */
   .glass { background: #ffffff; border: 1px solid #e5e7eb; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+  .score-ring { transition: stroke-dashoffset .6s ease; }
+  .leaflet-tooltip-fiat { background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 4px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  .leaflet-tooltip-fiat::before { border-top-color: #e5e7eb; }
 </style>
 </head>
 <body class="bg-fondo text-gray-900 antialiased">
 
-<!-- ══════════ HEADER (idéntico a la consola) ══════════ -->
+<!-- ══ HEADER (idéntico a la consola) ══ -->
 <header class="sticky top-0 z-40 bg-white/90 backdrop-blur border-b border-gray-100">
   <div class="max-w-6xl mx-auto flex items-center gap-2 px-4 py-2.5 flex-wrap">
     <div class="flex items-center gap-2 flex-shrink-0">
@@ -65,309 +72,1150 @@
   </div>
 </header>
 
-<!-- ══════════ HERO: ¿QUÉ ES FIAT? ══════════ -->
-<section class="max-w-6xl mx-auto px-4 pt-10 pb-12">
-  <div class="grid lg:grid-cols-2 gap-8 items-center">
-    <div>
-      <p class="text-[11px] font-mono text-gray-400 tracking-[0.18em] uppercase mb-3">¿Qué es FIAT?</p>
-      <h1 class="text-4xl sm:text-[44px] font-black leading-[1.08] tracking-tight text-gray-900">
-        El Congreso de México,<br/>
-        <span class="text-semaforo-verde">medido en tiempo real.</span>
-      </h1>
-      <p class="mt-5 text-gray-600 text-[17px] leading-relaxed">
-        FIAT lee la gaceta, el SIL, los medios nacionales y 96 medios estatales
-        todos los días — y lo convierte en señal: qué temas van a moverse,
-        qué legisladores van a presentar, y qué iniciativas responden a qué eventos.
-      </p>
-      <ul class="mt-6 space-y-2.5 text-gray-700 text-[15px]">
-        <li class="flex gap-2.5"><span class="text-semaforo-verde font-black">✓</span> Scores por tema con 7 señales: media, congreso, tendencias, mañanera…</li>
-        <li class="flex gap-2.5"><span class="text-semaforo-verde font-black">✓</span> Radar de legisladores: quién presenta, con qué efectividad, en qué comisiones</li>
-        <li class="flex gap-2.5"><span class="text-semaforo-verde font-black">✓</span> Consola personalizada con tus palabras clave y alertas</li>
-        <li class="flex gap-2.5"><span class="text-semaforo-verde font-black">✓</span> 479 leyes rastreadas: qué se aprobó y qué sigue pendiente</li>
-      </ul>
-      <div class="mt-8 flex flex-wrap gap-3">
-        <a href="../index.html" class="bg-semaforo-verde hover:bg-emerald-700 text-white font-semibold px-6 py-3 rounded-full transition-colors shadow-sm">Explora la consola →</a>
-        <a href="#planes" class="border border-borde hover:border-gray-400 bg-white text-gray-700 font-semibold px-6 py-3 rounded-full transition-colors">Ver planes</a>
-      </div>
-    </div>
+<div id="home-root"></div>
 
-    <!-- espacio reservado para el VIDEO — tarjeta oscura estilo "probabilidad" de la consola -->
-    <div class="relative aspect-video rounded-2xl overflow-hidden flex items-center justify-center" style="background:linear-gradient(135deg,#1a365d 0%,#0f2342 100%);" id="video-slot">
-      <!-- Cuando exista el video: reemplazar este bloque por el <video>/<iframe> -->
-      <div class="absolute inset-0 opacity-[0.12]" style="background-image:radial-gradient(circle at 78% 22%, #ffffff 0, transparent 42%);"></div>
-      <div class="absolute top-4 left-5 flex items-center gap-2">
-        <span class="text-[10px] font-mono text-white/50 tracking-[0.18em] uppercase">FIAT en 90 segundos</span>
-        <span class="flex items-center gap-1 text-[10px] font-mono text-emerald-300"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>PRÓXIMAMENTE</span>
-      </div>
-      <div class="w-[72px] h-[72px] rounded-full bg-white/10 border border-white/25 flex items-center justify-center">
-        <svg class="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════ SCORES + PROBABLES ══════════ -->
-<section class="max-w-6xl mx-auto px-4 pb-14">
-  <div class="grid lg:grid-cols-3 gap-5">
-
-    <!-- Top de Scores (2/3) -->
-    <div class="lg:col-span-2">
-      <div class="flex items-baseline justify-between mb-3">
-        <div>
-          <h2 class="text-lg font-bold text-gray-900">Top de Scores</h2>
-          <p class="text-[11px] font-mono text-gray-400" id="fecha-scores">hoy</p>
-        </div>
-        <a href="../index.html" class="text-[12px] font-medium text-semaforo-verde hover:text-emerald-700">Ver los 19 temas →</a>
-      </div>
-      <div id="top-scores" class="grid sm:grid-cols-2 gap-4">
-        <div class="text-gray-400 text-sm p-6 font-mono">cargando…</div>
-      </div>
-    </div>
-
-    <!-- Legisladores más probables — MISMO widget que la consola -->
-    <div class="lg:pt-8">
-      <div id="probables"></div>
-    </div>
-  </div>
-</section>
-
-<!-- ══════════ CONOCE MÁS: PLANES ══════════ -->
-<section id="planes" class="border-t border-gray-200 bg-white">
-  <div class="max-w-6xl mx-auto px-4 py-14">
-    <div class="text-center mb-9">
-      <p class="text-[11px] font-mono text-gray-400 tracking-[0.18em] uppercase mb-2">Conoce más</p>
-      <h2 class="text-3xl font-black tracking-tight text-gray-900">Elige tu plan</h2>
-      <p class="text-gray-500 mt-2 text-sm">Sin permanencia forzosa. Cancela cuando quieras.</p>
-    </div>
-
-    <div class="grid md:grid-cols-3 gap-5 max-w-4xl mx-auto items-stretch">
-
-      <!-- Tier 1: Prueba -->
-      <div class="rounded-xl border border-gray-200 bg-fondo p-7 flex flex-col">
-        <p class="text-[11px] font-mono text-gray-400 tracking-wide uppercase">Pruébalo</p>
-        <div class="mt-3">
-          <span class="text-4xl font-black text-semaforo-verde">Gratis</span>
-          <p class="text-gray-500 text-sm mt-1">las primeras <b class="text-gray-800">24 horas</b></p>
-        </div>
-        <p class="text-[11px] font-mono text-gray-400 mt-1.5">después $399 MXN / mes</p>
-        <ul class="mt-6 space-y-2 text-sm text-gray-600 flex-1">
-          <li><span class="text-semaforo-verde font-bold">✓</span> Acceso completo a la consola</li>
-          <li><span class="text-semaforo-verde font-bold">✓</span> Los 19 scores en vivo</li>
-          <li><span class="text-semaforo-verde font-bold">✓</span> Radar de legisladores</li>
-        </ul>
-        <a href="../index.html" class="mt-7 block text-center border border-semaforo-verde text-semaforo-verde hover:bg-semaforo-verde hover:text-white font-semibold py-2.5 rounded-full transition-colors text-sm">Empezar prueba</a>
-      </div>
-
-      <!-- Tier 2: Mensual (destacado) -->
-      <div class="relative rounded-xl border-2 border-semaforo-verde bg-tarjeta p-7 flex flex-col shadow-sm">
-        <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-semaforo-verde text-white text-[10px] font-mono font-bold px-3 py-0.5 rounded-full tracking-wider">MÁS POPULAR</span>
-        <p class="text-[11px] font-mono text-gray-400 tracking-wide uppercase">Mensual</p>
-        <div class="mt-3">
-          <span class="text-4xl font-black text-gray-900">$349</span>
-          <span class="text-gray-400 text-sm font-mono"> MXN/mes</span>
-        </div>
-        <p class="text-[11px] font-mono text-transparent mt-1.5">.</p>
-        <ul class="mt-6 space-y-2 text-sm text-gray-600 flex-1">
-          <li><span class="text-semaforo-verde font-bold">✓</span> Todo lo del plan de prueba</li>
-          <li><span class="text-semaforo-verde font-bold">✓</span> Consola personalizada con tus keywords</li>
-          <li><span class="text-semaforo-verde font-bold">✓</span> Alertas de tus temas</li>
-          <li><span class="text-semaforo-verde font-bold">✓</span> Búsqueda histórica completa</li>
-        </ul>
-        <a href="../index.html" class="mt-7 block text-center bg-semaforo-verde hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-full transition-colors shadow-sm text-sm">Suscribirme</a>
-      </div>
-
-      <!-- Tier 3: Trimestral -->
-      <div class="rounded-xl border border-gray-200 bg-fondo p-7 flex flex-col">
-        <p class="text-[11px] font-mono text-gray-400 tracking-wide uppercase">Trimestral</p>
-        <div class="mt-3">
-          <span class="text-4xl font-black text-gray-900">$999</span>
-          <span class="text-gray-400 text-sm font-mono"> MXN/3 meses</span>
-        </div>
-        <p class="text-[11px] font-mono text-semaforo-amarillo mt-1.5 font-semibold">= $333 al mes</p>
-        <ul class="mt-6 space-y-2 text-sm text-gray-600 flex-1">
-          <li><span class="text-semaforo-verde font-bold">✓</span> Todo lo del plan mensual</li>
-          <li><span class="text-semaforo-verde font-bold">✓</span> Un solo pago cada 3 meses</li>
-          <li><span class="text-semaforo-verde font-bold">✓</span> Precio congelado</li>
-        </ul>
-        <a href="../index.html" class="mt-7 block text-center border border-borde hover:border-gray-400 text-gray-700 font-semibold py-2.5 rounded-full transition-colors text-sm">Suscribirme</a>
-      </div>
-    </div>
-
-    <p class="text-center text-[11px] font-mono text-gray-400 mt-8">
-      Otras herramientas de monitoreo legislativo cobran desde $5,000 MXN mensuales por usuario — y solo muestran la gaceta.
-    </p>
-  </div>
-</section>
-
-<!-- ══════════ FOOTER ══════════ -->
-<footer class="border-t border-gray-200 bg-fondo">
-  <div class="max-w-6xl mx-auto px-4 py-7 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-gray-400">
-    <div class="flex items-center gap-2">
-      <img src="../fiat-logo-transparent.png" alt="" style="height:20px;object-fit:contain;" class="opacity-60" />
-      <span class="font-mono">Inteligencia Legislativa de México</span>
-    </div>
-    <div class="flex gap-5 font-medium">
-      <a href="../index.html" class="hover:text-gray-700">Consola</a>
-      <a href="https://x.com/Fiat_MX" class="hover:text-gray-700">@Fiat_MX</a>
-    </div>
-  </div>
-</footer>
-
-<script>
-/* ════════════════════════════════════════════════════════════════
-   Widgets PORTADOS 1:1 de la consola (dashboard/index.html):
-   - ScoreRing + SemaforoCard  (index.html ~296 y ~1091)
-   - "Legisladores mas probables" + top5Legisladores (~2096 y ~2317)
-   - PartidoBadge + PARTIDO_LOGOS/COLORS (~547-572)
-   Mismo markup, mismas clases, mismos campos de data.json.
-   Regla: no inventar widgets paralelos — reusar los de la consola.
-   ════════════════════════════════════════════════════════════════ */
-const PARTIDO_COLORS = {
-  'MORENA': '#8B1A2B', 'PAN': '#003B7A', 'PRI': '#C4161C',
-  'PVEM': '#00813E', 'PT': '#CC0000', 'MC': '#FF6600', 'PRD': '#FFD700',
-};
-const PARTIDO_LOGOS = {
-  MORENA: '../assets/partidos/morena.svg', PAN: '../assets/partidos/pan.svg',
-  PRI: '../assets/partidos/pri.svg', PVEM: '../assets/partidos/pvem.svg',
-  PT: '../assets/partidos/pt.svg', MC: '../assets/partidos/mc.svg',
-  PRD: '../assets/partidos/prd.svg',
-};
-
-function partidoBadge(partido) {
-  if (!partido) return "";
-  const url = PARTIDO_LOGOS[partido];
-  const color = PARTIDO_COLORS[partido] || '#6B7280';
-  if (url) return `<img src="${url}" alt="${partido}" title="${partido}" class="w-5 h-5 object-contain flex-shrink-0" onerror="this.outerHTML='<span class\\'px-1.5 py-px text-[9px] font-bold rounded text-white tracking-wide\\' style=\\'background-color:${color}\\'>${partido}</span>'" />`;
-  return `<span class="px-1.5 py-px text-[9px] font-bold rounded text-white tracking-wide" style="background-color:${color}">${partido}</span>`;
-}
-
-/* ScoreRing — puerto exacto (gradientes y tipografía de la consola) */
-function scoreRing(score, color, size = 56) {
-  const radius = (size - 8) / 2, half = size / 2;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (score / 100) * circumference;
-  const grads = { verde: ['#66bb6a', '#2e7d32'], amarillo: ['#e0a82b', '#c6972b'], rojo: ['#ef5350', '#c62828'] };
-  const [c1, c2] = grads[color] || ['#bdbdbd', '#9ca3af'];
-  const gid = `grad-${color}-${size}`;
-  const fontSize = size > 70 ? '16px' : size > 50 ? '13px' : '11px';
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-    <defs><linearGradient id="${gid}" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="${c1}"/><stop offset="100%" stop-color="${c2}"/></linearGradient></defs>
-    <circle cx="${half}" cy="${half}" r="${radius}" stroke="#e5e7eb" stroke-width="6" fill="none"/>
-    <circle cx="${half}" cy="${half}" r="${radius}" stroke="url(#${gid})" stroke-width="6" fill="none"
-      stroke-dasharray="${circumference}" stroke-dashoffset="${offset}" stroke-linecap="round"
-      transform="rotate(-90 ${half} ${half})"/>
-    <text x="${half}" y="${half}" text-anchor="middle" dominant-baseline="central"
-      style="font-size:${fontSize}" fill="#1a365d" font-weight="bold">${score.toFixed(0)}%</text></svg>`;
-}
-
-/* SemaforoCard — puerto exacto (chips + 5 barras Media/Trends/Congreso/CSP/Urgencia) */
-function semaforoCard(data) {
-  const colorClasses = { verde: 'border-semaforo-verde/40 hover:border-semaforo-verde',
-    amarillo: 'border-semaforo-amarillo/40 hover:border-semaforo-amarillo',
-    rojo: 'border-semaforo-rojo/40 hover:border-semaforo-rojo' };
-  const colorDot = { verde: 'bg-semaforo-verde', amarillo: 'bg-semaforo-amarillo', rojo: 'bg-semaforo-rojo' };
-  const momentum = data.momentum || {};
-  const trendArrow = momentum.tendencia === 'up' ? '↑' : momentum.tendencia === 'down' ? '↓' : '';
-  const trendColor = momentum.tendencia === 'up' ? 'text-green-600' : momentum.tendencia === 'down' ? 'text-red-500' : 'text-gray-400';
-  const topSubs = (data.subcategorias_activas || []).slice(0, 2);
-  const tieneReact = data.ratio_reactividad != null && data.ratio_reactividad >= 1.3;
-  const chips = (topSubs.length || tieneReact) ? `
-    <div class="flex flex-wrap items-center gap-1 mb-2">
-      ${topSubs.map(s => `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] bg-gray-100 text-gray-600 border border-gray-200 font-mono">${s.nombre}</span>`).join("")}
-      ${tieneReact ? `<span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold ${data.ratio_reactividad >= 2 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}">↑ ${data.ratio_reactividad}× react</span>` : ""}
-    </div>` : "";
-  const barras = [
-    ['Media', data.score_media, false], ['Trends', data.score_trends, false],
-    ['Congreso', data.score_congreso, false], ['CSP', data.score_mananera || 0, true],
-    ['Urgencia', data.score_urgencia, false],
-  ].map(([label, value, danger]) => `
-    <div>
-      <div class="flex items-center gap-1.5 mb-0.5">
-        <div class="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
-          <div class="h-full rounded-full transition-all" style="width:${Math.min(Math.max(value, 0), 100)}%;background-color:${danger ? '#c62828' : '#2e7d32'}"></div>
-        </div>
-        <span class="text-[10px] font-mono font-medium ${danger ? 'text-rose-600' : 'text-gray-700'}">${value.toFixed(0)}%</span>
-      </div>
-      <div class="text-[9px] uppercase tracking-wider text-gray-400">${label}</div>
-    </div>`).join("");
-  return `
-    <a href="../index.html" class="block glass border ${colorClasses[data.color]} rounded-xl p-4 cursor-pointer transition-all duration-300 hover:scale-[1.02]">
-      <div class="flex items-center justify-between mb-3">
-        <div class="flex items-center gap-2">
-          <div class="w-3 h-3 rounded-full ${colorDot[data.color]}"></div>
-          <div>
-            <h3 class="font-semibold text-sm text-gray-800">${data.nombre}</h3>
-            ${momentum.etiqueta ? `<div class="flex items-center gap-1">${trendArrow ? `<span class="text-[10px] font-bold ${trendColor}">${trendArrow}</span>` : ""}<span class="text-[10px] text-gray-400 font-mono">${momentum.etiqueta}</span></div>` : ""}
-          </div>
-        </div>
-        ${scoreRing(data.score_total, data.color, 56)}
-      </div>
-      ${chips}
-      <div class="grid grid-cols-5 gap-2 text-xs text-gray-500">${barras}</div>
-    </a>`;
-}
-
-fetch("../data.json")
-  .then(r => r.json())
-  .then(d => {
-    const semaforo = d.semaforo || [];
-    if (d.metadata && d.metadata.generado)
-      document.getElementById("fecha-scores").textContent = d.metadata.generado.slice(0, 10);
-
-    // ── Top 4 (mismas tarjetas de la consola, ordenadas por score) ──
-    const top = [...semaforo].sort((a, b) => b.score_total - a.score_total).slice(0, 4);
-    document.getElementById("top-scores").innerHTML = top.map(semaforoCard).join("");
-
-    // ── top5Legisladores: LÓGICA exacta de la consola (incl. filtro de receso) ──
-    const top5Legisladores = (() => {
-      if (!d.autoria || semaforo.length === 0) return [];
-      const enReceso = d.metadata?.modo_receso === true;
-      const norm = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
-      const tokenKey = s => norm(s).split(/\s+/).filter(Boolean).sort().join(' ');
-      const permSet = (enReceso && d.permanente?.nombres_norm)
-        ? new Set(d.permanente.nombres_norm.map(tokenKey)) : null;
-      const topCats = [...semaforo].sort((a, b) => b.score_total - a.score_total).slice(0, 5);
-      const seen = new Set(), result = [];
-      for (const catData of topCats) {
-        const preds = d.autoria[catData.categoria];
-        if (!preds || preds.length === 0) continue;
-        for (const p of preds) {
-          if (seen.has(p.nombre)) continue;
-          if (permSet && !permSet.has(tokenKey(p.nombre))) continue;
-          seen.add(p.nombre);
-          result.push({ ...p, categoria: catData.nombre });
-          break;
+<script type="text/babel">
+        /* ═══ BLOQUES COPIADOS VERBATIM DE dashboard/index.html ═══ */
+        const { useState, useEffect, useMemo, useRef } = React;
+        function ScoreRing({ score, color, size = 80 }) {
+            const radius = (size - 8) / 2;
+            const half = size / 2;
+            const circumference = 2 * Math.PI * radius;
+            const offset = circumference - (score / 100) * circumference;
+            const gradientColors = {
+                verde: ['#66bb6a', '#2e7d32'],
+                amarillo: ['#e0a82b', '#c6972b'],
+                rojo: ['#ef5350', '#c62828'],
+            };
+            const [c1, c2] = gradientColors[color] || ['#bdbdbd', '#9ca3af'];
+            const gradId = `grad-${color}-${size}`;
+            const fontSize = size > 70 ? '16px' : size > 50 ? '13px' : '11px';
+            return (
+                <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+                    <defs>
+                        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stopColor={c1} />
+                            <stop offset="100%" stopColor={c2} />
+                        </linearGradient>
+                    </defs>
+                    <circle cx={half} cy={half} r={radius} stroke="#e5e7eb" strokeWidth="6" fill="none" />
+                    <circle cx={half} cy={half} r={radius} stroke={`url(#${gradId})`} strokeWidth="6" fill="none"
+                        strokeDasharray={circumference} strokeDashoffset={offset}
+                        strokeLinecap="round" className="score-ring"
+                        transform={`rotate(-90 ${half} ${half})`} />
+                    <text x={half} y={half} textAnchor="middle" dominantBaseline="central"
+                        style={{fontSize}} fill="#1a365d" fontWeight="bold">
+                        {score.toFixed(0)}%
+                    </text>
+                </svg>
+            );
         }
-      }
-      return result;
-    })();
 
-    // ── markup exacto del widget de la consola ──
-    document.getElementById("probables").innerHTML = top5Legisladores.length ? `
-      <div class="glass border border-borde rounded-xl p-4">
-        <h3 class="font-semibold text-gray-700 mb-1 text-sm">Legisladores mas probables</h3>
-        <p class="text-[10px] text-gray-400 mb-3 font-mono">Mayor probabilidad de presentar instrumentos legislativos en las categorias activas.</p>
-        <div class="space-y-2">
-          ${top5Legisladores.map((leg, i) => `
-            <a href="../index.html" class="flex items-center gap-2.5 py-1.5 border-b border-gray-100 last:border-0 cursor-pointer hover:bg-gray-50 rounded transition-colors">
-              <div class="w-6 h-6 rounded-full bg-acento/10 flex items-center justify-center text-[10px] font-bold text-acento flex-shrink-0">${i + 1}</div>
-              <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-1.5">
-                  <span class="font-semibold text-xs text-gray-800 truncate">${leg.nombre}</span>
-                  ${partidoBadge(leg.partido)}
+        // ── Búsqueda Full-Text (Cloudflare Worker → Turso FTS5) ──
+        const WORKER_URL = 'https://fiat-busqueda.rreubenleon.workers.dev';
+        const PARTIDO_COLORS = {
+            'MORENA': '#8B1A2B', 'PAN': '#003B7A', 'PRI': '#C4161C',
+            'PVEM': '#00813E', 'PT': '#CC0000', 'MC': '#FF6600', 'PRD': '#FFD700',
+        };
+
+        // Logos oficiales de partidos (SVG local en assets/partidos/).
+        // Definidos acá (nivel alto) para que widgets en toda la app puedan usarlos.
+        const PARTIDO_LOGOS = {
+            MORENA: '../assets/partidos/morena.svg',
+            PAN:    '../assets/partidos/pan.svg',
+            PRI:    '../assets/partidos/pri.svg',
+            PVEM:   '../assets/partidos/pvem.svg',
+            PT:     '../assets/partidos/pt.svg',
+            MC:     '../assets/partidos/mc.svg',
+            PRD:    '../assets/partidos/prd.svg',
+        };
+
+        // Nombre oficial completo de cada grupo parlamentario.
+        // (Portado de consola-pro.html para el wizard ConsolaProConfigModal.)
+        const PARTIDO_NOMBRE_COMPLETO = {
+            MORENA: 'Movimiento Regeneración Nacional (MORENA)',
+            PAN:    'Partido Acción Nacional (PAN)',
+            PRI:    'Partido Revolucionario Institucional (PRI)',
+            PVEM:   'Partido Verde Ecologista de México (PVEM)',
+            PT:     'Partido del Trabajo (PT)',
+            MC:     'Movimiento Ciudadano (MC)',
+            PRD:    'Partido de la Revolución Democrática (PRD)',
+            INDEP:  'Independientes / Sin grupo',
+        };
+
+        // Orden político estándar para listar grupos parlamentarios.
+        const PARTIDO_ORDEN = ['MORENA', 'PAN', 'PRI', 'PVEM', 'PT', 'MC', 'PRD', 'INDEP'];
+
+        // Matchup → escala de "tracción" (5..1). Reemplaza el grado A–F en TODA
+        // la app. short = tabla compacta · label = detalle/tooltip.
+        const MATCHUP_TRACCION = {
+            A: { nivel: 5, short: 'Alta',   label: 'Alta tracción',           color: 'text-emerald-600' },
+            B: { nivel: 4, short: 'Buena',  label: 'Buena tracción',          color: 'text-lime-600' },
+            C: { nivel: 3, short: 'Media',  label: 'Tracción media',          color: 'text-amber-600' },
+            D: { nivel: 2, short: 'Baja',   label: 'Baja tracción',           color: 'text-orange-500' },
+            F: { nivel: 1, short: 'Insuf.', label: 'Sin tracción suficiente', color: 'text-gray-500' },
+        };
+        function traccion(grade) {
+            return MATCHUP_TRACCION[grade] || { nivel: 0, short: '—', label: 'Sin datos', color: 'text-gray-400' };
+        }
+
+        // Normaliza variantes de partido a la clave canónica.
+        // 'Morena' → 'MORENA'; 'Sin Partido'/''/null → 'INDEP'.
+        function normPartido(p) {
+            const s = (p || '').trim().toUpperCase();
+            if (!s || s === 'SIN PARTIDO' || s === 'INDEPENDIENTE' || s === 'NINGUNO') return 'INDEP';
+            if (PARTIDO_NOMBRE_COMPLETO[s]) return s;
+            return 'INDEP';
+        }
+
+        /* Solo el nombre distintivo de la comisión (sin "Comisión de ").
+           Portado de consola-pro.html para el wizard. */
+        const _nombreComisionDisplay = (nombre) => (nombre || '').replace(/^Comisi[oó]n\s+de\s+/i, '').trim();
+
+        /* ── Banner de frescura del SIL: avisa si el scraper se quedó atrás ── */
+        function SilFreshnessBanner({ metadata }) {
+            const fechaPres = metadata?.sil_max_fecha_presentacion;
+            if (!fechaPres) return null;
+            const hoy = new Date();
+            const fp = new Date(fechaPres + 'T00:00:00');
+            const diasGap = Math.floor((hoy - fp) / (1000 * 60 * 60 * 24));
+            if (diasGap < 5) return null;  // <5 días: silencio
+            const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+            const labelFecha = `${parseInt(fechaPres.slice(8,10))} ${meses[parseInt(fechaPres.slice(5,7))-1]} ${fechaPres.slice(0,4)}`;
+            const nivel = diasGap >= 14 ? 'rojo' : diasGap >= 7 ? 'amarillo' : 'gris';
+            const cls = nivel === 'rojo' ? 'bg-red-50 border-red-200 text-red-900'
+                      : nivel === 'amarillo' ? 'bg-amber-50 border-amber-200 text-amber-900'
+                      : 'bg-gray-50 border-gray-200 text-gray-700';
+            return (
+                <div className={`border rounded-lg px-3 py-2 text-xs ${cls}`}>
+                    <span className="font-semibold">Cobertura SIL:</span> última actividad legislativa registrada el <span className="font-mono">{labelFecha}</span> ({diasGap} días atrás). {nivel === 'rojo' ? 'El scraper puede estar incompleto — los conteos por legislador subestiman la realidad.' : nivel === 'amarillo' ? 'Posible retraso de scraping; los conteos pueden estar abajo.' : ''}
                 </div>
-                <div class="text-[10px] text-gray-400 font-mono">${leg.camara === 'Senado' ? 'Sen.' : 'Dip.'}${leg.estado ? ` - ${leg.estado}` : ''} &middot; <span class="text-acento">${leg.categoria}</span></div>
+            );
+        }
+
+        function PartidoBadge({ partido, size = 'sm' }) {
+            const [errored, setErrored] = React.useState(false);
+            const color = PARTIDO_COLORS[partido] || '#6B7280';
+            const url = PARTIDO_LOGOS[partido];
+            if (!partido) return null;
+            const dim = size === 'xl' ? 'w-8 h-8' : size === 'lg' ? 'w-6 h-6' : 'w-5 h-5';
+            const pillPad = size === 'xl' ? 'px-2 py-0.5 text-xs' : size === 'lg' ? 'px-2 py-0.5 text-[11px]' : 'px-1.5 py-px text-[9px]';
+            if (url && !errored) {
+                return (
+                    <img src={url} alt={partido} title={partido}
+                        onError={() => setErrored(true)}
+                        className={`${dim} object-contain flex-shrink-0`}
+                        style={{ imageRendering: 'auto' }} />
+                );
+            }
+            return (
+                <span className={`${pillPad} font-bold rounded text-white tracking-wide`} style={{ backgroundColor: color }}>{partido}</span>
+            );
+        }
+        function SemaforoCard({ data, onClick, riesgo }) {
+            const RIESGO_CHIP = {
+                alto:  ['Riesgo alto',  'bg-rose-50 text-rose-700 border-rose-200'],
+                medio: ['Riesgo medio', 'bg-amber-50 text-amber-700 border-amber-200'],
+                bajo:  ['Riesgo bajo',  'bg-emerald-50 text-emerald-700 border-emerald-200'],
+            };
+            const colorClasses = {
+                verde: 'border-semaforo-verde/40 hover:border-semaforo-verde',
+                amarillo: 'border-semaforo-amarillo/40 hover:border-semaforo-amarillo',
+                rojo: 'border-semaforo-rojo/40 hover:border-semaforo-rojo',
+            };
+            const pulseClass = data.color === 'verde' ? 'pulse-verde' : data.color === 'amarillo' ? 'pulse-amarillo' : '';
+            const colorDot = { verde: 'bg-semaforo-verde', amarillo: 'bg-semaforo-amarillo', rojo: 'bg-semaforo-rojo' };
+            const momentum = data.momentum || {};
+            const trendArrow = momentum.tendencia === 'up' ? '\u2191' : momentum.tendencia === 'down' ? '\u2193' : '';
+            const trendColor = momentum.tendencia === 'up' ? 'text-green-600' : momentum.tendencia === 'down' ? 'text-red-500' : 'text-gray-400';
+            const topSubs = (data.subcategorias_activas || []).slice(0, 2);
+            /* Divergence badge DESACTIVADO en UI hasta que resolvamos el tema
+               de fondo: varias categorías reportan score_media=100 perma y
+               compararlas contra Trends bajo mete ruido en el pattern. */
+            return (
+                <div onClick={() => onClick(data)}
+                    className={`glass border ${colorClasses[data.color]} rounded-xl p-4 cursor-pointer transition-all duration-300 hover:scale-[1.02] ${pulseClass}`}>
+                    <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                            <div className={`w-3 h-3 rounded-full ${colorDot[data.color]}`}></div>
+                            <div>
+                                <h3 className="font-semibold text-sm text-gray-800">{data.nombre}</h3>
+                                {momentum.etiqueta && (
+                                    <div className="flex items-center gap-1">
+                                        {trendArrow && <span className={`text-[10px] font-bold ${trendColor}`}>{trendArrow}</span>}
+                                        <span className="text-[10px] text-gray-400 font-mono">{momentum.etiqueta}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                            {riesgo && RIESGO_CHIP[riesgo] && (
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full border whitespace-nowrap ${RIESGO_CHIP[riesgo][1]}`}>
+                                    {RIESGO_CHIP[riesgo][0]}
+                                </span>
+                            )}
+                            <ScoreRing score={data.score_total} color={data.color} size={56} />
+                        </div>
+                    </div>
+                    {(() => {
+                        const tieneReact = data.ratio_reactividad !== null && data.ratio_reactividad !== undefined && data.ratio_reactividad >= 1.3;
+                        const tieneDiv = data.divergencia
+                            && data.divergencia.indice >= 0.3
+                            && data.divergencia.patron_id !== 'rebalanceo_tecnico'
+                            && data.divergencia.patron_id !== 'convergencia';
+                        if (topSubs.length === 0 && !tieneReact && !tieneDiv) return null;
+                        return (
+                            <div className="flex flex-wrap items-center gap-1 mb-2">
+                                {topSubs.map(s => (
+                                    <span key={s.clave} className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] bg-gray-100 text-gray-600 border border-gray-200 font-mono">
+                                        {s.nombre}
+                                    </span>
+                                ))}
+                                {tieneReact && (
+                                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold ${data.ratio_reactividad >= 2 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`} title={`Actividad legislativa ${data.ratio_reactividad}× sobre baseline mensual`}>
+                                        ↑ {data.ratio_reactividad}× react
+                                    </span>
+                                )}
+                                {tieneDiv && (
+                                    <span
+                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-mono font-semibold bg-violet-50 text-violet-700 border border-violet-200"
+                                        title={`Señal atípica: ${data.divergencia.patron_label}. ${data.divergencia.sobre_representada} destaca mientras ${data.divergencia.sub_representada} queda rezagada.`}>
+                                        ⚐ {data.divergencia.patron_label}
+                                    </span>
+                                )}
+                            </div>
+                        );
+                    })()}
+                    <div className="grid grid-cols-5 gap-2 text-xs text-gray-500">
+                        {[
+                            { label: 'Media', value: data.score_media, danger: false },
+                            { label: 'Trends', value: data.score_trends, danger: false },
+                            { label: 'Congreso', value: data.score_congreso, danger: false },
+                            { label: 'CSP', value: data.score_mananera || 0, danger: true },
+                            { label: 'Urgencia', value: data.score_urgencia, danger: false },
+                        ].map(m => (
+                            <div key={m.label}>
+                                <div className="flex items-center gap-1.5 mb-0.5">
+                                    <div className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(Math.max(m.value, 0), 100)}%`, backgroundColor: m.danger ? '#c62828' : '#2e7d32' }} />
+                                    </div>
+                                    <span className={`text-[10px] font-mono font-medium ${m.danger ? 'text-rose-600' : 'text-gray-700'}`}>{m.value.toFixed(0)}%</span>
+                                </div>
+                                <div className="text-[9px] uppercase tracking-wider text-gray-400">{m.label}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        const CATEGORIA_LABEL = {
+            salud: 'Salud', educacion: 'Educación', seguridad_justicia: 'Seguridad',
+            economia_hacienda: 'Economía', electoral_politico: 'Electoral',
+            infraestructura: 'Infraestructura', energia: 'Energía',
+            trabajo: 'Trabajo', derechos_humanos: 'DDHH',
+            medio_ambiente: 'Medio ambiente', relaciones_exteriores: 'Exteriores',
+            agro_rural: 'Agro', anticorrupcion: 'Anticorrupción',
+            igualdad_genero: 'Igualdad', politica_social: 'Pol. Social',
+            medios_comunicacion: 'Medios', turismo: 'Turismo',
+            inteligencia_artificial: 'IA', administracion: 'Administración',
+        };
+        const _catLabel = (c) => CATEGORIA_LABEL[c] || (c || '—');
+
+        // PARTIDO_LOGOS y PartidoBadge están definidos arriba (nivel alto) para que
+        // widgets de toda la app los usen, no solo el Radar.
+
+        // Flip "Apellido1 Apellido2 Nombre(s)" → "Nombre(s) Apellido1 Apellido2"
+        // Solo para Cámara de Diputados (Senado ya viene correcto).
+        // Maneja partículas como "de", "la", "del" en apellidos compuestos.
+        const _PARTICULAS = new Set(['de','del','la','las','los','van','von','da','di','du','y']);
+        function flipNombreDiputado(nombre) {
+            if (!nombre) return nombre;
+            const tokens = nombre.trim().split(/\s+/);
+            if (tokens.length < 3) return nombre;
+            let cutIdx = 2;
+            let sawParticle = false;
+            while (cutIdx < tokens.length) {
+                const cur = tokens[cutIdx].toLowerCase().replace(/\./g, '');
+                if (_PARTICULAS.has(cur)) {
+                    cutIdx++;
+                    sawParticle = true;
+                } else if (sawParticle) {
+                    cutIdx++;
+                    sawParticle = false;
+                    if (cutIdx >= tokens.length || !_PARTICULAS.has(tokens[cutIdx].toLowerCase().replace(/\./g, ''))) break;
+                } else {
+                    break;
+                }
+            }
+            if (cutIdx >= tokens.length) return nombre;
+            const apellidos = tokens.slice(0, cutIdx).join(' ');
+            const nombres = tokens.slice(cutIdx).join(' ');
+            return `${nombres} ${apellidos}`;
+        }
+        function formatNombreLegislador(leg) {
+            if (!leg) return '';
+            if (leg.camara === 'Cámara de Diputados') return flipNombreDiputado(leg.nombre);
+            return leg.nombre;
+        }
+
+        /* ───────── EFECTIVIDAD — FUENTE ÚNICA DE VERDAD ─────────
+           UNA sola definición usada en TODA la plataforma (tabla Legisladores,
+           Consola y detalle/Métricas). Definición oficial (decisión jun 16):
+           % de éxito INDIVIDUAL = aprobados / (aprobados + desechados) contando
+           SOLO instrumentos firmados en solitario, con Wilson 95% lower bound
+           para penalizar muestras chicas (1/1 → ~5%, no 100%).
+           Fuente: cuentas elo_aprobados/elo_desechados de calcular_elo_legisladores
+           (individual-only, protegidas por el tripwire). NO se recalcula con
+           campos n_*_col porque eso mezclaba trabajo de bancada.
+           Devuelve 0-100, o null si no hay NI UN instrumento individual resuelto
+           (esos se muestran como "en revisión", nunca con número inventado). */
+        const SEMAFORO_COLOR_HEX = { verde: '#2e7d32', amarillo: '#c6972b', rojo: '#c62828' };
+        function MapaSeleccionEstados({ seleccionados, mapa, onToggle }) {
+            const mapRef = React.useRef(null);
+            const mapInstanceRef = React.useRef(null);
+            const markersRef = React.useRef([]);
+            const onToggleRef = React.useRef(onToggle);
+            React.useEffect(() => { onToggleRef.current = onToggle; }, [onToggle]);
+
+            React.useEffect(() => {
+                if (!mapRef.current || mapInstanceRef.current) return;
+                const map = L.map(mapRef.current, {
+                    center: [23.6, -102.0], zoom: 4,
+                    scrollWheelZoom: false, zoomControl: false,
+                    attributionControl: false, dragging: true, doubleClickZoom: false,
+                });
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png', {
+                    maxZoom: 7, minZoom: 4,
+                }).addTo(map);
+                mapInstanceRef.current = map;
+                setTimeout(() => map.invalidateSize(), 250);
+                return () => { map.remove(); mapInstanceRef.current = null; };
+            }, []);
+
+            React.useEffect(() => {
+                const map = mapInstanceRef.current;
+                if (!map) return;
+                markersRef.current.forEach(m => map.removeLayer(m));
+                markersRef.current = [];
+                const sel = new Set(seleccionados || []);
+                Object.entries(ESTADO_COORDS).forEach(([key, coords]) => {
+                    const on = sel.has(key);
+                    const size = on ? 16 : 9;
+                    const html = on
+                        ? `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#16a34a;border:2px solid #fff;box-shadow:0 0 0 3px rgba(22,163,74,0.30),0 1px 4px rgba(0,0,0,0.25);"></div>`
+                        : `<div style="width:${size}px;height:${size}px;border-radius:50%;background:#cbd5e1;border:1px solid #94a3b8;"></div>`;
+                    const icon = L.divIcon({ html, className: '', iconSize: [size, size], iconAnchor: [size/2, size/2] });
+                    const mk = L.marker(coords, { icon });
+                    const nombre = (mapa[key]?.nombre) || key;
+                    mk.bindTooltip(
+                        `<div style="font-family:Inter,sans-serif;font-size:11px;font-weight:600">${nombre}</div><div style="font-family:Inter,sans-serif;font-size:10px;color:#666">${on ? 'Seleccionado · clic para quitar' : 'Clic para agregar'}</div>`,
+                        { direction: 'top', className: 'leaflet-tooltip-fiat' }
+                    );
+                    mk.on('click', () => onToggleRef.current && onToggleRef.current(key));
+                    mk.addTo(map);
+                    markersRef.current.push(mk);
+                });
+            }, [seleccionados, mapa]);
+
+            return <div ref={mapRef} style={{height: '100%', minHeight: '320px', width: '100%', borderRadius: '0.5rem'}}></div>;
+        }
+
+        /* ── Componente MapaMexico con Leaflet ── */
+        /* ConsolaProConfigModal — Wizard de 4 pasos.
+           Portado de consola-pro.html (Fase 1 de unificación). Reusa los
+           helpers ya presentes en index.html (PARTIDO_*, normPartido,
+           PartidoBadge, SEMAFORO_COLOR_HEX, formatNombreLegislador,
+           _nombreComisionDisplay, MapaSeleccionEstados).
+           Cada paso requiere ≥1 selección para avanzar. Botón "Siguiente"
+           se vuelve "Listo" en el último paso. */
+        /* Chip input interactivo: el usuario teclea y con Enter/coma agrega
+           un chip; click en × lo quita. Definido a NIVEL DE MÓDULO (identidad
+           estable) para que React no remonte el input en cada tecla — si se
+           define dentro del render, pierde el foco tras cada letra. */
+        function ChipInput({ label, ayuda, placeholder, value, onChange, chipClass = 'bg-gray-100 text-gray-700 border-gray-200' }) {
+          const [draft, setDraft] = React.useState('');
+          const arr = Array.isArray(value) ? value : [];
+          const add = (raw) => {
+            const partes = (raw || '').split(',').map(s => s.trim()).filter(Boolean);
+            if (!partes.length) { setDraft(''); return; }
+            const next = [...arr];
+            partes.forEach(p => { if (!next.some(x => x.toLowerCase() === p.toLowerCase())) next.push(p); });
+            onChange(next);
+            setDraft('');
+          };
+          const remove = (i) => onChange(arr.filter((_, j) => j !== i));
+          return (
+            <div>
+              <label className="block text-[12px] font-semibold text-gray-800">{label}</label>
+              {ayuda && <div className="text-[11px] text-gray-500 mb-1.5 leading-snug">{ayuda}</div>}
+              {!ayuda && <div className="mb-1.5"></div>}
+              <div className="flex flex-wrap gap-1.5 items-center px-2 py-2 bg-gray-50 border border-gray-200 rounded-lg focus-within:border-acento focus-within:bg-white transition-colors" style={{minHeight: 42}}>
+                {arr.map((chip, i) => (
+                  <span key={i} className={`inline-flex items-center gap-1 text-[12px] font-medium px-2 py-1 rounded-full border ${chipClass}`}>
+                    {chip}
+                    <button onClick={() => remove(i)} className="hover:text-rose-600 leading-none text-[13px]">×</button>
+                  </span>
+                ))}
+                <input type="text" value={draft}
+                  onChange={e => setDraft(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); add(draft); }
+                    else if (e.key === 'Backspace' && !draft && arr.length) { remove(arr.length - 1); }
+                  }}
+                  onBlur={() => add(draft)}
+                  placeholder={arr.length === 0 ? placeholder : 'Agregar otro…'}
+                  className="flex-1 bg-transparent text-[13px] text-gray-800 placeholder-gray-400 focus:outline-none py-0.5" style={{minWidth: 120}} />
               </div>
-              <div class="text-xs text-acento font-bold flex-shrink-0 font-mono">${leg.score.toFixed(0)}%</div>
-            </a>`).join("")}
-        </div>
-      </div>` : "";
-  })
-  .catch(() => {
-    document.getElementById("top-scores").innerHTML =
-      '<p class="text-gray-400 text-sm p-6 font-mono">no se pudieron cargar los datos</p>';
-  });
+            </div>
+          );
+        }
+
+        /* Selector interactivo de riesgo: reúsa los temas que el usuario ya
+           eligió y deja marcar el nivel (Alto/Medio/Bajo) de cada uno con
+           toggles de semáforo. A nivel de módulo (identidad estable). */
+        function RiesgoTemasSelector({ categorias, labelFn, value, onChange }) {
+          const map = value || {};
+          const NIVELES = [
+            { k: 'alto',  label: 'Alto',  dot: '🔴', cls: 'bg-rose-50 text-rose-700' },
+            { k: 'medio', label: 'Medio', dot: '🟡', cls: 'bg-amber-50 text-amber-700' },
+            { k: 'bajo',  label: 'Bajo',  dot: '🟢', cls: 'bg-emerald-50 text-emerald-700' },
+          ];
+          const set = (cat, nivel) => onChange({ ...map, [cat]: nivel });
+          if (!categorias || categorias.length === 0) {
+            return <div className="text-[12px] text-gray-400 italic px-3 py-3 bg-gray-50 border border-dashed border-gray-200 rounded-lg text-center">Elige temas en el paso anterior para definir su nivel de riesgo.</div>;
+          }
+          return (
+            <div className="space-y-1.5">
+              {categorias.map(cat => {
+                const actual = map[cat] || 'medio';
+                return (
+                  <div key={cat} className="flex items-center justify-between gap-3 px-3 py-2 bg-white border border-gray-200 rounded-lg">
+                    <div className="text-[13px] font-medium text-gray-800 truncate">{labelFn ? labelFn(cat) : cat}</div>
+                    <div className="inline-flex rounded-lg border border-gray-200 overflow-hidden flex-shrink-0">
+                      {NIVELES.map((n, i) => {
+                        const active = actual === n.k;
+                        return (
+                          <button key={n.k} onClick={() => set(cat, n.k)}
+                            className={`text-[11px] font-semibold px-2.5 py-1.5 transition ${i > 0 ? 'border-l border-gray-200' : ''} ${active ? n.cls : 'bg-white text-gray-400 hover:bg-gray-50'}`}>
+                            <span className="hidden sm:inline">{n.dot} </span>{n.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        }
+
+        function ConsolaProConfigModal({ data, allLegisladores, allComisiones, config, setConfig, onClose }) {
+          const PASOS = ['legisladores', 'temas', 'estados', 'comisiones', 'perfil'];
+          const PASOS_LABEL = {
+            legisladores: 'Legisladores',
+            temas:        'Temas',
+            estados:      'Estados',
+            comisiones:   'Comisiones',
+            perfil:       'Afinar',
+          };
+          const [paso, setPaso] = useState(PASOS[0]);
+          const [search, setSearch] = useState('');
+          const [searchCom, setSearchCom] = useState('');
+          const [ordenCom, setOrdenCom] = useState('nombre'); // 'nombre' | 'asuntos'
+          const idx = PASOS.indexOf(paso);
+
+          const toggleLeg = (id) => {
+            const set = new Set(config.legisladores);
+            if (set.has(id)) set.delete(id); else if (set.size < 20) set.add(id);
+            setConfig({ ...config, legisladores: Array.from(set) });
+          };
+          const toggleTema = (cat) => {
+            const set = new Set(config.temas);
+            if (set.has(cat)) set.delete(cat); else if (set.size < 8) set.add(cat);
+            setConfig({ ...config, temas: Array.from(set) });
+          };
+          const toggleEstado = (key) => {
+            const set = new Set(config.estados);
+            if (set.has(key)) set.delete(key); else if (set.size < 12) set.add(key);
+            setConfig({ ...config, estados: Array.from(set) });
+          };
+          const toggleComision = (key) => {
+            const set = new Set(config.comisiones || []);
+            if (set.has(key)) set.delete(key); else if (set.size < 10) set.add(key);
+            setConfig({ ...config, comisiones: Array.from(set) });
+          };
+          /* Perfil de empresa (alimenta el análisis "Mi industria"). Texto libre. */
+          const setPerfilField = (campo, valor) => {
+            setConfig({ ...config, perfil: { ...(config.perfil || {}), [campo]: valor } });
+          };
+          const perfil = config.perfil || {};
+
+          /* Validación de avance: cada paso requiere ≥1 selección */
+          const counts = {
+            legisladores: config.legisladores.length,
+            temas:        config.temas.length,
+            estados:      config.estados.length,
+            comisiones:   (config.comisiones || []).length,
+          };
+          const limites = { legisladores: 20, temas: 8, estados: 12, comisiones: 10 };
+          /* El paso 'perfil' es opcional (texto libre): nunca bloquea el avance. */
+          const puedeAvanzar = paso === 'perfil' ? true : counts[paso] >= 1;
+
+          const semaforo = data?.semaforo || [];
+          const mapa = data?.mapa || {};
+
+          /* Datos pre-procesados: alfabéticos + divididos por cámara */
+          const legPorCamara = useMemo(() => {
+            const dip = [], sen = [];
+            (allLegisladores || []).forEach(l => {
+              const cam = (l.camara || '').toLowerCase();
+              if (cam.includes('senad')) sen.push(l); else dip.push(l);
+            });
+            const sortByName = (a, b) => formatNombreLegislador(a).localeCompare(formatNombreLegislador(b));
+            dip.sort(sortByName); sen.sort(sortByName);
+            return { dip, sen };
+          }, [allLegisladores]);
+
+          /* Agrupado por partido dentro de cada cámara. Devuelve, por
+             cámara, un array ordenado (PARTIDO_ORDEN) de grupos
+             { key, nombre, legs[] }. Solo grupos con ≥1 legislador. */
+          const agruparPorPartido = (lista) => {
+            const mapa = {};
+            lista.forEach(l => {
+              const k = normPartido(l.partido);
+              (mapa[k] = mapa[k] || []).push(l);
+            });
+            return PARTIDO_ORDEN
+              .filter(k => mapa[k] && mapa[k].length)
+              .map(k => ({ key: k, nombre: PARTIDO_NOMBRE_COMPLETO[k], legs: mapa[k] }));
+          };
+          const legAgrupados = useMemo(() => ({
+            dip: agruparPorPartido(legPorCamara.dip),
+            sen: agruparPorPartido(legPorCamara.sen),
+          }), [legPorCamara]);
+
+          /* Acordeón: qué grupos de partido están expandidos.
+             Default colapsado para que el panel respire ("muy pro"). */
+          const [partidosAbiertos, setPartidosAbiertos] = useState({});
+          const togglePartido = (camKey, pKey) => {
+            const id = camKey + ':' + pKey;
+            setPartidosAbiertos(prev => ({ ...prev, [id]: !prev[id] }));
+          };
+
+          const temasOrdenados = useMemo(
+            () => [...semaforo].sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '')),
+            [semaforo]
+          );
+
+          /* Temas ordenados por cómo han escalado (Δ ~7d desc), con su
+             serie histórica para la mini-gráfica estilo Polymarket. */
+          const temasEscalando = useMemo(() => {
+            const cats = data?.historial_scores?.categorias || {};
+            return [...semaforo].map(s => {
+              const serie = (cats[s.categoria]?.scores || []).filter(v => v != null);
+              const n = serie.length;
+              const prev = n >= 8 ? serie[n - 8] : (n >= 2 ? serie[0] : null);
+              const last = n >= 1 ? serie[n - 1] : (s.score_total ?? null);
+              const delta = (prev != null && last != null) ? (last - prev) : null;
+              return { s, serie, delta };
+            }).sort((a, b) => (b.delta ?? -1e9) - (a.delta ?? -1e9));
+          }, [semaforo, data]);
+
+          const estadosOrdenados = useMemo(() => {
+            return Object.entries(mapa)
+              .sort(([, a], [, b]) => (a.nombre || '').localeCompare(b.nombre || ''));
+          }, [mapa]);
+
+          const comisionesPorCamara = useMemo(() => {
+            const dip = [], sen = [];
+            (allComisiones || []).forEach(c => {
+              const cam = (c.camara || '').toLowerCase();
+              if (cam.includes('senad')) sen.push(c); else dip.push(c);
+            });
+            const cmp = (a, b) => _nombreComisionDisplay(a.nombre).localeCompare(_nombreComisionDisplay(b.nombre));
+            dip.sort(cmp); sen.sort(cmp);
+            return { dip, sen };
+          }, [allComisiones]);
+
+          /* Filtro por búsqueda dentro de la lista alfabética por cámara */
+          const filtrarLegs = (lista) => {
+            if (search.length < 2) return lista;
+            const q = search.toLowerCase();
+            return lista.filter(l => formatNombreLegislador(l).toLowerCase().includes(q));
+          };
+          const filtrarComs = (lista) => {
+            if (searchCom.length < 2) return lista;
+            const q = searchCom.toLowerCase();
+            return lista.filter(c => (c.nombre || '').toLowerCase().includes(q));
+          };
+
+          /* === SUBCOMPONENTES === */
+
+          /* Card de legislador con foto. Click toggle. */
+          const LegCard = ({ l }) => {
+            const sel = config.legisladores.includes(l.id);
+            const nombreFmt = formatNombreLegislador(l);
+            const foto = l.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreFmt)}&background=e5e7eb&color=374151&size=64`;
+            return (
+              <button onClick={() => toggleLeg(l.id)}
+                className={`w-full flex items-center gap-2 px-2 py-2 text-left transition rounded-md ${sel ? 'bg-emerald-50 border border-emerald-200' : 'hover:bg-gray-50 border border-transparent'}`}>
+                <img src={foto} alt={nombreFmt}
+                  onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nombreFmt)}&background=e5e7eb&color=374151&size=64`; }}
+                  className="w-9 h-9 rounded-full object-cover bg-gray-100 flex-shrink-0 border border-gray-200" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-[12px] font-semibold text-gray-800 truncate">{nombreFmt}</div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <PartidoBadge partido={l.partido} size="sm" />
+                    {l.estado && <span className="text-[10px] text-gray-500 truncate">{l.estado}</span>}
+                  </div>
+                </div>
+                {sel && <span className="text-emerald-600 font-bold text-base flex-shrink-0">✓</span>}
+              </button>
+            );
+          };
+
+          /* === STEPPER (encabezado visual con 4 puntos numerados) === */
+          const Stepper = () => (
+            <div className="flex items-center justify-center gap-2 px-5 py-4 border-b border-gray-100">
+              {PASOS.map((p, i) => {
+                const completado = counts[p] >= 1;
+                const activo = p === paso;
+                return (
+                  <React.Fragment key={p}>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition ${
+                        activo ? 'bg-acento text-white ring-2 ring-acento/30' :
+                        completado ? 'bg-semaforo-verde text-white' :
+                        'bg-gray-200 text-gray-500'
+                      }`}>
+                        {completado && !activo ? '✓' : i + 1}
+                      </div>
+                      <div className={`text-xs font-semibold ${activo ? 'text-acento' : completado ? 'text-semaforo-verde' : 'text-gray-400'} hidden sm:inline`}>
+                        {PASOS_LABEL[p]}
+                      </div>
+                    </div>
+                    {i < PASOS.length - 1 && (
+                      <div className={`flex-1 h-0.5 max-w-[40px] ${completado ? 'bg-semaforo-verde/40' : 'bg-gray-200'}`}></div>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </div>
+          );
+
+          return (
+            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" onClick={onClose}>
+              <div onClick={e => e.stopPropagation()}
+                className="bg-white rounded-2xl max-w-5xl w-full max-h-[90vh] flex flex-col" style={{boxShadow: '0 20px 60px rgba(0,0,0,0.15)'}}>
+                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+                  <div>
+                    <div className="text-[10px] uppercase tracking-widest text-gray-500 font-bold">CONFIGURAR CONSOLA · PASO {idx + 1} DE {PASOS.length}</div>
+                    <h2 className="text-lg font-black text-gray-900 mt-0.5">
+                      {paso === 'legisladores' && 'Elige los legisladores que quieres vigilar'}
+                      {paso === 'temas'        && 'Elige los temas legislativos relevantes'}
+                      {paso === 'estados'      && 'Elige los estados que te interesan'}
+                      {paso === 'comisiones'   && 'Elige las comisiones a seguir'}
+                      {paso === 'perfil'       && 'Afina tu riesgo y palabras clave'}
+                    </h2>
+                  </div>
+                  <button onClick={onClose} className="text-gray-400 hover:text-gray-700 text-2xl leading-none w-8 h-8 hover:bg-gray-100 rounded-full">×</button>
+                </div>
+
+                <Stepper />
+
+                <div className="flex-1 overflow-y-auto p-5">
+
+                  {/* === PASO 1 — LEGISLADORES === */}
+                  {paso === 'legisladores' && (
+                    <div>
+                      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                        <div className="text-xs text-gray-600">
+                          Hasta {limites.legisladores} legisladores · <span className="font-semibold text-acento">{counts.legisladores} seleccionados</span>
+                        </div>
+                        <input type="text" placeholder="Buscar por nombre..." value={search}
+                          onChange={e => setSearch(e.target.value)}
+                          className="w-full sm:w-72 px-3 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white" />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {[
+                          { camKey: 'dip', label: 'Cámara de Diputados', grupos: legAgrupados.dip },
+                          { camKey: 'sen', label: 'Senado',              grupos: legAgrupados.sen },
+                        ].map(({ camKey, label, grupos }) => {
+                          const buscando = search.length >= 2;
+                          // Grupos con sus legisladores ya filtrados por búsqueda
+                          const gruposVis = grupos
+                            .map(g => ({ ...g, legsFiltrados: filtrarLegs(g.legs) }))
+                            .filter(g => g.legsFiltrados.length > 0);
+                          const totalCam = gruposVis.reduce((s, g) => s + g.legsFiltrados.length, 0);
+                          return (
+                            <div key={camKey} className="border border-gray-200 rounded-xl flex flex-col" style={{maxHeight: '60vh'}}>
+                              <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-xl flex items-center justify-between">
+                                <div className="text-xs font-bold text-gray-700">{label}</div>
+                                <div className="text-[10px] text-gray-500">{totalCam}</div>
+                              </div>
+                              <div className="overflow-y-auto p-2 space-y-1.5">
+                                {gruposVis.map(g => {
+                                  const abierto = buscando || !!partidosAbiertos[camKey + ':' + g.key];
+                                  const selEnGrupo = g.legsFiltrados.filter(l => config.legisladores.includes(l.id)).length;
+                                  const color = PARTIDO_COLORS[g.key] || '#6B7280';
+                                  return (
+                                    <div key={g.key} className="rounded-lg border border-gray-200 overflow-hidden">
+                                      <button onClick={() => !buscando && togglePartido(camKey, g.key)}
+                                        className="w-full flex items-center gap-2 px-2.5 py-2 bg-gray-50 hover:bg-gray-100 transition text-left"
+                                        style={{ borderLeft: `3px solid ${color}` }}>
+                                        {PARTIDO_LOGOS[g.key]
+                                          ? <img src={PARTIDO_LOGOS[g.key]} alt={g.key} className="w-6 h-6 object-contain flex-shrink-0" />
+                                          : <div className="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-white text-[9px] font-bold" style={{ background: color }}>IND</div>}
+                                        <div className="flex-1 min-w-0">
+                                          <div className="text-[12px] font-bold text-gray-800 truncate">{g.nombre}</div>
+                                          <div className="text-[10px] text-gray-500">
+                                            {g.legsFiltrados.length} legislador{g.legsFiltrados.length !== 1 ? 'es' : ''}
+                                            {selEnGrupo > 0 && <span className="text-acento font-semibold"> · {selEnGrupo} seleccionado{selEnGrupo !== 1 ? 's' : ''}</span>}
+                                          </div>
+                                        </div>
+                                        {!buscando && (
+                                          <span className={`text-gray-400 text-xs flex-shrink-0 transition-transform ${abierto ? 'rotate-90' : ''}`}>▶</span>
+                                        )}
+                                      </button>
+                                      {abierto && (
+                                        <div className="p-1.5 space-y-1 bg-white">
+                                          {g.legsFiltrados.map(l => <LegCard key={l.id} l={l} />)}
+                                        </div>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                                {gruposVis.length === 0 && (
+                                  <div className="text-xs text-gray-400 italic text-center py-4">Sin resultados</div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* === PASO 2 — TEMAS (estilo Polymarket, ordenado por escalada) === */}
+                  {paso === 'temas' && (
+                    <div>
+                      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                        <div className="text-xs text-gray-600">
+                          Hasta {limites.temas} temas · <span className="font-semibold text-acento">{counts.temas} seleccionados</span>
+                        </div>
+                        <div className="text-[11px] text-gray-400">Ordenados por cómo han escalado (últimos 7 días)</div>
+                      </div>
+                      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden" style={{maxHeight: '60vh', overflowY: 'auto'}}>
+                        {temasEscalando.map(({ s, serie, delta }, i) => {
+                          const sel = config.temas.includes(s.categoria);
+                          const hex = SEMAFORO_COLOR_HEX[s.color] || '#6B7280';
+                          const subiendo = delta != null && delta > 0.5;
+                          const bajando = delta != null && delta < -0.5;
+                          const arrowCol = subiendo ? '#16a34a' : bajando ? '#dc2626' : '#9ca3af';
+                          const arrow = subiendo ? '↗' : bajando ? '↘' : '→';
+                          const sl = serie.slice(-30);
+                          const W = 112, H = 34;
+                          let path = '';
+                          if (sl.length >= 2) {
+                            const mx = Math.max(...sl), mn = Math.min(...sl), rg = (mx - mn) || 1;
+                            const stepX = W / (sl.length - 1);
+                            path = sl.map((v, k) => `${(k * stepX).toFixed(1)},${(H - ((v - mn) / rg) * H).toFixed(1)}`).join(' ');
+                          }
+                          return (
+                            <button key={s.categoria} onClick={() => toggleTema(s.categoria)}
+                              className={`w-full flex items-center gap-3 px-2.5 py-3 border-b border-gray-100 last:border-b-0 text-left transition ${sel ? 'bg-emerald-50' : 'bg-white hover:bg-gray-50'}`}>
+                              <span className="flex-shrink-0 w-5 text-center text-sm text-gray-300 font-medium tabular-nums">{i + 1}</span>
+                              <div className="flex-shrink-0">
+                                <ScoreRing score={Math.round(s.score_total ?? 0)} color={s.color} size={46} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[15px] font-semibold text-gray-900 truncate leading-tight">{s.nombre}</div>
+                                <div className="flex items-baseline gap-1.5 mt-1">
+                                  <span className="text-[13px] font-semibold leading-none" style={{ color: arrowCol }}>
+                                    {arrow} {delta != null ? (delta > 0 ? '+' : '') + delta.toFixed(1) : '—'}
+                                  </span>
+                                  <span className="text-[11px] text-gray-400">últimos 7 días</span>
+                                </div>
+                              </div>
+                              <div className="flex-shrink-0">
+                                {path ? (
+                                  <svg width={W} height={H} className="block">
+                                    <polyline points={`0,${H} ${path} ${W},${H}`} fill={arrowCol} fillOpacity="0.08" stroke="none" />
+                                    <polyline points={path} fill="none" stroke={arrowCol} strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round" />
+                                  </svg>
+                                ) : <span className="text-[10px] text-gray-300 font-mono">—</span>}
+                              </div>
+                              <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-bold transition ${sel ? 'bg-emerald-500 text-white' : 'border-2 border-gray-300 text-transparent'}`}>✓</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* === PASO 3 — ESTADOS === */}
+                  {paso === 'estados' && (
+                    <div>
+                      <div className="text-xs text-gray-600 mb-3">
+                        Hasta {limites.estados} estados · <span className="font-semibold text-acento">{counts.estados} seleccionados</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        {/* Izquierda: lista compacta en 2 columnas (minimalista) */}
+                        <div className="md:col-span-2">
+                          <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+                            {estadosOrdenados.map(([key, info]) => {
+                              const sel = config.estados.includes(key);
+                              return (
+                                <button key={key} onClick={() => toggleEstado(key)}
+                                  className={`flex items-center gap-2 px-2 py-1.5 text-left rounded-md transition ${sel ? 'bg-emerald-50 text-emerald-800' : 'text-gray-700 hover:bg-gray-50'}`}>
+                                  <span className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 border text-[10px] font-bold ${sel ? 'bg-emerald-500 border-emerald-500 text-white' : 'border-gray-300 text-transparent'}`}>✓</span>
+                                  <span className="text-[13px] truncate">{info.nombre || info.abreviatura}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                        {/* Derecha: mapa interactivo — las entidades se iluminan al seleccionarlas */}
+                        <div className="md:col-span-1">
+                          <div className="border border-gray-200 rounded-xl p-3 bg-gray-50/60 h-full flex flex-col">
+                            <div className="text-[10px] uppercase tracking-wider font-bold text-gray-500 mb-2">Mapa · {counts.estados}/{limites.estados} seleccionados</div>
+                            <div className="flex-1 min-h-[320px] rounded-lg overflow-hidden border border-gray-200 bg-white">
+                              <MapaSeleccionEstados seleccionados={config.estados} mapa={mapa} onToggle={toggleEstado} />
+                            </div>
+                            {config.estados.length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mt-2 max-h-[88px] overflow-y-auto">
+                                {config.estados.map(k => {
+                                  const info = (mapa[k] || {});
+                                  return (
+                                    <button key={k} onClick={() => toggleEstado(k)}
+                                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white border border-emerald-200 text-emerald-700 text-[11px] font-medium hover:bg-emerald-50 transition">
+                                      {info.nombre || info.abreviatura || k}
+                                      <span className="text-emerald-400">×</span>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* === PASO 4 — COMISIONES === */}
+                  {paso === 'comisiones' && (
+                    <div>
+                      <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                        <div className="text-xs text-gray-600">
+                          Hasta {limites.comisiones} comisiones · <span className="font-semibold text-acento">{counts.comisiones} seleccionadas</span>
+                        </div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <div className="inline-flex rounded-lg border border-gray-200 bg-white overflow-hidden text-xs">
+                            {[['nombre','Alfabético'],['asuntos','Por # de asuntos']].map(([k,label], i) => (
+                              <button key={k} onClick={() => setOrdenCom(k)}
+                                className={`px-3 py-2 font-medium transition-colors ${ordenCom === k ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-50'} ${i > 0 ? 'border-l border-gray-200' : ''}`}>
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                          <input type="text" placeholder="Buscar comisión..." value={searchCom}
+                            onChange={e => setSearchCom(e.target.value)}
+                            className="w-full sm:w-64 px-3 py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:border-acento focus:bg-white" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {(() => {
+                          const asuntos = c => (c.sitl?.turnadas ?? c.total_docs ?? 0);
+                          const ordenar = lista => ordenCom === 'asuntos'
+                            ? [...lista].sort((a, b) => asuntos(b) - asuntos(a))
+                            : lista;
+                          return [
+                            { titulo: 'Cámara de Diputados', items: ordenar(filtrarComs(comisionesPorCamara.dip)) },
+                            { titulo: 'Senado',              items: ordenar(filtrarComs(comisionesPorCamara.sen)) },
+                          ];
+                        })().map(col => (
+                          <div key={col.titulo} className="border border-gray-200 rounded-xl flex flex-col" style={{maxHeight: '60vh'}}>
+                            <div className="px-3 py-2 border-b border-gray-200 bg-gray-50 rounded-t-xl flex items-center justify-between">
+                              <div className="text-xs font-bold text-gray-700">{col.titulo}</div>
+                              <div className="text-[10px] text-gray-500">{col.items.length}</div>
+                            </div>
+                            <div className="overflow-y-auto p-2 space-y-1">
+                              {col.items.map(c => {
+                                const key = `${c.nombre}|${c.camara}`;
+                                const sel = (config.comisiones || []).includes(key);
+                                return (
+                                  <button key={key} onClick={() => toggleComision(key)}
+                                    className={`w-full flex items-center justify-between gap-2 px-2 py-2 text-left rounded-md border transition ${sel ? 'bg-emerald-50 border-emerald-300' : 'border-transparent hover:bg-gray-50'}`}>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-[12px] font-semibold text-gray-800 truncate" title={c.nombre}>{_nombreComisionDisplay(c.nombre)}</div>
+                                      <div className="text-[10px] text-gray-500">{(c.sitl?.turnadas ?? c.total_docs ?? 0)} asuntos</div>
+                                    </div>
+                                    {sel && <span className="text-emerald-600 font-bold text-base flex-shrink-0">✓</span>}
+                                  </button>
+                                );
+                              })}
+                              {col.items.length === 0 && (
+                                <div className="text-xs text-gray-400 italic text-center py-4">Sin resultados</div>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* === PASO 5 — AFINAR: riesgo, palabras clave y exclusiones === */}
+                  {paso === 'perfil' && (
+                    <div>
+                      <div className="text-xs text-gray-600 mb-4">
+                        Último paso: dinos qué te preocupa y qué tan riesgoso es para ti.
+                        Esto afina tus alertas y tu análisis. <span className="text-gray-400">Todo opcional.</span>
+                      </div>
+                      <div className="space-y-5">
+                        {/* Temas / riesgos que preocupan — chips */}
+                        <ChipInput
+                          label="Temas o riesgos que te preocupan"
+                          ayuda="Escribe y presiona Enter. Ej. impuestos, etiquetado, competencia económica, datos personales, energía…"
+                          value={perfil.temas_riesgo}
+                          onChange={v => setPerfilField('temas_riesgo', v)}
+                          placeholder="Escribe un tema y Enter…"
+                          chipClass="bg-blue-50 text-blue-700 border-blue-200" />
+
+                        {/* Palabras clave + competidores — chips, lado a lado */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <ChipInput
+                            label="Palabras clave a monitorear"
+                            ayuda="Productos, conceptos o leyes concretas."
+                            value={perfil.palabras_clave}
+                            onChange={v => setPerfilField('palabras_clave', v)}
+                            placeholder="Ej. outsourcing, IEPS, etiquetado frontal…"
+                            chipClass="bg-gray-100 text-gray-700 border-gray-200" />
+                          <ChipInput
+                            label="Competidores o cámaras de referencia"
+                            ayuda="Actores cuyas posturas te interesan."
+                            value={perfil.competidores}
+                            onChange={v => setPerfilField('competidores', v)}
+                            placeholder="Ej. CANACINTRA, CONMÉXICO…"
+                            chipClass="bg-violet-50 text-violet-700 border-violet-200" />
+                        </div>
+
+                        {/* Selector interactivo de riesgo por tema elegido */}
+                        <div>
+                          <div className="text-[12px] font-semibold text-gray-800">¿Qué tan riesgoso es cada tema para ti?</div>
+                          <div className="text-[11px] text-gray-500 mb-2 leading-snug">
+                            Marca el nivel de cada tema que elegiste. FIAT prioriza tus alertas según esto.
+                          </div>
+                          <RiesgoTemasSelector
+                            categorias={config.temas}
+                            labelFn={_catLabel}
+                            value={perfil.riesgo_temas}
+                            onChange={v => setPerfilField('riesgo_temas', v)} />
+                        </div>
+
+                        {/* Temas a excluir — chips */}
+                        <ChipInput
+                          label="Temas a excluir"
+                          ayuda="Para no llenarte de alertas que no te sirven. Escribe y Enter."
+                          value={perfil.temas_excluir}
+                          onChange={v => setPerfilField('temas_excluir', v)}
+                          placeholder="Temas que prefieres no ver…"
+                          chipClass="bg-rose-50 text-rose-700 border-rose-200" />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* === FOOTER con Atrás / Siguiente / Listo === */}
+                <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between bg-gray-50 rounded-b-2xl gap-2">
+                  <button onClick={() => setPaso(PASOS[Math.max(0, idx - 1)])}
+                    disabled={idx === 0}
+                    className="text-xs font-semibold px-4 py-2 rounded-full transition border bg-white border-gray-300 text-gray-700 hover:border-gray-500 disabled:opacity-40 disabled:cursor-not-allowed">
+                    ← Atrás
+                  </button>
+                  <div className="text-[11px] text-gray-500 font-mono">
+                    {paso === 'perfil'
+                      ? <span>Palabras clave que vigilamos por ti — alimentan tu widget de Filtros personales</span>
+                      : (!puedeAvanzar
+                          ? <span>Selecciona al menos 1 para continuar</span>
+                          : <span>{counts[paso]} de {limites[paso]} seleccionados</span>)}
+                  </div>
+                  {idx < PASOS.length - 1 ? (
+                    <button onClick={() => setPaso(PASOS[idx + 1])}
+                      disabled={!puedeAvanzar}
+                      className="text-white font-semibold px-5 py-2 rounded-full text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{background: puedeAvanzar ? 'linear-gradient(135deg, #1a365d 0%, #2c5282 100%)' : '#9ca3af'}}>
+                      Siguiente →
+                    </button>
+                  ) : (
+                    <button onClick={onClose}
+                      disabled={!puedeAvanzar}
+                      className="text-white font-semibold px-5 py-2 rounded-full text-xs disabled:opacity-40 disabled:cursor-not-allowed"
+                      style={{background: puedeAvanzar ? 'linear-gradient(135deg, #2e7d32 0%, #388e3c 100%)' : '#9ca3af'}}>
+                      ✓ Listo
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        }
+
+        /* ═══════ HOME (lo único no-copiado: composición de la página) ═══════ */
+
+        function HomeApp() {
+            const [data, setData] = useState(null);
+            const [showWizard, setShowWizard] = useState(false);
+            const [allLegisladores, setAllLegisladores] = useState([]);
+            const [allComisiones, setAllComisiones] = useState([]);
+            const [config, setConfigState] = useState(() => {
+                try { return JSON.parse(localStorage.getItem('fiat_consola_demo')) || { legisladores: [], temas: [], estados: [], comisiones: [], perfil: {} }; }
+                catch { return { legisladores: [], temas: [], estados: [], comisiones: [], perfil: {} }; }
+            });
+            const setConfig = (next) => {
+                setConfigState(next);
+                try { localStorage.setItem('fiat_consola_demo', JSON.stringify(next)); } catch {}
+            };
+            useEffect(() => {
+                fetch('../data.json').then(r => r.json()).then(setData).catch(() => {});
+            }, []);
+            /* Igual que la consola: legisladores/comisiones del Worker se cargan
+               solo cuando hacen falta (al abrir el wizard), no a todo visitante. */
+            useEffect(() => {
+                if (!showWizard || allLegisladores.length) return;
+                fetch(`${WORKER_URL}/radar?limite=100`).then(r => r.ok ? r.json() : { legisladores: [] }).then(radar => {
+                    setAllLegisladores(radar.legisladores || []);
+                    const total = radar.total || 0;
+                    if (total > 100) {
+                        const pages = Math.ceil(total / 100);
+                        const ps = [];
+                        for (let p = 2; p <= pages; p++) ps.push(fetch(`${WORKER_URL}/radar?limite=100&pagina=${p}`).then(r => r.ok ? r.json() : { legisladores: [] }));
+                        Promise.all(ps).then(results => {
+                            const todos = [...(radar.legisladores || [])];
+                            results.forEach(r => todos.push(...(r.legisladores || [])));
+                            setAllLegisladores(todos);
+                        });
+                    }
+                }).catch(() => {});
+                fetch(`${WORKER_URL}/comisiones`).then(r => r.ok ? r.json() : { comisiones: [] })
+                    .then(d => setAllComisiones(d.comisiones || [])).catch(() => {});
+            }, [showWizard]);
+
+            const semaforo = data?.semaforo || [];
+            const top4 = [...semaforo].sort((a, b) => b.score_total - a.score_total).slice(0, 4);
+
+            /* top5Legisladores — LÓGICA copiada de la consola (index.html ~2096) */
+            const top5Legisladores = (() => {
+                if (!data || !data.autoria || semaforo.length === 0) return [];
+                const enReceso = data.metadata?.modo_receso === true;
+                const norm = (s) => (s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+                const tokenKey = (s) => norm(s).split(/\s+/).filter(Boolean).sort().join(' ');
+                const permSet = (enReceso && data.permanente?.nombres_norm)
+                    ? new Set(data.permanente.nombres_norm.map(tokenKey)) : null;
+                const topCats = [...semaforo].sort((a, b) => b.score_total - a.score_total).slice(0, 5);
+                const seen = new Set(); const result = [];
+                for (const catData of topCats) {
+                    const preds = data.autoria[catData.categoria];
+                    if (!preds || preds.length === 0) continue;
+                    for (const p of preds) {
+                        if (seen.has(p.nombre)) continue;
+                        if (permSet && !permSet.has(tokenKey(p.nombre))) continue;
+                        seen.add(p.nombre);
+                        result.push({...p, categoria: catData.nombre});
+                        break;
+                    }
+                }
+                return result;
+            })();
+            const nSel = (config.legisladores||[]).length + (config.temas||[]).length + (config.estados||[]).length + (config.comisiones||[]).length;
+
+            return (
+                <div>
+                    {/* ══ HERO: texto de Preguntas Frecuentes, verbatim ══ */}
+                    <section className="max-w-6xl mx-auto px-4 pt-10 pb-12">
+                        <div className="grid lg:grid-cols-2 gap-8 items-center">
+                            <div>
+                                <h1 className="text-lg font-bold text-gray-800">¿Qué es FIAT?</h1>
+                                <p className="mt-2 text-[13px] text-gray-500 leading-relaxed">FIAT es un sistema de inteligencia legislativa que monitorea en tiempo real la actividad del Congreso de México. Analiza iniciativas, dictámenes, puntos de acuerdo y medios de comunicación para generar alertas y predicciones sobre temas legislativos clave.</p>
+                                <div className="mt-6 flex flex-wrap gap-3">
+                                    <button onClick={() => setShowWizard(true)} className="text-white font-semibold px-5 py-2.5 rounded-full bg-semaforo-verde hover:bg-emerald-700 transition-colors shadow-sm text-[13px]">Diseña tu consola →</button>
+                                    <a href="#planes" className="border border-borde hover:border-gray-400 bg-white text-gray-700 font-semibold px-5 py-2.5 rounded-full transition-colors text-[13px]">Ver planes</a>
+                                </div>
+                                {nSel > 0 && (
+                                    <p className="mt-3 text-[11px] text-gray-400 font-mono">Tu consola de prueba lleva {nSel} selecciones — <button onClick={() => setShowWizard(true)} className="text-acento underline">continuar diseñándola</button></p>
+                                )}
+                            </div>
+                            {/* espacio reservado para el VIDEO */}
+                            <div className="relative aspect-video rounded-2xl overflow-hidden flex items-center justify-center" style={{background: 'linear-gradient(135deg,#1a365d 0%,#0f2342 100%)'}}>
+                                <div className="absolute top-4 left-5 flex items-center gap-2">
+                                    <span className="text-[10px] font-mono text-white/50 tracking-[0.18em] uppercase">FIAT en 90 segundos</span>
+                                    <span className="flex items-center gap-1 text-[10px] font-mono text-emerald-300"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>PRÓXIMAMENTE</span>
+                                </div>
+                                <div className="w-[72px] h-[72px] rounded-full bg-white/10 border border-white/25 flex items-center justify-center">
+                                    <svg className="w-7 h-7 text-white ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* ══ Top de Scores + Legisladores mas probables (widgets de la consola) ══ */}
+                    <section className="max-w-6xl mx-auto px-4 pb-14">
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div className="lg:col-span-2">
+                                <div className="flex items-baseline justify-between mb-3">
+                                    <h2 className="text-lg font-bold text-gray-800">Top de Scores</h2>
+                                    <a href="../index.html" className="text-[12px] font-medium text-acento hover:underline">Ver los {semaforo.length || 19} temas →</a>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                    {top4.map(s => <SemaforoCard key={s.categoria} data={s} onClick={() => { window.location.href = '../index.html'; }} />)}
+                                </div>
+                            </div>
+                            <div className="space-y-4">
+                                {top5Legisladores.length > 0 && (
+                                    <div className="glass border border-borde rounded-xl p-4">
+                                        <h3 className="font-semibold text-gray-700 mb-1 text-sm">Legisladores mas probables</h3>
+                                        <p className="text-[10px] text-gray-400 mb-3 font-mono">Mayor probabilidad de presentar instrumentos legislativos en las categorias activas.</p>
+                                        <div className="space-y-2">
+                                            {top5Legisladores.map((leg, i) => (
+                                                <div key={i} className="flex items-center gap-2.5 py-1.5 border-b border-gray-100 last:border-0">
+                                                    <div className="w-6 h-6 rounded-full bg-acento/10 flex items-center justify-center text-[10px] font-bold text-acento flex-shrink-0">{i + 1}</div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="font-semibold text-xs text-gray-800 truncate">{leg.nombre}</span>
+                                                            <PartidoBadge partido={leg.partido} size="sm" />
+                                                        </div>
+                                                        <div className="text-[10px] text-gray-400 font-mono">{leg.camara === 'Senado' ? 'Sen.' : 'Dip.'}{leg.estado ? ` - ${leg.estado}` : ''} &middot; <span className="text-acento">{leg.categoria}</span></div>
+                                                    </div>
+                                                    <div className="text-xs text-acento font-bold flex-shrink-0 font-mono">{leg.score.toFixed(0)}%</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* ══ Wizard de configuración — EL MISMO de la consola ══ */}
+                    {showWizard && data && (
+                        <ConsolaProConfigModal
+                            data={data}
+                            allLegisladores={allLegisladores}
+                            allComisiones={allComisiones}
+                            config={config}
+                            setConfig={setConfig}
+                            onClose={() => {
+                                setShowWizard(false);
+                                const total = (config.legisladores || []).length + (config.temas || []).length + (config.estados || []).length;
+                                if (total > 0) { document.getElementById('planes')?.scrollIntoView({ behavior: 'smooth' }); }
+                            }}
+                        />
+                    )}
+                </div>
+            );
+        }
+        ReactDOM.createRoot(document.getElementById('home-root')).render(<HomeApp />);
+
 </script>
 </body>
 </html>
