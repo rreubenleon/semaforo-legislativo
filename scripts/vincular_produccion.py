@@ -251,7 +251,10 @@ def main():
     # existe; si la ingesta fue una vista de etapa (cuadro de comisión SITL,
     # registro de turno en gaceta) y no hay fecha real → ABSTENCIÓN; y en
     # todos los casos, la primera aparición serial manda.
-    _TRAMITE = _re.compile(r"se dio turno|se turn[oó]", _re.I)
+    # "Se dio turno DIRECTO" = presentado y turnado en la MISMA sesión → la
+    # fecha de sesión SÍ es la de presentación (canarios Buró/Tijuana, 13-jul).
+    # Solo es vista de etapa la remisión posterior.
+    _TRAMITE = _re.compile(r"se turn[oó]\s+(?:a|para)|se remiti[oó]", _re.I)
     fechas_ef = []
     abst_etapa = 0
     for r in rows:

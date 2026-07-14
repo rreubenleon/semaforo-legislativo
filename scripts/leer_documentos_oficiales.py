@@ -187,6 +187,47 @@ _SITL_SINOPSIS = re.compile(
     r'<td width="350"[^>]*><span class="Estilo71">([^<]{40,})</span>', re.I)
 
 
+def paso_sitl_json(conn, dry):
+    """Fechas de presentación desde el scrape per-diputado de SITL
+    (dashboard/diputados_lxvi_oficial.json) para filas de cuadros que el
+    scrape web por comisión no resolvió (canario tarifazo NL, 13-jul)."""
+    src = ROOT / "dashboard" / "diputados_lxvi_oficial.json"
+    if not src.exists():
+        print("sin diputados_lxvi_oficial.json — paso omitido")
+        return
+    data = json.loads(src.read_text())
+    idx = {}
+    insts = data if isinstance(data, list) else data.get("instrumentos", [])
+    if isinstance(data, dict) and not insts:
+        insts = [i for v in data.values() if isinstance(v, list) for i in v]
+    for inst in insts:
+        if not isinstance(inst, dict):
+            continue
+        t, f = inst.get("titulo") or "", (inst.get("fecha") or "")[:10]
+        if not t or not f:
+            continue
+        k = key12(t)
+        if k:
+            idx.setdefault(k, []).append((f, inst))
+    rows = [r for r in objetivo(conn) if "cuadro_asuntos_por_comision" in r[6]]
+    rep = 0
+    for rid, sid, titulo, f, pres, sin_, url in rows:
+        k = key12(titulo)
+        cands = idx.get(k, [])
+        if not cands:
+            continue
+        fechas = sorted({fd for fd, _ in cands})
+        rep += 1
+        if not dry:
+            conn.execute("UPDATE sil_documentos SET fecha_presentacion_real=?, "
+                         "fuente_fecha_real='sitl' WHERE id=? "
+                         "AND COALESCE(fecha_presentacion_real,'')=''",
+                         (fechas[0], rid))
+    if not dry:
+        conn.commit()
+    print(f"SITL json per-diputado: fechas resueltas={rep}/{len(rows)}")
+
+
 def paso_sitl(conn, dry):
     import urllib.request
     UA = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -247,7 +288,8 @@ def paso_sitl(conn, dry):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--paso", choices=["universo", "match", "detalle", "sitl"],
+    ap.add_argument("--paso", choices=["universo", "match", "detalle", "sitl",
+                                       "sitl_json"],
                     required=True)
     ap.add_argument("--limite", type=int, default=0)
     ap.add_argument("--dry-run", action="store_true")
@@ -263,5 +305,7 @@ if __name__ == "__main__":
             paso_match(conn)
         elif a.paso == "detalle":
             paso_detalle(conn, a.limite, a.dry_run, a.solo_vinculos)
+        elif a.paso == "sitl_json":
+            paso_sitl_json(conn, a.dry_run)
         else:
             paso_sitl(conn, a.dry_run)
