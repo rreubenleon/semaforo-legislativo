@@ -160,14 +160,22 @@ def main():
     # ── índice de SERIALES (gate v3): la MISMA propuesta re-presentada antes
     # (etapas del propio asunto o re-presentación del autor) invalida el
     # "responde a la nota" — la fecha que manda es la PRIMERA aparición.
+    # Incluye PLANTILLAS de autor ("exhorta a diversas autoridades federales y
+    # estatales en relación con…"): el gate v4 encontró un falso serial por
+    # boilerplate reusado en temas distintos — el Jaccard debe correr sobre
+    # tokens de ASUNTO, no de plantilla.
     _MARCO = {"reforma", "reforman", "adiciona", "adicionan", "deroga", "expide",
               "modifica", "articulo", "articulos", "ley", "leyes", "codigo",
-              "general", "federal", "constitucion", "politica", "estados",
-              "unidos", "mexicanos", "diversas", "disposiciones", "materia",
-              "decreto", "proyecto", "punto", "acuerdo", "exhorta", "exhorto",
-              "respetuosamente", "secretaria", "gobierno", "camara", "senado",
-              "congreso", "republica", "nacional", "fraccion", "parrafo",
-              "bis", "ter"}
+              "general", "federal", "federales", "constitucion", "politica",
+              "estados", "unidos", "mexicanos", "diversas", "disposiciones",
+              "materia", "decreto", "proyecto", "punto", "acuerdo", "exhorta",
+              "exhorto", "respetuosamente", "secretaria", "gobierno", "camara",
+              "senado", "congreso", "republica", "nacional", "fraccion",
+              "parrafo", "bis", "ter", "autoridades", "estatales",
+              "municipales", "relacion", "informe", "informar", "solicita",
+              "solicitud", "urgente", "obvia", "resolucion", "tramite",
+              "competentes", "correspondientes", "ambitos", "acciones",
+              "medidas", "implementar", "garantizar", "fortalecer"}
     _serial_todos = []
     for _t, _f, _a in con.execute(
             "SELECT titulo, substr(fecha_presentacion,1,10), COALESCE(presentador,'') "
@@ -281,7 +289,7 @@ def main():
             if fechas_ef[k] is None:
                 continue
             d0 = date.fromisoformat(fechas_ef[k][:10]).toordinal()
-            need.update(np.where((mdate >= d0 - 21) & (mdate <= d0))[0].tolist())
+            need.update(np.where((mdate >= d0 - 21) & (mdate < d0))[0].tolist())
         need = sorted(need)
         print(f"embeddings acotados a ventana: {len(need)} notas (de {N})")
         vecs = emb.encode([mtxt[i] for i in need], batch_size=256,
@@ -334,13 +342,15 @@ def main():
                 fila[1], _sin, present):
             continue
         titulo = textos[k]  # texto COMPLETO (sin prefijo de autores, con sinopsis)
-        # Ventana [-21d, 0d] alrededor de la fecha EFECTIVA (real del documento
-        # + primera aparición serial): una nota posterior a la primera
-        # presentación no puede ser su detonante (gates v2/v3).
+        # Ventana [-21d, -1d] alrededor de la fecha EFECTIVA (real del documento
+        # + primera aparición serial). Gate v4: lead 0 quedó FUERA — el estrato
+        # mismo-día era auto-cobertura (la nota reporta el propio instrumento)
+        # o paralelismo del mismo partido; un vínculo evento→respuesta exige
+        # que la nota preceda al instrumento al menos un día.
         if fechas_ef[k] is None:
             continue
         d0 = date.fromisoformat(fechas_ef[k][:10]).toordinal()
-        win = np.where((mdate >= d0 - 21) & (mdate <= d0))[0]
+        win = np.where((mdate >= d0 - 21) & (mdate < d0))[0]
         if not len(win):
             continue
         sims = vecs_de(win) @ Qi[k]
