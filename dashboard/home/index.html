@@ -73,7 +73,86 @@
 </header>
 
 <div id="home-root"></div>
+<section id="planes" class="border-t border-gray-200 bg-white">
+  <div class="max-w-6xl mx-auto px-4 py-14">
+    <div class="text-center mb-9">
+      <p class="text-[11px] font-mono text-gray-400 tracking-[0.18em] uppercase mb-2">Conoce más</p>
+      <h2 class="text-3xl font-black tracking-tight text-gray-900">Elige tu plan</h2>
+      <p class="text-gray-500 mt-2 text-sm">Sin permanencia forzosa. Cancela cuando quieras.</p>
+    </div>
 
+    <div class="grid md:grid-cols-3 gap-5 max-w-4xl mx-auto items-stretch">
+
+      <!-- Tier 1: Prueba -->
+      <div class="rounded-xl border border-gray-200 bg-fondo p-7 flex flex-col">
+        <p class="text-[11px] font-mono text-gray-400 tracking-wide uppercase">Pruébalo</p>
+        <div class="mt-3">
+          <span class="text-4xl font-black text-semaforo-verde">Gratis</span>
+          <p class="text-gray-500 text-sm mt-1">las primeras <b class="text-gray-800">24 horas</b></p>
+        </div>
+        <p class="text-[11px] font-mono text-gray-400 mt-1.5">después $399 MXN / mes</p>
+        <ul class="mt-6 space-y-2 text-sm text-gray-600 flex-1">
+          <li><span class="text-semaforo-verde font-bold">✓</span> Acceso completo a la consola</li>
+          <li><span class="text-semaforo-verde font-bold">✓</span> Los 19 scores en vivo</li>
+          <li><span class="text-semaforo-verde font-bold">✓</span> Radar de legisladores</li>
+        </ul>
+        <a href="../index.html" class="mt-7 block text-center border border-semaforo-verde text-semaforo-verde hover:bg-semaforo-verde hover:text-white font-semibold py-2.5 rounded-full transition-colors text-sm">Empezar prueba</a>
+      </div>
+
+      <!-- Tier 2: Mensual (destacado) -->
+      <div class="relative rounded-xl border-2 border-semaforo-verde bg-tarjeta p-7 flex flex-col shadow-sm">
+        <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-semaforo-verde text-white text-[10px] font-mono font-bold px-3 py-0.5 rounded-full tracking-wider">MÁS POPULAR</span>
+        <p class="text-[11px] font-mono text-gray-400 tracking-wide uppercase">Mensual</p>
+        <div class="mt-3">
+          <span class="text-4xl font-black text-gray-900">$349</span>
+          <span class="text-gray-400 text-sm font-mono"> MXN/mes</span>
+        </div>
+        <p class="text-[11px] font-mono text-transparent mt-1.5">.</p>
+        <ul class="mt-6 space-y-2 text-sm text-gray-600 flex-1">
+          <li><span class="text-semaforo-verde font-bold">✓</span> Todo lo del plan de prueba</li>
+          <li><span class="text-semaforo-verde font-bold">✓</span> Consola personalizada con tus keywords</li>
+          <li><span class="text-semaforo-verde font-bold">✓</span> Alertas de tus temas</li>
+          <li><span class="text-semaforo-verde font-bold">✓</span> Búsqueda histórica completa</li>
+        </ul>
+        <a href="../index.html" class="mt-7 block text-center bg-semaforo-verde hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-full transition-colors shadow-sm text-sm">Suscribirme</a>
+      </div>
+
+      <!-- Tier 3: Trimestral -->
+      <div class="rounded-xl border border-gray-200 bg-fondo p-7 flex flex-col">
+        <p class="text-[11px] font-mono text-gray-400 tracking-wide uppercase">Trimestral</p>
+        <div class="mt-3">
+          <span class="text-4xl font-black text-gray-900">$999</span>
+          <span class="text-gray-400 text-sm font-mono"> MXN/3 meses</span>
+        </div>
+        <p class="text-[11px] font-mono text-semaforo-amarillo mt-1.5 font-semibold">= $333 al mes</p>
+        <ul class="mt-6 space-y-2 text-sm text-gray-600 flex-1">
+          <li><span class="text-semaforo-verde font-bold">✓</span> Todo lo del plan mensual</li>
+          <li><span class="text-semaforo-verde font-bold">✓</span> Un solo pago cada 3 meses</li>
+          <li><span class="text-semaforo-verde font-bold">✓</span> Precio congelado</li>
+        </ul>
+        <a href="../index.html" class="mt-7 block text-center border border-borde hover:border-gray-400 text-gray-700 font-semibold py-2.5 rounded-full transition-colors text-sm">Suscribirme</a>
+      </div>
+    </div>
+
+    <p class="text-center text-[11px] font-mono text-gray-400 mt-8">
+      Otras herramientas de monitoreo legislativo cobran desde $5,000 MXN mensuales por usuario — y solo muestran la gaceta.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer class="border-t border-gray-200 bg-fondo">
+  <div class="max-w-6xl mx-auto px-4 py-7 flex flex-col sm:flex-row items-center justify-between gap-3 text-[12px] text-gray-400">
+    <div class="flex items-center gap-2">
+      <img src="../fiat-logo-transparent.png" alt="" style="height:20px;object-fit:contain;" class="opacity-60" />
+      <span class="font-mono">Inteligencia Legislativa de México</span>
+    </div>
+    <div class="flex gap-5 font-medium">
+      <a href="../index.html" class="hover:text-gray-700">Consola</a>
+      <a href="https://x.com/Fiat_MX" class="hover:text-gray-700">@Fiat_MX</a>
+    </div>
+  </div>
+</footer>
 <script type="text/babel">
         /* ═══ BLOQUES COPIADOS VERBATIM DE dashboard/index.html ═══ */
         const { useState, useEffect, useMemo, useRef } = React;
