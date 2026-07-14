@@ -110,6 +110,12 @@ def main():
                     help="juez = modelo destilado local ($0) en vez de Haiku")
     ap.add_argument("--solo-nuevos", action="store_true",
                     help="solo instrumentos fuera del ledger; append + actualiza ledger")
+    ap.add_argument("--max-costo", type=float, default=0.0,
+                    help="candado DURO: corta el pase Haiku al alcanzar este "
+                         "costo estimado en USD y guarda lo obtenido (0 = sin tope)")
+    ap.add_argument("--salida", default="",
+                    help="ruta de salida en modo completo (por defecto el archivo "
+                         "de producción; usar un STAGING para gate antes de publicar)")
     ap.add_argument("--sin-vinculo", action="store_true",
                     help="re-pase: solo instrumentos YA procesados que quedaron sin vínculo "
                          "(útil tras ampliar el corpus); append dedupeado")
@@ -358,7 +364,16 @@ def main():
 
     vinculos = []
     tin = tout = ncalls = 0
+    _tope_alcanzado = False
     for k, fila in enumerate(rows):
+        # CANDADO DURO de costo (política Haiku, cap $7.50/mes): antes de
+        # cualquier llamada nueva, si el costo estimado ya alcanzó el tope,
+        # se detiene y guarda lo obtenido — nunca se rebasa el presupuesto.
+        if cli and args.max_costo and (tin / 1e6 + tout / 1e6 * 5) >= args.max_costo:
+            _tope_alcanzado = True
+            print(f"⛔ TOPE de costo ${args.max_costo} alcanzado en el instrumento "
+                  f"{k}/{len(rows)} · vínculos hasta aquí: {len(vinculos)}. Corte limpio.")
+            break
         sid, titulo, fecha, present, tg = fila[0], fila[1], fila[2], fila[3], fila[4]
         # RECHAZO DE OFICIO (gates Escéptico 11/12-jul): si el título sigue
         # mocho y la sinopsis trae firma de contaminación (detección por
@@ -482,10 +497,12 @@ def main():
         print(f"\n✅ append: +{len(vinculos)} vínculos (total {prev['n_vinculos']}) · "
               f"ledger: {len(ledger)}")
     else:
-        VINCULOS.write_text(json.dumps({"generado": args.desde, "n_instrumentos": len(rows),
-                                        "n_vinculos": len(vinculos), "vinculos": vinculos},
-                                       ensure_ascii=False, indent=1))
-        print(f"\n✅ {VINCULOS}: {len(vinculos)} vínculos de {len(rows)}")
+        destino = Path(args.salida) if args.salida else VINCULOS
+        destino.write_text(json.dumps({"generado": args.desde, "n_instrumentos": len(rows),
+                                       "n_vinculos": len(vinculos),
+                                       "tope_alcanzado": _tope_alcanzado, "vinculos": vinculos},
+                                      ensure_ascii=False, indent=1))
+        print(f"\n✅ {destino}: {len(vinculos)} vínculos de {len(rows)}")
     if cli:
         print(f"   llamadas juez Haiku: {ncalls} · costo REAL: ${tin/1e6+tout/1e6*5:.3f}")
 

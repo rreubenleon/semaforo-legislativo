@@ -1,0 +1,131 @@
+name: Re-lote vínculos Haiku (one-off, STAGING)
+
+# Re-juzga el universo de instrumentos con el vinculador v6 (blacklist +
+# acto-legislativo + seriales-por-asunto + dedupe + fecha real del documento)
+# usando el juez Haiku de PAGO. Escribe a un archivo de STAGING
+# (eval/vinculos_staging.json) — NO toca el de producción, que sigue en
+# cuarentena hasta que el Escéptico apruebe el lote.
+# CANDADO DURO de costo vía --max-costo: nunca rebasa el tope.
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_costo:
+        description: 'Tope DURO de gasto en USD (corte limpio al alcanzarlo)'
+        default: '6.50'
+      desde:
+        description: 'Fecha desde (universo)'
+        default: '2024-09-01'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "pipeline"        # nunca en paralelo con el pipeline (misma DB)
+  cancel-in-progress: false
+
+jobs:
+  relote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Cache modelos HF
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-vincular-v1
+
+      # DB con FECHA REAL de presentación (la del backfill leer_documentos):
+      # restore-keys semaforo-db- toma la más reciente, que es la de leerdocs.
+      - name: Restaurar semaforo.db (con fecha real)
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-relote-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-leerdocs-
+            semaforo-db-
+
+      - name: Verificar DB + columna fecha real
+        run: |
+          [ -f semaforo.db ] || { echo "sin DB en cache"; exit 1; }
+          python - <<'PY'
+          import sqlite3
+          con = sqlite3.connect("semaforo.db")
+          cols = [r[1] for r in con.execute("PRAGMA table_info(sil_documentos)")]
+          assert "fecha_presentacion_real" in cols, "DB SIN fecha real — corre leer_documentos.yml primero"
+          n = con.execute("SELECT COUNT(*) FROM sil_documentos WHERE COALESCE(fecha_presentacion_real,'')!=''").fetchone()[0]
+          print(f"instrumentos con fecha real: {n}")
+          assert n > 3000, f"muy pocas fechas reales ({n}) — backfill incompleto"
+          PY
+
+      - name: Forzar DB solo lectura
+        run: chmod 0444 semaforo.db
+
+      - name: Instalar dependencias
+        run: |
+          pip install -r requirements.txt
+          pip install sentence-transformers "scikit-learn==1.9.0" joblib anthropic
+
+      # TODOS los shards del corpus regional (el universo va desde 2024-09).
+      - name: Bajar corpus regional completo
+        run: |
+          mkdir -p eval/_corpus_regional
+          gh release download corpus -R rreubenleon/fiat-corpus \
+            --pattern "corpus-*.jsonl.gz" -D eval/_corpus_regional --clobber || true
+          ls eval/_corpus_regional/ | wc -l
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Re-lote Haiku → STAGING (candado de costo)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.FIAT_CLAUDE_API_KEY }}
+        run: |
+          echo "ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}" > .env
+          python scripts/vincular_produccion.py \
+            --relevantes --desde "${{ github.event.inputs.desde }}" \
+            --max-costo "${{ github.event.inputs.max_costo }}" \
+            --salida eval/vinculos_staging.json
+          rm -f .env
+
+      - name: Resumen
+        run: |
+          python - <<'PY'
+          import json
+          d = json.load(open("eval/vinculos_staging.json"))
+          print(f"vínculos en staging: {d['n_vinculos']} de {d['n_instrumentos']} instrumentos")
+          print(f"tope de costo alcanzado: {d.get('tope_alcanzado')}")
+          ext = sum(1 for v in d["vinculos"] if v.get("tipo_nota") == "externo")
+          reg = sum(1 for v in d["vinculos"] if v.get("nota_entidad"))
+          print(f"externos: {ext} · con nota regional: {reg}")
+          PY
+
+      - name: Commit del staging (NO toca producción)
+        run: |
+          git config user.name "FIAT Bot"
+          git config user.email "fiat-bot@users.noreply.github.com"
+          git add eval/vinculos_staging.json
+          git diff --cached --quiet && { echo "sin staging"; exit 0; }
+          git commit -m "🔗 Re-lote Haiku v6 → staging (pendiente gate Escéptico)"
+          for i in 1 2 3; do
+            git -c rebase.autoStash=true pull --rebase origin main && git push && break
+            sleep 10
+          done
+
+      - name: Guardar DB al cache (rueda para el pipeline)
+        uses: actions/cache/save@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-relote-${{ github.run_id }}
