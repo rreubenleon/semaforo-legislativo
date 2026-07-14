@@ -1,0 +1,87 @@
+name: Leer documentos oficiales (fecha real + texto íntegro)
+
+# Causa raíz del gate v3 de vínculos: 33.5% del ledger ingerido de vistas de
+# ETAPA (cuadros por comisión SITL, turnos de gaceta) — fecha_presentacion es
+# la del trámite. Este workflow lee el DOCUMENTO (ficha SIL, listado SITL) y
+# llena fecha_presentacion_real + fuente_fecha_real + sinopsis oficial.
+# La BD reparada se guarda al cache con prefijo semaforo-db- para que el
+# pipeline la adopte en su siguiente corrida.
+
+on:
+  workflow_dispatch:
+    inputs:
+      limite:
+        description: 'máx fichas SIL a leer en esta corrida (~1.5s c/u)'
+        default: '8000'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "pipeline"        # nunca en paralelo con el pipeline
+  cancel-in-progress: false
+
+jobs:
+  leer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: pip-${{ hashFiles('requirements.txt') }}
+
+      - name: Restaurar semaforo.db (ESCRITURA)
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-leerdocs-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - name: Verificar DB presente
+        run: |
+          [ -f semaforo.db ] || { echo "sin DB en cache"; exit 1; }
+          du -h semaforo.db
+
+      - name: Instalar dependencias
+        run: pip install -r requirements.txt
+
+      - name: Universo SIL (queries anchas, títulos íntegros)
+        run: python scripts/leer_documentos_oficiales.py --paso universo
+
+      - name: Match instrumentos ↔ SIL
+        run: python scripts/leer_documentos_oficiales.py --paso match
+
+      - name: Fichas SIL (fecha real + texto)
+        run: python scripts/leer_documentos_oficiales.py --paso detalle --limite "${{ github.event.inputs.limite }}"
+
+      - name: SITL por comisión (filas de cuadros)
+        run: python scripts/leer_documentos_oficiales.py --paso sitl
+
+      - name: Reporte
+        run: |
+          python - <<'PY'
+          import sqlite3
+          con = sqlite3.connect("semaforo.db")
+          q = lambda s: con.execute(s).fetchone()[0]
+          print("con fecha real:",
+                q("SELECT COUNT(*) FROM sil_documentos WHERE COALESCE(fecha_presentacion_real,'')!=''"))
+          print("fecha real ≠ fecha fila:",
+                q("""SELECT COUNT(*) FROM sil_documentos
+                     WHERE COALESCE(fecha_presentacion_real,'')!=''
+                     AND substr(fecha_presentacion_real,1,10)!=substr(fecha_presentacion,1,10)"""))
+          PY
+
+      - name: Guardar DB al cache
+        uses: actions/cache/save@v4
+        with:
+          path: semaforo.db
+          key: semaforo-db-leerdocs-${{ github.run_id }}

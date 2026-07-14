@@ -71,6 +71,15 @@ def contaminada(titulo, sinopsis, presentador=""):
     ns = na(s)
     if "resultados encontrados" in ns:
         return True
+    # lista de autores como sinopsis (el orden no siempre coincide con el
+    # campo presentador — caso Marx Arriaga, piloto v3 13-jul)
+    if re.match(r"^(de\s+l[ao]s\s+(senador|diputad|legislador)|del\s+senador|"
+                r"de\s+la\s+senadora|del\s+diputado|de\s+la\s+diputada|"
+                r"de\s+legisladoras|(?:del?\s+(?:la\s+)?)?(?:sen|dip)\.\s*[a-z])", ns):
+        return True
+    # menú de navegación de gaceta pegado como sinopsis (extractor viejo)
+    if "iniciativas, minutas" in ns or "gacetas anteriores" in ns:
+        return True
 
     def _pref(a, b):
         n = 0
@@ -82,7 +91,13 @@ def contaminada(titulo, sinopsis, presentador=""):
 
     if presentador and _pref(ns, na(presentador)) >= 40:
         return True
-    if _pref(ns, na(titulo or "")) >= 60:
+    # sinopsis = copia del título truncado SOLO es contaminación si no agrega
+    # contenido (la extracción anclada de gaceta devuelve título+objeto, que
+    # comparte prefijo LEGÍTIMAMENTE) y si el título no traía ya el objeto
+    # completo (títulos cortados en el trámite '…Se dio turno' están enteros)
+    nt = na(titulo or "")
+    if (_pref(ns, nt) >= 60 and len(ns) < len(nt) + 40
+            and not re.search(r"se dio turno|se turn[oó]|concluid[oa]", nt)):
         return True
     return False
 
@@ -195,15 +210,47 @@ def paso_reconteo(conn, dry):
     return rep_sin
 
 
-def extraer_objeto_gaceta(html_text):
-    """El objeto del asunto en la página del documento de gaceta del Senado."""
-    limpio = re.sub(r"<[^>]+>", " ", html_text)
+_FIN_GACETA = re.compile(
+    r"Punto de Acuerdo Concluido|Concluid[oa] el \d|Archivos para descargar|"
+    r"Se dio turno|Gacetas Anteriores|Ficha T[eé]cnica|SINTESIS|S[ií]ntesis|VOTACI",
+    re.I)
+
+
+def extraer_objeto_gaceta(html_text, titulo=None):
+    """El objeto del asunto en la página del documento de gaceta del Senado,
+    ANCLADO en el título truncado: se localiza la cola del título en el texto
+    de la página y se captura el asunto completo alrededor. Sin ancla no hay
+    extracción (si el título no está en la página, el id NO mapea a este
+    documento — pegar otra cosa es contaminar). Las heurísticas sin ancla
+    agarraban el menú de navegación o glosarios (piloto v3 13-jul)."""
+    if not titulo:
+        return None
+    limpio = re.sub(r"<[^>]+>", " ", html_text or "")
     limpio = re.sub(r"\s+", " ", limpio)
-    m = re.search(
-        r"((?:con\s+)?(?:punto de acuerdo|proyecto de decreto|proposici[oó]n|iniciativa)"
-        r"[^|]{60,2000}?)(?:\s{2,}|Sen\.|Dip\.|SINTESIS|Síntesis|VOTACI|Documento)",
-        limpio, re.I)
-    return m.group(1).strip() if m else None
+    spans = list(re.finditer(r"\S+", limpio))
+    tp = [re.sub(r"[^a-z0-9]", "", na(m.group(0))) for m in spans]
+    tt = toks(titulo)
+    # drop=1 tolera que el cap haya cortado la última palabra a la mitad
+    for drop in (0, 1):
+        cola = tt[len(tt) - 8 - drop:len(tt) - drop or None]
+        if len(cola) < 5:
+            return None
+        k = len(cola)
+        for j in range(len(tp) - k + 1):
+            if tp[j:j + k] != cola:
+                continue
+            ancla_ini = spans[j].start()
+            # retrocede al arranque del asunto ('con punto de acuerdo…')
+            ini = ancla_ini
+            for mm in re.finditer(
+                    r"(?:con\s+)?(?:punto de acuerdo|proyecto de decreto|iniciativa con)",
+                    limpio[:ancla_ini], re.I):
+                if ancla_ini - mm.start() < 1600:
+                    ini = mm.start()
+            seg = _FIN_GACETA.split(limpio[ini:ini + 2400])[0].strip()
+            if len(seg) >= 60:
+                return seg
+    return None
 
 
 def paso_gaceta(conn, limite, dry):
@@ -229,7 +276,7 @@ def paso_gaceta(conn, limite, dry):
         if not html_text:
             fall += 1
             continue
-        objeto = extraer_objeto_gaceta(html_text)
+        objeto = extraer_objeto_gaceta(html_text, titulo)
         if not objeto or len(objeto) < 60 or not objeto_valido(titulo, objeto):
             fall += 1
             continue

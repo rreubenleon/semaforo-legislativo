@@ -35,7 +35,8 @@ sys.path.insert(0, str(ROOT))
 from scripts.matcher_entidades import entidades
 from scripts.matcher_evento import terms
 from scripts.generar_auditoria_matcher import cargar_corpus
-from scripts.sanar_titulos_truncados import contaminada
+from scripts.sanar_titulos_truncados import contaminada, na
+from scripts.nucleo_titulos import key12, ctoks, apellidos, jaccard
 from collections import Counter
 import math
 import sqlite3
@@ -143,16 +144,72 @@ def main():
     N = len(media)
     idf = lambda x: math.log(1 + N / (1 + df.get(x, 0)))
 
-    con = sqlite3.connect(str(ROOT / "semaforo.db"))
+    con = sqlite3.connect(str(os.environ.get("SANAR_DB", ROOT / "semaforo.db")))
+    from scripts.leer_documentos_oficiales import ensure_cols
+    ensure_cols(con)
     filtro = ""
     if args.relevantes:
         filtro = ("AND (tipo_grupo LIKE '%PA%' OR lower(tipo_grupo) LIKE '%iniciativa%' "
                   "OR lower(tipo_grupo) LIKE '%punto de acuerdo%') ")
     q = ("SELECT seguimiento_id, titulo, fecha_presentacion, presentador, tipo_grupo, "
-         "COALESCE(sinopsis,'') "
+         "COALESCE(sinopsis,''), COALESCE(fecha_presentacion_real,''), COALESCE(url,'') "
          "FROM sil_documentos WHERE fecha_presentacion >= ? AND titulo IS NOT NULL "
          "AND es_duplicado_cross_camara IS NOT 1 " + filtro + "ORDER BY fecha_presentacion DESC")
     rows = con.execute(q, (args.desde,)).fetchall()
+
+    # ── índice de SERIALES (gate v3): la MISMA propuesta re-presentada antes
+    # (etapas del propio asunto o re-presentación del autor) invalida el
+    # "responde a la nota" — la fecha que manda es la PRIMERA aparición.
+    _MARCO = {"reforma", "reforman", "adiciona", "adicionan", "deroga", "expide",
+              "modifica", "articulo", "articulos", "ley", "leyes", "codigo",
+              "general", "federal", "constitucion", "politica", "estados",
+              "unidos", "mexicanos", "diversas", "disposiciones", "materia",
+              "decreto", "proyecto", "punto", "acuerdo", "exhorta", "exhorto",
+              "respetuosamente", "secretaria", "gobierno", "camara", "senado",
+              "congreso", "republica", "nacional", "fraccion", "parrafo",
+              "bis", "ter"}
+    _serial_todos = []
+    for _t, _f, _a in con.execute(
+            "SELECT titulo, substr(fecha_presentacion,1,10), COALESCE(presentador,'') "
+            "FROM sil_documentos WHERE titulo IS NOT NULL AND fecha_presentacion IS NOT NULL"):
+        _serial_todos.append((_f, key12(_t), frozenset(ctoks(_t)), apellidos(_a, _t)))
+    for _f, _t, _a in con.execute(
+            "SELECT substr(fecha,1,10), titulo, COALESCE(autor,'') FROM gaceta "
+            "WHERE titulo IS NOT NULL AND fecha IS NOT NULL "
+            "AND tipo IN ('iniciativa','proposicion','minuta')"):
+        _serial_todos.append((_f, key12(_t), frozenset(ctoks(_t)), apellidos(_a, _t)))
+    _por_key, _por_ap = {}, {}
+    for _i, (_f, _k, _ct, _ap) in enumerate(_serial_todos):
+        if _k:
+            _por_key.setdefault(_k, []).append((_f, _ap))
+        for _a in _ap:
+            _por_ap.setdefault(_a, []).append(_i)
+
+    def fecha_primera(titulo, pres, f_ef):
+        """Primera aparición de la misma propuesta (guard de autor medido:
+        apellidos∩≥2, o clave ≥8 tokens si un lado no trae autor)."""
+        k = key12(titulo)
+        ap = apellidos(pres, titulo)
+        best = f_ef
+        ntok = len(k.split()) if k else 0
+        for fm, apm in _por_key.get(k, []):
+            if fm < best and (len(ap & apm) >= 2
+                              or ((not ap or not apm) and ntok >= 8)):
+                best = fm
+        if ap:  # T2: re-presentación con redacción distinta (Jaccard + especificidad)
+            ct = frozenset(ctoks(titulo))
+            espec = ct - _MARCO
+            cand = set()
+            for a in ap:
+                cand.update(_por_ap.get(a, ()))
+            for i in cand:
+                fm, km, ctm, apm = _serial_todos[i]
+                if fm >= best or km == k:
+                    continue
+                if (len(ap & apm) >= 2 and jaccard(ct, ctm) >= 0.7
+                        and len(espec & ctm) >= 4):
+                    best = fm
+        return best
 
     ledger = set()
     if args.sin_vinculo:
@@ -190,6 +247,25 @@ def main():
         rows = rows[::paso][:args.limite]
     print(f"instrumentos a procesar: {len(rows)}")
 
+    # ── fecha EFECTIVA por instrumento (gate v3): fecha real del documento si
+    # existe; si la ingesta fue una vista de etapa (cuadro de comisión SITL,
+    # registro de turno en gaceta) y no hay fecha real → ABSTENCIÓN; y en
+    # todos los casos, la primera aparición serial manda.
+    _TRAMITE = _re.compile(r"se dio turno|se turn[oó]", _re.I)
+    fechas_ef = []
+    abst_etapa = 0
+    for r in rows:
+        _freal = (r[6] if len(r) > 6 else "") or ""
+        _url_i = (r[7] if len(r) > 7 else "") or ""
+        if not _freal and ("cuadro_asuntos_por_comision" in _url_i
+                           or _TRAMITE.search(r[1] or "")):
+            fechas_ef.append(None)
+            abst_etapa += 1
+            continue
+        fechas_ef.append(fecha_primera(r[1], r[3], (_freal or r[2])[:10]))
+    if abst_etapa:
+        print(f"abstención por fecha de etapa sin resolver: {abst_etapa}")
+
     emb = SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
     cache = CACHE / f"emb_{len(media)}.npy"
     if cache.exists():
@@ -198,8 +274,10 @@ def main():
     else:
         # CI / incremental: embeber SOLO las notas en las ventanas de los pendientes
         need = set()
-        for r in rows:
-            d0 = date.fromisoformat(r[2][:10]).toordinal()
+        for k, r in enumerate(rows):
+            if fechas_ef[k] is None:
+                continue
+            d0 = date.fromisoformat(fechas_ef[k][:10]).toordinal()
             need.update(np.where((mdate >= d0 - 21) & (mdate <= d0))[0].tolist())
         need = sorted(need)
         print(f"embeddings acotados a ventana: {len(need)} notas (de {N})")
@@ -253,10 +331,12 @@ def main():
                 fila[1], _sin, present):
             continue
         titulo = textos[k]  # texto COMPLETO (sin prefijo de autores, con sinopsis)
-        # Ventana [-21d, 0d]: una nota POSTERIOR al instrumento no puede ser su
-        # detonante (12.1% del lote viejo tenía lead<0 — gate Escéptico 12-jul).
-        # lead=0 se queda etiquetado mismo_dia (mañanera matutina → PA es real).
-        d0 = date.fromisoformat(fecha[:10]).toordinal()
+        # Ventana [-21d, 0d] alrededor de la fecha EFECTIVA (real del documento
+        # + primera aparición serial): una nota posterior a la primera
+        # presentación no puede ser su detonante (gates v2/v3).
+        if fechas_ef[k] is None:
+            continue
+        d0 = date.fromisoformat(fechas_ef[k][:10]).toordinal()
         win = np.where((mdate >= d0 - 21) & (mdate <= d0))[0]
         if not len(win):
             continue
@@ -313,21 +393,32 @@ def main():
                 time.sleep(0.2)
             if es_vinculo:
                 # tipo_nota: la nota ¿cubre un evento EXTERNO o el propio proceso
-                # legislativo? (112/439 eran cobertura de congreso — distinguirlo
-                # permite a las métricas filtrar autoreferencia)
+                # legislativo? Además del léxico legislativo, es CIRCULAR
+                # (cobertura del propio instrumento) si es mismo día y la nota
+                # nombra al autor o arranca con verbo de proposición en 3ª
+                # (gate v3: 4/4 detectados, 0 falsos en 47 CUADRA).
                 _PROC = _re.compile(
                     r"\b(iniciativa|reforma[sn]?|congreso|senado|diputad|"
                     r"comisi[oó]n permanente|c[aá]mara|dictamen|pleno|legislador)\b", _re.I)
-                vinculos.append({"sil_id": sid, "fecha": fecha[:10], "presentador": present,
+                _lead = int(d0 - mdate[i])
+                _nota_na = na((mtxt[i] or "") + " " + (mres[i] or "")[:300])
+                _aps = apellidos(present, fila[1])
+                _circular = _lead == 0 and (
+                    any(a in _nota_na for a in _aps)
+                    or _re.match(r"^\s*(pide|exhorta|urge|propone|plantea|"
+                                 r"presenta|busca|va por)\b", mtxt[i] or "", _re.I))
+                vinculos.append({"sil_id": sid, "fecha": fecha[:10],
+                                 "fecha_efectiva": fechas_ef[k], "presentador": present,
                                  "tipo_grupo": tg, "titulo": titulo, "nota_fecha": media[i][0],
                                  "nota_fuente": mfte[i], "nota_titulo": mtxt[i],
-                                 "lead_dias": int(d0 - mdate[i]),
-                                 "mismo_dia": int(d0 - mdate[i]) == 0,
+                                 "lead_dias": _lead,
+                                 "mismo_dia": _lead == 0,
                                  "nota_entidad": ment[i],
                                  "nota_origen": morig[i], "nota_url": murl[i],
                                  "sin_cuerpo": not (mres[i] or "").strip(),
                                  "juez": "local" if modelo is not None else "haiku",
-                                 "tipo_nota": "proceso" if _PROC.search(mtxt[i]) else "externo"})
+                                 "tipo_nota": "proceso" if (_circular or _PROC.search(mtxt[i]))
+                                 else "externo"})
                 break
         if (k + 1) % 20 == 0:
             extra = f" · ${tin/1e6+tout/1e6*5:.3f}" if cli else ""
