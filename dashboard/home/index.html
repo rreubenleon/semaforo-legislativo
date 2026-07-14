@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FIAT — Inteligencia Legislativa de México</title>
+<meta name="description" content="FIAT monitorea el Congreso mexicano en tiempo real: scores por tema, legisladores más probables, vínculos entre medios y legislación." />
+<link rel="icon" type="image/x-icon" href="../favicon.ico" />
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png" />
+<link rel="apple-touch-icon" href="../apple-touch-icon.png" />
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<style>
+  body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .glow { box-shadow: 0 0 60px -18px rgba(16,185,129,.45); }
+  @keyframes pulse-soft { 0%,100%{opacity:.75} 50%{opacity:1} }
+  .pulse-soft { animation: pulse-soft 2.4s ease-in-out infinite; }
+</style>
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased">
+
+<!-- ══════════ NAV ══════════ -->
+<nav class="max-w-6xl mx-auto flex items-center justify-between px-5 py-4">
+  <a href="./" class="flex items-center gap-2.5">
+    <img src="../fiat-logo-transparent.png" alt="FIAT" class="w-9 h-9 rounded-full" />
+    <span class="font-black tracking-tight text-lg">FIAT</span>
+    <span class="hidden sm:inline text-xs text-slate-400 mt-0.5">Inteligencia Legislativa</span>
+  </a>
+  <div class="flex items-center gap-3 text-sm">
+    <a href="../index.html" class="text-slate-300 hover:text-white transition">Consola</a>
+    <a href="#planes" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-4 py-1.5 rounded-lg transition">Suscríbete</a>
+  </div>
+</nav>
+
+<!-- ══════════ HERO: ¿QUÉ ES FIAT? ══════════ -->
+<header class="max-w-6xl mx-auto px-5 pt-10 pb-14">
+  <div class="grid lg:grid-cols-2 gap-10 items-center">
+    <div>
+      <p class="text-emerald-400 font-bold text-sm tracking-[0.2em] uppercase mb-3">¿Qué es FIAT?</p>
+      <h1 class="text-4xl sm:text-5xl font-black leading-[1.08] tracking-tight">
+        El Congreso de México,<br/>
+        <span class="text-emerald-400">medido en tiempo real.</span>
+      </h1>
+      <p class="mt-5 text-slate-300 text-lg leading-relaxed">
+        FIAT lee la gaceta, el SIL, los medios nacionales y 96 medios estatales
+        <b class="text-white">todos los días</b> — y lo convierte en señal:
+        qué temas van a moverse, qué legisladores van a presentar, y qué
+        iniciativas responden a qué eventos.
+      </p>
+      <ul class="mt-6 space-y-2.5 text-slate-300 text-[15px]">
+        <li class="flex gap-2.5"><span class="text-emerald-400 font-black">✓</span> Scores por tema con 7 señales (media, congreso, tendencias, mañanera…)</li>
+        <li class="flex gap-2.5"><span class="text-emerald-400 font-black">✓</span> Radar de legisladores: quién presenta, qué tan efectivo, con qué comisiones</li>
+        <li class="flex gap-2.5"><span class="text-emerald-400 font-black">✓</span> Alertas y consola personalizada con tus palabras clave</li>
+        <li class="flex gap-2.5"><span class="text-emerald-400 font-black">✓</span> 479 leyes rastreadas: qué se aprobó y qué sigue pendiente</li>
+      </ul>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href="../index.html" class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-6 py-3 rounded-xl transition glow">Explora la consola →</a>
+        <a href="#planes" class="border border-slate-700 hover:border-slate-500 text-slate-200 font-semibold px-6 py-3 rounded-xl transition">Ver planes</a>
+      </div>
+    </div>
+
+    <!-- espacio reservado para el VIDEO -->
+    <div class="relative aspect-video rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-900 to-slate-950 overflow-hidden flex items-center justify-center group cursor-default" id="video-slot">
+      <!-- Cuando exista el video: reemplazar este bloque por el <video>/<iframe> -->
+      <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(circle at 30% 40%, rgba(16,185,129,.5), transparent 55%), radial-gradient(circle at 75% 70%, rgba(245,158,11,.35), transparent 50%);"></div>
+      <div class="text-center relative">
+        <div class="w-20 h-20 mx-auto rounded-full bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center pulse-soft">
+          <svg class="w-8 h-8 text-emerald-400 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+        </div>
+        <p class="mt-4 text-slate-400 text-sm font-medium">FIAT en 90 segundos</p>
+        <p class="text-slate-600 text-xs">próximamente</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════ SCORES + PROBABLES ══════════ -->
+<section class="max-w-6xl mx-auto px-5 pb-16">
+  <div class="grid lg:grid-cols-3 gap-6">
+
+    <!-- Top de Scores (2/3) -->
+    <div class="lg:col-span-2">
+      <div class="flex items-baseline justify-between mb-4">
+        <h2 class="text-xl font-black tracking-tight">Top de Scores <span class="text-slate-500 font-medium text-sm">· hoy</span></h2>
+        <a href="../index.html" class="text-emerald-400 text-sm font-semibold hover:text-emerald-300">ver los 19 temas →</a>
+      </div>
+      <div id="top-scores" class="grid sm:grid-cols-2 gap-4">
+        <div class="text-slate-500 text-sm p-6">Cargando scores…</div>
+      </div>
+    </div>
+
+    <!-- Legisladores más probables (1/3) -->
+    <div>
+      <div class="flex items-baseline justify-between mb-4">
+        <h2 class="text-xl font-black tracking-tight">Más probables</h2>
+        <span class="text-slate-500 text-xs">a presentar esta semana</span>
+      </div>
+      <div id="probables" class="space-y-3">
+        <div class="text-slate-500 text-sm p-6">Cargando…</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ CONOCE MÁS: PLANES ══════════ -->
+<section id="planes" class="border-t border-slate-900 bg-gradient-to-b from-slate-950 to-slate-900/60">
+  <div class="max-w-6xl mx-auto px-5 py-16">
+    <div class="text-center mb-10">
+      <p class="text-amber-400 font-bold text-xs tracking-[0.25em] uppercase mb-2">Conoce más</p>
+      <h2 class="text-3xl font-black tracking-tight">Elige tu plan</h2>
+      <p class="text-slate-400 mt-2 text-sm">Sin permanencia forzosa. Cancela cuando quieras.</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5 max-w-4xl mx-auto items-stretch">
+
+      <!-- Tier 1: Prueba -->
+      <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-7 flex flex-col">
+        <p class="font-bold text-slate-200">Pruébalo</p>
+        <div class="mt-4">
+          <span class="text-4xl font-black text-emerald-400">Gratis</span>
+          <p class="text-slate-400 text-sm mt-1">las primeras <b class="text-slate-200">24 horas</b></p>
+        </div>
+        <p class="text-slate-500 text-xs mt-2">después $399 MXN al mes</p>
+        <ul class="mt-6 space-y-2 text-sm text-slate-300 flex-1">
+          <li>✓ Acceso completo a la consola</li>
+          <li>✓ Los 19 scores en vivo</li>
+          <li>✓ Radar de legisladores</li>
+        </ul>
+        <a href="../index.html" class="mt-7 block text-center border border-emerald-500/60 text-emerald-400 hover:bg-emerald-500 hover:text-slate-950 font-bold py-2.5 rounded-xl transition">Empezar prueba</a>
+      </div>
+
+      <!-- Tier 2: Mensual (destacado) -->
+      <div class="relative rounded-2xl border-2 border-emerald-500 bg-slate-900 p-7 flex flex-col glow">
+        <span class="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500 text-slate-950 text-[11px] font-black px-3 py-0.5 rounded-full tracking-wide">MÁS POPULAR</span>
+        <p class="font-bold text-slate-200">Mensual</p>
+        <div class="mt-4">
+          <span class="text-4xl font-black">$349</span>
+          <span class="text-slate-400 text-sm"> MXN / mes</span>
+        </div>
+        <p class="text-slate-500 text-xs mt-2">&nbsp;</p>
+        <ul class="mt-6 space-y-2 text-sm text-slate-300 flex-1">
+          <li>✓ Todo lo del plan de prueba</li>
+          <li>✓ Consola personalizada con tus keywords</li>
+          <li>✓ Alertas de tus temas</li>
+          <li>✓ Búsqueda histórica completa</li>
+        </ul>
+        <a href="../index.html" class="mt-7 block text-center bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black py-2.5 rounded-xl transition">Suscribirme</a>
+      </div>
+
+      <!-- Tier 3: Trimestral -->
+      <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-7 flex flex-col">
+        <p class="font-bold text-slate-200">Trimestral</p>
+        <div class="mt-4">
+          <span class="text-4xl font-black">$999</span>
+          <span class="text-slate-400 text-sm"> MXN / 3 meses</span>
+        </div>
+        <p class="text-amber-400 text-xs mt-2 font-semibold">equivale a $333 al mes · ahorras 5%</p>
+        <ul class="mt-6 space-y-2 text-sm text-slate-300 flex-1">
+          <li>✓ Todo lo del plan mensual</li>
+          <li>✓ Un solo pago cada 3 meses</li>
+          <li>✓ Precio congelado</li>
+        </ul>
+        <a href="../index.html" class="mt-7 block text-center border border-slate-600 hover:border-slate-400 text-slate-200 font-bold py-2.5 rounded-xl transition">Suscribirme</a>
+      </div>
+    </div>
+
+    <p class="text-center text-slate-600 text-xs mt-8">
+      Comparativo: herramientas de monitoreo legislativo en México cobran desde $5,000 MXN mensuales por usuario — y solo muestran la gaceta.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer class="border-t border-slate-900">
+  <div class="max-w-6xl mx-auto px-5 py-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-slate-500">
+    <div class="flex items-center gap-2">
+      <img src="../fiat-logo-transparent.png" alt="" class="w-6 h-6 rounded-full opacity-70" />
+      <span>FIAT · Inteligencia Legislativa de México</span>
+    </div>
+    <div class="flex gap-5">
+      <a href="../index.html" class="hover:text-slate-300">Consola</a>
+      <a href="https://x.com/Fiat_MX" class="hover:text-slate-300">@Fiat_MX</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+const COLORES = { rojo: "bg-red-500", amarillo: "bg-amber-400", verde: "bg-emerald-500" };
+const BORDES  = { rojo: "border-red-500/40", amarillo: "border-amber-400/40", verde: "border-emerald-500/40" };
+
+fetch("../data.json")
+  .then(r => r.json())
+  .then(d => {
+    // ── Top 4 scores ──
+    const top = [...(d.semaforo || [])]
+      .sort((a, b) => b.score_total - a.score_total)
+      .slice(0, 4);
+    document.getElementById("top-scores").innerHTML = top.map((s, i) => `
+      <a href="../index.html" class="block rounded-xl border ${BORDES[s.color] || "border-slate-800"} bg-slate-900/60 p-5 hover:bg-slate-900 transition">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-500 text-xs font-bold">#${i + 1}</span>
+          <span class="w-2.5 h-2.5 rounded-full ${COLORES[s.color] || "bg-slate-600"}"></span>
+        </div>
+        <p class="font-bold mt-2 leading-snug">${s.nombre}</p>
+        <div class="flex items-end justify-between mt-3">
+          <span class="text-3xl font-black">${Math.round(s.score_total)}</span>
+          <span class="text-slate-500 text-xs text-right">${(s.momentum && s.momentum.etiqueta) || ""}</span>
+        </div>
+      </a>`).join("");
+
+    // ── Legisladores más probables (top global del predictor de autoría) ──
+    const vistos = new Set();
+    const legs = [];
+    for (const cat of top.map(t => t.categoria)) {
+      for (const l of (d.autoria && d.autoria[cat]) || []) {
+        if (vistos.has(l.nombre)) continue;
+        vistos.add(l.nombre);
+        legs.push({ ...l, tema: (d.semaforo.find(s => s.categoria === cat) || {}).nombre });
+      }
+    }
+    legs.sort((a, b) => b.score - a.score);
+    document.getElementById("probables").innerHTML = legs.slice(0, 5).map(l => `
+      <div class="rounded-xl border border-slate-800 bg-slate-900/60 p-4 flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-emerald-400 shrink-0">
+          ${Math.round(l.score)}
+        </div>
+        <div class="min-w-0">
+          <p class="font-bold text-sm truncate">${l.nombre}</p>
+          <p class="text-slate-500 text-xs truncate">${l.partido} · ${l.camara}${l.tema ? " · " + l.tema : ""}</p>
+        </div>
+      </div>`).join("");
+  })
+  .catch(() => {
+    document.getElementById("top-scores").innerHTML =
+      '<p class="text-slate-500 text-sm p-6">No se pudieron cargar los datos.</p>';
+  });
+</script>
+</body>
+</html>
