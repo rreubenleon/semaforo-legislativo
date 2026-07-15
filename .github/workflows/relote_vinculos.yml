@@ -56,7 +56,7 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: semaforo.db
-          key: semaforo-db-relote-${{ github.run_id }}
+          key: relote-noexiste-${{ github.run_id }}
           restore-keys: |
             semaforo-db-leerdocs-
             semaforo-db-
@@ -73,9 +73,6 @@ jobs:
           print(f"instrumentos con fecha real: {n}")
           assert n > 3000, f"muy pocas fechas reales ({n}) — backfill incompleto"
           PY
-
-      - name: Forzar DB solo lectura
-        run: chmod 0444 semaforo.db
 
       - name: Instalar dependencias
         run: |
@@ -138,9 +135,3 @@ jobs:
             git -c rebase.autoStash=true pull --rebase origin main && git push && break
             sleep 10
           done
-
-      - name: Guardar DB al cache (rueda para el pipeline)
-        uses: actions/cache/save@v4
-        with:
-          path: semaforo.db
-          key: semaforo-db-relote-${{ github.run_id }}
