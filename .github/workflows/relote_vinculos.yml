@@ -16,6 +16,9 @@ on:
       desde:
         description: 'Fecha desde (universo)'
         default: '2024-09-01'
+      hasta:
+        description: 'Fecha hasta (acota la tanda; vacío = sin tope)'
+        default: ''
 
 permissions:
   contents: write
@@ -27,7 +30,7 @@ concurrency:
 jobs:
   relote:
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    timeout-minutes: 355
     steps:
       - uses: actions/checkout@v4
 
@@ -79,13 +82,24 @@ jobs:
           pip install -r requirements.txt
           pip install sentence-transformers "scikit-learn==1.9.0" joblib anthropic
 
-      # TODOS los shards del corpus regional (el universo va desde 2024-09).
-      - name: Bajar corpus regional completo
+      # Shards del corpus regional acotados al rango [desde-1mes .. hasta]:
+      # embeber el corpus COMPLETO (1.06M notas) tumbó la 1a tanda por timeout.
+      # Con un tramo corto la unión de ventanas cubre solo esos meses.
+      - name: Bajar corpus regional (acotado al rango)
         run: |
           mkdir -p eval/_corpus_regional
-          gh release download corpus -R rreubenleon/fiat-corpus \
-            --pattern "corpus-*.jsonl.gz" -D eval/_corpus_regional --clobber || true
-          ls eval/_corpus_regional/ | wc -l
+          DESDE="${{ github.event.inputs.desde }}"
+          HASTA="${{ github.event.inputs.hasta }}"
+          # mes de inicio = mes(desde) - 1 (la ventana llega 21 días atrás)
+          INI=$(date -u -d "${DESDE%-*}-01 -1 month" +%Y-%m)
+          FIN=${HASTA:0:7}; [ -z "$FIN" ] && FIN=$(date -u +%Y-%m)
+          M="$INI"
+          while [ "$M" \< "$FIN" ] || [ "$M" = "$FIN" ]; do
+            gh release download corpus -R rreubenleon/fiat-corpus \
+              --pattern "corpus-$M.jsonl.gz" -D eval/_corpus_regional --clobber || true
+            M=$(date -u -d "$M-01 +1 month" +%Y-%m)
+          done
+          echo "shards descargados:"; ls eval/_corpus_regional/ | wc -l
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -96,6 +110,7 @@ jobs:
           echo "ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}" > .env
           python scripts/vincular_produccion.py \
             --relevantes --desde "${{ github.event.inputs.desde }}" \
+            --hasta "${{ github.event.inputs.hasta }}" \
             --max-costo "${{ github.event.inputs.max_costo }}" \
             --salida eval/vinculos_staging.json
           rm -f .env

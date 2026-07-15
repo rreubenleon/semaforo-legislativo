@@ -103,6 +103,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--limite", type=int, default=0, help="máx instrumentos (0 = todos)")
     ap.add_argument("--desde", default="2026-01-01")
+    ap.add_argument("--hasta", default="", help="fecha_presentacion < hasta (acota la tanda)")
     ap.add_argument("--topk", type=int, default=2, help="candidatos a juzgar por instrumento")
     ap.add_argument("--relevantes", action="store_true",
                     help="solo iniciativas + proposiciones con PA (excluye trámite)")
@@ -157,11 +158,15 @@ def main():
     if args.relevantes:
         filtro = ("AND (tipo_grupo LIKE '%PA%' OR lower(tipo_grupo) LIKE '%iniciativa%' "
                   "OR lower(tipo_grupo) LIKE '%punto de acuerdo%') ")
+    # --hasta acota la tanda (evita embeber TODO el corpus: la unión de las
+    # ventanas de un tramo corto cubre solo una rebanada del corpus regional)
+    _hasta_sql = " AND fecha_presentacion < ? " if args.hasta else " "
     q = ("SELECT seguimiento_id, titulo, fecha_presentacion, presentador, tipo_grupo, "
          "COALESCE(sinopsis,''), COALESCE(fecha_presentacion_real,''), COALESCE(url,'') "
          "FROM sil_documentos WHERE fecha_presentacion >= ? AND titulo IS NOT NULL "
-         "AND es_duplicado_cross_camara IS NOT 1 " + filtro + "ORDER BY fecha_presentacion DESC")
-    rows = con.execute(q, (args.desde,)).fetchall()
+         "AND es_duplicado_cross_camara IS NOT 1 " + _hasta_sql + filtro
+         + "ORDER BY fecha_presentacion DESC")
+    rows = con.execute(q, (args.desde, args.hasta) if args.hasta else (args.desde,)).fetchall()
 
     # ── índice de SERIALES (gate v3): la MISMA propuesta re-presentada antes
     # (etapas del propio asunto o re-presentación del autor) invalida el
