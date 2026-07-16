@@ -1477,7 +1477,12 @@
                 return () => { if (chartInstance.current) { try { chartInstance.current.destroy(); } catch (e) {} chartInstance.current = null; } };
             }, [datos, visibles]);
 
+            /* REGLA DEL USUARIO (16-jul): si los números no están
+               blindados, la sección NO EXISTE en la página — nada de
+               letreros 'en revisión' de cara al público. El widget solo
+               se renderiza si hay subtemas vivos con número válido. */
             if (!datos || !visibles) return null;
+            if (!datos.board.some(b => b.clase === 'vivo' && b.p != null)) return null;
             const cats = [...new Set(datos.board.map(b => b.cat))];
 
             return (
