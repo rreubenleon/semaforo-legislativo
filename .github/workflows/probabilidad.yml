@@ -1,0 +1,63 @@
+name: Probabilidad por subtema (diario)
+
+# Calcula P(iniciativa del subtema en 14 días) — probabilidad empírica
+# condicionada con recalibración y vigilancia de calibración — y publica
+# dashboard/probabilidad_subtemas.json (insumo de la Tendencia del dashboard).
+# $0: CPU pura ~5s. NO escribe la DB ni la guarda al cache (lección 15-jul:
+# un cache envenenado tumbó el pipeline).
+
+on:
+  schedule:
+    - cron: '30 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: "probabilidad-subtemas"
+  cancel-in-progress: false
+
+jobs:
+  calcular:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Obtener semaforo.db (solo lectura, sin re-guardar)
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: prob-noexiste-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - name: Fallback a release si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-latest --pattern "semaforo.db*" --clobber
+            [ -f semaforo.db.gz ] && gunzip -f semaforo.db.gz || true
+          fi
+          du -h semaforo.db
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Calcular probabilidades
+        run: python scripts/probabilidad_subtemas.py
+
+      - name: Commit del JSON
+        run: |
+          git config user.name "FIAT Bot"
+          git config user.email "fiat-bot@users.noreply.github.com"
+          git add dashboard/probabilidad_subtemas.json
+          git diff --cached --quiet && { echo "sin cambios"; exit 0; }
+          git commit -m "📊 Probabilidad por subtema (diario)"
+          for i in 1 2 3; do
+            git -c rebase.autoStash=true pull --rebase origin main && git push && break
+            sleep 10
+          done
