@@ -1390,156 +1390,146 @@
             '#0d9488', '#b91c1c', '#1d4ed8', '#9333ea',
         ];
 
-        /* Tendencia del dashboard = PROBABILIDAD POR TEMA ESPECÍFICO.
-           P(≥1 iniciativa del subtema en los próximos 14 días) — probabilidad
-           empírica condicionada, calibrada y vigilada (backtest walk-forward
-           +19% skill; capa de recalibración; guardas anti-saturación).
-           Datos: dashboard/probabilidad_subtemas.json (probabilidad.yml, CI).
-           Reemplaza a la gráfica de score compuesto, que vivía saturada
-           65-75 y se veía plana (decisión del usuario, 15-jul-2026). */
+        /* Tendencia del dashboard = PROBABILIDAD POR TEMA ESPECÍFICO (compacta).
+           P(≥1 iniciativa del subtema en 14 días), calibrada y vigilada.
+           Rediseño 16-jul (orden del usuario): mismas proporciones que la
+           Tendencia anterior — gráfica Chart.js de 280px + una fila de pills
+           clickeables (el idioma del widget viejo), sin tablero invasivo.
+           Datos: dashboard/probabilidad_subtemas.json (probabilidad.yml). */
         function HistorialScoresChart({ historial, semaforo, onCategoryClick }) {
+            const chartRef = useRef(null);
+            const chartInstance = useRef(null);
             const [datos, setDatos] = useState(null);
             const [filtro, setFiltro] = useState('movers');
-            const [expandido, setExpandido] = useState(false);
+            const [visibles, setVisibles] = useState(null);   // Set de keys en la gráfica
             useEffect(() => {
                 fetch('./probabilidad_subtemas.json?v=' + Date.now())
-                    .then(r => r.ok ? r.json() : null).then(setDatos).catch(() => {});
+                    .then(r => r.ok ? r.json() : null)
+                    .then(d => {
+                        if (!d || !d.board) return;
+                        setDatos(d);
+                        setVisibles(new Set(d.movers.slice(0, 5)));
+                    }).catch(() => {});
             }, []);
-            if (!datos || !datos.board || !datos.board.length) return null;
 
-            const COLORES = ['#2e7d32', '#1a365d', '#c6972b', '#7c3aed', '#c62828'];
+            const vivos = useMemo(() => (datos ? datos.board.filter(b => b.clase === 'vivo' && b.spark && b.spark.length > 5) : []), [datos]);
+            const porKey = useMemo(() => { const m = {}; vivos.forEach(b => { m[b.key] = b; }); return m; }, [vivos]);
             const CATN = {};
             (semaforo || []).forEach(s => { CATN[s.categoria] = s.nombre; });
-            const catCorto = (c) => (CATN[c] || c).split(' ')[0].toUpperCase();
 
-            /* ── gráfica: los movers (máx 5 líneas, siempre) ── */
-            const W = 760, Hh = 240, PAD = { l: 40, r: 170, t: 12, b: 22 };
-            const IW = W - PAD.l - PAD.r, IH = Hh - PAD.t - PAD.b;
-            const tracks = datos.movers.map(k => ({ k, tr: datos.tracks[k] || [] }))
-                .filter(t => t.tr.length > 10);
-            const n = Math.min(...tracks.map(t => t.tr.length));
-            const sx = (i) => PAD.l + IW * i / (n - 1);
-            const sy = (v) => PAD.t + IH * (1 - v / 100);
-            const nom = (k) => (datos.board.find(b => b.key === k) || {}).nombre || k;
-            /* etiquetas finales sin encimarse */
-            const finales = tracks.map((t, ti) => {
-                const tr = t.tr.slice(-n);
-                return { ti, k: t.k, y: sy(tr[tr.length - 1][1]), p: tr[tr.length - 1][1] };
-            }).sort((a, b) => a.y - b.y);
-            const yUsadas = [];
-            finales.forEach(f => {
-                while (yUsadas.some(y => Math.abs(f.y - y) < 12)) f.y += 12;
-                yUsadas.push(f.y);
-            });
-
-            /* ── tablero ── */
-            const cats = [...new Set(datos.board.map(b => b.cat))];
-            let filas;
-            if (filtro === 'movers') {
-                filas = datos.board.filter(b => b.clase === 'vivo')
-                    .sort((a, b) => Math.abs(b.delta || 0) - Math.abs(a.delta || 0));
-            } else {
-                filas = datos.board.filter(b => b.cat === filtro)
+            /* pills según filtro: movers = top 12 por |Δ|; categoría = sus subtemas */
+            const pills = useMemo(() => {
+                if (!datos) return [];
+                if (filtro === 'movers') {
+                    return [...vivos].sort((a, b) => Math.abs(b.delta || 0) - Math.abs(a.delta || 0)).slice(0, 12);
+                }
+                return datos.board.filter(b => b.cat === filtro)
                     .sort((a, b) => (b.p || 0) - (a.p || 0));
-            }
-            const visibles = expandido ? filas : filas.slice(0, 9);
+            }, [datos, filtro, vivos]);
 
-            const Spark = ({ vals }) => {
-                if (!vals || vals.length < 2) return <span style={{ width: 96, display: 'inline-block' }} />;
-                const w = 96, h = 22;
-                const pts = vals.map((v, i) => `${(i * w / (vals.length - 1)).toFixed(1)},${(h - 2 - v / 100 * (h - 5)).toFixed(1)}`);
-                const up = vals[vals.length - 1] >= vals[0];
-                const col = up ? '#2e7d32' : '#c4c9d0';
-                return (
-                    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="flex-shrink-0">
-                        <polyline points={pts.join(' ')} fill="none" stroke={col} strokeWidth="1.5" />
-                        <circle cx={pts[pts.length - 1].split(',')[0]} cy={pts[pts.length - 1].split(',')[1]} r="2.2" fill={col} />
-                    </svg>
-                );
+            const toggle = (key) => {
+                setVisibles(prev => {
+                    const next = new Set(prev);
+                    if (next.has(key)) { if (next.size > 1) next.delete(key); }
+                    else { if (next.size >= 6) next.delete([...next][0]); next.add(key); }
+                    return next;
+                });
             };
+
+            /* gráfica Chart.js — mismo contenedor de 280px del widget anterior */
+            useEffect(() => {
+                if (!chartRef.current || !datos || !visibles) return;
+                if (chartInstance.current) { try { chartInstance.current.destroy(); } catch (e) {} }
+                const keys = [...visibles].filter(k => porKey[k]);
+                if (!keys.length) return;
+                const nSem = Math.min(...keys.map(k => porKey[k].spark.length));
+                const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+                const fin = new Date((datos.hasta || '') + 'T12:00:00');
+                const labels = Array.from({ length: nSem }, (_, i) => {
+                    const d = new Date(fin); d.setDate(d.getDate() - 7 * (nSem - 1 - i));
+                    return i === nSem - 1 ? 'HOY' : `${String(d.getDate()).padStart(2, '0')}-${MESES[d.getMonth()]}`;
+                });
+                const dsets = keys.map((k, i) => ({
+                    label: porKey[k].nombre,
+                    data: porKey[k].spark.slice(-nSem),
+                    borderColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
+                    backgroundColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
+                    borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0.35, fill: false,
+                }));
+                chartInstance.current = new Chart(chartRef.current, {
+                    type: 'line',
+                    data: { labels, datasets: dsets },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${c.parsed.y}%` } },
+                        },
+                        scales: {
+                            y: { min: 0, max: 100, grid: { color: 'rgba(0,0,0,0.05)' },
+                                 ticks: { stepSize: 25, callback: (v) => v + '%', font: { size: 10, family: 'JetBrains Mono' }, color: '#9ca3af' } },
+                            x: { grid: { display: false },
+                                 ticks: { font: { size: 9, family: 'JetBrains Mono' }, color: '#9ca3af', maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+                        },
+                    },
+                });
+                return () => { if (chartInstance.current) { try { chartInstance.current.destroy(); } catch (e) {} chartInstance.current = null; } };
+            }, [datos, visibles]);
+
+            if (!datos || !visibles) return null;
+            const cats = [...new Set(datos.board.map(b => b.cat))];
 
             return (
                 <div className="glass border border-borde rounded-xl p-4 space-y-3">
-                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <div className="flex items-center justify-between gap-2">
                         <div>
-                            <div className="text-xs font-semibold text-gray-500">Probabilidad por tema específico</div>
-                            <div className="text-[10px] text-gray-400 mt-0.5">P. de que se presente una iniciativa del subtema en los próximos 14 días · mostrando los 5 que más se mueven</div>
-                        </div>
-                        <span className={`text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border ${datos.calibracion?.ok ? 'text-emerald-700 border-emerald-200 bg-emerald-50' : 'text-amber-700 border-amber-200 bg-amber-50'}`}
-                              title={`Backtest de calibración semanal: desviación mediana ${datos.calibracion?.desviacion_mediana} pts entre lo predicho y lo ocurrido`}>
-                            {datos.calibracion?.ok ? 'CALIBRADO ✓' : 'CALIBRACIÓN EN REVISIÓN'}
-                        </span>
-                    </div>
-
-                    <svg viewBox={`0 0 ${W} ${Hh}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
-                        {[0, 25, 50, 75, 100].map(v => (
-                            <g key={v}>
-                                <line x1={PAD.l} x2={W - PAD.r} y1={sy(v)} y2={sy(v)} stroke="#eef0f2" />
-                                <text x={PAD.l - 6} y={sy(v) + 3} textAnchor="end" fontSize="9" fontFamily="JetBrains Mono, monospace" fill="#9ca3af">{v}%</text>
-                            </g>
-                        ))}
-                        {tracks.map((t, ti) => {
-                            const tr = t.tr.slice(-n);
-                            const d = 'M' + tr.map((p, i) => `${sx(i).toFixed(1)},${sy(p[1]).toFixed(1)}`).join(' L');
-                            return <path key={t.k} d={d} fill="none" stroke={COLORES[ti % COLORES.length]} strokeWidth="2" />;
-                        })}
-                        {tracks.map((t, ti) => {
-                            const tr = t.tr.slice(-n);
-                            return <circle key={t.k} cx={sx(n - 1)} cy={sy(tr[tr.length - 1][1])} r="3.5" fill={COLORES[ti % COLORES.length]} stroke="#fff" strokeWidth="2" />;
-                        })}
-                        {finales.map(f => (
-                            <text key={f.k} x={W - PAD.r + 7} y={f.y + 3} fontSize="10" fontWeight="600" fontFamily="JetBrains Mono, monospace" fill={COLORES[f.ti % COLORES.length]}>
-                                {nom(f.k).length > 20 ? nom(f.k).slice(0, 19) + '…' : nom(f.k)} · {f.p}%
-                            </text>
-                        ))}
-                    </svg>
-
-                    <div className="flex gap-1.5 flex-wrap">
-                        <button onClick={() => { setFiltro('movers'); setExpandido(false); }}
-                            className={`text-[10px] font-mono px-2.5 py-1 rounded-full border transition-colors ${filtro === 'movers' ? 'bg-acento text-white border-acento' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>Movers</button>
-                        {cats.map(c => (
-                            <button key={c} onClick={() => { setFiltro(c); setExpandido(false); }}
-                                className={`text-[10px] font-mono px-2.5 py-1 rounded-full border transition-colors ${filtro === c ? 'bg-acento text-white border-acento' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
-                                {(CATN[c] || c).length > 14 ? (CATN[c] || c).slice(0, 12) + '…' : (CATN[c] || c)}
-                            </button>
-                        ))}
-                    </div>
-
-                    <div>
-                        {visibles.map(b => (
-                            <div key={b.key} className="flex items-center gap-3 py-1.5 border-b border-gray-100 last:border-0">
-                                <div className="flex-1 min-w-0">
-                                    <div className="text-[8.5px] font-mono tracking-widest text-gray-400">{catCorto(b.cat)}</div>
-                                    <div className="text-[13px] font-semibold text-gray-800 truncate">{b.nombre}</div>
-                                </div>
-                                {b.clase === 'vivo' ? (
-                                    <React.Fragment>
-                                        <Spark vals={b.spark} />
-                                        <div className="w-[104px] text-right flex-shrink-0">
-                                            <div className="text-base font-extrabold font-mono text-gray-800">{b.p}%</div>
-                                            <div className={`text-[9.5px] font-mono ${b.delta > 0 ? 'text-semaforo-verde font-bold' : 'text-gray-400'}`}>
-                                                {b.delta > 0 ? '+' : ''}{b.delta} en 4 sem
-                                            </div>
-                                        </div>
-                                    </React.Fragment>
-                                ) : (
-                                    <span className="text-[9px] font-mono font-bold px-2 py-0.5 rounded-full border border-gray-200 bg-gray-50 text-gray-400"
-                                          title={b.clase === 'siempre_activo'
-                                              ? 'Este subtema produce iniciativas prácticamente todas las semanas: una probabilidad no aporta información.'
-                                              : 'Historia insuficiente o calibración en revisión: sin número hasta que la señal aguante.'}>
-                                        {b.clase === 'siempre_activo' ? 'SIEMPRE ACTIVO' : 'MONITOREANDO'}
-                                    </span>
-                                )}
+                            <div className="text-xs font-semibold text-gray-500">Probabilidad por tema específico
+                                <span className={`ml-2 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full border align-middle ${datos.calibracion?.ok ? 'text-emerald-700 border-emerald-200 bg-emerald-50' : 'text-amber-700 border-amber-200 bg-amber-50'}`}
+                                      title={`Backtest semanal: desviación mediana ${datos.calibracion?.desviacion_mediana} pts entre lo predicho y lo ocurrido`}>
+                                    {datos.calibracion?.ok ? 'CALIBRADO ✓' : 'EN REVISIÓN'}
+                                </span>
                             </div>
-                        ))}
-                    </div>
-                    {filas.length > 9 && (
-                        <div className="text-center pt-1">
-                            <button onClick={() => setExpandido(!expandido)} className="text-[10px] font-mono text-gray-400 hover:text-acento transition-colors">
-                                {expandido ? 'ver menos ↑' : `ver los ${filas.length} subtemas →`}
-                            </button>
+                            <div className="text-[10px] text-gray-400 mt-0.5">Probabilidad de que se presente una iniciativa del tema en los próximos 14 días · elige hasta 6</div>
                         </div>
-                    )}
+                        <select value={filtro} onChange={e => setFiltro(e.target.value)}
+                            className="text-[11px] font-mono text-gray-600 bg-white border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-acento">
+                            <option value="movers">Los que más se mueven</option>
+                            {cats.map(c => <option key={c} value={c}>{CATN[c] || c}</option>)}
+                        </select>
+                    </div>
+
+                    <div style={{ height: '280px' }}><canvas ref={chartRef}></canvas></div>
+
+                    <div className="flex flex-wrap gap-1.5">
+                        {pills.map(b => {
+                            const on = visibles.has(b.key);
+                            const idx = [...visibles].indexOf(b.key);
+                            const color = on ? CATEGORY_COLORS[idx % CATEGORY_COLORS.length] : '#d1d5db';
+                            if (b.clase !== 'vivo') {
+                                return (
+                                    <span key={b.key} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono bg-gray-50 text-gray-400 border border-transparent"
+                                        title={b.clase === 'siempre_activo'
+                                            ? 'Produce iniciativas prácticamente todas las semanas — una probabilidad no aporta.'
+                                            : 'Historia insuficiente o calibración en revisión: sin número.'}>
+                                        {b.nombre.length > 18 ? b.nombre.slice(0, 16) + '…' : b.nombre}
+                                        <span className="text-[8px] tracking-wider">{b.clase === 'siempre_activo' ? 'SIEMPRE' : '···'}</span>
+                                    </span>
+                                );
+                            }
+                            return (
+                                <button key={b.key} onClick={() => toggle(b.key)}
+                                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono font-medium transition-all border ${on ? 'border-gray-300 bg-white shadow-sm' : 'border-transparent bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>
+                                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }}></span>
+                                    <span className={on ? 'text-gray-700' : ''}>{b.nombre.length > 18 ? b.nombre.slice(0, 16) + '…' : b.nombre}</span>
+                                    <span className={`font-bold ${on ? 'text-gray-800' : ''}`}>{b.p}%</span>
+                                    {b.delta != null && b.delta !== 0 && (
+                                        <span className={b.delta > 0 ? 'text-semaforo-verde font-bold' : 'text-gray-400'}>{b.delta > 0 ? '▲' : '▼'}</span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
                 </div>
             );
         }
