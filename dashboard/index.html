@@ -1390,288 +1390,167 @@
             '#0d9488', '#b91c1c', '#1d4ed8', '#9333ea',
         ];
 
-        function HistorialScoresChart({ historial, semaforo, onCategoryClick }) {
+        /* Tendencia = ACTIVIDAD LEGISLATIVA OBSERVADA vs. su RANGO ESPERADO.
+           El score compuesto vive saturado cerca del techo (todo 65-75) → se
+           veía plano. Aquí graficamos la señal que SÍ se mueve: instrumentos
+           por semana de cada tema, contra la banda P25–P75 de sus 8 semanas
+           previas (esperado móvil, pura aritmética). Cuando la barra rompe
+           por arriba de la banda, el tema está más activo de lo normal.
+           Fuente: series_temporales (conteo diario real por categoría). */
+        function HistorialScoresChart({ historial, semaforo, series, onCategoryClick }) {
             const chartRef = useRef(null);
             const chartInstance = useRef(null);
-            const [hoveredCat, setHoveredCat] = useState(null);
-            const [visibleCats, setVisibleCats] = useState(() => {
-                /* Start with top 5 by current score */
-                const sorted = [...semaforo].sort((a,b) => b.score_total - a.score_total);
-                return new Set(sorted.slice(0, 5).map(s => s.categoria));
-            });
+            const S = series || {};
 
-            const INICIO_PERIODO = '2026-02-01'; // Inicio periodo ordinario de sesiones
-            const rawFechas = historial.fechas;
-            const rawCategorias = historial.categorias;
-            const idxInicio = rawFechas.findIndex(f => f >= INICIO_PERIODO);
-            const fechas = idxInicio >= 0 ? rawFechas.slice(idxInicio) : rawFechas;
-            const categorias = {};
-            for (const cat of Object.keys(rawCategorias)) {
-                categorias[cat] = { ...rawCategorias[cat], scores: idxInicio >= 0 ? rawCategorias[cat].scores.slice(idxInicio) : rawCategorias[cat].scores };
-            }
-            const catKeys = Object.keys(categorias);
-
-            const toggleCat = (cat) => {
-                setVisibleCats(prev => {
-                    const next = new Set(prev);
-                    if (next.has(cat)) { if (next.size > 1) next.delete(cat); }
-                    else { next.add(cat); }
-                    return next;
-                });
+            const lunes = (iso) => {
+                const d = new Date(iso + 'T12:00:00');
+                const dia = (d.getDay() + 6) % 7; // 0 = lunes
+                d.setDate(d.getDate() - dia);
+                return d.toISOString().slice(0, 10);
+            };
+            const pct = (arr, p) => {
+                if (!arr.length) return 0;
+                const s = [...arr].sort((a, b) => a - b);
+                const i = (s.length - 1) * p;
+                const lo = Math.floor(i), hi = Math.ceil(i);
+                return s[lo] + (s[hi] - s[lo]) * (i - lo);
             };
 
-            const toggleAll = () => {
-                if (visibleCats.size === catKeys.length) {
-                    const sorted = [...semaforo].sort((a,b) => b.score_total - a.score_total);
-                    setVisibleCats(new Set(sorted.slice(0, 5).map(s => s.categoria)));
-                } else {
-                    setVisibleCats(new Set(catKeys));
+            /* Diario → semanal (lunes) por categoría, con banda esperada
+               P25/P50/P75 de las 8 semanas previas (excluye la semana actual). */
+            const semanalPorCat = useMemo(() => {
+                const out = {};
+                for (const cat of Object.keys(S)) {
+                    const porSem = {};
+                    for (const p of (S[cat] || [])) porSem[lunes(p.fecha)] = (porSem[lunes(p.fecha)] || 0) + (p.count || 0);
+                    const semanas = Object.keys(porSem).sort();
+                    // descarta la última semana si está incompleta (< 7 días de datos ya agregados no se sabe; se deja)
+                    const filas = semanas.map((w, i) => {
+                        const prev = semanas.slice(Math.max(0, i - 8), i).map(x => porSem[x]);
+                        return {
+                            w, obs: porSem[w],
+                            p25: prev.length >= 3 ? pct(prev, 0.25) : null,
+                            p50: prev.length >= 3 ? pct(prev, 0.50) : null,
+                            p75: prev.length >= 3 ? pct(prev, 0.75) : null,
+                        };
+                    });
+                    out[cat] = filas;
                 }
+                return out;
+            }, [series]);
+
+            /* La última semana suele estar EN CURSO (parcial): comparar 2 días
+               contra un normal de 7 es engañoso. Se descarta de stats y orden. */
+            const completas = (cat) => (semanalPorCat[cat] || []).slice(0, -1);
+
+            /* Orden de temas: el más "caliente" primero = mayor exceso sobre su
+               banda en las últimas 4 semanas completas. Default = el primero. */
+            const excesoActual = (cat) => {
+                const f = completas(cat).slice(-4).filter(x => x.p75 != null);
+                if (!f.length) return -Infinity;
+                return Math.max(...f.map(x => x.obs - x.p75));
             };
+            const catsOrden = [...semaforo]
+                .filter(s => completas(s.categoria).length > 4)
+                .sort((a, b) => excesoActual(b.categoria) - excesoActual(a.categoria));
+
+            const [sel, setSel] = useState(() => (catsOrden[0] && catsOrden[0].categoria) || (semaforo[0] && semaforo[0].categoria));
+            const catSel = semaforo.find(s => s.categoria === sel) || semaforo[0];
+            const COLOR = { verde: '#2e7d32', amarillo: '#c6972b', rojo: '#c62828' };
+            const colSel = COLOR[catSel?.color] || '#1a365d';
+
+            const NSEM = 16; // últimas 16 semanas completas
+            const filasSel = completas(sel).slice(-NSEM);
 
             useEffect(() => {
-                if (!chartRef.current || fechas.length < 2) return;
-                if (chartInstance.current) chartInstance.current.destroy();
-
-                const labels = fechas.map(f => {
-                    const d = new Date(f + 'T12:00:00');
-                    return d.toLocaleDateString('es-MX', { day: '2-digit', month: 'short' });
+                if (!chartRef.current || !filasSel.length) return;
+                if (chartInstance.current) { try { chartInstance.current.destroy(); } catch (e) {} }
+                const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+                const labels = filasSel.map((f, i) => {
+                    if (i === filasSel.length - 1) return 'ÚLT. SEM.';
+                    const d = new Date(f.w + 'T12:00:00');
+                    return `${String(d.getDate()).padStart(2,'0')}-${MESES[d.getMonth()]}`;
                 });
-
-                const datasets = catKeys.filter(cat => visibleCats.has(cat)).map((cat, idx) => {
-                    const catData = categorias[cat];
-                    const colorIdx = catKeys.indexOf(cat);
-                    const color = CATEGORY_COLORS[colorIdx % CATEGORY_COLORS.length];
-                    const isHovered = hoveredCat === cat;
-                    const hasHover = hoveredCat !== null;
-                    const scores = catData.scores.map(s => s === null ? undefined : s);
-                    const lastIdx = scores.length - 1;
-
-                    return {
-                        label: catData.nombre,
-                        data: scores,
-                        borderColor: hasHover && !isHovered ? color + '25' : color,
-                        backgroundColor: 'transparent',
-                        borderWidth: isHovered ? 3 : (hasHover ? 1 : 2),
-                        fill: false,
-                        stepped: 'before',
-                        tension: 0,
-                        pointRadius: scores.map((_, i) => i === lastIdx ? (isHovered ? 7 : 5) : 0),
-                        pointHitRadius: 10,
-                        pointHoverRadius: 6,
-                        pointBackgroundColor: color,
-                        pointBorderColor: '#fff',
-                        pointBorderWidth: isHovered ? 3 : 2,
-                        spanGaps: true,
-                        order: isHovered ? 0 : 1,
-                        _catKey: cat,
-                    };
+                const obs = filasSel.map(f => f.obs);
+                const p25 = filasSel.map(f => f.p25);
+                const p75 = filasSel.map(f => f.p75);
+                const p50 = filasSel.map(f => f.p50);
+                // color de cada barra: sobre banda = tono del tema fuerte, dentro = gris, bajo = gris claro
+                const barColors = filasSel.map(f => {
+                    if (f.p75 == null) return 'rgba(148,163,184,0.35)';
+                    if (f.obs > f.p75) return colSel;
+                    if (f.obs < f.p25) return 'rgba(148,163,184,0.30)';
+                    return 'rgba(148,163,184,0.55)';
                 });
-
-                const thresholdPlugin = {
-                    id: 'thresholds',
-                    beforeDraw(chart) {
-                        const { ctx, chartArea, scales } = chart;
-                        if (!chartArea) return;
-                        const yScale = scales.y;
-
-                        /* Líneas de umbral estilo Polymarket: sutiles y punteadas */
-                        const thresholds = [
-                            { value: 65, color: 'rgba(46,125,50,0.15)', label: '' },
-                            { value: 40, color: 'rgba(198,40,40,0.15)', label: '' },
-                        ];
-
-                        ctx.save();
-                        ctx.setLineDash([2, 6]);
-                        ctx.lineWidth = 0.8;
-
-                        thresholds.forEach(t => {
-                            const y = yScale.getPixelForValue(t.value);
-                            ctx.beginPath();
-                            ctx.strokeStyle = t.color;
-                            ctx.moveTo(chartArea.left, y);
-                            ctx.lineTo(chartArea.right, y);
-                            ctx.stroke();
-                        });
-
-                        ctx.restore();
-                    }
-                };
-
-                /* Plugin: anillo pulsante (sonar) en el último punto del dataset
-                   con score más alto. Identifica el "líder" actual y le pone un
-                   ping animado para que destaque visualmente. */
-                const topPulsePlugin = {
-                    id: 'topPulse',
-                    afterDatasetsDraw(chart) {
-                        let topIdx = -1, topValue = -Infinity;
-                        chart.data.datasets.forEach((ds, i) => {
-                            const data = ds.data || [];
-                            for (let j = data.length - 1; j >= 0; j--) {
-                                const v = data[j];
-                                if (v != null && v !== undefined) {
-                                    if (v > topValue) { topValue = v; topIdx = i; }
-                                    break;
-                                }
-                            }
-                        });
-                        if (topIdx === -1) return;
-                        const meta = chart.getDatasetMeta(topIdx);
-                        const points = meta.data || [];
-                        if (points.length === 0) return;
-                        const lastPoint = points[points.length - 1];
-                        if (!lastPoint) return;
-                        const x = lastPoint.x, y = lastPoint.y;
-                        const color = chart.data.datasets[topIdx].borderColor;
-                        const t = ((Date.now() % 1500) / 1500);
-                        const radius = 5 + t * 14;
-                        const opacity = (1 - t) * 0.65;
-                        const ctx = chart.ctx;
-                        ctx.save();
-                        ctx.beginPath(); ctx.arc(x, y, radius, 0, 2 * Math.PI);
-                        ctx.strokeStyle = color; ctx.globalAlpha = opacity; ctx.lineWidth = 2; ctx.stroke();
-                        ctx.beginPath(); ctx.arc(x, y, 4, 0, 2 * Math.PI);
-                        ctx.globalAlpha = 1; ctx.fillStyle = color; ctx.fill();
-                        ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
-                        ctx.restore();
-                    }
-                };
-
-                /* Animación progressive line drawing (patrón canónico de Chart.js):
-                   cada punto se dibuja después del anterior, de izquierda a derecha,
-                   trazando la línea. El y.from toma la Y del punto previo, así nunca
-                   se aplasta al eje y deja de verse "flat" al entrar. */
-                const isFirstRender = !window._fiatChartRevealed;
-                window._fiatChartRevealed = true;
-                const totalDuration = 1400;
-                const delayBetweenPoints = totalDuration / Math.max(labels.length, 1);
-                const previousY = (ctx) => {
-                    if (ctx.index === 0) return ctx.chart.scales.y.getPixelForValue(ctx.chart.scales.y.min);
-                    const meta = ctx.chart.getDatasetMeta(ctx.datasetIndex);
-                    const prev = meta && meta.data && meta.data[ctx.index - 1];
-                    if (!prev) return ctx.chart.scales.y.getPixelForValue(ctx.chart.scales.y.min);
-                    return prev.getProps(['y'], true).y;
-                };
-
                 chartInstance.current = new Chart(chartRef.current, {
-                    type: 'line',
-                    plugins: [thresholdPlugin, topPulsePlugin],
-                    data: { labels, datasets },
+                    data: {
+                        labels,
+                        datasets: [
+                            { type: 'line', label: 'Esperado (P75)', data: p75, borderColor: 'rgba(148,163,184,0.55)', borderWidth: 1, borderDash: [3,3], pointRadius: 0, fill: '+1', backgroundColor: 'rgba(148,163,184,0.13)', tension: 0.3, order: 1 },
+                            { type: 'line', label: 'Esperado (P25)', data: p25, borderColor: 'rgba(148,163,184,0.55)', borderWidth: 1, borderDash: [3,3], pointRadius: 0, fill: false, tension: 0.3, order: 1 },
+                            { type: 'line', label: 'Normal (mediana)', data: p50, borderColor: 'rgba(100,116,139,0.7)', borderWidth: 1.5, pointRadius: 0, fill: false, tension: 0.3, order: 2 },
+                            { type: 'bar', label: 'Observado', data: obs, backgroundColor: barColors, borderRadius: 3, barPercentage: 0.6, order: 3 },
+                        ],
+                    },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        animation: isFirstRender ? {
-                            x: {
-                                type: 'number', easing: 'linear', duration: delayBetweenPoints, from: NaN,
-                                delay(ctx) { if (ctx.type !== 'data' || ctx.xStarted) return 0; ctx.xStarted = true; return ctx.index * delayBetweenPoints; }
-                            },
-                            y: {
-                                type: 'number', easing: 'linear', duration: delayBetweenPoints * 2, from: previousY,
-                                delay(ctx) { if (ctx.type !== 'data' || ctx.yStarted) return 0; ctx.yStarted = true; return ctx.index * delayBetweenPoints; }
-                            }
-                        } : { duration: 400, easing: 'easeOutQuad' },
+                        responsive: true, maintainAspectRatio: false,
                         interaction: { mode: 'index', intersect: false },
                         plugins: {
                             legend: { display: false },
                             tooltip: {
-                                backgroundColor: 'rgba(15,23,42,0.92)',
-                                titleColor: '#f1f5f9',
-                                bodyColor: '#cbd5e1',
-                                borderColor: 'rgba(255,255,255,0.08)',
-                                borderWidth: 1,
-                                padding: { top: 10, bottom: 10, left: 14, right: 14 },
-                                cornerRadius: 10,
-                                displayColors: true,
-                                boxWidth: 8,
-                                boxHeight: 8,
-                                boxPadding: 6,
-                                titleFont: { size: 12, weight: '600', family: 'JetBrains Mono, ui-monospace, monospace' },
-                                bodyFont: { size: 11, family: 'JetBrains Mono, ui-monospace, monospace' },
                                 callbacks: {
-                                    label: (item) => ` ${item.dataset.label}: ${item.raw?.toFixed(1)}%`
+                                    title: (t) => `Semana del ${filasSel[t[0].dataIndex].w}`,
+                                    label: (c) => {
+                                        const f = filasSel[c.dataIndex];
+                                        if (c.dataset.label === 'Observado') {
+                                            let est = '';
+                                            if (f.p75 != null) est = f.obs > f.p75 ? ' · SOBRE lo normal' : f.obs < f.p25 ? ' · bajo lo normal' : ' · dentro de lo normal';
+                                            return `Observado: ${f.obs} instrumentos${est}`;
+                                        }
+                                        if (c.dataset.label === 'Normal (mediana)') return `Normal esperado: ${(f.p50||0).toFixed(0)}/sem`;
+                                        return null;
+                                    },
                                 },
-                                itemSort: (a, b) => (b.raw || 0) - (a.raw || 0),
-                            }
+                            },
                         },
                         scales: {
-                            y: {
-                                min: 0, max: 100,
-                                position: 'right',
-                                ticks: {
-                                    color: '#b0b8c4',
-                                    font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                    stepSize: 25,
-                                    padding: 12,
-                                    callback: v => v + '%',
-                                },
-                                grid: {
-                                    color: (ctx) => ctx.tick.value === 0 ? 'transparent' : 'rgba(0,0,0,0.04)',
-                                    lineWidth: 0.5,
-                                    drawBorder: false,
-                                    drawTicks: false,
-                                },
-                                border: { display: false, dash: [2, 4] },
-                            },
-                            x: {
-                                ticks: {
-                                    color: '#b0b8c4',
-                                    font: { size: 10, family: '-apple-system, BlinkMacSystemFont, sans-serif' },
-                                    maxRotation: 0,
-                                    maxTicksLimit: 8,
-                                    padding: 8,
-                                },
-                                grid: { display: false },
-                                border: { display: false },
-                            }
+                            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { font: { size: 10, family: 'JetBrains Mono' }, color: '#9ca3af' }, title: { display: true, text: 'instrumentos / semana', font: { size: 9 }, color: '#9ca3af' } },
+                            x: { grid: { display: false }, ticks: { font: { size: 9, family: 'JetBrains Mono' }, color: '#9ca3af', maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
                         },
-                    }
+                    },
                 });
+                return () => { if (chartInstance.current) { try { chartInstance.current.destroy(); } catch (e) {} chartInstance.current = null; } };
+            }, [sel, series]);
 
-                /* Animación del top pulse: redraw cada 60ms (~16fps suave) */
-                const pulseInterval = setInterval(() => {
-                    if (chartInstance.current) {
-                        try { chartInstance.current.draw(); } catch(e) {}
-                    }
-                }, 60);
-
-                return () => {
-                    clearInterval(pulseInterval);
-                    if (chartInstance.current) {
-                        try { chartInstance.current.destroy(); } catch (e) {}
-                        chartInstance.current = null;
-                    }
-                };
-            }, [historial, visibleCats, hoveredCat]);
+            const u = filasSel[filasSel.length - 1] || {};
+            const estado = (u.p75 == null) ? null : (u.obs > u.p75 ? ['SOBRE LO NORMAL', 'text-emerald-700 bg-emerald-50 border-emerald-200'] : u.obs < u.p25 ? ['BAJO LO NORMAL', 'text-gray-500 bg-gray-50 border-gray-200'] : ['DENTRO DE LO NORMAL', 'text-gray-600 bg-gray-50 border-gray-200']);
 
             return (
                 <div className="glass border border-borde rounded-xl p-4 space-y-3">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between gap-2">
                         <div>
-                            <div className="text-xs font-semibold text-gray-500">Tendencia de Scores</div>
-                            <div className="text-[10px] text-gray-400 mt-0.5">Evolucion del score compuesto por categoria durante el actual periodo de sesiones</div>
+                            <div className="text-xs font-semibold text-gray-500">Actividad legislativa vs. lo esperado</div>
+                            <div className="text-[10px] text-gray-400 mt-0.5">Instrumentos por semana de cada tema contra su rango normal (P25–P75 de las 8 semanas previas). La banda gris es lo esperado; la barra, lo observado.</div>
                         </div>
-                        <button onClick={toggleAll}
-                            className="text-[10px] text-acento hover:text-acento/80 font-medium px-2 py-1 rounded border border-acento/20 hover:bg-acento/5 transition-colors">
-                            {visibleCats.size === catKeys.length ? 'Top 5' : 'Ver todas'}
-                        </button>
+                        {estado && <span className={`text-[9px] font-bold px-2 py-1 rounded-full border whitespace-nowrap ${estado[1]}`}>{estado[0]}</span>}
                     </div>
-                    <div style={{height: '280px'}}><canvas ref={chartRef}></canvas></div>
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-sm font-bold text-gray-800">{catSel?.nombre}</span>
+                        <span className="text-[10px] text-gray-400 font-mono">{u.obs != null ? `${u.obs} la última semana` : ''}{u.p50 != null ? ` · normal ~${u.p50.toFixed(0)}` : ''}</span>
+                    </div>
+                    <div style={{height: '250px'}}><canvas ref={chartRef}></canvas></div>
                     <div className="flex flex-wrap gap-1.5">
-                        {catKeys.map((cat, idx) => {
-                            const catInfo = categorias[cat];
-                            const color = CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
-                            const isVisible = visibleCats.has(cat);
-                            const lastScore = catInfo.scores.filter(s => s !== null).pop();
-                            const catData = semaforo.find(s => s.categoria === cat);
+                        {catsOrden.map((s) => {
+                            const activo = s.categoria === sel;
+                            const ex = excesoActual(s.categoria);
+                            const caliente = ex > 0;
                             return (
-                                <button key={cat}
-                                    onClick={() => toggleCat(cat)}
-                                    onMouseEnter={() => setHoveredCat(cat)}
-                                    onMouseLeave={() => setHoveredCat(null)}
-                                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono font-medium transition-all border ${isVisible ? 'border-gray-300 bg-white shadow-sm' : 'border-transparent bg-gray-100 text-gray-400'}`}>
-                                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: isVisible ? color : '#d1d5db'}}></div>
-                                    <span className={isVisible ? 'text-gray-700' : ''}>{catInfo.nombre.length > 15 ? catInfo.nombre.substring(0, 13) + '..' : catInfo.nombre}</span>
-                                    {lastScore !== undefined && isVisible && <span className="text-gray-700 ml-0.5 font-bold">{lastScore.toFixed(0)}%</span>}
+                                <button key={s.categoria}
+                                    onClick={() => setSel(s.categoria)}
+                                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono font-medium transition-all border ${activo ? 'border-gray-400 bg-white shadow-sm text-gray-800' : 'border-transparent bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>
+                                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: caliente ? (COLOR[s.color] || '#1a365d') : '#d1d5db'}}></span>
+                                    <span>{s.nombre.length > 15 ? s.nombre.substring(0, 13) + '..' : s.nombre}</span>
+                                    {caliente && <span className="text-emerald-600 font-bold ml-0.5">↑</span>}
                                 </button>
                             );
                         })}
@@ -2284,7 +2163,7 @@
 
                     {/* Historical Trends Chart */}
                     {data.historial_scores && data.historial_scores.fechas?.length > 1 && (
-                        <HistorialScoresChart historial={data.historial_scores} semaforo={semaforo} onCategoryClick={setSelected} />
+                        <HistorialScoresChart historial={data.historial_scores} semaforo={semaforo} series={data.series_temporales} onCategoryClick={setSelected} />
                     )}
 
                     {/* Ordenar por */}
