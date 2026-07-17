@@ -109,6 +109,22 @@ def main():
         if cat:
             por_dia[cat][f] += 1
 
+    # cobertura de MEDIOS por tema (categoría primaria del clasificador FIAT),
+    # misma unidad de textura: suma móvil 7d de notas, paso diario. Va al
+    # FONDO de la gráfica para leer disonancia/uniformidad medios↔Congreso.
+    # Días sin captura (caída del scraper: 12-mar→8-abr-2026, arranque de feb)
+    # van como null — el fondo no se dibuja ahí en vez de fingir silencio.
+    medios_dia = defaultdict(lambda: defaultdict(int))
+    vol_dia = defaultdict(int)
+    for cats, f in con.execute(
+            """SELECT categorias, substr(fecha,1,10) FROM articulos
+               WHERE fecha >= ?""", (DESDE,)):
+        vol_dia[f] += 1
+        cat_p = (cats or "").split(",")[0].split(":")[0].strip()
+        if cat_p:
+            medios_dia[cat_p][f] += 1
+    UMBRAL_7D = 1500  # una semana normal captura ~9K notas; una caída, ~0
+
     out = {}
     for cat, s in series.items():
         total = [a + b for a, b in zip(s["ini"], s["pa"])]
@@ -120,14 +136,17 @@ def main():
         m_u, m_p = sum(u4) / max(1, len(u4)), sum(p4) / max(1, len(p4))
         tendencia = "sube" if m_u > m_p * 1.15 else ("baja" if m_u < m_p * 0.85 else "estable")
         pd = por_dia[cat]
-        diario = []
+        md = medios_dia.get(cat, {})
+        diario, medios = [], []
         for d in dias_diario:
             dd = dt.date.fromisoformat(d)
-            diario.append(sum(pd.get((dd - dt.timedelta(days=j)).isoformat(), 0)
-                              for j in range(7)))
+            ult7 = [(dd - dt.timedelta(days=j)).isoformat() for j in range(7)]
+            diario.append(sum(pd.get(x, 0) for x in ult7))
+            con_captura = sum(vol_dia.get(x, 0) for x in ult7) >= UMBRAL_7D
+            medios.append(sum(md.get(x, 0) for x in ult7) if con_captura else None)
         out[cat] = {"nombre": nombre, "total": total, "ini": s["ini"], "pa": s["pa"],
                     "suma": sum(total), "prom4": round(m_u, 1),
-                    "tendencia": tendencia, "diario": diario}
+                    "tendencia": tendencia, "diario": diario, "medios": medios}
 
     SALIDA.write_text(json.dumps({
         "generado": dt.datetime.utcnow().isoformat(timespec="seconds") + "Z",
