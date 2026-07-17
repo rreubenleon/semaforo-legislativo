@@ -1436,8 +1436,6 @@
                     if (d.getMonth() !== mesPrev) { mesPrev = d.getMonth(); return MESL[d.getMonth()]; }
                     return '';
                 });
-                const SUAVES = ['#6098F3', '#E8837B', '#5BBFA9', '#E5B04C',
-                                '#9C8CF5', '#6FBF73', '#93A5BD', '#E58BB8'];
                 const gridPunteado = {
                     id: 'gridPunteado',
                     beforeDatasetsDraw(chart) {
@@ -1464,58 +1462,21 @@
                         ctx.restore();
                     },
                 };
-                const cierrePoly = {
-                    id: 'cierrePoly',
-                    afterDatasetsDraw(chart) {
-                        const ctx = chart.ctx;
-                        const items = chart.data.datasets.map((ds, i) => {
-                            const meta = chart.getDatasetMeta(i);
-                            const el = meta.data[meta.data.length - 1];
-                            if (!el) return null;
-                            return { x: el.x, y: el.y, color: ds.borderColor,
-                                     label: ds.label, val: ds.data[ds.data.length - 1] };
-                        }).filter(Boolean).sort((a, b) => a.y - b.y);
-                        const area = chart.chartArea;
-                        let prev = -Infinity;
-                        items.forEach(it => { it.ty = Math.max(it.y, prev + 46); prev = it.ty; });
-                        // si el apilado se sale por abajo, recorrer todo hacia arriba
-                        const exceso = items.length ? Math.max(0, items[items.length - 1].ty - (area.bottom - 6)) : 0;
-                        if (exceso > 0) {
-                            items.forEach(it => { it.ty -= exceso; });
-                            let piso = area.top + 18;
-                            items.forEach(it => { it.ty = Math.max(it.ty, piso); piso = it.ty + 46; });
-                        }
-                        items.forEach(it => {
-                            ctx.save();
-                            ctx.beginPath();
-                            ctx.arc(it.x, it.y, 5, 0, Math.PI * 2);
-                            ctx.fillStyle = it.color;
-                            ctx.fill();
-                            const nombre = it.label.length > 18 ? it.label.slice(0, 17) + '…' : it.label;
-                            ctx.fillStyle = it.color;
-                            ctx.font = '500 13px Inter, sans-serif';
-                            ctx.fillText(nombre, it.x + 14, it.ty - 8);
-                            ctx.font = '700 22px Inter, sans-serif';
-                            ctx.fillText(String(it.val), it.x + 14, it.ty + 16);
-                            ctx.restore();
-                        });
-                    },
-                };
                 const dsets = keys.map((k, i) => ({
                     label: datos.series[k].nombre,
                     data: datos.series[k].total,
-                    borderColor: SUAVES[i % SUAVES.length],
-                    backgroundColor: SUAVES[i % SUAVES.length],
+                    borderColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
+                    backgroundColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
                     borderWidth: 2, tension: 0, fill: false,
                     pointRadius: 0, pointHoverRadius: 4,
                 }));
                 chartInstance.current = new Chart(chartRef.current, {
                     type: 'line',
                     data: { labels, datasets: dsets },
-                    plugins: [gridPunteado, cierrePoly],
+                    plugins: [gridPunteado],
                     options: {
                         responsive: true, maintainAspectRatio: false,
-                        layout: { padding: { right: 150, top: 16, bottom: 4 } },
+                        layout: { padding: { right: 44, top: 16, bottom: 4 } },
                         interaction: { mode: 'index', intersect: false },
                         plugins: {
                             legend: { display: false },
