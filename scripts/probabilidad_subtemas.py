@@ -330,10 +330,16 @@ def main():
     if lote_parcial:
         for b in out_board:
             b["delta"] = None
+    # los destacados SIEMPRE son los que se MUEVEN — nunca "los más altos"
+    # (eso re-apilaba todo en 90-97 arriba, el problema original). Con lote
+    # parcial el movimiento se mide dentro de la propia ventana de 21 días
+    # (rango del track diario), que no depende del delta suprimido.
+    def rango21(b):
+        vs = [v for _, v in b.get("track21", [])]
+        return (max(vs) - min(vs)) if len(vs) >= 5 else 0
+    cand = [b for b in out_board if b["clase"] == "vivo" and b["salto_max_30d"] <= SALTO_MAX]
     movers = [b["key"] for b in sorted(
-        [b for b in out_board if b["clase"] == "vivo" and b["salto_max_30d"] <= SALTO_MAX
-         and (lote_parcial or b["delta"] is not None)],
-        key=lambda b: (-(b["p"] or 0) if lote_parcial else -abs(b["delta"] or 0)))][:5]
+        cand, key=lambda b: (-rango21(b) if lote_parcial else -abs(b["delta"] or 0)))][:5]
 
     SALIDA.write_text(json.dumps({
         "generado": dt.datetime.utcnow().isoformat(timespec="seconds") + "Z",
