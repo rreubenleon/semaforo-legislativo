@@ -1429,44 +1429,93 @@
                 const keys = [...visibles].filter(k => datos.series[k]);
                 if (!keys.length) return;
                 const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+                const MESL = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+                let mesPrev = -1;
                 const labels = datos.semanas.map(w => {
                     const d = new Date(w + 'T12:00:00');
-                    return `${String(d.getDate()).padStart(2, '0')} ${MESES[d.getMonth()]}`;
+                    if (d.getMonth() !== mesPrev) { mesPrev = d.getMonth(); return MESL[d.getMonth()]; }
+                    return '';
                 });
+                const SUAVES = ['#6098F3', '#E8837B', '#5BBFA9', '#E5B04C',
+                                '#9C8CF5', '#6FBF73', '#93A5BD', '#E58BB8'];
                 const gridPunteado = {
                     id: 'gridPunteado',
                     beforeDatasetsDraw(chart) {
-                        const { ctx, chartArea, scales } = chart;
+                        const { ctx, chartArea, scales, width } = chart;
                         if (!chartArea) return;
+                        const maxv = scales.y.max;
+                        const paso = maxv <= 40 ? 10 : maxv <= 80 ? 20 : maxv <= 160 ? 50 : 100;
                         ctx.save();
-                        ctx.strokeStyle = 'rgba(148,163,184,0.35)';
-                        ctx.lineWidth = 1;
-                        ctx.setLineDash([2, 4]);
-                        scales.y.ticks.forEach(t => {
-                            const y = scales.y.getPixelForValue(t.value);
+                        for (let v = 0; v <= maxv; v += paso) {
+                            const y = scales.y.getPixelForValue(v);
+                            ctx.strokeStyle = 'rgba(148,163,184,0.35)';
+                            ctx.lineWidth = 1;
+                            ctx.setLineDash([2, 4]);
                             ctx.beginPath();
                             ctx.moveTo(chartArea.left, y);
-                            ctx.lineTo(chartArea.right, y);
+                            ctx.lineTo(width - 8, y);
                             ctx.stroke();
-                        });
+                            ctx.setLineDash([]);
+                            ctx.fillStyle = '#b0b7c3';
+                            ctx.font = '500 12px Inter, sans-serif';
+                            ctx.textAlign = 'right';
+                            ctx.fillText(String(v), width - 10, y - 5);
+                        }
                         ctx.restore();
+                    },
+                };
+                const cierrePoly = {
+                    id: 'cierrePoly',
+                    afterDatasetsDraw(chart) {
+                        const ctx = chart.ctx;
+                        const items = chart.data.datasets.map((ds, i) => {
+                            const meta = chart.getDatasetMeta(i);
+                            const el = meta.data[meta.data.length - 1];
+                            if (!el) return null;
+                            return { x: el.x, y: el.y, color: ds.borderColor,
+                                     label: ds.label, val: ds.data[ds.data.length - 1] };
+                        }).filter(Boolean).sort((a, b) => a.y - b.y);
+                        const area = chart.chartArea;
+                        let prev = -Infinity;
+                        items.forEach(it => { it.ty = Math.max(it.y, prev + 46); prev = it.ty; });
+                        // si el apilado se sale por abajo, recorrer todo hacia arriba
+                        const exceso = items.length ? Math.max(0, items[items.length - 1].ty - (area.bottom - 6)) : 0;
+                        if (exceso > 0) {
+                            items.forEach(it => { it.ty -= exceso; });
+                            let piso = area.top + 18;
+                            items.forEach(it => { it.ty = Math.max(it.ty, piso); piso = it.ty + 46; });
+                        }
+                        items.forEach(it => {
+                            ctx.save();
+                            ctx.beginPath();
+                            ctx.arc(it.x, it.y, 5, 0, Math.PI * 2);
+                            ctx.fillStyle = it.color;
+                            ctx.fill();
+                            const nombre = it.label.length > 18 ? it.label.slice(0, 17) + '…' : it.label;
+                            ctx.fillStyle = it.color;
+                            ctx.font = '500 13px Inter, sans-serif';
+                            ctx.fillText(nombre, it.x + 14, it.ty - 8);
+                            ctx.font = '700 22px Inter, sans-serif';
+                            ctx.fillText(String(it.val), it.x + 14, it.ty + 16);
+                            ctx.restore();
+                        });
                     },
                 };
                 const dsets = keys.map((k, i) => ({
                     label: datos.series[k].nombre,
                     data: datos.series[k].total,
-                    borderColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
-                    backgroundColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
-                    borderWidth: 2, tension: 0.1, fill: false,
+                    borderColor: SUAVES[i % SUAVES.length],
+                    backgroundColor: SUAVES[i % SUAVES.length],
+                    borderWidth: 2, tension: 0, fill: false,
                     pointRadius: 0, pointHoverRadius: 4,
                 }));
                 chartInstance.current = new Chart(chartRef.current, {
                     type: 'line',
                     data: { labels, datasets: dsets },
-                    plugins: [gridPunteado],
+                    plugins: [gridPunteado, cierrePoly],
                     options: {
                         responsive: true, maintainAspectRatio: false,
-                        layout: { padding: { top: 12 } },
+                        layout: { padding: { right: 150, top: 16, bottom: 4 } },
                         interaction: { mode: 'index', intersect: false },
                         plugins: {
                             legend: { display: false },
@@ -1475,12 +1524,10 @@
                                 label: (c) => ` ${c.dataset.label}: ${c.parsed.y} instrumentos` } },
                         },
                         scales: {
-                            y: { position: 'right', beginAtZero: true,
-                                 grid: { display: false },
-                                 border: { display: false },
-                                 ticks: { font: { size: 10, family: 'JetBrains Mono' }, color: '#9ca3af' } },
+                            y: { display: false, beginAtZero: true },
                             x: { grid: { display: false }, border: { display: false },
-                                 ticks: { font: { size: 9, family: 'JetBrains Mono' }, color: '#9ca3af', maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
+                                 ticks: { font: { size: 12, family: 'Inter' }, color: '#b0b7c3', maxRotation: 0, autoSkip: false,
+                                          callback: function(v, i) { const l = this.getLabelForValue(v); return l || undefined; } } },
                         },
                     },
                 });
