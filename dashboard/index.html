@@ -1430,8 +1430,9 @@
                 if (!keys.length) return;
                 const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
                 const MESL = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+                const eje = datos.dias || datos.semanas;
                 let mesPrev = -1;
-                const labels = datos.semanas.map(w => {
+                const labels = eje.map(w => {
                     const d = new Date(w + 'T12:00:00');
                     if (d.getMonth() !== mesPrev) { mesPrev = d.getMonth(); return MESL[d.getMonth()]; }
                     return '';
@@ -1464,10 +1465,10 @@
                 };
                 const dsets = keys.map((k, i) => ({
                     label: datos.series[k].nombre,
-                    data: datos.series[k].total,
+                    data: datos.series[k].diario || datos.series[k].total,
                     borderColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
                     backgroundColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
-                    borderWidth: 2, tension: 0, fill: false,
+                    borderWidth: 1.8, tension: 0, fill: false,
                     pointRadius: 0, pointHoverRadius: 4,
                 }));
                 chartInstance.current = new Chart(chartRef.current, {
@@ -1481,7 +1482,7 @@
                         plugins: {
                             legend: { display: false },
                             tooltip: { callbacks: {
-                                title: (t) => `Semana del ${datos.semanas[t[0].dataIndex]}`,
+                                title: (t) => `7 días al ${(datos.dias || datos.semanas)[t[0].dataIndex]}`,
                                 label: (c) => ` ${c.dataset.label}: ${c.parsed.y} instrumentos` } },
                         },
                         scales: {
