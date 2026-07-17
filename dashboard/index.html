@@ -1433,52 +1433,40 @@
                     const d = new Date(w + 'T12:00:00');
                     return `${String(d.getDate()).padStart(2, '0')} ${MESES[d.getMonth()]}`;
                 });
+                const gridPunteado = {
+                    id: 'gridPunteado',
+                    beforeDatasetsDraw(chart) {
+                        const { ctx, chartArea, scales } = chart;
+                        if (!chartArea) return;
+                        ctx.save();
+                        ctx.strokeStyle = 'rgba(148,163,184,0.35)';
+                        ctx.lineWidth = 1;
+                        ctx.setLineDash([2, 4]);
+                        scales.y.ticks.forEach(t => {
+                            const y = scales.y.getPixelForValue(t.value);
+                            ctx.beginPath();
+                            ctx.moveTo(chartArea.left, y);
+                            ctx.lineTo(chartArea.right, y);
+                            ctx.stroke();
+                        });
+                        ctx.restore();
+                    },
+                };
                 const dsets = keys.map((k, i) => ({
                     label: datos.series[k].nombre,
                     data: datos.series[k].total,
                     borderColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
                     backgroundColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
-                    borderWidth: 2, tension: 0.3, fill: false,
+                    borderWidth: 2, tension: 0.1, fill: false,
                     pointRadius: 0, pointHoverRadius: 4,
                 }));
-                const endLabels = {
-                    id: 'endLabels',
-                    afterDatasetsDraw(chart) {
-                        const ctx = chart.ctx;
-                        const items = chart.data.datasets.map((ds, i) => {
-                            const meta = chart.getDatasetMeta(i);
-                            const el = meta.data[meta.data.length - 1];
-                            if (!el) return null;
-                            return { x: el.x, y: el.y, color: ds.borderColor, label: ds.label,
-                                     val: ds.data[ds.data.length - 1] };
-                        }).filter(Boolean).sort((a, b) => a.y - b.y);
-                        let prev = -Infinity;
-                        items.forEach(it => { it.ty = Math.max(it.y, prev + 34); prev = it.ty; });
-                        items.forEach(it => {
-                            ctx.save();
-                            ctx.beginPath();
-                            ctx.arc(it.x, it.y, 4, 0, Math.PI * 2);
-                            ctx.fillStyle = it.color;
-                            ctx.strokeStyle = '#ffffff';
-                            ctx.lineWidth = 2;
-                            ctx.fill(); ctx.stroke();
-                            const nombre = it.label.length > 20 ? it.label.slice(0, 19) + '…' : it.label;
-                            ctx.fillStyle = it.color;
-                            ctx.font = '600 10.5px "JetBrains Mono", monospace';
-                            ctx.fillText(nombre, it.x + 12, it.ty - 5);
-                            ctx.font = '800 17px Inter, sans-serif';
-                            ctx.fillText(it.val + '/sem', it.x + 12, it.ty + 12);
-                            ctx.restore();
-                        });
-                    },
-                };
                 chartInstance.current = new Chart(chartRef.current, {
                     type: 'line',
                     data: { labels, datasets: dsets },
-                    plugins: [endLabels],
+                    plugins: [gridPunteado],
                     options: {
                         responsive: true, maintainAspectRatio: false,
-                        layout: { padding: { right: 170, top: 12 } },
+                        layout: { padding: { top: 12 } },
                         interaction: { mode: 'index', intersect: false },
                         plugins: {
                             legend: { display: false },
@@ -1488,7 +1476,7 @@
                         },
                         scales: {
                             y: { position: 'right', beginAtZero: true,
-                                 grid: { color: 'rgba(0,0,0,0.05)' },
+                                 grid: { display: false },
                                  border: { display: false },
                                  ticks: { font: { size: 10, family: 'JetBrains Mono' }, color: '#9ca3af' } },
                             x: { grid: { display: false }, border: { display: false },
@@ -1524,10 +1512,10 @@
                             return (
                                 <button key={k} onClick={() => toggle(k)}
                                     style={on ? { borderColor: color, backgroundColor: color + '14' } : {}}
-                                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono font-medium transition-all border ${on ? 'shadow-sm text-gray-800' : 'border-transparent bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>
-                                    <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }}></span>
-                                    <span>{s.nombre.length > 17 ? s.nombre.slice(0, 15) + '…' : s.nombre}</span>
-                                    <span className="font-bold">{s.prom4}/sem</span>
+                                    title={`${s.nombre}: ${s.prom4} instrumentos/semana (prom. 4 sem)`}
+                                    className={`flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[9.5px] font-mono font-medium transition-all border ${on ? 'shadow-sm text-gray-700' : 'border-transparent bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>
+                                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }}></span>
+                                    <span>{s.nombre.length > 15 ? s.nombre.slice(0, 13) + '…' : s.nombre}</span>
                                     <span className={fcls}>{flecha}</span>
                                 </button>
                             );
