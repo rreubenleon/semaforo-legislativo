@@ -98,6 +98,17 @@ def main():
             series[cat] = {"ini": [0] * len(semanas), "pa": [0] * len(semanas)}
         series[cat]["ini" if tipo == "iniciativa" else "pa"][idx[wk]] += 1
 
+    # serie DIARIA (suma móvil de 7 días, paso diario): la textura "técnica"
+    # de la gráfica — misma unidad instrumentos/semana, ~165 puntos por tema
+    d_ini = dt.date.fromisoformat(DESDE)
+    d_fin = dt.date.fromisoformat(hoy)
+    dias_diario = [(d_ini + dt.timedelta(days=i)).isoformat()
+                   for i in range((d_fin - d_ini).days + 1)]
+    por_dia = defaultdict(lambda: defaultdict(int))
+    for f, cat, tipo in filas:
+        if cat:
+            por_dia[cat][f] += 1
+
     out = {}
     for cat, s in series.items():
         total = [a + b for a, b in zip(s["ini"], s["pa"])]
@@ -108,14 +119,20 @@ def main():
         p4 = total[-8:-4] if len(total) >= 8 else total[:4]
         m_u, m_p = sum(u4) / max(1, len(u4)), sum(p4) / max(1, len(p4))
         tendencia = "sube" if m_u > m_p * 1.15 else ("baja" if m_u < m_p * 0.85 else "estable")
+        pd = por_dia[cat]
+        diario = []
+        for d in dias_diario:
+            dd = dt.date.fromisoformat(d)
+            diario.append(sum(pd.get((dd - dt.timedelta(days=j)).isoformat(), 0)
+                              for j in range(7)))
         out[cat] = {"nombre": nombre, "total": total, "ini": s["ini"], "pa": s["pa"],
                     "suma": sum(total), "prom4": round(m_u, 1),
-                    "tendencia": tendencia}
+                    "tendencia": tendencia, "diario": diario}
 
     SALIDA.write_text(json.dumps({
         "generado": dt.datetime.utcnow().isoformat(timespec="seconds") + "Z",
         "desde": DESDE, "hasta": hoy, "ultima_semana_completa": corte,
-        "semanas": semanas, "dedupe_filas": n_dedup, "sin_categoria": sin_cat,
+        "semanas": semanas, "dias": dias_diario, "dedupe_filas": n_dedup, "sin_categoria": sin_cat,
         "nota": "Conteo semanal observado de iniciativas + puntos de acuerdo "
                 "por tema (clasificación FIAT), dedupe por contenido; semana "
                 "en curso excluida.",
