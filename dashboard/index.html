@@ -1390,86 +1390,108 @@
             '#0d9488', '#b91c1c', '#1d4ed8', '#9333ea',
         ];
 
-        /* Tendencia del dashboard = PROBABILIDAD POR TEMA ESPECÍFICO (compacta).
-           P(≥1 iniciativa del subtema en 14 días), calibrada y vigilada.
-           Rediseño 16-jul (orden del usuario): mismas proporciones que la
-           Tendencia anterior — gráfica Chart.js de 280px + una fila de pills
-           clickeables (el idioma del widget viejo), sin tablero invasivo.
-           Datos: dashboard/probabilidad_subtemas.json (probabilidad.yml). */
+        /* TENDENCIA DE TEMAS EN EL CONGRESO — datos OBSERVADOS, sin modelo.
+           Decisión del usuario (17-jul): la gráfica muestra la evolución
+           semanal real de iniciativas + puntos de acuerdo por tema
+           (clasificación FIAT, dedupe auditado) desde febrero. Sobre esta
+           frecuencia se lee el score. Estilo: el idioma Polymarket aprobado
+           (líneas + punto final + etiqueta, pills clickeables, hasta 8).
+           Datos: dashboard/tendencia_temas.json (cron diario). */
         function HistorialScoresChart({ historial, semaforo, onCategoryClick }) {
             const chartRef = useRef(null);
             const chartInstance = useRef(null);
             const [datos, setDatos] = useState(null);
-            const [filtro, setFiltro] = useState('movers');
-            const [visibles, setVisibles] = useState(null);   // Set de keys en la gráfica
+            const [visibles, setVisibles] = useState(null);
             useEffect(() => {
-                fetch('./probabilidad_subtemas.json?v=' + Date.now())
+                fetch('./tendencia_temas.json?v=' + Date.now())
                     .then(r => r.ok ? r.json() : null)
                     .then(d => {
-                        if (!d || !d.board) return;
+                        if (!d || !d.series) return;
                         setDatos(d);
-                        setVisibles(new Set(d.movers.slice(0, 5)));
+                        const top = Object.entries(d.series)
+                            .sort((a, b) => b[1].suma - a[1].suma).slice(0, 5).map(([k]) => k);
+                        setVisibles(new Set(top));
                     }).catch(() => {});
             }, []);
-
-            const vivos = useMemo(() => (datos ? datos.board.filter(b => b.clase === 'vivo' && b.spark && b.spark.length > 5) : []), [datos]);
-            const porKey = useMemo(() => { const m = {}; vivos.forEach(b => { m[b.key] = b; }); return m; }, [vivos]);
-            const CATN = {};
-            (semaforo || []).forEach(s => { CATN[s.categoria] = s.nombre; });
-
-            /* pills según filtro: movers = top 12 por |Δ|; categoría = sus subtemas */
-            const pills = useMemo(() => {
-                if (!datos) return [];
-                if (filtro === 'movers') {
-                    return [...vivos].sort((a, b) => Math.abs(b.delta || 0) - Math.abs(a.delta || 0)).slice(0, 12);
-                }
-                return datos.board.filter(b => b.cat === filtro)
-                    .sort((a, b) => (b.p || 0) - (a.p || 0));
-            }, [datos, filtro, vivos]);
 
             const toggle = (key) => {
                 setVisibles(prev => {
                     const next = new Set(prev);
                     if (next.has(key)) { if (next.size > 1) next.delete(key); }
-                    else { if (next.size >= 6) next.delete([...next][0]); next.add(key); }
+                    else { if (next.size >= 8) next.delete([...next][0]); next.add(key); }
                     return next;
                 });
             };
 
-            /* gráfica Chart.js — mismo contenedor de 280px del widget anterior */
             useEffect(() => {
                 if (!chartRef.current || !datos || !visibles) return;
                 if (chartInstance.current) { try { chartInstance.current.destroy(); } catch (e) {} }
-                const keys = [...visibles].filter(k => porKey[k]);
+                const keys = [...visibles].filter(k => datos.series[k]);
                 if (!keys.length) return;
-                const nSem = Math.min(...keys.map(k => porKey[k].spark.length));
                 const MESES = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
-                const fin = new Date((datos.hasta || '') + 'T12:00:00');
-                const labels = Array.from({ length: nSem }, (_, i) => {
-                    const d = new Date(fin); d.setDate(d.getDate() - 7 * (nSem - 1 - i));
-                    return i === nSem - 1 ? 'HOY' : `${String(d.getDate()).padStart(2, '0')}-${MESES[d.getMonth()]}`;
+                const labels = datos.semanas.map(w => {
+                    const d = new Date(w + 'T12:00:00');
+                    return `${String(d.getDate()).padStart(2, '0')} ${MESES[d.getMonth()]}`;
                 });
                 const dsets = keys.map((k, i) => ({
-                    label: porKey[k].nombre,
-                    data: porKey[k].spark.slice(-nSem),
+                    label: datos.series[k].nombre,
+                    data: datos.series[k].total,
                     borderColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
                     backgroundColor: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
-                    borderWidth: 2, pointRadius: 0, pointHoverRadius: 4, tension: 0.35, fill: false,
+                    borderWidth: 2, tension: 0.3, fill: false,
+                    pointRadius: 0, pointHoverRadius: 4,
                 }));
+                const endLabels = {
+                    id: 'endLabels',
+                    afterDatasetsDraw(chart) {
+                        const ctx = chart.ctx;
+                        const items = chart.data.datasets.map((ds, i) => {
+                            const meta = chart.getDatasetMeta(i);
+                            const el = meta.data[meta.data.length - 1];
+                            if (!el) return null;
+                            return { x: el.x, y: el.y, color: ds.borderColor, label: ds.label,
+                                     val: ds.data[ds.data.length - 1] };
+                        }).filter(Boolean).sort((a, b) => a.y - b.y);
+                        let prev = -Infinity;
+                        items.forEach(it => { it.ty = Math.max(it.y, prev + 34); prev = it.ty; });
+                        items.forEach(it => {
+                            ctx.save();
+                            ctx.beginPath();
+                            ctx.arc(it.x, it.y, 4, 0, Math.PI * 2);
+                            ctx.fillStyle = it.color;
+                            ctx.strokeStyle = '#ffffff';
+                            ctx.lineWidth = 2;
+                            ctx.fill(); ctx.stroke();
+                            const nombre = it.label.length > 20 ? it.label.slice(0, 19) + '…' : it.label;
+                            ctx.fillStyle = it.color;
+                            ctx.font = '600 10.5px "JetBrains Mono", monospace';
+                            ctx.fillText(nombre, it.x + 12, it.ty - 5);
+                            ctx.font = '800 17px Inter, sans-serif';
+                            ctx.fillText(it.val + '/sem', it.x + 12, it.ty + 12);
+                            ctx.restore();
+                        });
+                    },
+                };
                 chartInstance.current = new Chart(chartRef.current, {
                     type: 'line',
                     data: { labels, datasets: dsets },
+                    plugins: [endLabels],
                     options: {
                         responsive: true, maintainAspectRatio: false,
+                        layout: { padding: { right: 170, top: 12 } },
                         interaction: { mode: 'index', intersect: false },
                         plugins: {
                             legend: { display: false },
-                            tooltip: { callbacks: { label: (c) => ` ${c.dataset.label}: ${c.parsed.y}%` } },
+                            tooltip: { callbacks: {
+                                title: (t) => `Semana del ${datos.semanas[t[0].dataIndex]}`,
+                                label: (c) => ` ${c.dataset.label}: ${c.parsed.y} instrumentos` } },
                         },
                         scales: {
-                            y: { min: 0, max: 100, grid: { color: 'rgba(0,0,0,0.05)' },
-                                 ticks: { stepSize: 25, callback: (v) => v + '%', font: { size: 10, family: 'JetBrains Mono' }, color: '#9ca3af' } },
-                            x: { grid: { display: false },
+                            y: { position: 'right', beginAtZero: true,
+                                 grid: { color: 'rgba(0,0,0,0.05)' },
+                                 border: { display: false },
+                                 ticks: { font: { size: 10, family: 'JetBrains Mono' }, color: '#9ca3af' } },
+                            x: { grid: { display: false }, border: { display: false },
                                  ticks: { font: { size: 9, family: 'JetBrains Mono' }, color: '#9ca3af', maxRotation: 0, autoSkip: true, maxTicksLimit: 8 } },
                         },
                     },
@@ -1477,60 +1499,36 @@
                 return () => { if (chartInstance.current) { try { chartInstance.current.destroy(); } catch (e) {} chartInstance.current = null; } };
             }, [datos, visibles]);
 
-            /* REGLA DEL USUARIO (16-jul): si los números no están
-               blindados, la sección NO EXISTE en la página — nada de
-               letreros 'en revisión' de cara al público. El widget solo
-               se renderiza si hay subtemas vivos con número válido. */
             if (!datos || !visibles) return null;
-            if (!datos.board.some(b => b.clase === 'vivo' && b.p != null)) return null;
-            const cats = [...new Set(datos.board.map(b => b.cat))];
+            const orden = Object.entries(datos.series).sort((a, b) => b[1].suma - a[1].suma);
 
             return (
                 <div className="glass border border-borde rounded-xl p-4 space-y-3">
-                    <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
                         <div>
-                            <div className="text-xs font-semibold text-gray-500">Probabilidad por tema específico
-                                <span className={`ml-2 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded-full border align-middle ${datos.calibracion?.ok ? 'text-emerald-700 border-emerald-200 bg-emerald-50' : 'text-amber-700 border-amber-200 bg-amber-50'}`}
-                                      title={`Backtest semanal: desviación mediana ${datos.calibracion?.desviacion_mediana} pts entre lo predicho y lo ocurrido`}>
-                                    {datos.calibracion?.ok ? 'CALIBRADO ✓' : 'EN REVISIÓN'}
-                                </span>
-                            </div>
-                            <div className="text-[10px] text-gray-400 mt-0.5">Probabilidad de que se presente una iniciativa del tema en los próximos 14 días · elige hasta 6</div>
+                            <div className="text-xs font-semibold text-gray-500">Tendencia de temas en el Congreso</div>
+                            <div className="text-[10px] text-gray-400 mt-0.5">Iniciativas y puntos de acuerdo presentados por semana · febrero → hoy · elige hasta 8 temas</div>
                         </div>
-                        <select value={filtro} onChange={e => setFiltro(e.target.value)}
-                            className="text-[11px] font-mono text-gray-600 bg-white border border-gray-200 rounded-lg px-2 py-1 focus:outline-none focus:border-acento">
-                            <option value="movers">Los que más se mueven</option>
-                            {cats.map(c => <option key={c} value={c}>{CATN[c] || c}</option>)}
-                        </select>
+                        <span className="text-[9px] font-mono text-gray-400" title="Semana en curso excluida (estaría incompleta)">datos a la semana del {datos.ultima_semana_completa}</span>
                     </div>
 
                     <div style={{ height: '280px' }}><canvas ref={chartRef}></canvas></div>
 
                     <div className="flex flex-wrap gap-1.5">
-                        {pills.map(b => {
-                            const on = visibles.has(b.key);
-                            const idx = [...visibles].indexOf(b.key);
+                        {orden.map(([k, s]) => {
+                            const on = visibles.has(k);
+                            const idx = [...visibles].indexOf(k);
                             const color = on ? CATEGORY_COLORS[idx % CATEGORY_COLORS.length] : '#d1d5db';
-                            if (b.clase !== 'vivo') {
-                                return (
-                                    <span key={b.key} className="flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono bg-gray-50 text-gray-400 border border-transparent"
-                                        title={b.clase === 'siempre_activo'
-                                            ? 'Produce iniciativas prácticamente todas las semanas — una probabilidad no aporta.'
-                                            : 'Historia insuficiente o calibración en revisión: sin número.'}>
-                                        {b.nombre.length > 18 ? b.nombre.slice(0, 16) + '…' : b.nombre}
-                                        <span className="text-[8px] tracking-wider">{b.clase === 'siempre_activo' ? 'SIEMPRE' : '···'}</span>
-                                    </span>
-                                );
-                            }
+                            const flecha = s.tendencia === 'sube' ? '▲' : (s.tendencia === 'baja' ? '▼' : '→');
+                            const fcls = s.tendencia === 'sube' ? 'text-semaforo-verde font-bold' : 'text-gray-400';
                             return (
-                                <button key={b.key} onClick={() => toggle(b.key)}
-                                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono font-medium transition-all border ${on ? 'border-gray-300 bg-white shadow-sm' : 'border-transparent bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>
+                                <button key={k} onClick={() => toggle(k)}
+                                    style={on ? { borderColor: color, backgroundColor: color + '14' } : {}}
+                                    className={`flex items-center gap-1 px-2 py-1 rounded-lg text-[10px] font-mono font-medium transition-all border ${on ? 'shadow-sm text-gray-800' : 'border-transparent bg-gray-100 text-gray-400 hover:bg-gray-200'}`}>
                                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }}></span>
-                                    <span className={on ? 'text-gray-700' : ''}>{b.nombre.length > 18 ? b.nombre.slice(0, 16) + '…' : b.nombre}</span>
-                                    <span className={`font-bold ${on ? 'text-gray-800' : ''}`}>{b.p}%</span>
-                                    {b.delta != null && b.delta !== 0 && (
-                                        <span className={b.delta > 0 ? 'text-semaforo-verde font-bold' : 'text-gray-400'}>{b.delta > 0 ? '▲' : '▼'}</span>
-                                    )}
+                                    <span>{s.nombre.length > 17 ? s.nombre.slice(0, 15) + '…' : s.nombre}</span>
+                                    <span className="font-bold">{s.prom4}/sem</span>
+                                    <span className={fcls}>{flecha}</span>
                                 </button>
                             );
                         })}
