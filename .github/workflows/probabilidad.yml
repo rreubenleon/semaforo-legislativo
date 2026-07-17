@@ -50,11 +50,14 @@ jobs:
       - name: Calcular probabilidades
         run: python scripts/probabilidad_subtemas.py
 
+      - name: Tendencia de temas (observada)
+        run: python scripts/tendencia_temas.py
+
       - name: Commit del JSON
         run: |
           git config user.name "FIAT Bot"
           git config user.email "fiat-bot@users.noreply.github.com"
-          git add dashboard/probabilidad_subtemas.json
+          git add dashboard/probabilidad_subtemas.json dashboard/tendencia_temas.json
           git diff --cached --quiet && { echo "sin cambios"; exit 0; }
           git commit -m "📊 Probabilidad por subtema (diario)"
           for i in 1 2 3; do
