@@ -50,16 +50,20 @@ jobs:
       - name: Calcular probabilidades
         run: python scripts/probabilidad_subtemas.py
 
-      - name: Tendencia de temas (observada)
+      - name: Panel de medios (sombra de cobertura, incremental $0)
+        run: python scripts/panel_medios.py
+        continue-on-error: true
+
+      - name: Tendencia de temas (observada + sombra de medios)
         run: python scripts/tendencia_temas.py
 
       - name: Commit del JSON
         run: |
           git config user.name "FIAT Bot"
           git config user.email "fiat-bot@users.noreply.github.com"
-          git add dashboard/probabilidad_subtemas.json dashboard/tendencia_temas.json
+          git add dashboard/probabilidad_subtemas.json dashboard/tendencia_temas.json eval/panel_medios_diario.json
           git diff --cached --quiet && { echo "sin cambios"; exit 0; }
-          git commit -m "📊 Probabilidad por subtema (diario)"
+          git commit -m "📊 Probabilidad por subtema + panel de medios (diario)"
           for i in 1 2 3; do
             git -c rebase.autoStash=true pull --rebase origin main && git push && break
             sleep 10
