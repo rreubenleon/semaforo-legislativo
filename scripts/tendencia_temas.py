@@ -109,21 +109,18 @@ def main():
         if cat:
             por_dia[cat][f] += 1
 
-    # cobertura de MEDIOS por tema (categoría primaria del clasificador FIAT),
-    # misma unidad de textura: suma móvil 7d de notas, paso diario. Va al
-    # FONDO de la gráfica para leer disonancia/uniformidad medios↔Congreso.
-    # Días sin captura (caída del scraper: 12-mar→8-abr-2026, arranque de feb)
-    # van como null — el fondo no se dibuja ahí en vez de fingir silencio.
-    medios_dia = defaultdict(lambda: defaultdict(int))
-    vol_dia = defaultdict(int)
-    for cats, f in con.execute(
-            """SELECT categorias, substr(fecha,1,10) FROM articulos
-               WHERE fecha >= ?""", (DESDE,)):
-        vol_dia[f] += 1
-        cat_p = (cats or "").split(",")[0].split(":")[0].strip()
-        if cat_p:
-            medios_dia[cat_p][f] += 1
-    UMBRAL_7D = 1500  # una semana normal captura ~9K notas; una caída, ~0
+    # cobertura de MEDIOS por tema: notas/día del PANEL fijo de 7 medios
+    # nacionales con archivo histórico (eval/panel_medios_diario.json,
+    # generado por scripts/panel_medios.py vía sitemaps). Metodología
+    # uniforme feb→hoy — sin los huecos del RSS (arranque 13-feb y
+    # migración Turso 12-mar→8-abr). Va al FONDO de la gráfica para leer
+    # disonancia/uniformidad medios↔Congreso.
+    medios_dia = defaultdict(dict)
+    panel_path = ROOT / "eval" / "panel_medios_diario.json"
+    if panel_path.exists():
+        for f, dia in json.loads(panel_path.read_text())["dias"].items():
+            for cat, n in dia.get("cats", {}).items():
+                medios_dia[cat][f] = n
 
     out = {}
     for cat, s in series.items():
@@ -142,8 +139,7 @@ def main():
             dd = dt.date.fromisoformat(d)
             ult7 = [(dd - dt.timedelta(days=j)).isoformat() for j in range(7)]
             diario.append(sum(pd.get(x, 0) for x in ult7))
-            con_captura = sum(vol_dia.get(x, 0) for x in ult7) >= UMBRAL_7D
-            medios.append(sum(md.get(x, 0) for x in ult7) if con_captura else None)
+            medios.append(sum(md.get(x, 0) for x in ult7) if md else None)
         out[cat] = {"nombre": nombre, "total": total, "ini": s["ini"], "pa": s["pa"],
                     "suma": sum(total), "prom4": round(m_u, 1),
                     "tendencia": tendencia, "diario": diario, "medios": medios}
