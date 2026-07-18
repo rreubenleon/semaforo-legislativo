@@ -321,7 +321,7 @@
                         transform={`rotate(-90 ${half} ${half})`} />
                     <text x={half} y={half} textAnchor="middle" dominantBaseline="central"
                         style={{fontSize}} fill="#1a365d" fontWeight="bold">
-                        {score.toFixed(0)}%
+                        {score.toFixed(0)}
                     </text>
                 </svg>
             );
@@ -901,12 +901,12 @@
                 <div className="glass border border-borde rounded-xl p-4">
                     <div className="flex items-baseline justify-between mb-1">
                         <h3 className="font-semibold text-gray-700 text-sm">Divergencias</h3>
-                        <span className="text-[10px] text-gray-400" title="Una divergencia aparece cuando las fuentes que alimentan el score (Media, Congreso, Mañanera, Trends, etc.) están desalineadas entre sí más de lo habitual.">
+                        <span className="text-[10px] text-gray-400" title="Una divergencia aparece cuando las fuentes que alimentan el Índice de Actividad (Media, Congreso, Mañanera, Trends, etc.) están desalineadas entre sí más de lo habitual.">
                             ⓘ señales atípicas
                         </span>
                     </div>
                     <p className="text-[11px] text-gray-500 mb-3 leading-snug">
-                        Categorías donde las fuentes del score están desalineadas entre sí: una destaca mientras otras quedan rezagadas.
+                        Categorías donde las fuentes del Índice de Actividad están desalineadas entre sí: una destaca mientras otras quedan rezagadas.
                     </p>
                     {vacio ? (
                         <div className="py-4 text-center text-[11px] text-gray-400 italic">
@@ -1769,7 +1769,7 @@
                             <div className="flex items-center gap-2">
                                 <button onClick={() => {
                                     const emoji = data.color === 'rojo' ? '🔴' : data.color === 'amarillo' ? '🟡' : '🟢';
-                                    const texto = `${data.nombre}: ${data.score_total.toFixed(0)}% ${emoji}\nScore FIAT en tiempo real\nhttps://fiatmx.com`;
+                                    const texto = `${data.nombre}: Índice de Actividad ${data.score_total.toFixed(0)}/100 ${emoji}\nFIAT · Inteligencia Legislativa\nhttps://fiatmx.com`;
                                     if (navigator.share) {
                                         navigator.share({ title: `FIAT — ${data.nombre}`, text: texto, url: 'https://fiatmx.com' }).catch(() => {});
                                     } else {
@@ -1789,7 +1789,7 @@
                                 <ScoreRing score={data.score_total} color={data.color} size={90} />
                                 <div>
                                     <div className="text-3xl font-bold" style={{color: colors[data.color]}}>{data.score_total.toFixed(1)}</div>
-                                    <div className="text-gray-500 text-sm uppercase tracking-wider">{data.color}</div>
+                                    <div className="text-gray-500 text-[11px] uppercase tracking-wider font-mono">Índice de Actividad · 0-100</div>
                                     <div className="text-xs text-gray-400 mt-1 font-mono">{formatearActualizacion(generado)}</div>
                                 </div>
                             </div>
@@ -2110,13 +2110,13 @@
                                 </svg>
                                 <div className="relative flex items-start justify-between">
                                     <div className="flex-1 min-w-0">
-                                        <div className="text-xs font-semibold text-white/80 mb-1">Mayor probabilidad de actividad legislativa</div>
+                                        <div className="text-xs font-semibold text-white/80 mb-1">Mayor índice de actividad legislativa</div>
                                         <h2 className="text-2xl md:text-3xl font-bold mb-2">{top.nombre}</h2>
                                         <NewsTicker articulos={topArticulos} max={5} />
                                     </div>
                                     <div className="flex flex-col items-end ml-6">
-                                        <div className="text-white text-4xl md:text-5xl font-black leading-none tracking-tight">{top.score_total.toFixed(0)}%</div>
-                                        <div className="text-[10px] text-white/50 mt-2 uppercase tracking-widest font-mono">score compuesto</div>
+                                        <div className="text-white text-4xl md:text-5xl font-black leading-none tracking-tight">{top.score_total.toFixed(0)}</div>
+                                        <div className="text-[10px] text-white/50 mt-2 uppercase tracking-widest font-mono">Índice de Actividad · 0-100</div>
                                     </div>
                                 </div>
                             </div>
@@ -2185,7 +2185,7 @@
                     <div className="flex items-center gap-2 text-xs">
                         <span className="text-gray-500 uppercase tracking-wider">Ordenar por</span>
                         <div className="inline-flex rounded-lg border border-borde bg-white overflow-hidden">
-                            {[['score', 'Score'], ['urgencia', 'Urgencia'], ['activos', 'Activos']].map(([key, label], i) => (
+                            {[['score', 'Índice'], ['urgencia', 'Urgencia'], ['activos', 'Activos']].map(([key, label], i) => (
                                 <button key={key} onClick={() => setOrden(key)}
                                     className={`px-3 py-1.5 font-medium transition-colors ${orden === key ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-50'} ${i > 0 ? 'border-l border-borde' : ''}`}>
                                     {label}
@@ -5825,7 +5825,7 @@
                 <div className="glass border border-borde rounded-xl p-4">
                     <div className="flex items-center justify-between mb-3">
                         <h3 className="font-semibold text-gray-700 text-sm">Temas más relevantes de la semana</h3>
-                        <span className="text-[10px] text-gray-400">Top 5 por score FIAT</span>
+                        <span className="text-[10px] text-gray-400">Top 5 por Índice de Actividad</span>
                     </div>
                     <div className="space-y-2">
                         {top5.map((cat, i) => {
@@ -5910,7 +5910,7 @@
                                 <span className="text-[10px] text-white/80 font-mono font-bold">Acceso restringido</span>
                             </div>
                             <h2 className="text-white text-2xl md:text-3xl font-bold leading-tight mb-3">Métricas internas de FIAT.</h2>
-                            <p className="text-white/70 text-sm leading-relaxed mb-6 font-mono">Aquí publicamos la calibración del modelo: qué tan honesta es la probabilidad que muestra FIAT cuando dice 70%, 80% o 90%. Acceso reservado.</p>
+                            <p className="text-white/70 text-sm leading-relaxed mb-6 font-mono">Aquí publicamos la validación del modelo: qué tan bien el Índice de Actividad anticipa la actividad legislativa real. Acceso reservado.</p>
                             <form onSubmit={submit} className="space-y-3">
                                 <div>
                                     <label className="text-[10px] uppercase tracking-widest text-white/50 font-mono">Contraseña</label>
@@ -6092,7 +6092,7 @@
                             }
                         },
                         scales: {
-                            x: { min: 0, max: 100, title: { display: true, text: 'Score FIAT predicho (%)', font: { size: 10, family: 'JetBrains Mono, ui-monospace, monospace' } }, ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
+                            x: { min: 0, max: 100, title: { display: true, text: 'Índice de Actividad', font: { size: 10, family: 'JetBrains Mono, ui-monospace, monospace' } }, ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
                             y: { min: 0, max: 100, title: { display: true, text: 'Hit rate observado (%)', font: { size: 10, family: 'JetBrains Mono, ui-monospace, monospace' } }, ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.04)' } }
                         }
                     }
@@ -6153,7 +6153,7 @@
                             }
                         },
                         scales: {
-                            x: { min: 0, max: 100, title: { display: true, text: 'Score FIAT predicho', font: { size: 10, family: 'JetBrains Mono, ui-monospace, monospace' } }, ticks: { font: { size: 10 }, callback: v => v + '%' }, grid: { color: 'rgba(0,0,0,0.04)' } },
+                            x: { min: 0, max: 100, title: { display: true, text: 'Índice de Actividad', font: { size: 10, family: 'JetBrains Mono, ui-monospace, monospace' } }, ticks: { font: { size: 10 } }, grid: { color: 'rgba(0,0,0,0.04)' } },
                             y: { min: 0, max: 100, title: { display: true, text: 'Hit observado', font: { size: 10, family: 'JetBrains Mono, ui-monospace, monospace' } }, ticks: { font: { size: 10 }, callback: v => v + '%' }, grid: { color: 'rgba(0,0,0,0.04)' } }
                         }
                     }
@@ -10207,9 +10207,9 @@
                                     {[
                                         ["¿Que es Fiat?", "FIAT es un sistema de inteligencia legislativa que monitorea en tiempo real la actividad del Congreso de Mexico. Analiza iniciativas, dictamenes, puntos de acuerdo y medios de comunicacion para generar alertas y predicciones sobre temas legislativos clave."],
                                         ["¿De donde provienen los datos?", "Los datos se obtienen de fuentes publicas oficiales y medios de comunicacion. El sistema se actualiza automaticamente seis veces al dia."],
-                                        ["¿Que significa el score de cada categoria?", "El score (0-100) es un indicador compuesto que combina volumen de noticias, actividad legislativa actual y pasada y tendencia de busquedas en internet. Un score alto indica mayor probabilidad de actividad legislativa en ese tema."],
+                                        ["¿Que significa el Indice de Actividad de cada categoria?", "El Indice de Actividad (0-100) es un indicador compuesto que combina volumen de noticias, actividad legislativa actual y pasada, menciones en la conferencia presidencial y tendencia de busquedas en internet. Un indice alto significa que el tema esta muy activo ahora mismo en la conversacion publica y legislativa. Es un termometro de coyuntura, no una probabilidad."],
                                         ["¿Por que probabilidades y no posibilidades?", "En 1951, un analista de la CIA llamado Sherman Kent reporto que una invasion a Yugoslavia era una \"posibilidad seria\". El pensaba que eso significaba 65% o mas. Su jefe lo interpreto como 20%. La consecuencia fue un error masivo de politica exterior. Cuando preguntas que significa \"posible\", las respuestas van desde 5% hasta 80%. Por eso en FIAT usamos numeros. Cuando decimos que un tema tiene un score de 73, no hay ambiguedad. No es algo probable ni bastante posible, es 73 de 100. Esto te permite comparar temas entre si, seguir su evolucion en el tiempo y tomar decisiones informadas sin depender de interpretaciones subjetivas."],
-                                        ["¿Que tan precisas son las predicciones?", "Las predicciones son estimaciones, no certezas. Un score de 70% no significa que algo va a pasar, significa que hay senales fuertes de actividad. Asi como un pronostico de 30% de lluvia no quiere decir que no va a llover, solo que es menos probable, nuestros scores reflejan la intensidad de las senales legislativas en un momento dado. La seccion de Resoluciones muestra el historial de precision semanal para que puedas evaluar que tan bien calibrado esta el sistema."],
+                                        ["¿Que tan precisas son las predicciones?", "Las predicciones son estimaciones, no certezas. Un Indice de Actividad de 70 no significa que algo va a pasar, significa que hay senales fuertes de actividad. Asi como un termometro alto no garantiza fiebre pero avisa que algo pasa, el Indice refleja la intensidad de las senales legislativas en un momento dado. La seccion de Resoluciones muestra el historial de precision semanal para que puedas evaluar que tan bien calibrado esta el sistema."],
                                         ["¿Que son las comisiones y como se mide su actividad?", "Las comisiones son organos del Congreso donde se analizan y dictaminan las iniciativas y proposiciones con punto de acuerdo. Fiat mide su actividad contando los documentos procesados en los ultimos 60 dias y asignando un score de actividad relativo."],
                                         ["¿Como puedo contactar al equipo?", "Puedes escribirnos a contacto@fiatmx.com o seguirnos en X (Twitter) como @Fiat_MX para recibir alertas automaticas sobre actividad legislativa relevante."],
                                     ].map(([q, a], i, arr) => (
