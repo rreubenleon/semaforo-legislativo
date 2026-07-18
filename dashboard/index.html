@@ -1455,8 +1455,8 @@
                             ctx.lineTo(width - 8, y);
                             ctx.stroke();
                             ctx.setLineDash([]);
-                            ctx.fillStyle = '#b0b7c3';
-                            ctx.font = '500 12px Inter, sans-serif';
+                            ctx.fillStyle = '#b0b8c4';
+                            ctx.font = "500 10px 'JetBrains Mono', ui-monospace, monospace";
                             ctx.textAlign = 'right';
                             ctx.fillText(String(v), width - 10, y - 5);
                         }
@@ -1497,11 +1497,32 @@
                         interaction: { mode: 'index', intersect: false },
                         plugins: {
                             legend: { display: false },
-                            tooltip: { callbacks: {
-                                title: (t) => `7 días al ${(datos.dias || datos.semanas)[t[0].dataIndex]}`,
-                                label: (c) => c.dataset.esMedios
-                                    ? ` ${c.dataset.label} · medios: ${c.parsed.y} notas`
-                                    : ` ${c.dataset.label}: ${c.parsed.y} instrumentos` } },
+                            tooltip: {
+                                backgroundColor: 'rgba(15,23,42,0.94)',
+                                titleColor: '#f1f5f9', bodyColor: '#cbd5e1',
+                                borderColor: 'rgba(255,255,255,0.08)', borderWidth: 1,
+                                padding: { top: 10, bottom: 10, left: 13, right: 15 },
+                                cornerRadius: 10, caretPadding: 8,
+                                displayColors: true, boxWidth: 8, boxHeight: 8, boxPadding: 6, usePointStyle: true,
+                                titleFont: { size: 11, weight: '700', family: "'JetBrains Mono', ui-monospace, monospace" },
+                                bodyFont: { size: 11, weight: '500', family: "'JetBrains Mono', ui-monospace, monospace" },
+                                titleMarginBottom: 8, bodySpacing: 6,
+                                filter: (item) => !item.dataset.esMedios,
+                                itemSort: (a, b) => (b.parsed.y || 0) - (a.parsed.y || 0),
+                                callbacks: {
+                                    title: (t) => {
+                                        const iso = (datos.dias || datos.semanas)[t[0].dataIndex];
+                                        const d = new Date(iso + 'T12:00:00');
+                                        return `Semana al ${d.getDate()} ${MESL[d.getMonth()]}`;
+                                    },
+                                    label: (c) => ` ${c.dataset.label}`,
+                                    afterLabel: (c) => {
+                                        const k = keys[c.datasetIndex];
+                                        const med = (datos.series[k].medios || [])[c.dataIndex];
+                                        return `   Congreso ${c.parsed.y}  ·  medios ${med == null ? '—' : med}`;
+                                    },
+                                },
+                            },
                         },
                         scales: {
                             y: { display: false, beginAtZero: true },
