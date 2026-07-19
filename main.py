@@ -2507,37 +2507,6 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     except Exception as e:
         logger.warning(f"Vinculación legisladores falló (no crítico): {e}")
 
-    # Paso 3e.1: SENADORES desde la fuente OFICIAL (senado.gob.mx), no del SIL.
-    # Antes esto era un script de una sola vez (rebuild_actividad_senadores.yml,
-    # última corrida 11-may-2026) y el paso anterior lo revertía en cada corrida:
-    # al 18-jul-2026, 103 de 111 senadores estaban >15% arriba del oficial
-    # (factor promedio 1.84). Ahora corre SIEMPRE, después de poblar.
-    try:
-        from scripts.rebuild_actividad_senadores import rebuild_senadores
-        r = rebuild_senadores()
-        logger.info(
-            f"Senadores reconstruidos desde senado.gob.mx: "
-            f"{r.get('insertados', 0)} filas ({r.get('senadores', 0)} senadores)"
-        )
-    except Exception as e:
-        logger.warning(f"Rebuild senadores falló (no crítico): {e}")
-
-    # Paso 3e.2: candado — FIAT vs fuente oficial. No escribe nada; si el
-    # desvío pasa la tolerancia lo grita en el log para que se vea en Actions.
-    try:
-        from scripts.validar_senadores_vs_oficial import validar
-        v = validar()
-        if not v["ok"]:
-            logger.error(
-                f"⚠️ SENADORES DESVIADOS DEL OFICIAL: {v['inflados']}/{v['comparables']} "
-                f"senadores fuera de tolerancia (factor promedio {v['factor_promedio']}). "
-                f"Los conteos publicados NO cuadran con senado.gob.mx."
-            )
-        else:
-            logger.info(f"✅ Senadores cuadran con senado.gob.mx ({v['comparables']} comparados)")
-    except Exception as e:
-        logger.warning(f"Validación senadores falló (no crítico): {e}")
-
     try:
         n_reacciones = calcular_reacciones_historicas()
         logger.info(f"Reacciones históricas: {n_reacciones} calculadas")
