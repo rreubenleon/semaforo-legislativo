@@ -659,23 +659,6 @@ def poblar_actividad_desde_sil():
         logger.warning("No hay legisladores en la BD. Ejecuta scrape_diputados/senadores primero.")
         return {"vinculados": 0, "sin_match": 0}
 
-    # SENADORES: su fuente autoritativa NO es el SIL, es `senador_instrumento`
-    # (scraper directo de senado.gob.mx) vía rebuild_actividad_senadores.py.
-    # El parser del campo `presentador` del SIL falla con los bloques colectivos
-    # ("de Ciudadanos Legisladores De senadoras y senadores…") y le adjudica el
-    # instrumento a UN solo senador → inflaba los conteos (caso Camarillo:
-    # 174 ini/780 prop en FIAT vs 73/140 oficiales, may-2026).
-    # Ese arreglo se revertía en cada corrida porque este paso volvía a
-    # insertar desde el SIL. Verificado 18-jul-2026: 103 de 111 senadores
-    # estaban >15% arriba del oficial (factor promedio 1.84).
-    # Por eso aquí se OMITEN. Los diputados sí se pueblan desde el SIL.
-    senador_ids = {
-        r[0] for r in conn.execute(
-            "SELECT id FROM legisladores WHERE camara = 'Senado'"
-        )
-    }
-    omitidos_senado = 0
-
     # Procesar documentos SIL que aún no están en actividad_legislador
     # Solo procesar docs con presentador, fecha y categoría
     docs = conn.execute("""
@@ -711,11 +694,6 @@ def poblar_actividad_desde_sil():
             legislador_id = (encontrar_legislador_id(nn, camara_norm, bd_idx)
                              or encontrar_legislador_id(nn, camara_otra, bd_idx))
 
-            # Senadores: no se pueblan desde el SIL (ver nota arriba).
-            if legislador_id is not None and legislador_id in senador_ids:
-                omitidos_senado += 1
-                continue
-
             try:
                 conn.execute("""
                     INSERT INTO actividad_legislador
@@ -748,12 +726,8 @@ def poblar_actividad_desde_sil():
 
     conn.commit()
 
-    logger.info(
-        f"Actividad legislador: {vinculados} vínculos creados, {sin_match} sin match, "
-        f"{omitidos_senado} omitidos (senadores → fuente oficial senado.gob.mx)"
-    )
-    return {"vinculados": vinculados, "sin_match": sin_match,
-            "omitidos_senado": omitidos_senado}
+    logger.info(f"Actividad legislador: {vinculados} vínculos creados, {sin_match} sin match")
+    return {"vinculados": vinculados, "sin_match": sin_match}
 
 
 def _obtener_presentador_sil(seg_id, asu_id):
