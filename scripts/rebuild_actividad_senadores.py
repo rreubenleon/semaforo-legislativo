@@ -59,11 +59,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--dry-run", action="store_true")
-    args = ap.parse_args()
+def rebuild_senadores(dry_run: bool = False):
+    """Reconstruye actividad_legislador de senadores desde senador_instrumento.
 
+    Llamable desde el pipeline (main.py paso 3e.1). Antes era one-off y el paso
+    de poblado desde SIL lo revertía en cada corrida.
+    Devuelve dict con {insertados, senadores, borradas}.
+    """
     from db import get_connection
 
     conn = get_connection()
@@ -177,18 +179,38 @@ def main():
         ).fetchone()["nombre"]
         logger.info(f"  {nombre[:35]:35s} {n_pre:5d} → {n_post:5d} ({d:+d})")
 
-    if args.dry_run:
+    if dry_run:
         logger.info("\nDRY-RUN: no se modifica nada")
         return 0
 
-    # ── 6. DELETE filas viejas de senadores ──
-    placeholders = ",".join("?" * len(senador_ids))
-    n_borradas = conn.execute(
-        f"DELETE FROM actividad_legislador "
-        f"WHERE legislador_id IN ({placeholders})",
-        list(senador_ids),
-    ).rowcount
-    logger.info(f"DELETE: {n_borradas} filas viejas de senadores eliminadas")
+    # ── 6. DELETE filas viejas — SOLO de senadores que SÍ podemos reconstruir ──
+    # Ojo (18-jul-2026): borrar los 149 senadores del índice y reinsertar solo
+    # los que están en `senador_instrumento` (112) dejaba a 38 senadores CON
+    # actividad real en CERO. Antes eso se tapaba porque el paso de poblado
+    # desde SIL los rellenaba en la siguiente corrida; ahora que ese paso omite
+    # senadores, quedarían vacíos de forma permanente. Por eso el DELETE se
+    # limita a los ids efectivamente cubiertos por la fuente oficial.
+    ids_reconstruibles = {f["legislador_id"] for f in nuevas_filas
+                          if f.get("legislador_id") is not None}
+    sin_cobertura = senador_ids - ids_reconstruibles
+    if sin_cobertura:
+        logger.warning(
+            f"{len(sin_cobertura)} senadores sin cobertura en senador_instrumento: "
+            f"se dejan INTACTOS (no se borran ni se reconstruyen). "
+            f"Sus conteos siguen viniendo del SIL y NO están validados contra "
+            f"senado.gob.mx."
+        )
+    if ids_reconstruibles:
+        placeholders = ",".join("?" * len(ids_reconstruibles))
+        n_borradas = conn.execute(
+            f"DELETE FROM actividad_legislador "
+            f"WHERE legislador_id IN ({placeholders})",
+            list(ids_reconstruibles),
+        ).rowcount
+    else:
+        n_borradas = 0
+    logger.info(f"DELETE: {n_borradas} filas viejas eliminadas "
+                f"({len(ids_reconstruibles)} senadores reconstruidos)")
 
     # ── 7. INSERT filas nuevas ──
     conn.executemany("""
@@ -219,6 +241,19 @@ def main():
         f"{len(snapshot_post)} senadores"
     )
 
+    return {
+        "sin_cobertura": len(sin_cobertura),
+        "insertados": len(nuevas_filas),
+        "senadores": len(snapshot_post),
+        "total_filas": sum(snapshot_post.values()),
+    }
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dry-run", action="store_true")
+    args = ap.parse_args()
+    rebuild_senadores(dry_run=args.dry_run)
     return 0
 
 
