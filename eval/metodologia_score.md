@@ -1,5 +1,24 @@
 # Metodología del Score FIAT (Semáforo Legislativo)
 
+> ⚠️ **DOCUMENTO HISTÓRICO — NO ES EL ESTADO ACTUAL. NO CITAR COMO VERDAD VIVA.**
+>
+> Retrata el sistema en **junio-2026**. Partes ya NO son ciertas. Verificado
+> el 18-jul-2026 contra la BD viva (`db-latest`):
+>
+> - ❌ **"score_legisladores = 0 en todas las categorías" es FALSO hoy.** Ese
+>   componente está vivo desde jun-2026: hoy vale 38.7–69.0 por categoría y sí
+>   pondera (10%). Se comprobó recalculando las 19 categorías desde sus
+>   componentes: el `score_total` guardado solo coincide con la versión que
+>   INCLUYE Legisladores.
+> - ⚠️ El número del score ya **no se llama "score"** de cara al usuario: es
+>   **Índice de Actividad** (0-100, sin "%"). No es una probabilidad.
+>
+> **Regla para cualquiera (humano o agente) que lea esto:** este archivo sirve
+> para entender el DISEÑO y el historial de auditoría. Para afirmar cualquier
+> NÚMERO hay que consultar la fuente viva (`db-latest`, `data.json`, el worker
+> o la fuente oficial), nunca este documento. Un hallazgo citado de aquí es una
+> PISTA, no un hecho verificado.
+
 > Documento de referencia para buscar literatura. Describe EXACTAMENTE lo que
 > corre hoy (código), no lo idealizado. Fuentes: `config.py`, `scrapers/*.py`,
 > `api/correlacion.py`, `backfill_scores.py`. Generado tras auditoría jun-2026.
