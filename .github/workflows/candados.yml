@@ -1,0 +1,98 @@
+name: Candados de datos (diario)
+
+# POR QUÉ EXISTE
+#   El repo tenía 5 validadores y la CI corría UNO. `validar_fiat_vs_numeralia`,
+#   `_validar_100` y `auditoria_externa` existían y no los ejecutaba nadie —
+#   igual que el rebuild de senadores, que era "one-off" y llevaba dos meses
+#   revertido: al 18-jul-2026, 103 de 111 senadores publicaban conteos ~84%
+#   arriba de senado.gob.mx y nadie se enteró.
+#
+#   Un validador que nadie corre no es un candado, es un adorno. Este workflow
+#   los corre a diario y FALLA RUIDOSAMENTE (GitHub manda correo) para que estar
+#   equivocado sea visible solo, sin depender de que alguien lo revise.
+#
+# $0: solo CPU + lectura de la BD publicada.
+
+on:
+  schedule:
+    - cron: '0 11 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "candados-datos"
+  cancel-in-progress: false
+
+jobs:
+  validar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias mínimas
+        run: pip install requests beautifulsoup4
+
+      # Solo LECTURA de la BD. No se re-guarda al cache (lección 15-jul-2026:
+      # un cache envenenado tumbó el pipeline).
+      - name: Obtener semaforo.db
+        uses: actions/cache/restore@v4
+        with:
+          path: semaforo.db
+          key: candados-noexiste-${{ github.run_id }}
+          restore-keys: |
+            semaforo-db-
+
+      - name: Fallback a release si no hay cache
+        run: |
+          if [ ! -f semaforo.db ]; then
+            gh release download db-latest --pattern "semaforo.db*" --clobber
+            [ -f semaforo.db.gz ] && gunzip -f semaforo.db.gz || true
+          fi
+          du -h semaforo.db
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ── CANDADOS DUROS: chequeos deterministas contra la BD. Si fallan,
+      #    el job se pone rojo y llega correo. No dependen de la red.
+      - name: 'CANDADO · Senadores vs senado.gob.mx'
+        id: senadores
+        continue-on-error: true
+        run: python scripts/validar_senadores_vs_oficial.py
+
+      - name: 'CANDADO · Universo FIAT vs Numeralia oficial SIL'
+        id: numeralia
+        continue-on-error: true
+        run: python scripts/validar_fiat_vs_numeralia.py
+
+      # ── INFORMATIVOS: dependen de sitios externos, así que un fallo puede ser
+      #    ruido de red. Se reportan pero NO tumban el job, para que el correo
+      #    de falla siga significando algo real.
+      - name: 'INFO · Auditoría externa de cobertura'
+        continue-on-error: true
+        run: python scripts/auditoria_externa.py || true
+
+      - name: Resumen y veredicto
+        run: |
+          echo "## Candados de datos" >> $GITHUB_STEP_SUMMARY
+          echo "| Candado | Resultado |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Senadores vs senado.gob.mx | ${{ steps.senadores.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Universo FIAT vs Numeralia | ${{ steps.numeralia.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          FALLO=0
+          [ "${{ steps.senadores.outcome }}" != "success" ] && FALLO=1
+          [ "${{ steps.numeralia.outcome }}" != "success" ] && FALLO=1
+          if [ "$FALLO" = "1" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **Los números publicados NO cuadran con la fuente oficial.**" >> $GITHUB_STEP_SUMMARY
+            echo "Revisar el log del candado en rojo antes de mostrar cifras a nadie." >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Los candados duros pasaron." >> $GITHUB_STEP_SUMMARY
