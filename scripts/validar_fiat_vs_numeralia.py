@@ -31,31 +31,51 @@ TIPOS_FIAT = ("Iniciativa", "Proposición con punto de acuerdo")
 TOLERANCIA_PCT = 4.0
 
 
+# ARQUITECTURA (decisión del usuario, may-2026, caso Leti Robles / Camarillo):
+#   Para el SENADO la fuente autoritativa NO es el SIL, es senado.gob.mx
+#   (`senador_instrumento` → `scripts/validar_senadores_vs_oficial.py`).
+#   Medido el 19-jul-2026, el SIL infla al Senado de forma brutal contra lo que
+#   el propio Senado publica:
+#       Iniciativas    oficial 3130 · SIL 6676  (+113%)
+#       Proposiciones  oficial 1509 · SIL 5467  (+262%)
+#   Mientras que Diputados cuadra:
+#       Iniciativas    oficial 6614 · SIL 7661  (+15.8%)
+#       Proposiciones  oficial 1411 · SIL 1435  (+1.7%)
+#
+#   Por eso este validador mide SOLO DIPUTADOS contra la Numeralia del SIL.
+#   Incluir al Senado lo dejaría en rojo permanente por datos que ni siquiera
+#   usamos — y un candado que siempre grita es un candado que se ignora.
+CAMARA_VALIDADA = "Cámara de Diputados"
+
+
 def _conteo_fiat(cur, tipo: str) -> dict:
-    """Devuelve conteos del backbone local para un tipo SIL."""
+    """Conteos del backbone local para un tipo SIL, SOLO Cámara de Diputados."""
     total = cur.execute(
-        "SELECT COUNT(*) FROM sil_documentos WHERE tipo = ?", (tipo,)
+        "SELECT COUNT(*) FROM sil_documentos WHERE tipo = ? AND camara = ?",
+        (tipo, CAMARA_VALIDADA),
     ).fetchone()[0]
     sin_dup = cur.execute(
         """SELECT COUNT(*) FROM sil_documentos
-           WHERE tipo = ?
+           WHERE tipo = ? AND camara = ?
              AND COALESCE(es_duplicado_cross_camara, 0) = 0""",
-        (tipo,),
+        (tipo, CAMARA_VALIDADA),
     ).fetchone()[0]
     con_fecha = cur.execute(
         """SELECT COUNT(*) FROM sil_documentos
-           WHERE tipo = ?
+           WHERE tipo = ? AND camara = ?
              AND COALESCE(es_duplicado_cross_camara, 0) = 0
              AND fecha_presentacion IS NOT NULL
              AND fecha_presentacion != ''""",
-        (tipo,),
+        (tipo, CAMARA_VALIDADA),
     ).fetchone()[0]
     return {"total": total, "sin_dup": sin_dup, "con_fecha": con_fecha}
 
 
 def main() -> int:
-    print("Descargando numeralia oficial SIL (LXVI, ambas cámaras)...")
-    numeralia = obtener_numeralia(legislatura="66", camara="todas")
+    print("Descargando numeralia oficial SIL (LXVI, DIPUTADOS).")
+    print("El Senado se valida aparte contra senado.gob.mx "
+          "(validar_senadores_vs_oficial.py) — el SIL lo infla +113%/+262%.")
+    numeralia = obtener_numeralia(legislatura="66", camara="diputados")
     if not numeralia:
         print("ERROR: numeralia vacía. Abortando.")
         return 1
@@ -63,7 +83,7 @@ def main() -> int:
     conn = get_connection()
     cur = conn.cursor()
 
-    print("\n=== Validación FIAT vs Numeralia oficial SIL (LXVI) ===\n")
+    print("\n=== Validación FIAT vs Numeralia oficial SIL (LXVI · Diputados) ===\n")
     header = (
         f"{'Tipo':34} {'Oficial':>9} {'FIAT':>8} {'FIAT ND':>10} "
         f"{'Δ abs':>8} {'Δ %':>8} {'Estado':>10}"
