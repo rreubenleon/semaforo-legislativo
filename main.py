@@ -2507,6 +2507,21 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     except Exception as e:
         logger.warning(f"Vinculación legisladores falló (no crítico): {e}")
 
+    # Paso 3e.1: los bloques colectivos que el parser no supo partir se
+    # guardaban con co_firmantes='' → contaban como trabajo PERSONAL en la
+    # tarjeta ("Ini · solo") en vez de "+N bancada". Medido 19-jul-2026:
+    # 3,603 filas (3,064 Senado + 539 Diputados). El origen ya está corregido;
+    # esto recoloca las que quedaron mal y se autocura en cada corrida.
+    # Idempotente: solo toca filas personales cuyo presentador delata varios
+    # firmantes. No borra ni inserta.
+    try:
+        from scripts.reparar_colectivas_mal_marcadas import reparar
+        n_rec = reparar()
+        if n_rec:
+            logger.info(f"Colectivas recolocadas en bancada: {n_rec}")
+    except Exception as e:
+        logger.warning(f"Reparación de colectivas falló (no crítico): {e}")
+
     try:
         n_reacciones = calcular_reacciones_historicas()
         logger.info(f"Reacciones históricas: {n_reacciones} calculadas")
