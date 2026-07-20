@@ -141,6 +141,21 @@ def clasificar_por_titulo(titulo: str) -> str:
             if t.startswith(p):
                 return f"Otro:{sub}"
 
+    # ── Segunda pasada: marcador EN MEDIO del título ────────────────────
+    # Los asuntos de la Comisión Permanente empiezan con el bloque de autores
+    # ("De senadoras y senadores Alejandro Moreno Cárdenas, Manuel Añorve
+    # Baños, …, con proyecto de decreto por el que…"), así que el marcador del
+    # instrumento nunca queda al inicio y `startswith` fallaba: 610 asuntos
+    # reales de la Permanente quedaron como "Otro" (verificado 19-jul-2026
+    # contra senado.gob.mx/permanente/CP66-2ASPR).
+    # Las frases son fijas del lenguaje parlamentario, así que buscarlas en
+    # cualquier posición no arrastra convocatorias ni reportes de inasistencia.
+    if "con proyecto de decreto" in t or "con proyecto de ley" in t:
+        return "Iniciativa"
+    if "con punto de acuerdo" in t or "proposicion con punto de acuerdo" in t \
+            or "proposición con punto de acuerdo" in t:
+        return "Proposición con punto de acuerdo"
+
     return ""
 
 
@@ -148,10 +163,24 @@ def main(dry_run: bool = False):
     conn = get_connection()
     cur = conn.cursor()
 
+    # Normalizar la ortografía duplicada: el SIL devuelve el mismo tipo con
+    # mayúsculas distintas y quedaban como DOS tipos separados, partiendo los
+    # conteos en dos (19-jul-2026: 486 "con Punto de Acuerdo" + 356 "con punto
+    # de acuerdo" en la Permanente eran el mismo tipo).
+    if not dry_run:
+        n_norm = cur.execute(
+            """UPDATE sil_documentos SET tipo = 'Proposición con punto de acuerdo'
+               WHERE tipo = 'Proposición con Punto de Acuerdo'"""
+        ).rowcount
+        if n_norm:
+            print(f"Ortografía normalizada: {n_norm} filas → 'Proposición con punto de acuerdo'")
+        conn.commit()
+
     rows = cur.execute("""
         SELECT id, tipo, titulo
         FROM sil_documentos
-        WHERE (tipo='Asunto' OR tipo='' OR tipo IS NULL)
+        WHERE (tipo='Asunto' OR tipo='' OR tipo IS NULL
+               OR tipo='Otro' OR tipo LIKE 'Otro:%')
     """).fetchall()
 
     print(f"Filas candidatas a reclasificar: {len(rows)}")
