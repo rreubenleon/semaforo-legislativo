@@ -31,11 +31,11 @@ from db import get_connection
 from scrapers.legisladores import _es_bloque_colectivo
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--dry-run", action="store_true")
-    args = ap.parse_args()
+def reparar(dry_run: bool = False) -> int:
+    """Recoloca en bancada las colectivas mal marcadas. Devuelve cuántas.
 
+    Llamable desde el pipeline (main.py paso 3e.1). Idempotente.
+    """
     conn = get_connection()
     filas = conn.execute("""
         SELECT a.id, a.nombre_presentador, l.camara
@@ -50,23 +50,22 @@ def main() -> int:
             corregir.append((presentador, rid))
             por_camara[camara] = por_camara.get(camara, 0) + 1
 
-    print(f"Filas 'personales' revisadas: {len(filas)}")
-    print(f"Colectivas mal marcadas: {len(corregir)}")
-    for cam, n in sorted(por_camara.items(), key=lambda x: -x[1]):
-        print(f"  {cam}: {n}")
-
-    if args.dry_run:
-        print("\nDRY-RUN: no se modifica nada.")
-        return 0
-    if not corregir:
-        print("Nada que corregir.")
-        return 0
+    if dry_run or not corregir:
+        return len(corregir)
 
     conn.executemany(
         "UPDATE actividad_legislador SET co_firmantes = ? WHERE id = ?", corregir
     )
     conn.commit()
-    print(f"\n✅ {len(corregir)} filas re-marcadas como colectivas.")
+    return len(corregir)
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--dry-run", action="store_true")
+    args = ap.parse_args()
+    n = reparar(dry_run=args.dry_run)
+    print(("DRY-RUN · " if args.dry_run else "") + f"colectivas mal marcadas: {n}")
     return 0
 
 
