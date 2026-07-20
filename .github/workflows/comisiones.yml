@@ -121,6 +121,16 @@ jobs:
           echo "Paso resuelto: $PASO"
 
       # Lunes: primero gaceta, luego SITL batch 1
+      # Turnos de la Comisión Permanente desde senado.gob.mx. Durante el
+      # receso la Permanente es lo ÚNICO que sesiona y el SIL no guarda su
+      # turno: se perdía el 92% (110 de 1,312 asuntos, medido 19-jul-2026),
+      # que es por lo que la sección se veía estancada desde abril.
+      # Debe correr ANTES del paso Gaceta para que los turnos nuevos ya
+      # estén en la BD cuando se calculen las estadísticas por comisión.
+      - name: Turnos de la Permanente (fuente oficial Senado)
+        run: python scripts/scrape_permanente_turnos.py
+        continue-on-error: true
+
       - name: Paso Gaceta (datos SQLite → D1)
         if: steps.paso.outputs.paso == 'lunes' || steps.paso.outputs.paso == 'gaceta' || steps.paso.outputs.paso == 'todo'
         run: python scripts/refresh_comisiones_sitl.py --paso gaceta --ignorar-modo-receso
