@@ -64,14 +64,6 @@ HEADERS = {
 PERTS = [1, 2, 3, 4, 6, 8]
 DELAY = 0.25
 
-# El caché y el checkpoint eran PERMANENTES: `fetch_html` devolvía el HTML
-# guardado para siempre y el checkpoint saltaba a todo diputado ya presente en
-# el JSON. Resultado: el scrape corría en verde cada miércoles sin volver a
-# pedir NADA, y el espejo oficial de Diputados quedó congelado el 28-abr-2026
-# (descubierto el 19-jul, ~3 meses después). Ahora el caché expira: los
-# periodos cerrados se reutilizan, pero lo reciente se vuelve a bajar.
-CACHE_TTL_DIAS = 6
-
 CACHE_DIR = ROOT / "eval" / "diputados" / "cache_sitl"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 OUT_JSON = ROOT / "dashboard" / "diputados_lxvi_oficial.json"
@@ -110,12 +102,9 @@ def cargar_diputados_bd() -> list[dict]:
     return [dict(r) for r in rows]
 
 
-def fetch_html(url: str, cache_path: Path, ttl_dias: float = CACHE_TTL_DIAS) -> str:
+def fetch_html(url: str, cache_path: Path) -> str:
     if cache_path.exists() and cache_path.stat().st_size > 100:
-        edad_dias = (time.time() - cache_path.stat().st_mtime) / 86400.0
-        if edad_dias < ttl_dias:
-            return cache_path.read_text(encoding="utf-8")
-        logger.debug(f"  caché vencido ({edad_dias:.1f}d), re-descargando {url}")
+        return cache_path.read_text(encoding="utf-8")
     try:
         r = requests.get(url, headers=HEADERS, timeout=20, verify=False)
         r.encoding = "utf-8"
@@ -244,22 +233,9 @@ def main():
 
     # Checkpoint: si JSON existe, cargar diputados ya hechos y skipear.
     # Crítico para resiliencia ante timeouts (60min original, 180min ahora).
-    # OJO (19-jul-2026): el checkpoint es para reanudar tras un timeout DENTRO
-    # de una corrida, NO para saltarse semanas. Si el JSON ya es viejo hay que
-    # volver a bajar todo, o el espejo se congela (fue lo que pasó: 28-abr →
-    # 19-jul en verde, sin refrescar un solo diputado).
     out_path = ROOT / "dashboard" / "diputados_lxvi_oficial.json"
     ya_hechos = set()
-    _cp_vencido = False
     if out_path.exists():
-        _edad_cp = (time.time() - out_path.stat().st_mtime) / 86400.0
-        if _edad_cp >= CACHE_TTL_DIAS:
-            _cp_vencido = True
-            logger.info(
-                f"Checkpoint VENCIDO ({_edad_cp:.1f} días): se ignora y se "
-                f"re-scrapea a todos los diputados."
-            )
-    if out_path.exists() and not _cp_vencido:
         try:
             existing = json.loads(out_path.read_text())
             for d in existing.get("diputados", []):
