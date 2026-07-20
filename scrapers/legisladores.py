@@ -640,6 +640,36 @@ def scrape_senadores(max_detalle=150):
 # ────────────────────────────────────────────
 # Poblar actividad_legislador desde SIL
 # ────────────────────────────────────────────
+# Marcadores de BLOQUE COLECTIVO en el campo `presentador` del SIL.
+# Por qué existe (19-jul-2026): cuando `_parsear_presentadores` no logra
+# partir un bloque colectivo devuelve UN solo autor, y entonces la fila se
+# guardaba con co_firmantes='' — es decir, contada como trabajo INDIVIDUAL.
+# Medido: 3,064 filas del Senado y 539 de Diputados marcadas como personales
+# siendo colectivas (ej. "de Legisladoras y Legisladores De senadoras y
+# senadores Alejandro Moreno Cárdenas, Manuel Añorve…" = 862 filas).
+# Es la raíz del caso Camarillo (may-2026) y de que el número de control de
+# Beatriz Mojica pasara de 40 a 61 iniciativas personales.
+_MARCAS_COLECTIVO = (
+    "senadoras y senadores",
+    "legisladoras y legisladores",
+    "diputadas y diputados",
+    "grupo parlamentario",
+    "integrantes de",
+    "integrantes del",
+)
+
+
+def _es_bloque_colectivo(presentador: str) -> bool:
+    """True si el texto del presentador delata varios firmantes."""
+    if not presentador:
+        return False
+    p = presentador.lower()
+    if any(m in p for m in _MARCAS_COLECTIVO):
+        return True
+    # Varios nombres separados por coma en una cadena larga.
+    return p.count(",") >= 2 and len(p) > 60
+
+
 def poblar_actividad_desde_sil():
     """
     Vincula los documentos del SIL existentes con legisladores.
@@ -711,7 +741,9 @@ def poblar_actividad_desde_sil():
                     doc["titulo"],
                     doc["comision"],
                     doc["estatus"],
-                    presentador if len(autores) > 1 else "",
+                    # Colectiva si el parser encontró varios autores O si el
+                    # texto delata un bloque colectivo que no supo partir.
+                    presentador if (len(autores) > 1 or _es_bloque_colectivo(presentador)) else "",
                 ))
                 vinculados += 1
             except (sqlite3.IntegrityError, ValueError):
