@@ -241,6 +241,7 @@ TWITTER_ACCOUNTS = [
 
 # Twitter/X API v2 — Bearer Token (PPU plan)
 import os
+import re
 TWITTER_BEARER_TOKEN = os.environ.get("TWITTER_BEARER_TOKEN", "")
 
 # ─────────────────────────────────────────────
@@ -2169,6 +2170,14 @@ def normalizar_comision_senado(nombre_raw):
         return None
 
     nombre = nombre_raw.strip()
+
+    # 0. Comisiones PROPIAS de la Comisión Permanente (Primera/Segunda/Tercera).
+    #    Se guardan como "Primera Comisión de Trabajo: Asuntos Políticos…" o
+    #    como "Tercera Comisión". Son órganos reales del receso; canonizar a
+    #    "Primera/Segunda/Tercera Comisión" para que la sección las agrupe.
+    m_perm = re.match(r"\s*(primera|segunda|tercera)\s+comisi[óo]n", nombre, re.I)
+    if m_perm:
+        return m_perm.group(1).capitalize() + " Comisión"
 
     # 1. Match exacto (case-insensitive)
     if nombre.lower() in _COMISIONES_SENADO_INDEX:
