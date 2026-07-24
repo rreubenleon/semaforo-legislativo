@@ -1455,9 +1455,13 @@ def paso_5d_elo_legisladores():
         # 'Cámara de Senadores' vs 'Senado' rompía el dedup). Idempotente.
         # Corre sobre el DB cacheado de CI que aún trae los fantasmas
         # viejos (629 Márquez dup 540, 640 Castro dup 570 → "100% 1/1").
+        # --d1: además de limpiar local, purga el fantasma de D1 (el radar
+        # lee de ahí; el sync normal solo hace UPDATE, nunca DELETE). Sin
+        # esto los fantasmas vivían en el radar aunque se limpiaran local
+        # (caso id 685, 23-jul-2026). El token ya está en el env del pipeline.
         subprocess.run(
-            [sys.executable, str(Path(__file__).parent / "scripts" / "limpiar_fantasmas_sil_inferido.py")],
-            capture_output=True, text=True, timeout=60,
+            [sys.executable, str(Path(__file__).parent / "scripts" / "limpiar_fantasmas_sil_inferido.py"), "--d1"],
+            capture_output=True, text=True, timeout=120,
         )
         result = subprocess.run(
             [sys.executable, str(Path(__file__).parent / "scripts" / "calcular_elo_legisladores.py"), "--guardar"],
