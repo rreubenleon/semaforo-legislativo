@@ -92,9 +92,23 @@ def inferir_camara(nombre_elo, camara_original):
     return canonizar_camara(camara_original)
 
 
+# Marcadores de contaminación del campo presentador: cuando el "nombre" que
+# viene del ELO en realidad arrastra el texto del asunto ("Fulano, del Grupo
+# Parlamentario…, con proyecto de decreto…. Se dio turno directo a…"). El
+# nombre real termina antes de cualquiera de estos. (23-jul-2026: sin este
+# corte se creó el fantasma id 685 "Enrique Vargas del Villar, del Grupo…".)
+_CORTE_NOMBRE = re.compile(
+    r",|\bde[l]?\s+Grupo\b|\bcon\s+proyecto\b|\bcon\s+punto\b"
+    r"|\bSe\s+dio\s+turno\b|\bque\s+(?:reforma|adiciona|expide|deroga|abroga)\b",
+    re.IGNORECASE)
+
+
 def limpiar_nombre(nombre_elo):
-    """'Dip. Ivonne Aracely Ortega Pacheco' → 'Ivonne Aracely Ortega Pacheco'"""
-    return re.sub(r"^(Dip\.|Sen\.)\s*", "", nombre_elo).strip()
+    """'Dip. Ivonne Aracely Ortega Pacheco' → 'Ivonne Aracely Ortega Pacheco'.
+    También corta la cola de presentador/turno si el ELO la arrastró."""
+    n = re.sub(r"^(Dip\.|Sen\.)\s*", "", nombre_elo or "").strip()
+    n = _CORTE_NOMBRE.split(n)[0].strip()
+    return n
 
 
 def main():
