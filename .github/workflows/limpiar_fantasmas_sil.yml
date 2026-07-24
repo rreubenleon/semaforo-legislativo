@@ -34,17 +34,14 @@ jobs:
           path: ~/.cache/pip
           key: pip-${{ hashFiles('requirements.txt') }}
 
-      - uses: actions/cache/restore@v4
-        with:
-          path: semaforo.db
-          key: semaforo-db-limpfant-${{ github.run_id }}
-          restore-keys: |
-            semaforo-db-
-
+      # Bajar SIEMPRE db-latest (tiene el estado actual, con los fantasmas
+      # por purgar). No usar el cache compartido: el pipeline cada-4h borra
+      # el fantasma LOCAL sin --d1, y si ese DB llega al cache, este workflow
+      # ya no vería el stub y no purgaría D1 (la carrera del 23-jul).
       - run: |
-          if [ ! -f semaforo.db ]; then
-            gh release download db-seed-v4 --pattern "semaforo.db" --clobber
-          fi
+          gh release download db-latest --pattern "semaforo.db*" --clobber
+          [ -f semaforo.db.gz ] && gunzip -f semaforo.db.gz || true
+          du -h semaforo.db
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -97,8 +94,3 @@ jobs:
           for n,k in dups[:10]:
               print(f'  {n} ×{k}')"
 
-      - uses: actions/cache/save@v4
-        if: always()
-        with:
-          path: semaforo.db
-          key: semaforo-db-limpfant-${{ github.run_id }}
