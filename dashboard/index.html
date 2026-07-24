@@ -4836,10 +4836,14 @@
                                         )}
                                     </div>
                                 </div>
-                                {/* Dict / Inic / Prop / Total: SITL para Diputados, Gaceta para Senado */}
+                                {/* Dict / Inic / Prop / Total: dato OFICIAL (sitl) para AMBAS cámaras
+                                   cuando existe. Diputados = SITL diputados; Senado =
+                                   comisiones.senado.gob.mx (scrapers/comisiones_senado_asuntos.py,
+                                   refrescado por comisiones_senado_asuntos.yml). Si una comisión no
+                                   tiene turnadas oficiales, cae a la gaceta. */}
                                 {(() => {
-                                    const useSitl = c.camara === 'Diputados' && c.sitl;
-                                    const dict = useSitl ? (c.sitl.aprobadas || 0) : (c.tipos?.dictamen || 0);
+                                    const useSitl = c.sitl && c.sitl.turnadas != null;
+                                    const dict = useSitl ? (c.sitl.aprobadas ?? c.sitl.desglose?.dictamenes ?? 0) : (c.tipos?.dictamen || 0);
                                     const inic = useSitl ? (c.sitl.iniciativas?.turnadas || 0) : (c.tipos?.iniciativa || 0);
                                     const prop = useSitl ? (c.sitl.proposiciones?.turnadas || 0) : (c.tipos?.proposicion || 0);
                                     const total = useSitl ? (c.sitl.turnadas || 0) : (c.total_docs || 0);
