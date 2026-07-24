@@ -34,6 +34,7 @@ Uso:
     python scripts/limpiar_fantasmas_sil_inferido.py
 """
 import argparse
+import re
 import logging
 import sqlite3
 import subprocess
@@ -59,6 +60,21 @@ TABLAS_FK = [
     "legisladores_trayectoria",
     "legisladores_perfil",
 ]
+
+
+# Mismo corte que completar_legisladores_desde_elo.limpiar_nombre: si un stub
+# arrastró la cola del presentador/turno ("Fulano, del Grupo…, con proyecto…"),
+# hay que limpiarlo ANTES de intentar el match, o no reconoce al legislador real
+# y el fantasma sobrevive (caso id 685 "Enrique Vargas del Villar, del Grupo…").
+_CORTE_NOMBRE = re.compile(
+    r",|\bde[l]?\s+Grupo\b|\bcon\s+proyecto\b|\bcon\s+punto\b"
+    r"|\bSe\s+dio\s+turno\b|\bque\s+(?:reforma|adiciona|expide|deroga|abroga)\b",
+    re.IGNORECASE)
+
+
+def _cortar_cola(nombre):
+    n = re.sub(r"^(Dip\.|Sen\.)\s*", "", nombre or "").strip()
+    return _CORTE_NOMBRE.split(n)[0].strip()
 
 
 def canon(camara):
@@ -95,7 +111,7 @@ def main():
 
     for s in stubs:
         sid, nom, cam = s["id"], s["nombre"], s["camara"]
-        nn = normalizar_nombre(nom)
+        nn = normalizar_nombre(_cortar_cola(nom))
         c = canon(cam)
         mid = encontrar_legislador_id(nn, c, idx)
         if not mid or mid == sid:
