@@ -14,6 +14,9 @@ import json
 import logging
 import argparse
 import os
+import sqlite3  # nivel módulo: paso_5_scoring usa `except sqlite3.IntegrityError`
+                # sin importarlo → NameError que tumbaba el pipeline cuando dos
+                # corridas caían en la misma hora (scores_intradia UNIQUE). 27-jul.
 import sys
 import time
 from datetime import datetime, timezone
