@@ -71,19 +71,32 @@ def _conteo_fiat(cur, tipo: str) -> dict:
     return {"total": total, "sin_dup": sin_dup, "con_fecha": con_fecha}
 
 
-def main() -> int:
-    print("Descargando numeralia oficial SIL (LXVI, DIPUTADOS).")
-    print("El Senado se valida aparte contra senado.gob.mx "
-          "(validar_senadores_vs_oficial.py) — el SIL lo infla +113%/+262%.")
-    numeralia = obtener_numeralia(legislatura="66", camara="diputados")
-    if not numeralia:
-        print("ERROR: numeralia vacía. Abortando.")
-        return 1
+def _conteo_sitl(cur, tipo: str) -> int:
+    """SITL (diputado_instrumento): instrumentos DISTINTOS por tipo. Es la
+    fuente canónica de Diputados (decisión del usuario 24-jul-2026: se ancla al
+    SITL, no a la Numeralia, que cuenta un universo distinto)."""
+    like = "%iniciativa%" if "iniciativa" in tipo.lower() else "%proposici%"
+    return cur.execute(
+        "SELECT COUNT(DISTINCT seguimiento_id) FROM diputado_instrumento "
+        "WHERE LOWER(tipo) LIKE ?",
+        (like,),
+    ).fetchone()[0]
 
+
+def main() -> int:
+    print("Candado Diputados: FIAT (sil_documentos) vs SITL (diputado_instrumento).")
+    print("El Senado se valida aparte contra senado.gob.mx "
+          "(validar_senadores_vs_oficial.py).")
     conn = get_connection()
     cur = conn.cursor()
 
-    print("\n=== Validación FIAT vs Numeralia oficial SIL (LXVI · Diputados) ===\n")
+    sitl_total = cur.execute(
+        "SELECT COUNT(DISTINCT seguimiento_id) FROM diputado_instrumento").fetchone()[0]
+    if not sitl_total:
+        print("ERROR: diputado_instrumento vacío (¿falta el scrape SITL?). Abortando.")
+        return 1
+
+    print("\n=== Validación FIAT vs SITL oficial (LXVI · Diputados) ===\n")
     header = (
         f"{'Tipo':34} {'Oficial':>9} {'FIAT':>8} {'FIAT ND':>10} "
         f"{'Δ abs':>8} {'Δ %':>8} {'Estado':>10}"
@@ -93,7 +106,7 @@ def main() -> int:
 
     fallas = 0
     for tipo in TIPOS_FIAT:
-        oficial = numeralia.get(tipo, {}).get("presentados", 0)
+        oficial = _conteo_sitl(cur, tipo)
         fiat = _conteo_fiat(cur, tipo)
         delta = fiat["sin_dup"] - oficial
         pct = (100.0 * delta / oficial) if oficial else 0.0
@@ -105,9 +118,6 @@ def main() -> int:
             f"{fiat['sin_dup']:>10} {delta:>+8} {pct:>+7.1f}% {estado:>10}"
         )
 
-    # Totales
-    total_oficial = numeralia.get("Totales de Asuntos", {}).get("presentados", 0)
-    print(f"\nTotal oficial LXVI (todos los tipos): {total_oficial}")
 
     # Fechas faltantes (debuda del barrido sin detalle)
     print("\nCobertura de fecha_presentacion en backbone FIAT:")
@@ -122,18 +132,6 @@ def main() -> int:
             f"({pct_fecha:.1f}%)"
         )
 
-    # Desglose adicional: aprobados como señal de calidad del pipeline
-    print("\nReferencia de flujo oficial (LXVI completo):")
-    for tipo in TIPOS_FIAT:
-        n = numeralia.get(tipo, {})
-        if not n:
-            continue
-        print(
-            f"  {tipo[:34]:34} "
-            f"pres={n['presentados']:>5} apro={n['aprobados']:>4} "
-            f"dese={n['desechados']:>4} pend={n['pendientes']:>5} "
-            f"reti={n['retirados']:>3}"
-        )
 
     close_db()
 
