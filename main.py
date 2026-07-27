@@ -2511,6 +2511,24 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     except Exception as e:
         logger.warning(f"Vinculación legisladores falló (no crítico): {e}")
 
+    # Paso 3e.0: RECONCILIAR SENADORES contra la fuente oficial.
+    # poblar_actividad_desde_sil llena a los senadores desde el SIL, que los
+    # infla ~2.5x contra senado.gob.mx (decisión de paridad 24-jul-2026:
+    # la fuente canónica del Senado es senado.gob.mx, no el SIL). Este rebuild
+    # SOBREESCRIBE la actividad de los senadores CON cobertura oficial
+    # (senador_instrumento) — baja de 2.54x a ~0.92x — y deja INTACTOS a los
+    # ~38 sin cobertura (conservan el SIL). Corre en CADA corrida (no one-off:
+    # esa fue la causa de que el fix de mayo llevara 2 meses revertido).
+    try:
+        from scripts.rebuild_actividad_senadores import rebuild_senadores
+        r = rebuild_senadores()
+        logger.info(
+            f"Senado reconciliado con senado.gob.mx: {r.get('insertados', 0)} filas "
+            f"({r.get('senadores', 0)} sen.; {r.get('sin_cobertura', 0)} sin cobertura oficial)"
+        )
+    except Exception as e:
+        logger.warning(f"Reconciliación senadores falló (no crítico): {e}")
+
     # Paso 3e.1: los bloques colectivos que el parser no supo partir se
     # guardaban con co_firmantes='' → contaban como trabajo PERSONAL en la
     # tarjeta ("Ini · solo") en vez de "+N bancada". Medido 19-jul-2026:
