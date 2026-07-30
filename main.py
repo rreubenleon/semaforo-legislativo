@@ -2556,6 +2556,20 @@ def ejecutar_pipeline_completo(skip_trends=False, dias_gaceta=7):
     sync_db()  # Sincronizar datos SIL + legisladores con Turso
 
     paso_4_clasificacion_nlp()
+
+    # Reconciliar la categoría de la Comisión Permanente con el turno OFICIAL de
+    # senado.gob.mx. El clasificador por keywords no distingue el OBJETO del
+    # bloque de autor/partido del título y mandaba a electoral_politico asuntos
+    # de salud, niñez, economía, etc. El turno ("SE DIO TURNO A LA COMISIÓN DE
+    # X") es la señal oficial de la materia. No crítico: si el Senado no
+    # responde, se sigue. Ver scripts/reclasificar_permanente_oficial.py
+    # (bug reportado 30-jul-2026). D1 se propaga vía sync/radar.yml.
+    try:
+        from scripts.reclasificar_permanente_oficial import reclasificar
+        reclasificar(dry_run=False, a_d1=False)
+    except Exception as e:
+        logger.warning(f"Reconciliación Permanente falló (no crítico): {e}")
+
     scores = paso_5_scoring()
     paso_5b_resoluciones()
     paso_5c_indice_busqueda()
