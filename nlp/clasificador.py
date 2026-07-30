@@ -322,6 +322,60 @@ SEÑALES_LEGISLATIVAS = [
 ]
 
 
+# Bloque de autores de los asuntos de la Gaceta (Permanente/Senado): el título
+# arranca con "De la Dip. X, del Grupo Parlamentario del Partido Y, con proyecto
+# de decreto…". Ese preámbulo trae "partido", "grupo parlamentario", nombres de
+# partido — keywords ELECTORALES — que ahogaban el tema real y mandaban a
+# electoral_politico iniciativas de vehicular, Banco de México, niñez, etc.
+# (bug reportado 30-jul-2026). Se recorta antes de clasificar: se clasifica el
+# OBJETO, no quién lo firma. Solo aplica cuando hay preámbulo de autor; los
+# títulos ya limpios (SIL regular, notas de medios) no coinciden y no se tocan.
+_RE_PREAMBULO_AUTOR = re.compile(
+    r"^\s*\d*\.?\s*De\s+(?:la|el|las|los|l)\s+(?:Dip\.|Sen\.|senador|diputad|legislador).*?"
+    r"(con\s+proyecto\s+de\s+decreto|con\s+punto\s+de\s+acuerdo"
+    r"|proposici[oó]n\s+con\s+punto|que\s+(?:reforma|adiciona|expide|deroga|abroga))",
+    re.IGNORECASE | re.DOTALL)
+
+
+def quitar_preambulo_autor(titulo):
+    """Devuelve el título sin el bloque de autores/partido, si lo tiene."""
+    if not titulo:
+        return titulo
+    m = _RE_PREAMBULO_AUTOR.search(titulo)
+    return titulo[m.start(1):] if m else titulo
+
+
+# "Estados Unidos Mexicanos" es el nombre OFICIAL del país; disparaba el keyword
+# "estados unidos" (EUA) → relaciones_exteriores. Medido 30-jul-2026: 33 de 149
+# asuntos de la Permanente en relaciones_exteriores eran falsos positivos por
+# esto. Se neutraliza antes de clasificar (la referencia a EUA de verdad usa
+# "Estados Unidos de América" o "estadounidense", que no coinciden con esto).
+_RE_EUM = re.compile(r"estados unidos mexicanos", re.IGNORECASE)
+
+
+# Materia por artículo constitucional. Muchas reformas de la Permanente traen un
+# título pelón ("reforma el párrafo X del artículo N de la Constitución") y la
+# sinopsis vacía: el TEMA real está en el número de artículo, no en palabras
+# clave. Ej: art. 28 = competencia económica y Banco de México → economía. Solo
+# artículos de materia INEQUÍVOCA (no 4, 27, 73, que son mixtos). Señal fuerte,
+# no absoluta: si el objeto trae keywords más específicas, esas mandan.
+_ART_CONST_CAT = {
+    3: "educacion", 5: "trabajo", 28: "economia_hacienda",
+    41: "electoral_politico", 115: "administracion", 123: "trabajo",
+}
+_RE_ART_CONST = re.compile(
+    r"art[íi]culo\s+(\d{1,3})\s*(?:o\.?|º|°|bis)?.{0,80}?constituci[oó]n",
+    re.IGNORECASE | re.DOTALL)
+
+
+def materia_constitucional(texto):
+    """Categoría implícita por el artículo constitucional citado, o None."""
+    if not texto:
+        return None
+    m = _RE_ART_CONST.search(texto)
+    return _ART_CONST_CAT.get(int(m.group(1))) if m else None
+
+
 def clasificar_texto(titulo, resumen="", comision=None):
     """
     Clasifica un texto en las 17 categorías legislativas.
@@ -335,6 +389,15 @@ def clasificar_texto(titulo, resumen="", comision=None):
     - Boost por señales de instrumentos legislativos
     - Boost por comisión dictaminadora (si se conoce)
     """
+    # Recortar el bloque de autores/partido antes de todo (evita que el
+    # preámbulo mande el asunto a electoral_politico). Ver quitar_preambulo_autor.
+    titulo = quitar_preambulo_autor(titulo)
+
+    # Neutralizar "Estados Unidos Mexicanos" (nombre del país) para que no
+    # dispare relaciones_exteriores. Ver _RE_EUM.
+    titulo = _RE_EUM.sub("México", titulo or "")
+    resumen = _RE_EUM.sub("México", resumen or "")
+
     # Filtro 1: Excluir deportes y entretenimiento
     if _es_contexto_no_legislativo(titulo, resumen):
         return {}
@@ -432,6 +495,14 @@ def clasificar_texto(titulo, resumen="", comision=None):
 
         if score >= NLP_CONFIG["min_confianza"]:
             scores[cat_clave] = round(score, 4)
+
+    # Materia por artículo constitucional: para reformas con título pelón y sin
+    # sinopsis, el artículo citado revela el tema (art. 28 → economía, etc.).
+    # Señal fuerte: si no había un match de keywords más alto, gana.
+    cat_art = materia_constitucional(f"{titulo} {resumen}")
+    if cat_art:
+        piso = max(scores.values(), default=0.0)
+        scores[cat_art] = round(max(scores.get(cat_art, 0.0), piso, 0.6) + 0.15, 4)
 
     # Boost por comisión dictaminadora: si el documento tiene comisión asignada,
     # la categoría correspondiente recibe un boost fuerte. Si la categoría no tenía
