@@ -260,6 +260,11 @@ async function handleRadar(request, env) {
   const categoria = (url.searchParams.get('categoria') || '').trim();
   const q = (url.searchParams.get('q') || '').trim().toLowerCase();
   const sort = (url.searchParams.get('sort') || 'hit_rate').trim();
+  // "¿Quién legisla más sobre X?": rankea por conteo de instrumentos
+  // individuales del tema (columna temas_json). Se valida contra [a-z_] para
+  // poder inyectarlo seguro en el path JSON (no admite comillas ni inyección).
+  const temaRaw = (url.searchParams.get('tema') || '').trim();
+  const tema = /^[a-z_]+$/.test(temaRaw) ? temaRaw : '';
   const pagina = Math.max(1, parseInt(url.searchParams.get('pagina') || '1') || 1);
   // Cap subido a 2000 para soportar la sub-pestaña 'Permanente' del Radar
   // que necesita el universo LXVI completo (~684 legisladores) para
@@ -283,14 +288,24 @@ async function handleRadar(request, env) {
     // Matchup: A primero, F al final
     matchup: "CASE s.matchup_grade WHEN 'A' THEN 1 WHEN 'B' THEN 2 WHEN 'C' THEN 3 WHEN 'D' THEN 4 WHEN 'F' THEN 5 ELSE 6 END ASC",
   };
-  const orderSql = orderMap[sort] || orderMap.hit_rate;
+  // Si se pide un tema, el orden es por conteo de instrumentos en ese tema
+  // (tema ya validado a [a-z_], seguro para interpolar en el path JSON).
+  const orderSql = tema
+    ? `json_extract(s.temas_json, '$.${tema}') DESC NULLS LAST`
+    : (orderMap[sort] || orderMap.hit_rate);
 
   // WHERE dinámico
   const filters = [];
   const params = [];
   if (camara) { filters.push('l.camara = ?'); params.push(camara); }
   if (partido) { filters.push('l.partido = ?'); params.push(partido); }
-  if (categoria) { filters.push('s.categoria_dominante = ?'); params.push(categoria); }
+  if (tema) {
+    // "quién legisla más sobre X": filtra a quienes tienen ≥1 instrumento
+    // individual en el tema (no solo a los que lo tienen como dominante).
+    filters.push(`json_extract(s.temas_json, '$.${tema}') > 0`);
+  } else if (categoria) {
+    filters.push('s.categoria_dominante = ?'); params.push(categoria);
+  }
   if (q && q.length >= 2) {
     // Buscar por palabras independientes en lugar de string completo.
     // Permite que "Karen Michel" matchee "Michel González Márquez"
@@ -344,7 +359,7 @@ async function handleRadar(request, env) {
           l.marcador_continuidad,
           p.biografia, p.anio_nacimiento, p.profesion, p.estudios,
           p.foto_hd_url, p.fuente_scraping,
-          s.categoria_dominante, s.prob_reaccion_dominante,
+          s.categoria_dominante, s.prob_reaccion_dominante, s.temas_json,
           s.iniciativas_proy_15d, s.proposiciones_proy_15d,
           s.promedio_l3p_iniciativas, s.promedio_l3p_proposiciones,
           s.promedio_l3p_iniciativas_col, s.promedio_l3p_proposiciones_col,
@@ -419,6 +434,8 @@ async function handleRadar(request, env) {
       biografia: r.biografia || '',
       fuente_perfil: r.fuente_scraping || '',
       categoria_dominante: r.categoria_dominante,
+      // Desglose de instrumentos individuales por tema {categoria: n}.
+      temas: (() => { try { return r.temas_json ? JSON.parse(r.temas_json) : {}; } catch { return {}; } })(),
       hit_rate: r.prob_reaccion_dominante,
       hit_respondio: r.respondio,
       hit_total: r.total_oportunidades,
