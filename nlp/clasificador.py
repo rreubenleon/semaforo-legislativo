@@ -362,6 +362,7 @@ _RE_EUM = re.compile(r"estados unidos mexicanos", re.IGNORECASE)
 _ART_CONST_CAT = {
     3: "educacion", 5: "trabajo", 28: "economia_hacienda",
     41: "electoral_politico", 115: "administracion", 123: "trabajo",
+    127: "administracion",  # remuneraciones de servidores públicos
 }
 _RE_ART_CONST = re.compile(
     r"art[íi]culo\s+(\d{1,3})\s*(?:o\.?|º|°|bis)?.{0,80}?constituci[oó]n",
