@@ -84,6 +84,7 @@ CREATE TABLE IF NOT EXISTS legisladores_stats (
     legislador_id                 INTEGER PRIMARY KEY REFERENCES legisladores(id),
     fecha_calculo                 TEXT NOT NULL,
     categoria_dominante           TEXT,
+    temas_json                    TEXT,   -- {categoria: n_individual} top 8, por legislador
     iniciativas_proy_15d          REAL,
     proposiciones_proy_15d        REAL,
     prob_reaccion_dominante       REAL,
