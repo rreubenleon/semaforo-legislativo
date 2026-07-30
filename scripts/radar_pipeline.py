@@ -719,6 +719,16 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
     """
     logger.info("Cálculo de hit rate por legislador (recalibrado)…")
 
+    # Migration idempotente: columna temas_json (conteo individual por tema).
+    # Debe existir antes de la UPSERT de más abajo. Si ya existe, se ignora.
+    try:
+        ejecutar_sql_d1(
+            "ALTER TABLE legisladores_stats ADD COLUMN temas_json TEXT;"
+        )
+        logger.info("  Columna temas_json agregada a legisladores_stats")
+    except Exception as e:
+        logger.debug(f"  Migration temas_json: {e}")
+
     # 1) Categoría dominante por legislador.
     #    Mínimo 3 actos en la categoría, ponderado por tipo de instrumento:
     #    iniciativa = 2x, resto = 1x. Las iniciativas reflejan el área de
@@ -736,22 +746,36 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
     # esta categoría enriquecida.
     # Pesos: iniciativa individual=2.0, prop individual=1.0,
     #        iniciativa colectiva=0.6, prop colectiva=0.3.
+    # Categoría ENRIQUECIDA: se prefiere la de sil_documentos (fuente, ~95%
+    # de cobertura en los instrumentos ligados al SIL) sobre la copia
+    # denormalizada de actividad_legislador (~50%, sin rellenar). Con el
+    # fallback la cobertura sube de 50% → ~82% y el tema dominante se vuelve
+    # más preciso (medido 30-jul-2026: cambia en ~38% de legisladores).
     for row in db_ro.execute(
         """
-        SELECT legislador_id, categoria, tipo_instrumento,
-               CASE WHEN co_firmantes IS NULL OR co_firmantes = ''
+        SELECT a.legislador_id AS legislador_id,
+               COALESCE(NULLIF(TRIM(s.categoria), ''), a.categoria) AS cat_src,
+               a.tipo_instrumento AS tipo_instrumento,
+               CASE WHEN a.co_firmantes IS NULL OR a.co_firmantes = ''
                     THEN 1 ELSE 0 END as es_indiv,
                COUNT(*) as n
-        FROM actividad_legislador
-        WHERE legislador_id IS NOT NULL
-          AND categoria IS NOT NULL AND categoria <> ''
-          AND fecha_presentacion >= ?
-        GROUP BY legislador_id, categoria, tipo_instrumento, es_indiv
+        FROM actividad_legislador a
+        LEFT JOIN sil_documentos s ON a.sil_documento_id = s.id
+        WHERE a.legislador_id IS NOT NULL
+          AND a.fecha_presentacion >= ?
+        GROUP BY a.legislador_id, cat_src, a.tipo_instrumento, es_indiv
         """,
         (FECHA_INICIO_LXVI,),
     ):
         leg_id = row["legislador_id"]
-        cat = row["categoria"]
+        # cat_src puede venir multi-token de sil ("salud:0.8,trabajo:0.3"):
+        # tomar solo la categoría primaria.
+        cat_raw = row["cat_src"]
+        if not cat_raw:
+            continue
+        cat = cat_raw.split(":")[0].split(",")[0].strip()
+        if not cat or cat == "sin categoría":
+            continue
         tipo_norm = (row["tipo_instrumento"] or "").lower()
         es_iniciativa = "iniciativa" in tipo_norm
         es_indiv = bool(row["es_indiv"])
@@ -761,9 +785,11 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
             peso = 0.6 if es_iniciativa else 0.3
         n = int(row["n"] or 0)
         leg_bucket = raw_counts.setdefault(leg_id, {})
-        cat_bucket = leg_bucket.setdefault(cat, {"count": 0.0, "score": 0.0})
+        cat_bucket = leg_bucket.setdefault(cat, {"count": 0.0, "score": 0.0, "indiv": 0})
         cat_bucket["count"] += n
         cat_bucket["score"] += n * peso
+        if es_indiv:
+            cat_bucket["indiv"] += n
 
     for leg_id, cats in raw_counts.items():
         # Threshold reducido de ≥3 a ≥1 (decisión 12-may con Opción B).
@@ -784,6 +810,20 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
         f"  Legisladores con categoría dominante (≥3 actos, iniciativa 2x): "
         f"{len(cats_por_leg)}"
     )
+
+    # temas_json: conteo de instrumentos INDIVIDUALES por tema, por legislador.
+    # Alimenta "¿quién legisla más sobre X?" (filtro/orden) y el desglose por
+    # tema en cada card. El dato ya vive en raw_counts (antes se calculaba para
+    # elegir el dominante y se descartaba). Formato {categoria: n}, top 8.
+    temas_por_leg: dict[int, str] = {}
+    for leg_id, cats in raw_counts.items():
+        pares = sorted(
+            ((c, int(v.get("indiv", 0))) for c, v in cats.items()
+             if int(v.get("indiv", 0)) > 0),
+            key=lambda kv: (-kv[1], kv[0]),
+        )[:8]
+        if pares:
+            temas_por_leg[leg_id] = json.dumps(dict(pares), ensure_ascii=False)
 
     # 2) Picos REALES por categoría: z>=1.5 del conteo diario de notas de la
     #    categoría vs su ritmo ordinario (mismo detector estadístico que
@@ -917,7 +957,7 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
     # 4) Calcular hit rate por legislador
     batch_sql: list[str] = []
     ahora = datetime.utcnow().isoformat()
-    stats_rows: list[tuple[int, str, float]] = []
+    stats_rows: list[tuple[int, str, float, str]] = []
     calculados = 0
     distro_hits = {"0": 0, "<25": 0, "<50": 0, "<75": 0, ">=75": 0}
 
@@ -982,7 +1022,7 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
             "total_oportunidades=excluded.total_oportunidades, "
             "fecha_calculo=excluded.fecha_calculo;"
         )
-        stats_rows.append((leg_id, categoria, hit_rate))
+        stats_rows.append((leg_id, categoria, hit_rate, temas_por_leg.get(leg_id, "")))
         calculados += 1
 
         if len(batch_sql) >= 200:
@@ -995,15 +1035,19 @@ def paso_hit_rate(db_ro: sqlite3.Connection) -> dict:
     # 5) Actualizar legisladores_stats (categoria_dominante + prob)
     if stats_rows:
         stats_sqls = []
-        for leg_id, cat, hr in stats_rows:
+        for leg_id, cat, hr, temas in stats_rows:
+            temas_val = _sql_escape(temas) if temas else "NULL"
             stats_sqls.append(
                 "INSERT INTO legisladores_stats "
-                "(legislador_id, fecha_calculo, categoria_dominante, prob_reaccion_dominante) "
-                f"VALUES ({leg_id}, {_sql_escape(ahora)}, {_sql_escape(cat)}, {hr:.4f}) "
+                "(legislador_id, fecha_calculo, categoria_dominante, "
+                "prob_reaccion_dominante, temas_json) "
+                f"VALUES ({leg_id}, {_sql_escape(ahora)}, {_sql_escape(cat)}, "
+                f"{hr:.4f}, {temas_val}) "
                 "ON CONFLICT(legislador_id) DO UPDATE SET "
                 "fecha_calculo=excluded.fecha_calculo, "
                 "categoria_dominante=excluded.categoria_dominante, "
-                "prob_reaccion_dominante=excluded.prob_reaccion_dominante;"
+                "prob_reaccion_dominante=excluded.prob_reaccion_dominante, "
+                "temas_json=excluded.temas_json;"
             )
         for i in range(0, len(stats_sqls), 200):
             ejecutar_sql_d1("\n".join(stats_sqls[i:i + 200]))
