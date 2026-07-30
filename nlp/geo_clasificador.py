@@ -577,6 +577,17 @@ def clasificar_articulos_por_estado(desde_fecha=None):
             url = fila["url"] or ""
             categorias = fila["categorias"] or ""
 
+            # El mapa es de cobertura LEGISLATIVA por estado: solo entran notas
+            # que FIAT clasificó en algún tema. Sin este filtro, notas sin tema
+            # (deportes, espectáculos) se colaban por mencionar un estado — o un
+            # apellido que coincide con un estado (ej. "Guerrero"): así una nota
+            # del Abierto de tenis de Los Cabos aparecía en Guerrero
+            # (bug reportado 30-jul-2026). Medido: quita ~70% de ruido y 31/32
+            # estados conservan cobertura.
+            cat_limpia = categorias.strip()
+            if not cat_limpia or cat_limpia == "sin categoría":
+                continue
+
             estados = clasificar_estado(titulo, resumen)
 
             if not estados:
