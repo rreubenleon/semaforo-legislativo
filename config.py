@@ -1473,6 +1473,7 @@ NLP_CONFIG = {
 COMISION_A_CATEGORIA = [
     # Seguridad y Justicia
     ("seguridad pública", "seguridad_justicia"),
+    ("seguridad ciudadana", "seguridad_justicia"),
     ("justicia", "seguridad_justicia"),
     ("defensa nacional", "seguridad_justicia"),
     ("marina", "seguridad_justicia"),
