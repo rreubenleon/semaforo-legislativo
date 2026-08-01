@@ -2338,6 +2338,9 @@
             const [fQ, setFQ] = useState('');
             const [qInput, setQInput] = useState('');
             const [fSort, setFSort] = useState('hit_rate');
+            // "¿Quién legisla más sobre X?": al elegir tema, el worker rankea por
+            // conteo de instrumentos individuales de ese tema (param tema=).
+            const [fTema, setFTema] = useState('');
 
             // Sub-pestaña: 'todos' (default LXVI completa) | 'permanente' (solo
             // integrantes oficiales de la Comisión Permanente del periodo activo)
@@ -2382,6 +2385,7 @@
                 if (fCamara) params.set('camara', fCamara);
                 if (fPartido) params.set('partido', fPartido);
                 if (fCategoria) params.set('categoria', fCategoria);
+                if (fTema) params.set('tema', fTema);
                 if (fQ) params.set('q', fQ);
 
                 fetch(`${WORKER_URL}/radar?${params.toString()}`)
@@ -2407,19 +2411,20 @@
                     .catch(e => { if (!cancelado) setError(e.message); })
                     .finally(() => { if (!cancelado) setCargando(false); });
                 return () => { cancelado = true; };
-            }, [pagina, fCamara, fPartido, fCategoria, fQ, fSort, vista]);
+            }, [pagina, fCamara, fPartido, fCategoria, fTema, fQ, fSort, vista]);
 
             const limpiarFiltros = () => {
-                setFCamara(''); setFPartido(''); setFCategoria('');
+                setFCamara(''); setFPartido(''); setFCategoria(''); setFTema('');
                 setQInput(''); setFQ(''); setFSort('hit_rate'); setPaginaRadar(1);
             };
 
-            const hayFiltros = fCamara || fPartido || fCategoria || fQ || fSort !== 'hit_rate';
+            const hayFiltros = fCamara || fPartido || fCategoria || fTema || fQ || fSort !== 'hit_rate';
 
             const chips = [];
             if (fCamara) chips.push({ k: 'camara', label: fCamara, clear: () => setFCamara('') });
             if (fPartido) chips.push({ k: 'partido', label: fPartido, clear: () => setFPartido('') });
             if (fCategoria) chips.push({ k: 'categoria', label: _catLabel(fCategoria), clear: () => setFCategoria('') });
+            if (fTema) chips.push({ k: 'tema', label: `Legislan más: ${_catLabel(fTema)}`, clear: () => setFTema('') });
             if (fQ) chips.push({ k: 'q', label: `"${fQ}"`, clear: () => { setQInput(''); setFQ(''); } });
 
             return (
@@ -2514,6 +2519,15 @@
                                     const val = typeof c === 'string' ? c : c.categoria;
                                     const cnt = typeof c === 'object' ? c.n : null;
                                     return <option key={val} value={val}>{_catLabel(val)}{cnt != null ? ` (${cnt})` : ''}</option>;
+                                })}
+                            </select>
+                            <select value={fTema} onChange={e => { setFTema(e.target.value); setPaginaRadar(1); }}
+                                title="Ordena por quién ha presentado MÁS instrumentos individuales sobre el tema"
+                                className="px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg bg-gray-50 hover:bg-white focus:outline-none focus:ring-2 focus:ring-acento/20">
+                                <option value="">Legislan más sobre… · —</option>
+                                {(meta.categorias || []).map(c => {
+                                    const val = typeof c === 'string' ? c : c.categoria;
+                                    return <option key={'t' + val} value={val}>{_catLabel(val)}</option>;
                                 })}
                             </select>
                             <div className="ml-auto flex items-center gap-1.5">
@@ -2774,8 +2788,12 @@
                     {/* Desktop columns */}
                     <div className="hidden md:block text-center">
                         {leg.categoria_dominante ? (
-                            <span className="text-[11px] text-gray-500 truncate block font-mono" title={leg.categoria_dominante}>
+                            <span className="text-[11px] text-gray-500 truncate block font-mono"
+                                  title={`${_catLabel(leg.categoria_dominante)}${(leg.temas && leg.temas[leg.categoria_dominante]) ? ` · ${leg.temas[leg.categoria_dominante]} instrumentos individuales` : ''}`}>
                                 {_catLabel(leg.categoria_dominante)}
+                                {leg.temas && leg.temas[leg.categoria_dominante] ? (
+                                    <span className="text-gray-400"> · {leg.temas[leg.categoria_dominante]}</span>
+                                ) : null}
                             </span>
                         ) : <span className="text-xs text-gray-400">—</span>}
                     </div>
@@ -2974,6 +2992,16 @@
                                     {leg.categoria_dominante && (
                                         <div className="mt-2 inline-block px-2 py-0.5 text-[11px] rounded bg-white/10 text-white/90 font-medium">
                                             Tema dominante: {_catLabel(leg.categoria_dominante)}
+                                        </div>
+                                    )}
+                                    {leg.temas && Object.keys(leg.temas).length > 0 && (
+                                        <div className="mt-2 flex flex-wrap gap-1.5"
+                                             title="Instrumentos individuales presentados por tema (LXVI)">
+                                            {Object.entries(leg.temas).slice(0, 5).map(([cat, n]) => (
+                                                <span key={cat} className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded bg-white/10 text-white/85">
+                                                    {_catLabel(cat)} <span className="font-mono font-semibold text-white">{n}</span>
+                                                </span>
+                                            ))}
                                         </div>
                                     )}
                                     <ComisionesLegislador raw={leg.comisiones_cargo} dark />
