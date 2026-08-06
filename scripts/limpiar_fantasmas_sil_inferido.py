@@ -122,6 +122,32 @@ def main():
         elif cam != c:
             norm_camara.append((sid, nom, cam, c))
 
+    # Senadores sil_inferido NO vigentes: el roster oficial del Senado
+    # (origen='sitl_oficial') es completo y autoritativo (128 escaños) y ya
+    # sustituye a quien pidió licencia. Por eso CUALQUIER senador sil_inferido
+    # es no-vigente (licencia para el gabinete federal, o suplente), aunque no
+    # duplique a un titular actual. El limpiador de duplicados no los tocaba →
+    # el roster mostraba 148 en vez de 128 (bug 6-ago-2026: Ebrard, García
+    # Harfuch, Godoy, etc. seguían listados como senadores en funciones).
+    # CANDADO: solo se purgan si el roster oficial viene sano (≥120), para no
+    # vaciar el Senado si el scrape oficial falló ese día.
+    senado_oficial = conn.execute(
+        "SELECT COUNT(*) FROM legisladores "
+        "WHERE camara='Senado' AND origen='sitl_oficial'"
+    ).fetchone()[0]
+    fantasma_ids = {sid for sid, _, _ in fantasmas}
+    senado_no_vig = []
+    if senado_oficial >= 120:
+        for s in stubs:
+            if canon(s["camara"]) == "Senado" and s["id"] not in fantasma_ids:
+                senado_no_vig.append((s["id"], s["nombre"]))
+    else:
+        print(f"  ⚠️ CANDADO roster: Senado oficial={senado_oficial} (<120) — "
+              f"NO se purgan sil_inferido de Senado este run (scrape incompleto).")
+    # No normalizar camara de los que vamos a borrar.
+    _novig_ids = {sid for sid, _ in senado_no_vig}
+    norm_camara = [x for x in norm_camara if x[0] not in _novig_ids]
+
     print(f"\n  Stubs sil_inferido: {len(stubs)}")
     print(f"  Fantasmas (dup de roster oficial): {len(fantasmas)}")
     for sid, nom, mid in fantasmas:
@@ -146,6 +172,12 @@ def main():
     if len(norm_camara) > 5:
         print(f"   … y {len(norm_camara) - 5} más")
 
+    print(f"\n  Senadores sil_inferido NO vigentes a purgar "
+          f"(licencia/suplente): {len(senado_no_vig)}  "
+          f"(roster oficial={senado_oficial}, quedaría={senado_oficial})")
+    for sid, nom in senado_no_vig[:30]:
+        print(f"   DEL id={sid} {nom!r}")
+
     if args.dry_run:
         print("\n  (dry-run: no se tocó la DB)")
         return 0
@@ -161,6 +193,16 @@ def main():
         borradas += 1
         logger.info(f"Fantasma id={sid} {nom!r} borrado (dup de {mid})")
 
+    for sid, nom in senado_no_vig:
+        for t in TABLAS_FK:
+            try:
+                conn.execute(f"DELETE FROM {t} WHERE legislador_id=?", (sid,))
+            except sqlite3.OperationalError:
+                pass
+        conn.execute("DELETE FROM legisladores WHERE id=?", (sid,))
+        borradas += 1
+        logger.info(f"Senador no vigente id={sid} {nom!r} purgado (sil_inferido)")
+
     for sid, nom, viejo, nuevo in norm_camara:
         conn.execute(
             "UPDATE legisladores SET camara=? WHERE id=?", (nuevo, sid)
@@ -171,8 +213,9 @@ def main():
     # Propagar el borrado a D1 (radar lee de ahí). Nada repuebla la tabla
     # D1 legisladores — sync_legisladores_cargo_d1.py solo hace UPDATE —
     # así que los fantasmas viven en D1 hasta que se borran explícitamente.
-    if args.d1 and fantasmas:
-        ids = [sid for sid, _, _ in fantasmas]
+    ids_purga = [sid for sid, _, _ in fantasmas] + [sid for sid, _ in senado_no_vig]
+    if args.d1 and ids_purga:
+        ids = ids_purga
         lista = ",".join(str(i) for i in ids)
         sql_d1 = "\n".join([
             f"DELETE FROM legisladores_elo WHERE legislador_id IN ({lista});",
