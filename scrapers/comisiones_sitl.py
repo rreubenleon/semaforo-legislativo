@@ -21,7 +21,14 @@ import time
 from typing import Optional
 
 import requests
+import urllib3
 from bs4 import BeautifulSoup
+
+# SITL (sitl.diputados.gob.mx) sirve un certificado que la cadena de CAs del
+# runner no valida (endémico). Todo el resto del proyecto pega con verify=False;
+# este scraper era el único que quedó con verify por defecto → CERTIFICATE_
+# VERIFY_FAILED tumbaba comisiones.yml a diario (bug 6-ago-2026).
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 logger = logging.getLogger("comisiones_sitl")
 
@@ -125,7 +132,7 @@ def _scrape_comision(comt_id: int) -> Optional[dict]:
     try:
         resp = requests.get(
             SUMMARY_URL, params={"comt": comt_id},
-            headers=HEADERS, timeout=20
+            headers=HEADERS, timeout=20, verify=False
         )
         resp.raise_for_status()
         resp.encoding = "utf-8"
