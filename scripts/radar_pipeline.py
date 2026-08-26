@@ -1082,10 +1082,15 @@ def paso_matchup_grade(db_ro: sqlite3.Connection) -> dict:
     """
     TRACCIÓN del LEGISLADOR (propia, NO la de su comisión).
 
-    Mide qué % de SUS instrumentos individuales sustantivos han avanzado
-    (dictaminados = aprobados + desechados + retiradas) frente a los que siguen
-    en pendiente. Es una nota PROPIA de cada legislador; la calificación de la
-    comisión es algo aparte (vive en la pestaña Comisiones).
+    Mide qué % de SUS instrumentos individuales sustantivos han avanzado por
+    obra de la comisión (dictaminados = aprobados + desechados/rechazados)
+    frente a los que siguen en pendiente. Es una nota PROPIA de cada legislador;
+    la calificación de la comisión es algo aparte (vive en la pestaña Comisiones).
+
+    NO cuenta las RETIRADAS como avance: una retirada es el propio legislador
+    retirando su instrumento, no tracción de la comisión. Contarlas inflaba la
+    nota de quien sólo retiró (bug 25-ago-2026: una diputada con 0 aprobadas y
+    1 retirada salía "Tracción media" sostenida sólo por esa retirada).
 
     Asignación (entre legisladores con ≥3 instrumentos propios):
       - Los que SÍ mueven cosas (tasa>0) se rankean en 4 bandas parejas:
@@ -1103,7 +1108,7 @@ def paso_matchup_grade(db_ro: sqlite3.Connection) -> dict:
         """
         SELECT al.legislador_id,
                SUM(CASE WHEN sd.estatus LIKE '%Aprobado%' OR sd.estatus LIKE 'Desechado%'
-                         OR sd.estatus LIKE 'Rechazado%' OR sd.estatus LIKE 'Retirada%'
+                         OR sd.estatus LIKE 'Rechazado%'
                         THEN 1 ELSE 0 END) AS decididos,
                COUNT(*) AS total
         FROM actividad_legislador al
