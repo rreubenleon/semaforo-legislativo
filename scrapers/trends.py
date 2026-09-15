@@ -154,10 +154,38 @@ def scrape_trends_todas_categorias():
     """
     Consulta Google Trends vía SerpAPI para todas las categorías.
     Cada categoría = 1 búsqueda SerpAPI (hasta 5 keywords por consulta).
-    20 categorías = 20 búsquedas/run.
-    Con plan free (100/mes) alcanza para 5 runs/mes = ~1 por semana.
+    19 categorías = 19 búsquedas/run.
+
+    Plan free = 250 búsquedas/mes, así que solo alcanza para ~13 runs/mes.
+    El pipeline corre cada 4h (6/día), por eso este candado de frescura:
+    solo consultamos SerpAPI si la última consulta REAL tiene más de
+    UMBRAL_TRENDS_HORAS. La ventana de Trends es "now 7-d", así que
+    refrescar cada 3 días no pierde resolución y el consumo baja a
+    ~190/mes (19 x 10). Se puede forzar con FORCE_TRENDS=1.
     """
     conn = init_db()
+
+    # Candado de frescura: evita agotar el plan free de SerpAPI.
+    UMBRAL_TRENDS_HORAS = int(os.environ.get("UMBRAL_TRENDS_HORAS", "72"))
+    if os.environ.get("FORCE_TRENDS", "0") != "1":
+        fila = conn.execute("""
+            SELECT MAX(fecha_consulta) FROM trends
+            WHERE fecha_consulta NOT LIKE '%_fallback'
+        """).fetchone()
+        ultima_real = fila[0] if fila else None
+        if ultima_real:
+            try:
+                horas = (datetime.now() - datetime.fromisoformat(ultima_real)).total_seconds() / 3600
+                if horas < UMBRAL_TRENDS_HORAS:
+                    logger.info(
+                        f"Trends: última consulta real hace {horas:.0f}h "
+                        f"(< {UMBRAL_TRENDS_HORAS}h); omito SerpAPI para no agotar el plan "
+                        f"(free = 250/mes). Uso los datos ya guardados."
+                    )
+                    return {}
+            except (ValueError, TypeError):
+                pass
+
     resumen = {}
     categorias_ok = 0
     categorias_fallback = 0
