@@ -19,12 +19,39 @@ const ALLOWED_ORIGINS = [
 ];
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     // CORS preflight
     if (request.method === 'OPTIONS') {
       return corsResponse(null, 204, request);
     }
 
+    // ── Cache de borde para endpoints de lectura ──
+    // D1 free = 5M lecturas/día. Sin esto, cada request re-ejecuta las
+    // consultas contra D1 (varias escanean cientos/miles de filas) y se
+    // rebasa el tope. Los datos cambian a lo más 1 vez/día, así que 1h de
+    // cache es invisible para el usuario y corta las lecturas 10-100x.
+    const _url = new URL(request.url);
+    const _CACHEABLES = new Set(['/radar', '/comisiones', '/h2h', '/historicos', '/probabilidad', '/buscar']);
+    if (request.method === 'GET' && _CACHEABLES.has(_url.pathname)) {
+      const _cache = caches.default;
+      const _key = new Request(_url.toString(), { method: 'GET' });
+      const _hit = await _cache.match(_key);
+      if (_hit) return _hit;
+      const _resp = await router(request, env);
+      if (_resp && _resp.status === 200) {
+        const _c = new Response(_resp.body, _resp);
+        _c.headers.set('Cache-Control', 'public, max-age=3600');
+        if (ctx && ctx.waitUntil) ctx.waitUntil(_cache.put(_key, _c.clone()));
+        else await _cache.put(_key, _c.clone());
+        return _c;
+      }
+      return _resp;
+    }
+    return router(request, env);
+  },
+};
+
+async function router(request, env) {
     const url = new URL(request.url);
 
     if (url.pathname === '/') {
@@ -213,8 +240,7 @@ export default {
         500, request
       );
     }
-  },
-};
+}
 
 /**
  * Extrae la categoría FIAT principal del campo categoria.
